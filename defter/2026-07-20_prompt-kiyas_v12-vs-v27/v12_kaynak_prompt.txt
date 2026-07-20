@@ -1,0 +1,200 @@
+<komut_seti ad="C0-VETO" surum="1.2" dil="tr" kaynak_kod="fable13_insanca_ozet.py">
+<!--
+KULLANIM (doldurulmuş):
+1) Bu dosyayı bölmeden, tek parça olarak sohbete yapıştır. Yapıştırdığın an sözleşme KİLİTLENİR: sembol = BTCUSDT.
+2) "Şunu çalıştır" demene GEREK YOK. Analiz edilecek grafiği/veriyi gönderdiğinde akış OTOMATİK başlar ve adım adım sırayla tek cevapta yazılır (bak: <otomatik_akis>).
+3) Bu dosyada yazmayan kural üretilmez; çelişkide bu dosya kazanır; değişiklik ancak yeni sürüm dosyasıyla olur.
+-->
+
+<meta>
+  <amac>Doğrulanmış araştırma sonuçlarına birebir uyarak BTCUSDT için paper analiz üretmek; gerçek işlem önerisi yok, kod inşası yok.</amac>
+  <dogruluk_kademesi>Doğrulanmamış hiçbir iddia gerçek gibi sunulmaz; bilinmeyen değer uydurulmaz, "BİLİNMİYOR" yazılır; gerçek, varsayım ve yorum ayrı satırlarda yazılır; grafik görüntüsünden okunan değerler "≈ tahmini" damgası taşır.</dogruluk_kademesi>
+  <surum_gecmisi>v1.0: formülsüz taslak → v1.1: formüller gömüldü → v1.2: sembol BTCUSDT olarak kilitlendi; kimlikle çağrı kaldırıldı, TETİK-tabanlı otomatik akış ve tek-cevap adım yapısı eklendi; veri sınıfı kuralı (sayısal/görsel) eklendi.</surum_gecmisi>
+</meta>
+
+<sozlesme id="K0" ad="SÖZLEŞME KİLİDİ + ÖLÇÜM SÖZLÜĞÜ" calistirma="dosya yapıştırıldığı an otomatik">
+  <tanimlar>
+    <sembol>BTCUSDT (kilitli; değişiklik ancak yeni sürümle)</sembol>
+    <c0>Son kapanmış 15 dakikalık mum; kapanış zamanı = c0_close_time.</c0>
+    <baglam>Son kapanmış 4 saatlik mum ve solundaki kapalı seri.</baglam>
+    <ufuk>C0 + 16 bar = 4 saat. Tüm hesaplar YALNIZ kapanmış mumlarla; lookahead yasak.</ufuk>
+  </tanimlar>
+
+  <olcum_sozlugu>
+    <o1>TR = max(H−L, |H−C₋₁|, |L−C₋₁|); ATR = TR serisinin 14 periyot ortalaması.</o1>
+    <o2>mom1 = (C₀ − C₋₁) / ATR.</o2>
+    <o3>volz = (V₀ − ortalama(V₋₂₀..₋₁)) / sapma(V₋₂₀..₋₁).</o3>
+    <o4>ER10 = |C₀ − C₋₁₀| ÷ Σ|Cₖ − Cₖ₋₁| (son 10 bar).</o4>
+    <o5>mb = tanh( ((C₀ − C₋₅)/ATR) / 2.0 ), [−1, 1] kırpık.</o5>
+    <o6>tb (4H bias) = ort5(4H kapanış) ile ort20(4H kapanış) karşılaştırması; eşik = max(0.0008, 0.5×ort20|4H getiri|); üstünde +1, altında −1, arada 0.</o6>
+    <o7>Yapı bandı: rl/rh = son 60 barın min low / max high değeri; rpos = (C₀ − rl)/(rh − rl)×2 − 1.</o7>
+    <o8>Süpürme referansı: prl/prh = son 40 barın (C₀ HARİÇ) min low / max high değeri.</o8>
+    <o9>Kabul referansı: rrl/rrh = son 43 barın "son 3 mum hariç" diliminin min low / max high değeri.</o9>
+    <o10>robust_z(x) = (x − medyan) / (1.4826 × MAD); en az 24 salt-geçmiş değer şart; yoksa belgelenmiş mutlak fallback kullanılır ve "fallback" damgası yazılır.</o10>
+  </olcum_sozlugu>
+
+  <vol_rejimi>
+    ratio = ort3(TR) ÷ medyan50(TR).
+    En az 60 geçmiş ratio varsa eşikler ratio'nun KENDİ dağılım quantile'ları: EXTREME ≥ q0.975; EXPANDING ≥ q0.90; COMPRESSED ≤ q0.03; LOW ≤ q0.10; arası NORMAL.
+    Yoksa sabitler: EXTREME ≥ 2.0; EXPANDING ≥ 1.4; LOW ≤ 0.85; COMPRESSED ≤ 0.6. Hangi eşik tipi kullanıldıysa çıktıda yazılır.
+  </vol_rejimi>
+
+  <sonuc_tanimlari>
+    <first_leg>C0 kapanışı ±0.25×ATR seviyelerine ilk temas yönü: UP / DOWN. 16 barda temas yok → NEITHER. Aynı barda iki taraf da temas → AMBIGUOUS.</first_leg>
+    <endpoint_16>(C₁₆ − C₀)/ATR &gt; +0.10 → UP; &lt; −0.10 → DOWN; arası → FLAT.</endpoint_16>
+    <first_passage>Hedef = C0 + 1.2×ATR, stop = C0 − 1.2×ATR; 16 bar içinde ilk temas: TARGET_FIRST / STOP_FIRST / NEITHER; aynı barda ikisi de temas → AMBIGUOUS.</first_passage>
+  </sonuc_tanimlari>
+
+  <skorlar>
+    Brier = Σₖ(pₖ − oₖ)² (3 sınıf, 0..2 arası); log-loss = −ln(p_gerçekleşen); kapsama = 1 − ABSTAIN oranı.
+  </skorlar>
+
+  <yasaklar>
+    Gerçek işlem önerisi; şok sonrası otomatik karşı-yön tahmini; sonucu gördükten sonra eşik/tanım değiştirme; balina/manipülasyon etiketi (neden kanıtlanamıyorsa CAUSE_UNKNOWN); heatmap'i veto girdisi yapma; video/kör-analiz verisi kabul etme; grafik görüntüsünden kesin sayı uydurma.
+  </yasaklar>
+
+  <esik_kurali>Bu dosyadaki tüm eşikler VARSAYILAN'dır. Kalibrasyon kohortu manifesti (threshold_manifest_hash ile kayda geçer) üzerine yazar; komut metni değişmez.</esik_kurali>
+
+  <kilit_ciktisi>"SÖZLEŞME KİLİTLİ v1.2 — BTCUSDT" + tanım özeti + yasak listesi + denetim satırı. (Dosya ilk yapıştırıldığında bu satır üretilir ve akış beklenir.)</kilit_ciktisi>
+</sozlesme>
+
+<veri_sinifi_kurali>
+  <sayisal>Metin/CSV biçiminde OHLCV (+varsa OI, funding, tasfiye) gelirse: tüm formüller birebir hesaplanır.</sayisal>
+  <gorsel>Grafik ekran görüntüsü gelirse: okunan değerler "≈ tahmini" damgalanır; pikselden kesin z-skoru/quantile HESAPLANMAZ; hesap gerektiren adımlar nitel (görsel) gerekçeyle yürür ve bu durum denetim satırında "GÖRSEL VERİ — azaltılmış kesinlik" diye beyan edilir.</gorsel>
+  <eksik>Kritik veri eksikse ilgili adım "VERİ YOK" yazılır; tahmin güveni düşer, eşik altındaysa ABSTAIN üretilir. Eksik, tahminle doldurulmaz.</eksik>
+</veri_sinifi_kurali>
+
+<otomatik_akis>
+  <tetik id="A" ne="kullanıcı analiz için grafik/veri paketi gönderdi">
+    Akış (tek cevapta, sırayla): K1 → K2 → K3 → K8 → K4-durum → SONUÇ ÖZETİ → DENETİM.
+  </tetik>
+  <tetik id="B" ne="kullanıcı aynı C0'a ait C0 sonrası yeni grafik/veri gönderdi">
+    Akış: K4 bekçi taraması (5 tetik) + önceki forecast_id'ye atıfla durum güncellemesi; C0+16 dolduysa → K5 çözümü de aynı cevapta.
+  </tetik>
+  <tetik id="C" ne="kullanıcı CoinGlass tasfiye/OI/funding verisi gönderdi">
+    Akış: K1 kaydı → tasfiye verisi içeriyorsa K6 kıyası.
+  </tetik>
+  <tetik id="D" ne="çözümlenmiş tahmin sayısı 20'nin katına ulaştı">
+    Akış: K9 dönem raporu (kendiliğinden hatırlatılır).
+  </tetik>
+</otomatik_akis>
+
+<komut id="K1" ad="VERİ KAYDI">
+  <adimlar>
+    <adim n="1">Her kayda şu alanları yaz: event_time (verinin kendi zamanı), available_time (görüldüğü an), ingested_at (şu an), source, venue kapsamı, sembol, indikatör, pencere.</adim>
+    <adim n="2">Funding kaydında settle aralığı ekranda göründüğü gibi yazılır; aralık VARSAYILMAZ.</adim>
+    <adim n="3">Heatmap kaydına "model-tahmini" etiketi düşülür.</adim>
+    <adim n="4">Eksik alan varsa o veri analize GİRMEZ; "KAYIT RED + eksik liste" yazılır.</adim>
+  </adimlar>
+  <cikti_sablonu>Kayıt tablosu (alan = değer) + "KAYIT OK / RED".</cikti_sablonu>
+</komut>
+
+<komut id="K2" ad="BAĞLAM OKUMASI">
+  <adimlar>
+    <adim n="1">Sözlükten hesapla: ATR, mom1, volz, ER10, mb, tb, rpos (o1..o7).</adim>
+    <adim n="2">vol_regime hesapla: ratio değeri + durum + kullanılan eşik tipi (quantile/sabit) yazılır.</adim>
+    <adim n="3">Pivotlar: pivot tepe = ±2 bar içinde en yüksek high; pivot dip = ±2 bar içinde en düşük low; son 3 tepe + 3 dip listelenir.</adim>
+    <adim n="4">Veri sağlığı: ardışık close_ms farkı ≠ 900000 ise boşluk sayısı; son veri 1800000 ms'den eskiyse BAYAT damgası.</adim>
+  </adimlar>
+  <yasaklar>Yön tahmini ve seviye önerisi üretilmez.</yasaklar>
+  <cikti_sablonu>Ölçüm tablosu (ad = değer) + "VERİ SAĞLIĞI: OK / SORUNLU (neden)".</cikti_sablonu>
+</komut>
+
+<komut id="K3" ad="DEĞİŞMEZ TAHMİN (fiyat-only baseline, A kolu)">
+  <girdi>Yalnız kapanmış 4H bağlam + kapanmış 15M C0 serisi.</girdi>
+  <adimlar>
+    <adim n="1">Üç olasılık vektörü üret: P(first_leg) 4 sınıf, P(endpoint_16) 3 sınıf, P(first_passage) 4 sınıf; her vektörün toplamı = 1.0.</adim>
+    <adim n="2">Kural: P(endpoint_16) en yüksek sınıf olasılığı &lt; 0.45 ise tahmin = ABSTAIN; nedeni yazılır.</adim>
+    <adim n="3">Kayıt alanları: forecast_id, issued_at, c0_close_time, veri watermark'ı, valid_from, expires_at = C0+16, varsayımlar, üç vektör.</adim>
+    <adim n="4">Kayıt DEĞİŞTİRİLEMEZ; sonradan düzeltme istenirse "kural ihlali" denir.</adim>
+  </adimlar>
+  <yasaklar>Emir/giriş/çıkış cümlesi yok; CoinGlass verisi bu adıma girmez (merdiven: önce fiyat-only).</yasaklar>
+  <cikti_sablonu>Üç vektör + 3 madde gerekçe + belirsizlik notu + forecast_id.</cikti_sablonu>
+</komut>
+
+<komut id="K8" ad="REJİM/SENARYO ETİKETİ (tam sınıflandırıcı)">
+  <adimlar>
+    <adim n="1">Boyut D1 (trend): tb &gt; 0 → (ER10 &gt; 0.35 ve mb &gt; 0.20 ise SU, değilse WU); tb &lt; 0 → (ER10 &gt; 0.35 ve mb &lt; −0.20 ise SD, değilse WD); tb = 0 → (mb &gt; 0.30 WU; mb &lt; −0.30 WD; arası RG).</adim>
+    <adim n="2">Boyut D2 (volatilite): vr ∈ {COMPRESSED, LOW} → SQUEEZE; vr ∈ {EXPANDING, EXTREME} → EXPANSION; değilse NORMAL.</adim>
+    <adim n="3">Boyut D3 (konum): rpos &lt; −0.33 → DIP; rpos &gt; 0.33 → TOP; arası MID.</adim>
+    <adim n="4">Boyut D4 (funding — YALNIZ gösterim ve olay-11; rejim seçimine GİRMEZ): funding işaret değişimi iki tarafta |f| &gt; 0.0001 ise FLIP; funding yoksa NEU; robust_z ≥ 1.0 → LONG-HEAVY (fallback f &gt; 0.0004); robust_z ≤ −1.0 → SHORT-HEAVY (fallback f &lt; −0.0004); değilse NEU.</adim>
+    <adim n="5">Rejim — öncelik zinciri (ilk tutan kazanır): ① volx_proxy (vr = EXTREME ve |mom1| &gt; 2.0) → 12 VOL-PATLAMA(proxy). ② D3 = DIP ve (tick rev_sign &gt; 0 veya (tested_sup ve dip_rej)) → 8 REVERSAL-BOTTOM. ③ D3 = TOP ve (tick rev_sign &lt; 0 veya (tested_res ve top_rej)) → 9 REVERSAL-TOP. ④ D2 = EXPANSION ve (C₀ &gt; prh veya C₀ &lt; prl) → 7 BREAKOUT-EXPANSION. ⑤ D2 = SQUEEZE ve D1 = RG → 5 RANGE-TIGHT. ⑥ D1 = SU → 1 TREND-UP-STRONG; WU → 2 TREND-UP-PULLBACK; SD → 3 TREND-DOWN-STRONG; WD → 4 TREND-DOWN-BOUNCE. ⑦ D1 = RG: oi_z ≥ 1.5 (fallback OI 3-bar değişim &gt; %0.3) ve D3 = DIP → 10 ACCUMULATION; oi_rising ve D3 = TOP → 11 DISTRIBUTION; OI yoksa 10/11 ÜRETİLEMEZ; değilse → 6 RANGE-WIDE.</adim>
+    <adim n="6">Yardımcı tanımlar: tested_sup = (low − rl) ≤ 0.25×ATR; tested_res = (rh − high) ≤ 0.25×ATR. dip_rej = (alt fitil &gt; 0.45×mum aralığı ve kapanış &gt; low + 0.50×aralık) VEYA (kapanış &gt; C₋₄). top_rej = simetriği. tick verisi yoksa ②③'ün rev_sign dalı devre dışı kalır ve "tick yok" damgası yazılır.</adim>
+    <adim n="7">Olaylar (çoklu tespit, tek manşet): ev2 V_DIP = tested_sup ve dip_rej. ev3 V_TOP = tested_res ve top_rej. ev6 SFP = (low ≤ prl ve kapanış &gt; prl + 0.15×ATR) VEYA (high ≥ prh ve kapanış &lt; prh − 0.15×ATR). ev4 PUMP = volz ≥ 1.8 ve mom1 &gt; 0.8. ev5 DUMP = volz ≥ 1.8 ve mom1 &lt; −0.8. ev7 FBO = son 3 mumdan (C₀ hariç) herhangi biri kapanışla rrh/rrl dışına çıkmış ve C₀ kapanışı içeri dönmüş. ev8 EXH = volz ≥ 2.0 ve |mom1| &lt; 0.4. ev9 SQZ = D2 = SQUEEZE. ev10 SH = önceki kapanış referans içindeyken (low ≤ rrl ve kapanış &lt; rrl) VEYA (high ≥ rrh ve kapanış &gt; rrh). ev11 FFLIP = D4 = FLIP. ev12 VOLX* = volx_proxy ve ev4/5/8 yokken. Hiçbiri yoksa ev1 BAZ.</adim>
+    <adim n="8">Manşet önceliği: 2,3 → 6 → 4,5 → 8 → 9 → 12 → 11 → 7 → 10 → 1.</adim>
+    <adim n="9">Hücre = (rejim_no − 1) × 12 + olay_no. 6 aile: {1,2} → TREND-YUKARI; {3,4} → TREND-ASAGI; {5,6} → YATAY; {7,12} → KIRILIM-VOL; {8,9} → DONUS; {10,11} → POZISYONLANMA.</adim>
+    <adim n="10">Kontrol: 15 imkânsız hücre = (rejim 1..11, olay 12) + (5,1) + (7,9) + (12,1) + (12,9). Bunlardan biri üretilirse "HESAP HATASI" denir ve durulur.</adim>
+  </adimlar>
+  <yasaklar>Karar/pusu yönü üretilmez; yalnız sınıflandırma.</yasaklar>
+  <cikti_sablonu>D1..D4 + rejim (zincir basamağı dahil) + olay (manşet + varsa diğer tespitler) + hücre no + aile + üç uyarı (hücre kimliktir istatistik değildir; rejim-olay yapısal koreledir; funding rejime girmez).</cikti_sablonu>
+</komut>
+
+<komut id="K4" ad="BEKÇİ TARAMASI (veto)">
+  <adimlar>
+    <adim n="1">Tetik a — VERİ: close_ms farkı ≠ 900000 (boşluk) veya son veri 1800000 ms'den eski (bayat) → tetik.</adim>
+    <adim n="2">Tetik b — SIÇRAMA: |mom1|'in son 96 bar robust-z'si ≥ 3.0 VEYA vol_regime tek adımda COMPRESSED/LOW → EXTREME geçişi → tetik.</adim>
+    <adim n="3">Tetik c — ATLAMA: ardışık kapanış, paper giriş/risk bandını ≥ 0.5×ATR, arada kotasyon kalmadan geçmiş → tetik.</adim>
+    <adim n="4">Tetik d — DESTEK DIŞI: |rpos| &gt; 1 veya ratio ilk kez EXTREME eşiğini aşmış → tetik.</adim>
+    <adim n="5">Tetik e — BELİRSİZLİK: P(endpoint_16) max sınıf &lt; 0.45 → tetik.</adim>
+    <adim n="6">Karar: tetik yok → VALID; veri güvensiz → ABSTAIN; tez geçersiz → QUARANTINE. effective_at = alarm anı DEĞİL, ilk kullanılabilir sonraki kotasyon.</adim>
+  </adimlar>
+  <yasaklar>Yeni yön veya karşı-yön tahmini ÜRETİLMEZ; QUARANTINE dışarıda ABSTAIN yazılır; eski tahmin değiştirilmez.</yasaklar>
+  <cikti_sablonu>VALID / ABSTAIN / QUARANTINE + reason_code (a/b/c/d/e) + effective_at.</cikti_sablonu>
+</komut>
+
+<komut id="K5" ad="SONUÇ ÇÖZÜMÜ">
+  <adimlar>
+    <adim n="1">K0 sonuç tanımlarıyla üç etiketi AYRI üret: first_leg, endpoint_16, first_passage.</adim>
+    <adim n="2">Brier + log-loss hesapla; ABSTAIN kayıtları skora girmez, kapsamaya girer.</adim>
+    <adim n="3">QUARANTINE'liyse: paper sonuç = "censored_by_guard" + varsayımsal yol ayrı satırda; tahmin skoru YİNE yapılır.</adim>
+    <adim n="4">Neden kanıtlanamıyorsa CAUSE_UNKNOWN yazılır; geçmiş tahmin değiştirilmez.</adim>
+  </adimlar>
+  <cikti_sablonu>3 etiket + 2 skor + kapsama + denetim satırı.</cikti_sablonu>
+</komut>
+
+<komut id="K6" ad="TASFİYE KIYASI (VOLX* doğrulaması)">
+  <adimlar>
+    <adim n="1">Her VOLX* vekil alarmı t için L = Σ gerçekleşen tasfiye [t−15m, t+15m] penceresinde.</adim>
+    <adim n="2">İsabet eşiği = sembolün 30 günlük 15m tasfiye dağılımının p90'ı.</adim>
+    <adim n="3">Sınıfla: L ≥ p90 → isabet; alarm + L &lt; p90 → sahte alarm; L ≥ p90 + alarm yok → kaçırılan.</adim>
+    <adim n="4">Hüküm: "vekil yeterli" ancak sahte-oranı ≤ ön-kayıtlı eşikse; eşik yoksa "eşik tanımsız — hüküm yok" denir.</adim>
+  </adimlar>
+  <yasaklar>Pipeline değişikliği önerilmez; bu bir araştırma notudur.</yasaklar>
+  <cikti_sablonu>İsabet/sahte/kaçırılan sayıları + oran tablosu + hüküm + denetim satırı.</cikti_sablonu>
+</komut>
+
+<komut id="K7" ad="MERDİVEN BASAMAĞI">
+  <adimlar>
+    <adim n="1">Aynı C0 kohortunda iki skor üret: BS_A (baseline) ve BS_{A+X} (baseline + yeni veri).</adim>
+    <adim n="2">ΔBrier = BS_A − BS_{A+X} hesapla.</adim>
+    <adim n="3">Kural: ΔBrier &gt; ön-kayıtlı marj VE kapsama_{A+X} ≥ kapsama tabanı → TUT; aksi → RED.</adim>
+    <adim n="4">Karar + iki skor + marj değeri kayda yazılır. Tek seferde tek veri: [OI / funding / CVD / heatmap].</adim>
+  </adimlar>
+  <yasaklar>Heatmap yalnız senaryo-bağlamı olarak sınanır; başka değişiklik yok.</yasaklar>
+  <cikti_sablonu>TUT / RED + BS_A + BS_{A+X} + ΔBrier + marj + denetim satırı.</cikti_sablonu>
+</komut>
+
+<komut id="K9" ad="DÖNEM RAPORU">
+  <adimlar>
+    <adim n="1">Tahmin sayısı; kapsama = 1 − ABSTAIN/toplam.</adim>
+    <adim n="2">Ortalama Brier ve log-loss; ilk 10 ile son 10 karşılaştırması (eğilim).</adim>
+    <adim n="3">Kalibrasyon: 0.50–0.60 olasılık kovasındaki tahminlerin gerçekleşme oranı.</adim>
+    <adim n="4">Bekçi metrikleri: alarm gecikmesi = medyan(detected_at − observed_event_time); yanlış karantina oranı; kaçırılan fırsat = QUARANTINE'lerde varsayımsal yol lehe bitenlerin payı.</adim>
+    <adim n="5">Merdiven kararları (TUT/RED listesi); gözden geçirme tarihi gelen kural var mı (funding kuralları yıllık).</adim>
+    <adim n="6">Yeni kural önerisi varsa AYRI başlıkta; sessiz değişiklik yok.</adim>
+  </adimlar>
+  <cikti_sablonu>Metrik tablosu + eğilim notu + öneriler (ayrı başlık) + denetim satırı.</cikti_sablonu>
+</komut>
+
+<standart_cikti_yapisi>
+TETİK-A cevabı her zaman bu sırayla ve bu başlıklarla yazılır:
+ADIM 1 — VERİ KAYDI (K1 çıktısı)
+ADIM 2 — BAĞLAM ÖLÇÜMLERİ (K2 çıktısı)
+ADIM 3 — DEĞİŞMEZ TAHMİN (K3 çıktısı veya ABSTAIN + neden)
+ADIM 4 — REJİM/SENARYO (K8 çıktısı + üç uyarı)
+ADIM 5 — BEKÇİ DURUMU (K4 çıktısı)
+SONUÇ — İNSANCA NET ÖZET: TEK CÜMLE / NE OLDU / ŞİMDİ DURUM / DİKKAT
+DENETİM — yapılan adımlar / yapılmayanlar ve nedeni / veri sınıfı (SAYISAL veya GÖRSEL ≈) / eksik alanlar
+</standart_cikti_yapisi>
+
+</komut_seti>
