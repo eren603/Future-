@@ -1,0 +1,81 @@
+{
+  "run_id": "2026-07-20_BTCUSDT_C0-1784547900000",
+  "contract": "C0-VETO-v2.7-PRAGMATIK-BTCUSDT",
+  "mode": "PAPER",
+  "run_type": "RETROSPECTIVE_NONBLIND",
+  "was_live_forecast": false,
+  "provenance": "USER_SUPPLIED_UNRECEIPTED",
+  "scripts_available": false,
+  "evidence": {
+    "tier1": {"m15_rows": 60, "m15_closed": 59, "h4_rows": 22, "h4_closed": 21},
+    "tier2": {"screenshots": 6, "video_processed": false},
+    "tier3": 0
+  },
+  "profile": {
+    "status": "PASS",
+    "grid_ok": true, "duplicates": 0, "ohlc_sanity_violations": 0,
+    "open_bars_excluded": {"m15": [1784548800000], "h4": [1784548800000]},
+    "second_path": {
+      "agg_15m_to_4h": {"checked_bars": [1784505600000, 1784520000000, 1784534400000], "matches": 3},
+      "decimal_vs_float64": "OK"
+    }
+  },
+  "c0": {"ot": 1784547900000, "utc": "2026-07-20T11:45:00Z",
+         "o": "64807.20", "h": "65048.30", "l": "64807.10", "c": "64970.80",
+         "v": "3520.980", "close_location": 0.6787},
+  "mechanical": {
+    "label": "CALCULATED",
+    "atr0_15m": "180.7643",
+    "ma5_4h": "64638.60", "ma20_4h": "64225.93", "ma_diff": "412.67",
+    "threshold": {"value": "48.92", "formula": "0.10*ATR14(4H)", "assumption": true},
+    "trend_dir": "UP",
+    "prh40": "64940.00", "prl40": "63736.10",
+    "trigger": "BREAKOUT_UP", "trigger_dir": "UP",
+    "yon_M": "UP", "grade_M": "STRONG",
+    "atr_envelope": {"lo": "64753.88", "hi": "65187.72"}
+  },
+  "structural": {
+    "label": "CALCULATED",
+    "yon_Y": "UP",
+    "last_bos": {"dir": "UP", "ot": 1784547900000, "broken_level": "64393.20"},
+    "ssl_sweep": {"ot": 1784529000000, "level": "63736.10", "same_bar_reclaim": false, "close_loc": 0.146},
+    "displacement": {"ot": 1784547000000, "body": "484.60", "body_over_atr0": 2.68, "volume_rank": 1},
+    "open_bull_fvg": {"bot": "64376.60", "top": "64807.10", "ce": "64591.85", "fill": "OPEN"},
+    "amd": {"accumulation": true, "liquidity_taken": "SSL", "displacement": true, "label": "AMD_BULL"},
+    "pools_up_unswept": ["65084.60"],
+    "pools_down_unswept": ["64137.00", "63858.10", "63736.10", "62505.10"]
+  },
+  "context_tier2": {
+    "likidite_bandi": "hedef_yolunda",
+    "funding_isareti": "+",
+    "funding_value_descriptive": "0.0085% (asiri degil)",
+    "oi_egimi": "artan",
+    "liq_baskin_taraf": "okunamadi"
+  },
+  "confluence": {"yon": "LONG", "grade": "B",
+                 "grade_reason": "ortak yon + 1 baglam uyarisi (hedef yolunda likidite bandi)"},
+  "plan": {
+    "basis_T1": "STRUCTURAL_DOL1", "basis_T2": "ATR_FALLBACK",
+    "market": {"trigger": "15M govde kapanisi > 65048.30", "entry_nominal": "65048.30",
+               "stop": "64316.00", "r_t1": "0.05", "r_t2": "0.19", "verdict": "YETERSIZ"},
+    "pusu": {"zone": ["64376.60", "64807.10"], "preferred_entry_ce": "64591.85",
+             "stop": "64316.00", "stop_deep_alt": "64137.00",
+             "r_t1_ce": "1.79", "r_t2_ce": "2.16",
+             "invalidation": "15M govde kapanisi < 64316.00"},
+    "t1": "65084.60", "t2": "65187.72"
+  },
+  "charts": {
+    "grafik_mekanik_15M.png": "913e7bc4cf22da574bc883fac591dd008c17d086db9a856cf08fcdc33cef0fe1",
+    "grafik_smc_haritasi.png": "8c1c0033b33a53e45b5ee22bb518ae34ee4040205e6c4bb72cb69bf1dcda295f"
+  },
+  "warnings": [
+    "C0 kapanisi ile kosu arasinda gecikme (bayatlik)",
+    "BN-02 makbuzu/raw SHA yok (USER_SUPPLIED_UNRECEIPTED)",
+    "kalibrasyon artefakti yok — olasilik/edge iddiasi yapilmaz",
+    "video islenmedi",
+    "adaptif esik formulu varsayim (0.10*ATR14_4H)",
+    "pusu bolgesi sweep fitili degil displacement-FVG (plan_basis notu)",
+    "yapisal DOL2 veri icinde yok — T2 ATR fallback"
+  ],
+  "next_rollover_c0": 1784548800000
+}
