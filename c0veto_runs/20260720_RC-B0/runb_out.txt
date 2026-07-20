@@ -1,0 +1,20 @@
+<stdin>:52: Pandas4Warning: Starting with pandas version 4.0 all arguments of max will be keyword-only.
+<stdin>:52: Pandas4Warning: Starting with pandas version 4.0 all arguments of min will be keyword-only.
+PROFILE15 {'rows': 59, 'mono': True, 'grid': True, 'dup': False, 'ohlc': True}
+<stdin>:52: Pandas4Warning: Starting with pandas version 4.0 all arguments of max will be keyword-only.
+<stdin>:52: Pandas4Warning: Starting with pandas version 4.0 all arguments of min will be keyword-only.
+PROFILE4H {'rows': 21, 'mono': True, 'grid': True, 'dup': False, 'ohlc': True}
+RECON 1784505600000 {'n': 16, 'o': np.True_, 'hi': np.True_, 'lo': np.True_, 'c': np.True_}
+RECON 1784520000000 {'n': 16, 'o': np.True_, 'hi': np.True_, 'lo': np.True_, 'c': np.True_}
+<stdin>:62: Pandas4Warning: Starting with pandas version 4.0 all arguments of max will be keyword-only.
+MECH {'ATR0': np.float64(138.193), 'ma5': np.float64(64553.48), 'ma20': np.float64(64154.295), 'gap': 0.006222, 'thr': 0.001967, 'mb': 0.248, 'trend': 'UP', 'trig': 'NEUTRAL', 'prl': np.float64(63736.1), 'prh': np.float64(65011.0), 'dir': 'UP', 'grade': 'B', 'C0': [64305.0, 64327.3, 64267.5, 64280.5]}
+SWING_H(son12) [(1784494800000, np.float64(64539.0)), (1784499300000, np.float64(64874.9)), (1784506500000, np.float64(65084.6)), (1784509200000, np.float64(65011.0)), (1784512800000, np.float64(64920.0)), (1784515500000, np.float64(64940.0)), (1784519100000, np.float64(64887.0)), (1784528100000, np.float64(64198.3)), (1784534400000, np.float64(64337.0)), (1784542500000, np.float64(64393.2))]
+SWING_L(son12) [(1784497500000, np.float64(64305.0)), (1784502000000, np.float64(64534.9)), (1784505600000, np.float64(64534.6)), (1784508300000, np.float64(64380.0)), (1784511900000, np.float64(64470.0)), (1784517300000, np.float64(64610.2)), (1784523600000, np.float64(64046.0)), (1784529000000, np.float64(63736.1)), (1784536200000, np.float64(63858.1)), (1784541600000, np.float64(64137.0))]
+FVG_open [('BEAR', 1784522700000, np.float64(64536.1), np.float64(64673.4), 'UNFILLED'), ('BEAR', 1784523600000, np.float64(64359.3), np.float64(64503.0), 'PART_to_64393.2'), ('BULL', 1784538900000, np.float64(64087.6), np.float64(64155.5), 'PART_to_64137.0')]
+C0_sweep [] close_loc 0.217
+MORNING market trigger bars: YOK -> NO_FILL
+MORNING ATR-pusu: touch 1784521800000 reclaim (1784521800000, np.float64(64700.1))
+MORNING textbook-pusu fill bar: 1784521800000
+MORNING pusu ilk olay: [(1784522700000, 'STOP')]
+MORNING first_leg(ATR): [(1784523600000, 'D', '')]
+MORNING endpoint_16: C16= 64210.3 R16= -0.00812
