@@ -1,0 +1,11 @@
+interface:
+  display_name: "Data Analysis Deep Scan"
+  short_description: "Verified calculations and rigorous data analysis"
+  default_prompt: "Use $data-analysis-deep-scan to audit this dataset, verify the calculations, and explain the strongest supported findings."
+policy:
+  allow_implicit_invocation: true
+  products:
+    - "chatgpt"
+    - "codex"
+    - "api"
+    - "atlas"
