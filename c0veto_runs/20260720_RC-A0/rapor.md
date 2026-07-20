@@ -37,3 +37,10 @@ Ekranlar: 4 adet CoinGlass **Liquidity Heatmap** ekranı CG-06 (order-book) sın
 
 ## Bir sonraki tek güvenli adım
 RC-R1 kartını açabilmek için: 04:45:00Z ve sonrası kapalı 15M + 4H **raw Binance kline JSON'u** ile BN-02 makbuzu (endpoint, query, istek/yanıt zamanları, SHA-256) ve CG-00 pair-mapping yanıtı gönderin. Canlı (blind, PT30S uyumlu) forecast bu ortamda ancak Binance API erişimi açılırsa mümkündür.
+
+## Ek — 04:50Z güncellemesi (beceri zip'i geldi)
+- `Chatgpt_analiz_becerisi.zip` SHA-256 = a75cf0e2… → manifest EŞLEŞTİ; 12/12 iç dosya hash'i doğru.
+- `self_test.py` bu ortamda ÇALIŞTIRILDI: "SELF_TEST_OK: profile, safe join, analysis, exact decimals, inference, time order, and quarantine".
+- `profile_data.py` k15.csv/k4h.csv üzerinde çalıştırıldı: monotonik, duplicate 0, eksik 0, outlier bayrağı yok (çıktılar bu klasörde).
+- Bağımsız pandas ikinci-yol hesabı Decimal motoruyla BİREBİR aynı: ATR0=240.292857, gap4h=0.00718481, thr4h=0.00191106, T=65021.95, S=64445.25, zone=[64673.53, 64697.56].
+- deep_scan_audit: scripts_available=true; applied=APPLIED (video V1-V6 hariç).
