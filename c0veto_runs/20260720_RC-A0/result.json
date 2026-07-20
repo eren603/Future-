@@ -1,0 +1,233 @@
+{
+  "schema_version": "C0-VETO-RESULT-v2.6",
+  "run_id": "RC-20260720-C0close0430Z-c1168185-A0",
+  "parent_run_id": null,
+  "router_created": false,
+  "auto_rollover_seq": 0,
+  "contract_version": "C0-VETO-v2.6-BTCUSDT-RESEARCH",
+  "run_mode": "CASE_AUDIT",
+  "run_timing_mode": "RETROSPECTIVE_NONBLIND_AUDIT",
+  "was_live_forecast": false,
+  "prior_forecast_exists": false,
+  "live_ordering_enabled": false,
+  "paper_execution_enabled": true,
+  "forecast_data_watermark_utc": "2026-07-20T04:30:00Z",
+  "information_cutoff_utc": "2026-07-20T04:30:30Z",
+  "analysis_started_at_utc": "2026-07-20T04:33:14Z",
+  "status": "FEATURES_ONLY",
+  "reason_codes": [
+    "BLOCKED_CALIBRATION_REQUIRED_DIRECTION_PATH_ONLY",
+    "ISSUANCE_LATENCY_EXCEEDED_PT30S_FOR_C0_0430Z",
+    "OBSERVER_SAW_PARTIAL_POST_C0_BAR_~30S",
+    "NO_CAPTURE_ENVELOPE_USER_PASTED_KLINES",
+    "HASH_UNAVAILABLE_RAW_BINANCE_PAYLOAD"
+  ],
+  "source_pins": [
+    "Binance USD-M kline schema: 12-field REST array (user-pasted rows match schema)",
+    "fapi.binance.com and api.binance.com unreachable from environment (proxy CONNECT 403, tested 2026-07-20T04:34Z)"
+  ],
+  "input_inventory": [
+    {"file": "482d7282-C0VETO_v2.6_BTCUSDT_nihai_komut_promptu.md", "bytes": 173753, "sha256": "c116818524426494f721c0d10944b9e580c9bf10b16f7beb309a897ec69fbef8", "role": "contract", "accepted": true},
+    {"file": "89f579d1-C0VETO_v2.6_BTCUSDT_analiz_komut_promptu.txt", "bytes": 154619, "sha256": "5e1c8ea5b911ecfefb1bd18332fcd81631376899b5b51c01dd08dae59c011fd9", "role": "contract (komut kopyası)", "accepted": true},
+    {"file": "pasted_text_15m_klines", "rows_closed": 59, "rows_open_excluded": 1, "sha256": "HASH_UNAVAILABLE (chat paste; deterministic transcription in c0veto_engine.py sha256=95680678d02af923ec5c686bfc077938a7580dd4adff83ee4b7623171c2b4afe)", "role": "BN-01 aday (envelope'suz)", "accepted": "FEATURES_WITH_PROVENANCE_LIMIT"},
+    {"file": "pasted_text_4h_klines", "rows_closed": 21, "rows_open_excluded": 1, "sha256": "HASH_UNAVAILABLE (chat paste)", "role": "BN-01 aday (envelope'suz)", "accepted": "FEATURES_WITH_PROVENANCE_LIMIT"},
+    {"file": "ddac4694-Screenshot_20260720070847300.jpg", "bytes": 860890, "sha256": "c7830f7240ee048066b563e955d880c5197fd2302c0f6da1590e5e648abe238a", "role": "CG-06F UI (Perpetual Liquidity Heatmap 15dak)", "accepted": "DESCRIPTIVE_ONLY"},
+    {"file": "00bf25f9-Screenshot_20260720070853333.jpg", "bytes": 659466, "sha256": "6a71d82f143a3b8d01254f34aad6f81a4e697f6ba0eae2f7c3940fb881f48924", "role": "CG-06S UI (SPOT Liquidity Heatmap 15dak)", "accepted": "DESCRIPTIVE_ONLY"},
+    {"file": "48f5ab01-Screenshot_20260720070904568.jpg", "bytes": 320861, "sha256": "f65bf668f4ccc50a5577f34d609d5fb2dcb4296970fb0682be2afdd850ea8deb", "role": "CG-06S UI (SPOT Liquidity Heatmap 4S)", "accepted": "DESCRIPTIVE_ONLY"},
+    {"file": "8f0a2091-Screenshot_20260720070911808.jpg", "bytes": 612017, "sha256": "6e040e4756b74ed3458280d4470ddaa2fcdcf550f6399cffd72b4903cc6684a2", "role": "CG-06F UI (Perpetual Liquidity Heatmap 4S)", "accepted": "DESCRIPTIVE_ONLY"},
+    {"file": "8fac4d66-Screenshot_20260720070919935.jpg", "bytes": 517831, "sha256": "e40260b9b9f3dc19b699704b9bbb8f7d2f6952cf60618759aa343d983de79550", "role": "CoinGlass Binance BTCUSDT Perp 4S chart UI (funding/liq/OI panelleri)", "accepted": "DESCRIPTIVE_ONLY"},
+    {"file": "4e7bbb87-Screenshot_20260720070930619.jpg", "bytes": 496784, "sha256": "146e0c6455e1b396f35fdc53c95ba0d1050ce82cd120216014947d0b50b98f2c", "role": "CoinGlass Binance BTCUSDT Perp 15dak chart UI", "accepted": "DESCRIPTIVE_ONLY"},
+    {"file": "c897f931-Screenrecorder20260720070801868.mp4", "bytes": 12419239, "sha256": "7016038287102f157b5640362d7a12a3965ceeaec6ea9cf28fc1ac5194ef5224", "role": "video (V0 kısmi: hash+byte; ffprobe yok, metadata NOT_EXTRACTED)", "accepted": "DESCRIPTIVE_ONLY_QUARANTINED_FOR_BLIND_USE"}
+  ],
+  "data_audit": {
+    "time_integrity": "15M: 59 kapalı bar, tekdüze 900000ms grid, monotonik, duplicate yok (13:45Z 07-19 → 04:30Z 07-20). 4H: 21 kapalı bar, tekdüze grid (16:00Z 07-16 → 04:00Z 07-20 kapanış). Açık barlar (15M 04:30+, 4H 04:00+) dışlandı.",
+    "scope_integrity": "Tek venue/ürün adayı: Binance USD-M BTCUSDT PERPETUAL (UI provisional; exchangeInfo erişilemedi → kimlik PROVISIONAL). Spot ekranları ayrı tutuldu (G26). Crypto.com MCP ikame EDİLMEDİ (BLOCKED_SCOPE_MISMATCH_EXEC_VENUE).",
+    "availability_integrity": "Klines available_time bilinmiyor → availability_basis=FIRST_SEEN=2026-07-20T04:33Z (oturum). Retrospektif teşhis için yeterli; point-in-time forecast kanıtı DEĞİL.",
+    "hash_integrity": "Ham Binance payload hash'i yok (BN-02 makbuzu eksik) → HASH_UNAVAILABLE, kilit gücü düşürüldü. Yüklenen dosyaların SHA-256'ları input_inventory'de.",
+    "future_leakage": "C0=04:30Z için gözlemci, paste içindeki ~30-45 sn'lik açık 04:30-04:45 barını gördü (O=64733.60 L=64697.50) → blind iddiası YASAK; state RETROSPECTIVE_NONBLIND_DIAGNOSTIC. Açık bar hiçbir feature'a girmedi."
+  },
+  "parameter_registry": [
+    {"param": "n_ATR=14 (RULE_SIGNAL_V1 kendi tanımı)", "class": "B_CONTRACT_FIXED", "source": "BUILT_IN_RULE_SPEC frozen 2026-07-19T23:31:57Z"},
+    {"param": "ma5/ma20/thr4h/0.30/40-bar/0.25/0.45/0.50/0.15/1.2*ATR/pusu 0.15-0.25", "class": "B_CONTRACT_FIXED", "source": "BUILT_IN_RULE_SPEC + ATR_SHADOW_PLAN_V1"},
+    {"param": "tickSize/stepSize/minNotional", "class": "C_PROVIDER_RUNTIME", "source": "UNAVAILABLE (exchangeInfo erişilemedi) → yuvarlama yapılmadı, raw değerler"},
+    {"param": "k_UP/k_DOWN/H_FL/delta_flat/B_bps/heatmap band", "class": "D_CALIBRATED", "source": "YOK → ilgili kalibre yollar BLOCKED_CALIBRATION_REQUIRED"}
+  ],
+  "calculation_trace": [
+    {"formula_id": "TR+ATR0_mean14", "input_rows": "K15 son 15 bar (prev close dahil)", "cutoff": "2026-07-20T04:30:00Z", "result": "ATR0=240.2928571428571 (Decimal, tam kesir sakli)", "unit": "USDT", "quality_flags": ["NO_CAPTURE_ENVELOPE"]},
+    {"formula_id": "ma5_4h/ma20_4h/gap4h", "input_rows": "K4H 21 kapanış (son eligible 00:00-04:00Z)", "result": "ma5=64592.62 ma20=64131.845 gap4h=+0.0071848", "unit": "oran"},
+    {"formula_id": "thr4h=max(0.0008,0.5*mean(|4H logret| son20))", "input_rows": "20 getiri", "result": "0.0019110566403637802"},
+    {"formula_id": "mb=clip(tanh(((C0-C_5)/ATR0)/2))", "inputs": "C0=64733.60 C_5=64812.90", "result": "-0.16352555 (float64)"},
+    {"formula_id": "prl/prh_40bar_excl_C0", "input_rows": "K15[-41:-1]", "result": "prl=64305.00 prh=65084.60"},
+    {"formula_id": "C0_geometry", "result": "range0=155.00 lower_wick=72.40 upper_wick=23.40"},
+    {"formula_id": "predicates", "result": "breakout_up=F breakout_down=F reject_low=F reject_high=F sfp_up=F sfp_down=F → trigger_dir=NEUTRAL"},
+    {"formula_id": "policy_v1", "result": "trend_dir=UP (gap4h>thr4h) + trigger NEUTRAL → direction=UP grade=B"},
+    {"formula_id": "ATR_fallback_plan", "result": "E=64733.60 T=65021.95142857 S=64445.24857142 (raw; tickSize yok)"}
+  ],
+  "gate_matrix": [
+    {"gate_id": "CORE_C0_IDENTITY", "scope": "CORE_RUN", "state": "PASS", "evidence_ids": ["K15 satır 59", "15m↔4h mutabakatı", "ekran 24S High/Low eşleşmesi"], "blocks": [], "reason_codes": ["PROVISIONAL_NO_NATIVE_REPLAY_RECEIPT"]},
+    {"gate_id": "CORE_POINT_IN_TIME", "scope": "CORE_RUN", "state": "PASS", "evidence_ids": ["açık barlar dışlandı"], "blocks": [], "reason_codes": []},
+    {"gate_id": "DIRECTION_CALIBRATED", "scope": "DIRECTION", "state": "FAIL", "evidence_ids": [], "blocks": ["calibrated probability"], "reason_codes": ["BLOCKED_CALIBRATION_REQUIRED", "BLOCKED_MODEL_ARTIFACT_MISSING"]},
+    {"gate_id": "DIRECTION_RULE_V1", "scope": "DIRECTION", "state": "PASS", "evidence_ids": ["calculation_trace"], "blocks": [], "reason_codes": ["NONBLIND_DOWNGRADE_TO_DIAGNOSTIC"]},
+    {"gate_id": "MODULE_OI/FUNDING/CVD/LIQ/HEATMAP", "scope": "MODULE", "state": "FAIL", "evidence_ids": [], "blocks": ["challenger features"], "reason_codes": ["MODULE_NOT_ELIGIBLE_NO_RAW_JSON", "G24_DESCRIPTIVE_ONLY"]},
+    {"gate_id": "MODULE_VIDEO", "scope": "MODULE", "state": "FAIL", "evidence_ids": [], "blocks": ["video ölçümü"], "reason_codes": ["BLOCKED_VIDEO_CALIBRATION", "NO_SANITIZED_PACKAGE"]},
+    {"gate_id": "PLAN_REFERENCE", "scope": "PLAN", "state": "PASS", "evidence_ids": ["ATR0>0", "P0 doğrulandı"], "blocks": [], "reason_codes": ["ATR_FALLBACK_UNVALIDATED", "TICKSIZE_UNAVAILABLE_RAW_ONLY"]},
+    {"gate_id": "EXECUTION_QUOTE", "scope": "EXECUTION", "state": "FAIL", "evidence_ids": [], "blocks": ["MARKET_PAPER", "PUSU_PAPER fill"], "reason_codes": ["MARKET_YOK_LIVE_QUOTE_MISSING", "EXEC_DATA_NONE_PROXY_403"]}
+  ],
+  "baseline": {
+    "eligible": false,
+    "forecast_id": null,
+    "model_sha256": null,
+    "calibrator_sha256": null,
+    "first_leg_probabilities": null,
+    "endpoint_16_probabilities": null,
+    "first_passage_probabilities": null
+  },
+  "modules": [
+    {"module_id": "PRICE_ONLY", "state": "FEATURES_ONLY", "notes": "Tek uygun modül; bütün hesaplar burada."},
+    {"module_id": "PAIR_OI", "state": "MODULE_NOT_ELIGIBLE", "notes": "Ham CG-01 JSON yok; ekran paneli DESCRIPTIVE_ONLY (Açık Faiz ~101.8K-101.9K UI değeri)."},
+    {"module_id": "PAIR_FUNDING", "state": "MODULE_NOT_ELIGIBLE", "notes": "Ham CG-02/BN funding yok; UI 0.0032%-0.0033% DESCRIPTIVE_ONLY; interval kanıtı yok, 8h VARSAYILMADI."},
+    {"module_id": "FUTURES_CVD", "state": "MODULE_NOT_ELIGIBLE", "notes": "Ham CG-03 yok."},
+    {"module_id": "REALIZED_LIQUIDATION", "state": "MODULE_NOT_ELIGIBLE", "notes": "Ham CG-04 yok; UI 'Longs 907.3' DESCRIPTIVE_ONLY."},
+    {"module_id": "ORDERBOOK_LIQUIDITY_FUTURES(CG-06F)", "state": "DESCRIPTIVE_ONLY", "notes": "UI başlığı 'Liquidity Heatmap' → CG-05 liquidation heatmap DEĞİL (G25). Görsel: ~65.000-65.100 bandında belirgin koyu likidite bandı (hem perp hem spot 15dak ekranında); piksel→sayı dönüşümü YAPILMADI."},
+    {"module_id": "LIQUIDATION_HEATMAP_MODEL1(CG-05)", "state": "MODULE_NOT_ELIGIBLE", "notes": "Hiç veri yok."},
+    {"module_id": "BLIND_VIDEO_LAST", "state": "MODULE_NOT_ELIGIBLE", "notes": "Sanitized paket/ayrı gözlemci yok; video canlı açık mum içeriyor."},
+    {"module_id": "REGIME144_TELEMETRY_AUDIT", "state": "SOURCE_CODE_UNVERIFIED", "notes": "Non-empty kod yüklenmedi."},
+    {"module_id": "POST_C0_VETO", "state": "NOT_APPLICABLE", "notes": "Yayınlanmış immutable forecast yok → veto edilecek kayıt yok."}
+  ],
+  "coinglass_request_audit": [],
+  "video_audit": {
+    "original_video_sha256": "7016038287102f157b5640362d7a12a3965ceeaec6ea9cf28fc1ac5194ef5224",
+    "blind_status": "NOT_STARTED",
+    "sanitized_package_sha256": null,
+    "selected_frames": [],
+    "calibrations": [],
+    "observation_layer_a_sha256": null,
+    "observation_layer_b_sha256": null,
+    "overlay_artifacts": []
+  },
+  "regime_audit": null,
+  "scenario_12x12_audit": null,
+  "direction_decision": {
+    "state": "RETROSPECTIVE_NONBLIND_DIAGNOSTIC",
+    "direction": "UP",
+    "side": "LONG",
+    "support_grade": "B",
+    "primary_head": "RULE_SIGNAL_V1",
+    "policy_id": "RULE_SIGNAL_V1_PRICE_ONLY",
+    "policy_sha256": null,
+    "was_live_forecast": false,
+    "evidence_ids": ["gap4h=+0.71848%>thr4h=0.19111%", "trigger_dir=NEUTRAL"],
+    "counter_evidence_ids": ["mb=-0.1635 (C0 son 5 barda ATR'nin ~0.33'ü kadar geriledi)", "prh=65084.60 henüz aşılmadı; C0 üstünde ~351 USDT dirençli alan", "UI likidite bandı ~65.000-65.100 (DESCRIPTIVE_ONLY)"],
+    "reason_codes": ["OBSERVER_NONBLIND_30S_POST_C0", "RULE_UNCALIBRATED"]
+  },
+  "paper_plan": {
+    "state": "UNARMED_SHADOW",
+    "plan_basis": "ATR_FALLBACK_UNVALIDATED",
+    "side": "LONG",
+    "entry_reference": 64733.60,
+    "target_reference": 65021.95142857143,
+    "stop_reference": 64445.24857142857,
+    "expiry": "C0 hariç 16 tamamlanmış 15M bar → 2026-07-20T08:30:00Z kapanışı",
+    "market_reference_status": "REFERENCE_ONLY",
+    "pusu_reference_status": "UNARMED_SHADOW",
+    "pusu_zone": [64673.52678571428, 64697.55607142857],
+    "pusu_trigger": "RECLAIM_CONFIRMED_SHADOW: zone dokunuşu sonrası kapanmış 15M mumun zone üstüne reclaim'i; yerleştirme penceresi C0 sonrası ilk 4 tamamlanmış bar (05:30:00Z'ye kadar), sonra EXPIRED",
+    "plan_spec_id": "ATR_SHADOW_PLAN_V1",
+    "reason_codes": ["TICKSIZE_UNAVAILABLE_RAW_VALUES", "DIAGNOSTIC_ONLY_NONBLIND", "STRUCTURAL_PLAN_NOT_BUILT_TICK_RULE_UNRESOLVABLE"]
+  },
+  "guard": {"state": "NOT_STARTED", "effective_at": null, "events": []},
+  "execution_data_audit": {
+    "exec_data_source": "NONE",
+    "tool_name_or_provider": "fapi.binance.com curl via env proxy → CONNECT 403 (2026-07-20T04:34Z); Crypto.com MCP mevcut fakat İKAME YASAK",
+    "bn03a_book_ticker": {"captured": false, "quote_time_ms": null, "quote_age_ms": null, "bid": null, "bid_qty": null, "ask": null, "ask_qty": null, "spread_bps": null, "raw_sha256": null, "reason_codes": ["PROXY_403_GEO_OR_POLICY_BLOCK"]},
+    "bn03b_depth": {"captured": false, "limit": null, "last_update_id": null, "depth_bid_band": null, "depth_ask_band": null, "depth_imbalance_band": null, "band_bps_source": null, "raw_sha256": null, "reason_codes": ["PROXY_403"]},
+    "bn03c_premium_index": {"captured": false, "mark_price": null, "index_price": null, "last_funding_rate": null, "next_funding_time": null, "raw_sha256": null, "reason_codes": ["PROXY_403"]},
+    "bn03d_exchange_info": {"captured": false, "tick_size": null, "step_size": null, "min_notional": null, "raw_sha256": null, "reason_codes": ["PROXY_403"]},
+    "staleness_limit_ms_source": null,
+    "venue_substitution_check": "PASS"
+  },
+  "cost_model": {
+    "fee_source": "UNKNOWN",
+    "taker_fee_rate": null,
+    "maker_fee_rate": null,
+    "funding_cost_state": "EXCLUDED_UNPROVEN",
+    "slippage_bps_entry": null,
+    "depth_walk_vwap_entry": null,
+    "roundtrip_cost_target_leg": null,
+    "roundtrip_cost_stop_leg": null,
+    "net_r_multiple": null,
+    "reason_codes": ["FEE_UNKNOWN_NULL_MANDATE"]
+  },
+  "deep_scan_audit": {
+    "skill_contract_sha256": "361f6103ef961abf53108cc4d2705d2be82849bb862b00aac557b4fc7b11a5e2",
+    "applied": "PARTIAL",
+    "scripts_available": false,
+    "zip_hash_verified": "NOT_UPLOADED",
+    "profiled_inputs": ["K15 (59 kapalı bar): grid/monotoni/duplicate/OHLC-sanity PASS; open-prevclose max fark 0.10", "K4H (21 kapalı bar): aynı kontroller PASS; paste'te yinelenen kuyruk fragmanları birebir aynı değerlerle geldi → çelişki yok, BLOCKED_DUPLICATE_CONFLICT tetiklenmedi"],
+    "second_path_verifications": ["15M→4H agregasyon: 16:00-20:00, 20:00-00:00, 00:00-04:00 pencereleri O/H/L/C birebir eşleşti (exact_match=true)", "Açık 4H barı: iki ayrı capture'ın H/L değerleri tutarlı (64843.40/64602.00)", "Ekran 24S High 65084.6 = K15 satır43 high; 24S Low 64259.5 = K4H 12:00-16:00(07-19) low — bağımsız UI ikinci yolu", "Arşiv örnek karttaki 18:45Z C0 OHLC [64400.10,64420.00,64336.50,64399.80] = K15 satır21 birebir", "ATR0 ve MA'lar Decimal tam-kesir + float64 çapraz hesap"],
+    "single_path_unverified_claims": ["UI panel değerleri (funding %, OI, liq) tek kaynak → DESCRIPTIVE_ONLY zaten"],
+    "quarantined_modules": ["BLIND_VIDEO_LAST", "CG-05"],
+    "skipped_steps": ["V1-V6 video aşamaları (ayrı kör gözlemci + ffprobe yok; video zaten canlı açık mum içeriyor)", "beceri script'leri (zip yüklenmedi → manuel motor: c0veto_engine.py)"],
+    "evidence_labels_used": ["OBSERVED", "CALCULATED", "INFERRED(yok)", "SCENARIO(plan zarfı)"],
+    "reason_codes": []
+  },
+  "rule_signal_v2": {
+    "state": "BLOCKED_CALIBRATION_REQUIRED",
+    "direction": null,
+    "p_meta": null,
+    "conformal_set": null,
+    "coverage_target": null,
+    "artifact_hashes": {"event_filter_spec": null, "barrier_grid": null, "meta_model": null, "conformal_spec": null, "mfe_mae_table": null, "pbo_report": null, "dsr_report": null, "vol_target_spec": null},
+    "promotion_status": "NOT_ELIGIBLE",
+    "reason_codes": ["NO_V2_ARTIFACT_CHAIN"]
+  },
+  "execution_layer": {
+    "decision": "NO_ENTRY",
+    "selection_policy": null,
+    "market": {"status": "YOK", "side": null, "entry_basis": null, "entry_price": null, "target": null, "stop": null, "fee_model_id": null, "slippage_model_id": null, "reason_codes": ["MARKET_YOK_LIVE_QUOTE_MISSING", "EXEC_DATA_NONE"]},
+    "pusu": {"status": "YOK", "type": "NOT_SELECTED", "side": null, "zone_or_level": null, "trigger": null, "cancel_rule": null, "expiry": null, "target": null, "stop": null, "queue_fill_model_id": null, "reason_codes": ["NO_EXECUTABLE_QUOTE_FEE_LATENCY_DATA", "REFERENCE_ONLY_SHADOW_IN_paper_plan"]}
+  },
+  "outcomes": {"first_leg": "PENDING", "endpoint_16": "PENDING", "first_passage": "PENDING"},
+  "oos_decision": "NOT_ELIGIBLE",
+  "claim_to_evidence_summary": [
+    {"claim_id": "CL-01", "claim_type": "FACT", "claim": "C0 = 2026-07-20T04:15-04:30Z kapalı 15M bar, OHLC [64674.40, 64757.00, 64602.00, 64733.60]", "state": "CONDITIONAL", "output_value": "64733.60 (close)", "evidence_ids": ["K15 satır 59"], "counter_evidence_ids": [], "source_rows_or_frames": ["openTime 1784520900000"], "event_time_range": "04:15-04:30Z", "available_time_cutoff": "FIRST_SEEN 04:33Z", "formula_or_policy_id": null, "parameter_sources": [], "gate_scope": "CORE_RUN", "gate_result": "PASS", "limitations": ["kullanıcı yapıştırması; BN-02 replay makbuzu ve raw hash yok → PROVISIONAL"]},
+    {"claim_id": "CL-02", "claim_type": "CALCULATION", "claim": "ATR0 (14 TR ortalaması, C0 dahil)", "state": "SUPPORTED", "output_value": "240.2928571428571", "evidence_ids": ["calculation_trace TR+ATR0"], "counter_evidence_ids": [], "source_rows_or_frames": ["K15 son 15 satır"], "event_time_range": "00:45-04:30Z", "available_time_cutoff": "04:33Z", "formula_or_policy_id": "RULE_SIGNAL_V1 madde 3", "parameter_sources": ["n=14 CONTRACT_FIXED"], "gate_scope": "DIRECTION", "gate_result": "PASS", "limitations": ["ikinci yol: Decimal tam kesir + bağımsız float64 tekrar hesabı"]},
+    {"claim_id": "CL-03", "claim_type": "CALCULATION", "claim": "trend_dir=UP (gap4h=+0.0071848 > thr4h=0.0019111)", "state": "SUPPORTED", "output_value": "UP", "evidence_ids": ["21 eligible 4H kapanış"], "counter_evidence_ids": ["mb=-0.1635"], "source_rows_or_frames": ["K4H tamamı"], "event_time_range": "07-16 16:00Z → 07-20 04:00Z", "available_time_cutoff": "04:33Z", "formula_or_policy_id": "RULE_SIGNAL_V1 madde 4-5", "parameter_sources": ["CONTRACT_FIXED"], "gate_scope": "DIRECTION", "gate_result": "PASS", "limitations": []},
+    {"claim_id": "CL-04", "claim_type": "DIRECTION", "claim": "RULE_SIGNAL_V1: direction=UP, grade=B (trigger NEUTRAL + trend UP)", "state": "CONDITIONAL", "output_value": "UP/LONG/B", "evidence_ids": ["CL-02", "CL-03", "predicates hepsi FALSE"], "counter_evidence_ids": ["prh 65084.60 aşılmamış", "mb negatif"], "source_rows_or_frames": [], "event_time_range": null, "available_time_cutoff": "04:33Z", "formula_or_policy_id": "RULE_SIGNAL_V1 KARAR POLİTİKASI", "parameter_sources": ["CONTRACT_FIXED"], "gate_scope": "DIRECTION", "gate_result": "PASS", "limitations": ["NONBLIND → yalnız RETROSPECTIVE_NONBLIND_DIAGNOSTIC; olasılık/OOS iddiası YOK"]},
+    {"claim_id": "CL-05", "claim_type": "PLAN", "claim": "ATR_SHADOW_PLAN_V1 LONG referans zarfı E/T/S + pusu zone", "state": "CONDITIONAL", "output_value": "E=64733.60 T=65021.95 S=64445.25 zone=[64673.53,64697.56]", "evidence_ids": ["CL-02", "CL-04"], "counter_evidence_ids": [], "source_rows_or_frames": [], "event_time_range": null, "available_time_cutoff": "04:33Z", "formula_or_policy_id": "ATR_SHADOW_PLAN_V1 (1.2*ATR fallback)", "parameter_sources": ["CONTRACT_FIXED"], "gate_scope": "PLAN", "gate_result": "PASS", "limitations": ["ATR_FALLBACK_UNVALIDATED", "tickSize yok → raw", "UNARMED_SHADOW; fill/kâr iddiası değil"]},
+    {"claim_id": "CL-06", "claim_type": "EXECUTION", "claim": "MARKET/PUSU icra adayı üretilemez", "state": "SUPPORTED", "output_value": "NO_ENTRY", "evidence_ids": ["proxy 403 kanıtı", "fee UNKNOWN"], "counter_evidence_ids": [], "source_rows_or_frames": [], "event_time_range": null, "available_time_cutoff": null, "formula_or_policy_id": "PAPER İCRA KATMANI madde 0-1", "parameter_sources": [], "gate_scope": "EXECUTION", "gate_result": "FAIL", "limitations": []},
+    {"claim_id": "CL-07", "claim_type": "FACT", "claim": "UI ekranlarında ~65.000-65.100 bandında yoğun order-book likidite bandı görünüyor", "state": "CONDITIONAL", "output_value": "DESCRIPTIVE_ONLY", "evidence_ids": ["ddac4694", "00bf25f9", "8f0a2091 ekranları"], "counter_evidence_ids": [], "source_rows_or_frames": ["ekran pikselleri"], "event_time_range": "~04:08-04:09Z", "available_time_cutoff": "04:33Z", "formula_or_policy_id": "CG-06 EKRAN KURALI", "parameter_sources": [], "gate_scope": "MODULE", "gate_result": "NOT_APPLICABLE", "limitations": ["piksel→sayı dönüşümü yapılmadı; ham JSON yok; emir yaşı/niyet kanıtı değil"]}
+  ],
+  "correct_incomplete_wrong": [
+    {"kalem": "15M/4H kline serileri iç tutarlılık", "hüküm": "DOĞRU (agregasyon + süreklilik + UI çapraz kontrol)"},
+    {"kalem": "Ham veri provenansı (BN-00/BN-02 makbuz, hash)", "hüküm": "EKSİK"},
+    {"kalem": "CoinGlass modül ham JSON'ları (CG-00..CG-06)", "hüküm": "EKSİK"},
+    {"kalem": "Kalibre model/calibrator artefaktı", "hüküm": "EKSİK → olasılık üretilmedi"},
+    {"kalem": "Ekranların 'Liquidity Heatmap'i liquidation heatmap sayma riski", "hüküm": "ÖNLENDİ (CG-06'ya ayrıldı, G25)"},
+    {"kalem": "Video kör-forecast kullanımı", "hüküm": "DOĞRULANAMADI → karantina"}
+  ],
+  "uncertainties": [
+    "Yapıştırılan klines Binance raw payload'una hash'le bağlanamadı; transkripsiyon paste bozulmalarını (eksik tırnak, yinelenen kuyruk) deterministik düzeltti, fakat kaynak doğruluğu kullanıcı beyanına dayalı.",
+    "Sembol kimliği exchangeInfo ile doğrulanamadı (PROVISIONAL).",
+    "RULE_SIGNAL_V1 kalibre edilmemiş nitel kuraldır; UP/B çıktısı olasılık, edge veya işlem tavsiyesi DEĞİLDİR; üstelik bu koşuda nonblind teşhis.",
+    "expiry'ler (pusu 05:30Z, plan 08:30Z) rapor yazımı sırasında kısmen geçmiş olabilir; canlı takip verisi yok."
+  ],
+  "artifact_hashes": {
+    "c0veto_engine.py": "95680678d02af923ec5c686bfc077938a7580dd4adff83ee4b7623171c2b4afe",
+    "engine_out.json": "d13ba981a1d5e29b5c1c117b74bfec6358c46bffe932d44c26ccc7911f8be8e0"
+  },
+  "router_annex": {
+    "router_line": "ROUTER: AUTO_NEXT_C0 → new RUN_CARD RC-20260720-C0close0445Z-c1168185-R1 / forecast_id FC-20260720-0445Z-R1 (parent RC-20260720-C0close0430Z-c1168185-A0)",
+    "new_card": {
+      "run_id": "RC-20260720-C0close0445Z-c1168185-R1",
+      "parent_run_id": "RC-20260720-C0close0430Z-c1168185-A0",
+      "router_created": true,
+      "auto_rollover_seq": 1,
+      "c0_close_time_utc": "2026-07-20T04:45:00Z",
+      "status": "BLOCKED",
+      "reason_codes": ["BLOCKED_INCOMPLETE_C0 (04:30-04:45 kapalı native bar mevcut değil)", "ISSUANCE_LATENCY_PT30S_UNMEETABLE (ortamda canlı Binance aracı yok, proxy 403)", "EXEC_DATA=USER_SUPPLIED bekleniyor"],
+      "inheritance_note": "Parent kartta hiçbir kimlik alanı LOCKED statüsüne ulaşmadı (exchangeInfo yok) → miras alınmadı, fail-closed; kimlik alanları yeni kanıtla kullanıcıdan istenir (G46 uyumu).",
+      "next_safe_step": "Kullanıcı BN-01/BN-02 paketini (04:45 ve sonrası kapalı 15M/4H raw kline + endpoint/query/zaman/SHA-256 makbuzu) ve CG-00 eşlemesini gönderirse bu kart RETROSPECTIVE denetime açılır; canlı forecast için Binance API erişimli ortam gerekir."
+    }
+  }
+}
