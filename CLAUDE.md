@@ -13,7 +13,7 @@ beceriyi uygula.
 | Soru şununla ilgiliyse | Otomatik uygulanan beceri |
 |------------------------|---------------------------|
 | Değerleme, finansal model, DCF, comps, LBO, 3 tablo, çarpan, WACC, yatırım getirisi | `finansal-modelleme` |
-| Veri analizi, finansal tablo, oran, trend, Excel/CSV denetimi, kripto/hisse verisi yorumlama | `finansal-veri-analizi` |
+| Veri analizi, finansal tablo, oran, trend, istatistik, hesaplama, Excel/CSV/JSON denetimi, kripto/hisse verisi yorumlama, sayısal iddia doğrulama | `data-analysis-deep-scan` |
 | Grafik/chart okuma, mum grafiği, teknik analiz, grafik oluşturma, dashboard | `grafik-calisma` |
 
 Kurallar:
