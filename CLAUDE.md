@@ -14,7 +14,12 @@ beceriyi uygula.
 |------------------------|---------------------------|
 | Değerleme, finansal model, DCF, comps, LBO, 3 tablo, çarpan, WACC, yatırım getirisi | `finansal-modelleme` |
 | Veri analizi, finansal tablo, oran, trend, istatistik, hesaplama, Excel/CSV/JSON denetimi, kripto/hisse verisi yorumlama, sayısal iddia doğrulama | `data-analysis-deep-scan` |
-| Grafik/chart okuma, mum grafiği, teknik analiz, grafik oluşturma, dashboard | `grafik-calisma` |
+| Grafik/chart okuma, mum grafiği, teknik analiz, SMC, CHoCH/BOS, order block, FVG, likidite, Fibonacci/golden zone, giriş bölgesi, grafik oluşturma, dashboard | `grafik-calisma` |
+| Trading stratejisi, forex/endeks/kripto CFD, MQL5, Pine Script, Expert Advisor, backtest, prop trading, Ichimoku, risk yönetimi | `forex-trading-expert` |
+
+Ek kural: Kullanıcı bir **grafik ekran görüntüsü** gönderirse (mum grafiği,
+fiyat grafiği), açıkça istemese bile `grafik-calisma` SMC + Fibonacci akışıyla
+analiz et; derin SMC tanımları için `forex-trading-expert` referanslarını kullan.
 
 Kurallar:
 1. Soru birden fazla kategoriye giriyorsa ilgili becerilerin **hepsini** birlikte
