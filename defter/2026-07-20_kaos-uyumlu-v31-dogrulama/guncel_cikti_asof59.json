@@ -1,0 +1,93 @@
+{
+ "asof_ot": 1784547900000,
+ "c0": {
+  "o": 64807.2,
+  "h": 65048.3,
+  "l": 64807.1,
+  "c": 64970.8
+ },
+ "rejim_4h": {
+  "durum": "UP",
+  "ma_farki": 412.67,
+  "esik": 137.75,
+  "esik_tipi": "fallback_getiri(BAYRAK)",
+  "donus_izleme": {
+   "tip": "4H_SSL_SWEEP_RECLAIM",
+   "seviye": 64259.5,
+   "kol": "LONG-dönüş"
+  },
+  "son_4h_swing_high": 65084.6,
+  "son_4h_swing_low": 64259.5
+ },
+ "sinyaller": [
+  {
+   "tip": "IZLE_SHORT",
+   "asama": 2,
+   "sweep_ot": 1784542500000,
+   "seviye": 64337.0,
+   "reclaim": "AYNI_BAR_ZAYIF",
+   "not": "displacement bekleniyor"
+  }
+ ],
+ "pusu_bolgeleri": [
+  {
+   "tip": "FVG_BULL",
+   "bolge": [
+    64087.6,
+    64155.5
+   ],
+   "ce": 64121.55,
+   "durum": "TESTED",
+   "iptal": "gövde kapanışı < 64087.6"
+  },
+  {
+   "tip": "FVG_BULL",
+   "bolge": [
+    64376.6,
+    64807.1
+   ],
+   "ce": 64591.85,
+   "durum": "FRESH",
+   "iptal": "gövde kapanışı < 64376.6"
+  }
+ ],
+ "market_durumu": {
+  "yon": "LONG",
+  "teyit": "sonraki 15M gövde kapanışı > 65048.3 (C0 tepesi)",
+  "dayanak": "C0 kapanışı 64970.8 son teyitli swing 64393.2 üstünde",
+  "kirilim_taze": false
+ },
+ "atr_zarf": [
+  64753.883,
+  65187.717
+ ],
+ "son_teyitli_swingler": {
+  "high": 64393.2,
+  "low": 64137.0
+ },
+ "adaptif_esik_anlik": {
+  "atr0": 180.764,
+  "c0_vol_rank": 0.9137931034482759,
+  "govde_q90": 269.53
+ },
+ "yapisal_sabitler": {
+  "fraktal_k": 2,
+  "guclu_close_loc": 0.7,
+  "donus_pencere": 12,
+  "gecikmeli_reclaim": 3,
+  "atr_periyot": 14,
+  "atr_zarf_carpan": 1.2,
+  "vol_rank_penceresi": 96,
+  "min_vol_penceresi": 30,
+  "govde_penceresi": 48,
+  "min_govde_penceresi": 30,
+  "govde_quantile": 0.9,
+  "disp_vol_rank_esigi": 0.8,
+  "fvg_rapor_limiti": 4,
+  "rejim_quantile": 0.6,
+  "rejim_min_ornek": 10,
+  "rejim_fallback_carpani": 0.5
+ },
+ "veri_uyarilari": [],
+ "not": "PAPER — olasılık/isabet iddiası yok; isabet defterde sonradan ölçülür"
+}

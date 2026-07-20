@@ -1,10 +1,25 @@
-# KAOS-UYUMLU v3.0-ADAPTİF — 4H stratejik / 15M taktik bölge & dönüş motoru
+# KAOS-UYUMLU v3.1-ADAPTİF — 4H stratejik / 15M taktik bölge & dönüş motoru
 
 Mod: **PAPER** · Sembol: kullanıcının yapıştırdığı Binance kline seti · Çalıştırma:
 
 ```
-python3 motor.py <15m.json> <4h.json> [--asof N]
+python3 motor.py <15m.json> <4h.json> --asof <kapalı bar sayısı>
 ```
+
+## v3.1 — bağımsız adversarial doğrulama sonrası (workflow `wf_c13d5d60`, 6 denetçi)
+
+PASS: lookahead (kesme + sahte-bar + indeks testleriyle sızıntı YOK), determinizm
+(bit-özdeş, hash-seed bağımsız). FAIL→DÜZELTİLDİ: (1) market yönünde SHORT'u
+maskeleyen `elif` (çift kırılımda artık daha YENİ teyitli swing kazanır +
+`kirilim_taze` bayrağı); (2) 4H rejimi bilinmezken sinyale yanlış "KARŞI-REJİM"
+damgası (artık `rejim_bilinmiyor`); (3) displacement hacim filtresinin pencere
+yetersizken sessiz baypası (artık tespit DEVRE DIŞI + açık uyarı); (4) beyansız
+sabitler (0.80 hacim eşiği, q90, 96/48 pencereleri, ATR 14, 1.2 zarf, FVG limiti —
+tamamı `SABITLER` sözlüğünde ve her çıktıda); (5) sabit ondalık yuvarlamanın küçük
+fiyatlı varlıkta seviye çıktısını bozması (referans-ölçekli 8 anlamlı hane);
+(6) FVG INVALID tanımının ilan edilen iptal kuralıyla çelişkisi (gövde KAPANIŞI
+kuralına hizalandı); (7) ölü kod/çift kontrol temizliği, `--asof` sınır korumaları,
+displacement eşiğinin adayın KENDİ barının penceresinden hesaplanması.
 
 ## Kaos itirazına tasarım cevabı (neden "eski kalibrasyon tutmaz" sorununu çözer)
 

@@ -1,0 +1,2 @@
+1853943bb80eb34e490c387575f987c7f19fa7d4aa43432b3598aa8a01a8efb4  dogrulama-ozeti.md
+d95a5b97b7221bf87074472f221d69eff8d294f59e7921b3d5aebf70fd2ba7de  guncel_cikti_asof59.json
