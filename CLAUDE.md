@@ -17,6 +17,18 @@ beceriyi uygula.
 | Grafik/chart okuma, mum grafiği, teknik analiz, SMC, CHoCH/BOS, order block, FVG, likidite, Fibonacci/golden zone, giriş bölgesi, grafik oluşturma, dashboard | `grafik-calisma` |
 | Trading stratejisi, forex/endeks/kripto CFD, MQL5, Pine Script, Expert Advisor, backtest, prop trading, Ichimoku, risk yönetimi | `forex-trading-expert` |
 | Kline verisi yapıştırma (15M/4H OHLCV), "motoru çalıştır", "koşu yap", motor kararı/akıbet/defter sorgusu | `karar-motoru` |
+| Backtest, geriye dönük test, strateji performansı, profit factor, Sharpe, drawdown, Monte Carlo, walk-forward, overfitting | `backtest-motoru` |
+| Pozisyon boyutu, lot, kaç birim, risk %, stop mesafesi, Kelly, kaldıraç, volatilite hedef, VaR/CVaR | `risk-yonetimi` |
+| Portföy dağılımı, varlık ağırlığı, çeşitlendirme, Markowitz, min-varyans, max-Sharpe, HRP, risk paritesi | `portfoy-optimizasyonu` |
+
+Ek kural (motorlar — paralel & zorunlu sonuç): Bu becerilerin her biri kendi
+içinde ÇALIŞAN Python motoruna sahiptir (`.claude/skills/<ad>/scripts/`). Bir
+soru birden çok motoru ilgilendiriyorsa **hepsi birlikte/paralel** uygulanır ve
+her biri **gerçek sayısal sonuç** üretir — bir motor sonuç üretmeden cevap
+tamamlanmış sayılmaz. Zincir örneği: `grafik-calisma` (SMC/Fib sinyali) →
+`backtest-motoru` (test + Monte Carlo) → `risk-yonetimi` (Kelly/pozisyon) →
+`portfoy-optimizasyonu` (ağırlık). ⚠️ Canlı/otomatik emir (gerçek para) DAHİL
+DEĞİLDİR — motorlar yalnız analiz/backtest üretir.
 
 Ek kural (motor): Kullanıcı 15M+4H kline seti gönderdiğinde `karar-motoru`
 becerisi uygulanır — motor çıktısı OLDUĞU GİBİ verilir, üstüne alternatif
