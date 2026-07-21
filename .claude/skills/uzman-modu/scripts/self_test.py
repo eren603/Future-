@@ -31,12 +31,14 @@ def main():
     ]})
     assert r["genel_sonuc"] == "REVİZE", r
 
-    # 4) etiketli yorum, kanıtsız → kabul (yayınlanabilir)
+    # 4) etiketli yorum, kanıtsız → tekil verdict GEÇTİ + genel yayınlanabilir
     r = d.run_job({"claims": [
         {"id": "c4", "text": "Bence momentum güçlü", "type": "yorum",
          "evidence": "", "verified": False},
     ]})
     assert r["genel_sonuc"] == "YAYINLANABİLİR", r
+    assert r["iddia_denetimi"][0]["verdict"] == "GEÇTİ", r  # yorum karantinaya alınmaz
+    assert r["karantina"] == 0, r
 
     # 5) dairesel gerçek (kanıt = metnin kendisi) → KARANTİNA
     r = d.run_job({"claims": [
