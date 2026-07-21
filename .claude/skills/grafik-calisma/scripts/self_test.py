@@ -79,8 +79,32 @@ def main():
     assert abs(r["golden_zone"][0] - 104.28) < 0.01, r
     assert abs(r["golden_zone"][1] - 107.64) < 0.01, r
 
+    # 7) CANLILIK (anti-dejenerasyon): gerçek confluence VARSA motor SİNYAL
+    #    üretmeli — "sürekli BEKLE" ölü sistemine düşmemeli. Golden zone içine
+    #    yerleşmiş OB + makul hedefli çeşitli kurulumlar → hiçbiri BEKLE olmamalı.
+    #    (Tip-II hatası testi: yanlış sinyal kadar, hiç-sinyal-vermeme de kusurdur.)
+    fired = 0
+    trials = 0
+    for L in (15.0, 20.0, 25.0, 30.0):
+        low = 100.0
+        high = low + L
+        gz_lo, gz_hi = high - 0.786 * L, high - 0.618 * L
+        c = (gz_lo + gz_hi) / 2.0
+        for tmult in (0.15, 0.3, 0.6, 1.0):   # hedef: yakın → uzak
+            trials += 1
+            rr = cf.synth({
+                "structure": {"event": "CHoCH", "direction": "bull"},
+                "impulse": {"start": low, "end": high},
+                "order_blocks": [{"low": c - 0.4, "high": c + 0.4, "type": "demand"}],
+                "liquidity": [{"price": high + tmult * L, "type": "buyside"}],
+            })
+            if rr["KARAR"] == "LONG":
+                fired += 1
+    # OTE girişi SL'e yakın olduğundan gerçek confluence yakın hedefte bile ateşler.
+    assert fired == trials, f"CANLILIK KIRILDI: {fired}/{trials} ateşledi (ölü sisteme yakın)"
+
     print("SELF_TEST_OK: long-confluence, short-ayna, yalniz-fib-BEKLE, "
-          "yon-celiskisi-BEKLE, dusuk-rr-BEKLE, golden-zone-geometri")
+          "yon-celiskisi-BEKLE, dusuk-rr-BEKLE, golden-zone-geometri, canlilik")
 
 
 if __name__ == "__main__":
