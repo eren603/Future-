@@ -21,6 +21,13 @@ beceriyi uygula.
 | Pozisyon boyutu, lot, kaç birim, risk %, stop mesafesi, Kelly, kaldıraç, volatilite hedef, VaR/CVaR | `risk-yonetimi` |
 | Portföy dağılımı, varlık ağırlığı, çeşitlendirme, Markowitz, min-varyans, max-Sharpe, HRP, risk paritesi | `portfoy-optimizasyonu` |
 | Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
+| Ciddi analiz/karar/değerlendirme, "uzman gibi bak", derin inceleme, profesyonel görüş, strateji, çok-adımlı muhakeme | `uzman-modu` (ÜST-AKIL DİSİPLİNİ) |
+
+Ek kural (üst-akıl): Ciddi/analitik her soruda `uzman-modu` arka planda
+uygulanır — rol + niyet + tam bağlam + çok-mercekli muhakeme + araçla üretim +
+`scripts/iddia_denetim.py` ile ikinci-göz doğrulama. Dayanaksız/dairesel 'gerçek'
+iddia karantinaya alınır → cevap yayınlanmadan düzeltilir. Süslü/hafızadan/
+dairesel cevap YASAK.
 
 Ek kural (orkestratör): Bir soru NİHAİ KARAR gerektirdiğinde `karar-kurulu`
 becerisi devreye girer; ilgili tüm motorları **paralel** çalıştırır → 5 mercekle
