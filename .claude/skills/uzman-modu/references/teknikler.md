@@ -30,6 +30,38 @@ denetiminde KARANTİNA'ya alındı. Doğru çerçeve: bu teknikler model ağırl
 değiştirmez, kapasitenin ne kadarının **fiilen kullanıldığını** değiştirir —
 ama "ne kadar" için ölçülmüş sayı yoktur; öyle bir rakam verilmez.
 
+## ÇOK-MERCEK DÜZELTMESİ — karşı-kanıt (at gözlüğüne panzehir)
+İlk araştırma **yönlendirici sorgularla** (confirmation bias) yapılmıştı; sadece
+"işe yarar" diyen kaynaklar bulunmuştu. Karşı-kanıt arandığında tablo nüanslanıyor:
+
+- **Rol/persona prompting ≠ daha doğru:** Sistem promptundaki persona'lar
+  **doğruluğu güvenilir biçimde artırmıyor** (EMNLP 2024, 162 persona ile test).
+  → Rol vermek **tonu/odağı/biçimi** yönlendirir (Anthropic bu yüzden önerir),
+  ama modeli "daha zeki/daha doğru" yapmaz. "Rol = zekâ" iddiası YANLIŞ; "rol =
+  yönlendirme" doğru.
+- **CoT muhakeme modellerinde marjinal:** Zincirleme-düşünce, düşünmeyen
+  modeller için geliştirildi. Fable 5 gibi **düşünmesi zaten açık** modellerde
+  dıştan CoT prompt'u faydayı çok az artırır, maliyeti (süre/token) artırır
+  (arXiv:2506.07142 — "The Decreasing Value of Chain of Thought"). Değer zaten
+  modelin içinde.
+- **"Sihirli kelimeler" çoğu zaman anekdot:** popüler prompt tavsiyelerinin
+  büyük kısmı kanıtsız.
+
+### Bu modelde (Fable 5) GERÇEKTEN sağlam olanlar
+Karşı-kanıta rağmen ayakta kalanlar (yönlendirme değil, doğruluk için):
+1. **Tam bağlam + niyet** (eksik bilgi vermemek) — model varsayım uydurmasın diye.
+2. **Araçla üretim / ReAct** — iddiayı hafızadan değil veriden çıkarmak;
+   halüsinasyonu azaltır. (Kanıt tabanı en sağlam olan.)
+3. **İkinci-göz doğrulama** — `iddia_denetim.py`; kaynaksız iddiayı eler.
+4. **Efor** — zor işte daha çok muhakeme.
+Rol/CoT/ToT ise "yararlı olabilir ama garantisi zayıf" kategorisine iner.
+
 ## Sınır
 Bu teknikler cevabı daha derin ve daha az hatalı yapar; modeli her şeyi bilen
-yapmaz. "Bilmiyorum" ve "VERİ YOK" geçerli, doğru cevaplardır.
+yapmaz. Ve her teknik her modelde işe yaramaz — **çürütücü kanıt aranmadan**
+"şu teknik zekâ artırır" denmez. "Bilmiyorum"/"VERİ YOK" geçerli cevaplardır.
+
+## Karşı-kanıt kaynakları
+- Persona'lar doğruluğu artırmıyor: EMNLP 2024 (162 persona çalışması).
+- CoT'nin azalan değeri: arXiv:2506.07142.
+- CoT evrensel optimal değil / stress test: arXiv:2309.16621.
