@@ -63,7 +63,24 @@ def main():
         _finite(r3["metrics"], ["total_return", "profit_factor", "exposure"])
         assert 0.0 <= r3["metrics"]["exposure"] <= 1.0
 
-    print("SELF_TEST_OK: sma_cross, rsi, signal_column, monte_carlo, walk_forward")
+        # 4) YÖN DOĞRULUĞU — işaret hatası olmadığının kanıtı.
+        #    Kesin yükselen fiyatta: LONG kâr, SHORT zarar; düşende tam tersi.
+        up = 100.0 * np.cumprod(np.full(80, 1.005))
+        dn = 100.0 * np.cumprod(np.full(80, 0.995))
+
+        def _dir_ret(prices, sig):
+            d = pd.DataFrame({"open": prices, "high": prices, "low": prices, "close": prices})
+            d["signal"] = float(sig)
+            m = bt.run_backtest(d, {"type": "signal_column", "column": "signal"},
+                                fees_bps=0, slippage_bps=0)
+            return m["total_return"]
+
+        assert _dir_ret(up, 1.0) > 0,  "long, yükselen piyasada kâr etmeli"
+        assert _dir_ret(up, -1.0) < 0, "short, yükselen piyasada zarar etmeli"
+        assert _dir_ret(dn, -1.0) > 0, "short, düşen piyasada kâr etmeli"
+        assert _dir_ret(dn, 1.0) < 0,  "long, düşen piyasada zarar etmeli"
+
+    print("SELF_TEST_OK: sma_cross, rsi, signal_column, monte_carlo, walk_forward, yon-isareti")
 
 
 if __name__ == "__main__":
