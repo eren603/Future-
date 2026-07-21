@@ -1,0 +1,168 @@
+{
+  "son_bar": 1784642400000,
+  "son_bar_utc": "2026-07-21 14:00",
+  "karar": {
+    "karar": "LONG",
+    "yon": "LONG",
+    "zincir": 2,
+    "neden": "MARKET: son teyitli swing 66618 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.",
+    "giris_alt": 66881.1,
+    "giris_ust": 66881.1,
+    "giris": 66881.1,
+    "stop": 66311.0,
+    "iptal": 66618.0,
+    "t1": 67736.25000000001,
+    "t2": 68306.35000000002,
+    "iptal_kural": "15M gövde kapanışı kırılan 66618 seviyesinin gerisine dönerse sinyal geçersiz.",
+    "hedef_kaynak": "R-katı (likidite hedefi yok)",
+    "r": 1.5
+  },
+  "takip": {
+    "son_bar": 1784642400000,
+    "karar": {
+      "karar": "LONG",
+      "yon": "LONG",
+      "zincir": 2,
+      "neden": "MARKET: son teyitli swing 66618 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.",
+      "giris_alt": 66881.1,
+      "giris_ust": 66881.1,
+      "giris": 66881.1,
+      "stop": 66311.0,
+      "iptal": 66618.0,
+      "t1": 67736.25000000001,
+      "t2": 68306.35000000002,
+      "iptal_kural": "15M gövde kapanışı kırılan 66618 seviyesinin gerisine dönerse sinyal geçersiz.",
+      "hedef_kaynak": "R-katı (likidite hedefi yok)",
+      "r": 1.5
+    }
+  },
+  "akibet_onceki": "İLK KOŞU — kıyas yok.",
+  "acik_bolgeler": [
+    {
+      "tip": "bull",
+      "ust": 64855.3,
+      "alt": 64550.0,
+      "ce": 64702.65,
+      "bar": 58,
+      "zaman": 1784559600000
+    },
+    {
+      "tip": "bull",
+      "ust": 65209.0,
+      "alt": 64998.0,
+      "ce": 65103.5,
+      "bar": 60,
+      "zaman": 1784561400000
+    },
+    {
+      "tip": "bull",
+      "ust": 65380.0,
+      "alt": 65346.3,
+      "ce": 65363.15,
+      "bar": 105,
+      "zaman": 1784601900000
+    },
+    {
+      "tip": "bull",
+      "ust": 65847.6,
+      "alt": 65825.1,
+      "ce": 65836.35,
+      "bar": 120,
+      "zaman": 1784615400000
+    },
+    {
+      "tip": "bull",
+      "ust": 66003.0,
+      "alt": 65988.0,
+      "ce": 65995.5,
+      "bar": 124,
+      "zaman": 1784619000000
+    },
+    {
+      "tip": "bull",
+      "ust": 66292.4,
+      "alt": 66230.7,
+      "ce": 66261.54999999999,
+      "bar": 140,
+      "zaman": 1784633400000
+    },
+    {
+      "tip": "bull",
+      "ust": 66694.8,
+      "alt": 66529.2,
+      "ce": 66612.0,
+      "bar": 149,
+      "zaman": 1784641500000
+    }
+  ],
+  "swing_15m_son": [
+    [
+      65927.9,
+      "H"
+    ],
+    [
+      65970.0,
+      "H"
+    ],
+    [
+      66337.8,
+      "H"
+    ],
+    [
+      66110.0,
+      "L"
+    ],
+    [
+      66390.0,
+      "H"
+    ],
+    [
+      66117.1,
+      "L"
+    ],
+    [
+      66618.0,
+      "H"
+    ],
+    [
+      66290.4,
+      "L"
+    ]
+  ],
+  "swing_4h_son": [
+    [
+      64356.7,
+      "H"
+    ],
+    [
+      64948.8,
+      "H"
+    ],
+    [
+      64259.5,
+      "L"
+    ],
+    [
+      65084.6,
+      "H"
+    ],
+    [
+      63736.1,
+      "L"
+    ],
+    [
+      65788.0,
+      "H"
+    ]
+  ],
+  "rejim_4h": {
+    "rejim": "UP",
+    "fark": 1029.6599999999962,
+    "esik": 500.2100000000064
+  },
+  "donus_dizisi": {
+    "yon": "SHORT",
+    "adim": 2,
+    "supurme_ucu": 66529.2
+  }
+}
