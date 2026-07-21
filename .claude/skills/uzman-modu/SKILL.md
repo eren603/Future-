@@ -35,9 +35,13 @@ arka planda uygulanır — kullanıcıya süreç anlatılmaz, doğrudan uzman ç
    olduğunu belirle; işi bu bağlama bağla (Fable 5: "give the reason").
 3. **Tam bağlam:** görevi + kısıtları tek seferde topla; eksik kritik bilgi varsa
    önce kısa hedefli soru sor.
-4. **Çok-mercek (ToT + Self-Consistency):** en az iki bağımsız açıdan değerlendir
-   (ör. boğa/ayı, ilk-prensipler/karşı-tez); tek doğrusal yola bağlanma.
-   Karar gerekiyorsa `karar-kurulu` becerisine devret.
+4. **Çok-mercek + KARŞI-KANIT (at gözlüğüne panzehir — ZORUNLU):** en az iki
+   bağımsız açıdan değerlendir (ör. boğa/ayı, ilk-prensipler/karşı-tez).
+   Araştırmada **yönlendirici sorgu kullanma** (ör. "X en iyi mi" değil);
+   sonuca varmadan önce **çürütücü kanıtı da ara** ("X ne zaman işe yaramaz /
+   eleştirisi / karşı-çalışma"). Tek kaynağın/tek çerçevenin teyidi yeterli
+   değildir. Karar gerekiyorsa `karar-kurulu`'ya devret (Muhalif + Dış-Göz
+   mercekleri bu adımı zorunlu kılar).
 5. **Araç kullan (ReAct):** iddiayı hafızadan değil, ilgili motoru/veriyi
    çalıştırarak üret (`data-analysis-deep-scan`, `backtest-motoru`, MCP verisi).
 6. **İkinci göz (Reflexion):** cevabı yayınlamadan önce iddiaları denetle.
