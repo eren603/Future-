@@ -41,6 +41,24 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", str(s).strip().lower())
 
 
+# --- Sert-yasak desenleri (%100 karantina, kanıt sağlam değilse) ---
+# Ölçülmemiş sayısal iddia: yüzde ya da 2+ haneli sayı
+NUM_PAT = re.compile(r"(%\s*\d+|\b\d+(?:[.,]\d+)?\s*%|\b\d{2,}\b)")
+# Uydurma kıdem/kimlik: "X yıl ... uzman/tecrübe/deneyim/trader/analist"
+TENURE_PAT = re.compile(
+    r"\b\d+\s*(?:yıl|yil|sene|year)\w*.{0,40}"
+    r"(uzman|tecrübe|tecrube|deneyim|expert|experience|trader|analist|profesör|profesor)",
+    re.IGNORECASE)
+# Kanıt "gerçek bir dayanak" gibi mi görünüyor?
+CITED_PAT = re.compile(
+    r"(arxiv|doi|https?://|kaynak|veri\s*:|motor|connector|20\d\d|et al|rapor|dosya)",
+    re.IGNORECASE)
+
+
+def _has_citation(evidence: str) -> bool:
+    return bool(CITED_PAT.search(evidence or ""))
+
+
 def _circular(text: str, evidence: str) -> bool:
     t, e = _norm(text), _norm(evidence)
     if not e:
@@ -72,6 +90,14 @@ def audit_claim(c: dict) -> dict:
         if _circular(text, evidence):
             verdict = "KARANTİNA"
             reasons.append("dayanaksız/dairesel: kanıt yok ya da kendine atıf (hafızadan)")
+        # SERT-YASAK 1: uydurma kıdem/kimlik (kaynaksızsa doğrulanmış olsa bile)
+        if TENURE_PAT.search(text) and not _has_citation(evidence):
+            verdict = "KARANTİNA"
+            reasons.append("SERT-YASAK: uydurma kıdem/kimlik iddiası (kanıtlanamaz özgeçmiş)")
+        # SERT-YASAK 2: ölçülmemiş/dayanaksız sayısal iddia
+        if NUM_PAT.search(text) and not _has_citation(evidence):
+            verdict = "KARANTİNA"
+            reasons.append("SERT-YASAK: ölçülmemiş/dayanaksız sayısal iddia")
         if not evidence:
             verdict = "KARANTİNA"; reasons.append("'gerçek' iddia kanıtsız")
         if not verified:

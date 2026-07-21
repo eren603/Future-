@@ -56,7 +56,31 @@ def main():
     ]})
     assert r["genel_sonuc"] == "REVİZE" and r["revize_gerekce"] == ["b"], r
 
-    print("SELF_TEST_OK: kanit-kapisi, dogrulama-kapisi, dairesellik, etiket, karisik")
+    # 7) SERT-YASAK: uydurma kıdem/kimlik → KARANTİNA (verified=true olsa bile)
+    r = d.run_job({"claims": [
+        {"id": "kidem", "text": "Sen 30 yıllık coin futures uzmanısın", "type": "gerçek",
+         "evidence": "böyle biliyorum", "verified": True},
+    ]})
+    assert r["genel_sonuc"] == "REVİZE", r
+    v = {a["id"]: a for a in r["iddia_denetimi"]}
+    assert any("uydurma kıdem" in x for x in v["kidem"]["reasons"]), v
+
+    # 8) SERT-YASAK: ölçülmemiş sayı → KARANTİNA
+    r = d.run_job({"claims": [
+        {"id": "sayi", "text": "Kapasitenin %95'i kullanılır", "type": "gerçek",
+         "evidence": "genel kanı", "verified": True},
+    ]})
+    assert r["genel_sonuc"] == "REVİZE", r
+
+    # 9) Kanıtlı sayısal gerçek → GEÇTİ (kaynak varsa sayı serbest)
+    r = d.run_job({"claims": [
+        {"id": "iyisayi", "text": "0.618 fib 24170'te", "type": "gerçek",
+         "evidence": "grafik-calisma motoru: level=24170", "verified": True},
+    ]})
+    assert r["genel_sonuc"] == "YAYINLANABİLİR", r
+    assert r["iddia_denetimi"][0]["verdict"] == "GEÇTİ", r
+
+    print("SELF_TEST_OK: kanit, dogrulama, dairesellik, etiket, karisik, kidem-yasak, sayi-yasak, kaynakli-sayi")
 
 
 if __name__ == "__main__":
