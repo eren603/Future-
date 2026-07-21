@@ -60,7 +60,49 @@ def main():
     })
     assert d["KARAR"] in ("LONG", "NÖTR-BEKLE")  # tek danışman, uzlaşı=1 ama min_side kapısı
 
-    print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari")
+    # E) YÖN DOĞRULUĞU — hepsi ayı → SHORT, skor NEGATİF (short dediğinde short)
+    e = sentez.synth({
+        "question": "E",
+        "advisors": [
+            {"name": "grafik", "stance": "short", "confidence": 0.8},
+            {"name": "backtest", "stance": "sat", "confidence": 0.7},
+            {"name": "risk", "stance": "sell", "confidence": 0.6},
+        ],
+        "verifier": {"grafik": {"confirmed": True}, "backtest": {"confirmed": True}},
+    })
+    assert e["KARAR"] == "SHORT", e
+    assert e["yon_skoru"] < 0, e  # işaret negatif olmalı
+
+    # F) İŞARET SİMETRİSİ — aynı seti long yap → LONG, skor mutlak değeri ~aynı,
+    #    işaret ters. (long dediğinde long, tam ayna)
+    f = sentez.synth({
+        "question": "F",
+        "advisors": [
+            {"name": "grafik", "stance": "long", "confidence": 0.8},
+            {"name": "backtest", "stance": "al", "confidence": 0.7},
+            {"name": "risk", "stance": "buy", "confidence": 0.6},
+        ],
+        "verifier": {"grafik": {"confirmed": True}, "backtest": {"confirmed": True}},
+    })
+    assert f["KARAR"] == "LONG", f
+    assert f["yon_skoru"] > 0, f
+    assert abs(f["yon_skoru"] + e["yon_skoru"]) < 1e-9, (e["yon_skoru"], f["yon_skoru"])
+
+    # G) İŞARET BÜTÜNLÜĞÜ — LONG kararı verilince long ağırlığı short'tan büyük olmalı
+    g = sentez.synth({
+        "question": "G",
+        "advisors": [
+            {"name": "a", "stance": "long", "confidence": 0.9},
+            {"name": "b", "stance": "long", "confidence": 0.8},
+            {"name": "c", "stance": "short", "confidence": 0.4},
+        ],
+    })
+    wl = sum(x["etkin_agirlik"] for x in g["danisman_ozeti"] if x["yon"] == "long")
+    ws = sum(x["etkin_agirlik"] for x in g["danisman_ozeti"] if x["yon"] == "short")
+    assert g["KARAR"] == "LONG" and wl > ws, (g["KARAR"], wl, ws)
+
+    print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
+          "yon-short, isaret-simetri, isaret-butunluk")
 
 
 if __name__ == "__main__":
