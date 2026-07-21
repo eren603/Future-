@@ -62,6 +62,13 @@ Bu beceri bir **disiplin katmanıdır**; tüm motorların üstünde çalışır.
 `karar-kurulu` orkestratörü de bu protokolü kullanır: fan-out → 5 mercek →
 ikinci-göz (`iddia_denetim.py` + adversarial Skeptic) → tek karar.
 
+## Referanslar (kaynaklı)
+- `references/teknikler.md` — protokolün dayandığı teknikler + doğrulanmış
+  kaynaklar (Anthropic rehberleri + arXiv). Kaynaksız iddia buraya girmez.
+- `references/trade-prompt-sablonu.md` — trade için hazır prompt şablonu
+  (rol + niyet + tam bağlam + motorlar + ikinci-göz + karar kartı).
+
 ## Dürüstlük sınırı
 Bu protokol cevabı daha derin, daha az hatalı yapar; ama modeli her şeyi bilen
 yapmaz. "Uzman modu" = daha iyi muhakeme + kanıt disiplini, sihir değil.
+Ölçülmemiş sayısal iddia (ör. "kapasitenin %X'i") üretilmez.
