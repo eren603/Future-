@@ -16,6 +16,11 @@ beceriyi uygula.
 | Veri analizi, finansal tablo, oran, trend, istatistik, hesaplama, Excel/CSV/JSON denetimi, kripto/hisse verisi yorumlama, sayısal iddia doğrulama | `data-analysis-deep-scan` |
 | Grafik/chart okuma, mum grafiği, teknik analiz, SMC, CHoCH/BOS, order block, FVG, likidite, Fibonacci/golden zone, giriş bölgesi, grafik oluşturma, dashboard | `grafik-calisma` |
 | Trading stratejisi, forex/endeks/kripto CFD, MQL5, Pine Script, Expert Advisor, backtest, prop trading, Ichimoku, risk yönetimi | `forex-trading-expert` |
+| Kline verisi yapıştırma (15M/4H OHLCV), "motoru çalıştır", "koşu yap", motor kararı/akıbet/defter sorgusu | `karar-motoru` |
+
+Ek kural (motor): Kullanıcı 15M+4H kline seti gönderdiğinde `karar-motoru`
+becerisi uygulanır — motor çıktısı OLDUĞU GİBİ verilir, üstüne alternatif
+senaryo yazılmaz; koşu sonrası `engine/state/` değişiklikleri commit+push edilir.
 
 Ek kural: Kullanıcı bir **grafik ekran görüntüsü** gönderirse (mum grafiği,
 fiyat grafiği), açıkça istemese bile `grafik-calisma` SMC + Fibonacci akışıyla
