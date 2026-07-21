@@ -20,6 +20,13 @@ beceriyi uygula.
 | Backtest, geriye dönük test, strateji performansı, profit factor, Sharpe, drawdown, Monte Carlo, walk-forward, overfitting | `backtest-motoru` |
 | Pozisyon boyutu, lot, kaç birim, risk %, stop mesafesi, Kelly, kaldıraç, volatilite hedef, VaR/CVaR | `risk-yonetimi` |
 | Portföy dağılımı, varlık ağırlığı, çeşitlendirme, Markowitz, min-varyans, max-Sharpe, HRP, risk paritesi | `portfoy-optimizasyonu` |
+| Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
+
+Ek kural (orkestratör): Bir soru NİHAİ KARAR gerektirdiğinde `karar-kurulu`
+becerisi devreye girer; ilgili tüm motorları **paralel** çalıştırır → 5 mercekle
+muhakeme → adversarial doğrulama → `scripts/sentez.py` ile **güven-ağırlıklı tek
+karar**. Çelişki/zayıf sinyalde karar **NÖTR-BEKLE**'dir (fail-closed). Yalnız
+karar-destek; canlı/otomatik emir DAHİL DEĞİL.
 
 Ek kural (motorlar — paralel & zorunlu sonuç): Bu becerilerin her biri kendi
 içinde ÇALIŞAN Python motoruna sahiptir (`.claude/skills/<ad>/scripts/`). Bir
