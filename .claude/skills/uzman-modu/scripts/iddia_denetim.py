@@ -67,19 +67,18 @@ def audit_claim(c: dict) -> dict:
     reasons = []
     verdict = "GEÇTİ"
 
-    if _circular(text, evidence):
-        verdict = "KARANTİNA"
-        reasons.append("dayanaksız/dairesel: kanıt yok ya da kendine atıf (hafızadan)")
-
     if ctype in FACT:
+        # Kanıt/doğrulama/dairesellik kapıları YALNIZ 'gerçek' iddialara uygulanır
+        if _circular(text, evidence):
+            verdict = "KARANTİNA"
+            reasons.append("dayanaksız/dairesel: kanıt yok ya da kendine atıf (hafızadan)")
         if not evidence:
             verdict = "KARANTİNA"; reasons.append("'gerçek' iddia kanıtsız")
         if not verified:
             verdict = "KARANTİNA"; reasons.append("'gerçek' iddia ikinci gözle doğrulanmadı")
     else:
-        # varsayım/yorum: etiketli olduğu sürece kabul; sadece bilgi notu
-        if not evidence:
-            reasons.append("etiketli varsayım/yorum (kanıt aranmaz, gerçek gibi sunma)")
+        # varsayım/yorum: etiketli olduğu sürece kabul (kanıt aranmaz)
+        reasons.append("etiketli varsayım/yorum — kabul; 'gerçek' gibi sunma")
 
     return {"id": cid, "type": ctype, "verdict": verdict,
             "reasons": reasons, "text": text}
