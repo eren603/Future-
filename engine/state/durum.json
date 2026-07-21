@@ -1,65 +1,49 @@
 {
-  "son_bar": 1784646000000,
-  "son_bar_utc": "2026-07-21 15:00",
+  "son_bar": 1784660400000,
+  "son_bar_utc": "2026-07-21 19:00",
   "karar": {
-    "karar": "LONG",
-    "yon": "LONG",
-    "zincir": 2,
-    "neden": "MARKET: son teyitli swing 66618 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.",
-    "giris_alt": 66729.3,
-    "giris_ust": 66729.3,
-    "giris": 66729.3,
-    "stop": 66311.0,
-    "iptal": 66618.0,
-    "t1": 67356.75,
-    "t2": 67775.05000000002,
-    "iptal_kural": "15M gövde kapanışı kırılan 66618 seviyesinin gerisine dönerse sinyal geçersiz.",
-    "hedef_kaynak": "R-katı (likidite hedefi yok)",
-    "r": 1.5
+    "karar": "SHORT",
+    "yon": "SHORT",
+    "zincir": 1,
+    "neden": "Dönüş dizisi 4/4 tamam: 66390 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 66487.9 gövdeyle kırıldı.",
+    "giris_alt": 66307.3,
+    "giris_ust": 66363.1,
+    "giris": 66335.20000000001,
+    "stop": 66480.0,
+    "iptal": 66363.1,
+    "t1": 66117.1,
+    "t2": 66110.0,
+    "iptal_kural": "Giriş tetiklenmeden 15M gövde kapanışı 66363.1 ötesine geçerse bölge geçersiz.",
+    "hedef_kaynak": "likidite",
+    "r": 1.51
   },
   "takip": {
-    "son_bar": 1784646000000,
+    "son_bar": 1784660400000,
     "karar": {
-      "karar": "LONG",
-      "yon": "LONG",
-      "zincir": 2,
-      "neden": "MARKET: son teyitli swing 66618 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.",
-      "giris_alt": 66729.3,
-      "giris_ust": 66729.3,
-      "giris": 66729.3,
-      "stop": 66311.0,
-      "iptal": 66618.0,
-      "t1": 67356.75,
-      "t2": 67775.05000000002,
-      "iptal_kural": "15M gövde kapanışı kırılan 66618 seviyesinin gerisine dönerse sinyal geçersiz.",
-      "hedef_kaynak": "R-katı (likidite hedefi yok)",
-      "r": 1.5
+      "karar": "SHORT",
+      "yon": "SHORT",
+      "zincir": 1,
+      "neden": "Dönüş dizisi 4/4 tamam: 66390 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 66487.9 gövdeyle kırıldı.",
+      "giris_alt": 66307.3,
+      "giris_ust": 66363.1,
+      "giris": 66335.20000000001,
+      "stop": 66480.0,
+      "iptal": 66363.1,
+      "t1": 66117.1,
+      "t2": 66110.0,
+      "iptal_kural": "Giriş tetiklenmeden 15M gövde kapanışı 66363.1 ötesine geçerse bölge geçersiz.",
+      "hedef_kaynak": "likidite",
+      "r": 1.51
     }
   },
-  "akibet_onceki": "Önceki LONG: giriş tetiklendi, stop/hedef henüz yok — pozisyon AÇIK görünümde (son bar 2026-07-21 15:00).",
+  "akibet_onceki": "Önceki LONG: giriş TETİKLENMEDEN İPTAL (gövde kapanış 66581.4, iptal 66618, 2026-07-21 15:15).",
   "acik_bolgeler": [
-    {
-      "tip": "bull",
-      "ust": 64855.3,
-      "alt": 64550.0,
-      "ce": 64702.65,
-      "bar": 14,
-      "zaman": 1784559600000
-    },
-    {
-      "tip": "bull",
-      "ust": 65209.0,
-      "alt": 64998.0,
-      "ce": 65103.5,
-      "bar": 16,
-      "zaman": 1784561400000
-    },
     {
       "tip": "bull",
       "ust": 65380.0,
       "alt": 65346.3,
       "ce": 65363.15,
-      "bar": 61,
+      "bar": 45,
       "zaman": 1784601900000
     },
     {
@@ -67,47 +51,27 @@
       "ust": 65847.6,
       "alt": 65825.1,
       "ce": 65836.35,
-      "bar": 76,
+      "bar": 60,
       "zaman": 1784615400000
     },
     {
-      "tip": "bull",
-      "ust": 66003.0,
-      "alt": 65988.0,
-      "ce": 65995.5,
-      "bar": 80,
-      "zaman": 1784619000000
+      "tip": "bear",
+      "ust": 66769.0,
+      "alt": 66710.0,
+      "ce": 66739.5,
+      "bar": 94,
+      "zaman": 1784646000000
     },
     {
-      "tip": "bull",
-      "ust": 66292.4,
-      "alt": 66230.7,
-      "ce": 66261.54999999999,
-      "bar": 96,
-      "zaman": 1784633400000
-    },
-    {
-      "tip": "bull",
-      "ust": 66694.8,
-      "alt": 66529.2,
-      "ce": 66612.0,
+      "tip": "bear",
+      "ust": 66363.1,
+      "alt": 66307.3,
+      "ce": 66335.20000000001,
       "bar": 105,
-      "zaman": 1784641500000
+      "zaman": 1784655900000
     }
   ],
   "swing_15m_son": [
-    [
-      65970.0,
-      "H"
-    ],
-    [
-      66337.8,
-      "H"
-    ],
-    [
-      66110.0,
-      "L"
-    ],
     [
       66390.0,
       "H"
@@ -127,6 +91,18 @@
     [
       66924.1,
       "H"
+    ],
+    [
+      66487.9,
+      "L"
+    ],
+    [
+      66736.7,
+      "H"
+    ],
+    [
+      65939.0,
+      "L"
     ]
   ],
   "swing_4h_son": [
@@ -157,12 +133,12 @@
   ],
   "rejim_4h": {
     "rejim": "UP",
-    "fark": 1001.9249999999811,
-    "esik": 500.2100000000064
+    "fark": 1105.4150000000009,
+    "esik": 667.2800000000061
   },
   "donus_dizisi": {
     "yon": "SHORT",
-    "adim": 2,
-    "supurme_ucu": 66529.2
+    "adim": 4,
+    "supurme_ucu": 66480.0
   }
 }
