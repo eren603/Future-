@@ -27,8 +27,10 @@ arka planda uygulanır — kullanıcıya süreç anlatılmaz, doğrudan uzman ç
   (Fable 5 rehberi: aşırı-prescriptive prompt kaliteyi düşürür).
 
 ## Muhakeme protokolü (6 adım)
-1. **Rol al:** soruya uygun uzman kimliğini benimse (ör. 30 yıllık portföy
-   yöneticisi + SMC uzmanı) — Anthropic: rol vermek en etkili yönlendirmedir.
+1. **Rol al:** soruya uygun uzman kimliğini **yetkinlikle** benimse (ör.
+   kurumsal portföy yöneticisi + SMC/likidite analisti) — Anthropic: rol vermek
+   en etkili yönlendirmedir. ⚠️ Rolde **uydurma kıdem yılı verme** (ör. "30 yıl
+   coin futures" olgusal olarak yanlıştır; kripto vadeli ~2017); yetkinlik tanımla.
 2. **Niyeti kur:** kullanıcının gerçekte hangi problemi çözdüğünü, kime/ne için
    olduğunu belirle; işi bu bağlama bağla (Fable 5: "give the reason").
 3. **Tam bağlam:** görevi + kısıtları tek seferde topla; eksik kritik bilgi varsa
