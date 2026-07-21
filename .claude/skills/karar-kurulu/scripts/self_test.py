@@ -101,8 +101,23 @@ def main():
     ws = sum(x["etkin_agirlik"] for x in g["danisman_ozeti"] if x["yon"] == "short")
     assert g["KARAR"] == "LONG" and wl > ws, (g["KARAR"], wl, ws)
 
+    # H) CANLILIK (anti-dejenerasyon): hizalı + güçlü + doğrulanmış panel HER
+    #    ZAMAN ateşlemeli — "sürekli BEKLE" ölü sistemine düşmemeli. Kapılar
+    #    yalnız zayıf/çelişkili sinyali elemeli, gerçek konsensüsü değil.
+    for stance, want in (("long", "LONG"), ("short", "SHORT")):
+        h = sentez.synth({
+            "question": "H",
+            "advisors": [
+                {"name": "a", "stance": stance, "confidence": 0.75},
+                {"name": "b", "stance": stance, "confidence": 0.7},
+                {"name": "c", "stance": stance, "confidence": 0.65},
+            ],
+            "verifier": {"a": {"confirmed": True}, "b": {"confirmed": True}},
+        })
+        assert h["KARAR"] == want, ("CANLILIK KIRILDI", stance, h["KARAR"])
+
     print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
-          "yon-short, isaret-simetri, isaret-butunluk")
+          "yon-short, isaret-simetri, isaret-butunluk, canlilik")
 
 
 if __name__ == "__main__":
