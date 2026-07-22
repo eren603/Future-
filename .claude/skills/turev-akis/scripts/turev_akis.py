@@ -231,12 +231,54 @@ def analyze(job: dict) -> dict:
     }
 
 
+def to_advisor(result: dict) -> dict | None:
+    """Motor çıktısını karar-kurulu danışmanına ÇEVİRİR (öznel yorum devreden çıkar).
+
+    Eşleme kuralı (deterministik):
+      - stance: yon_skoru ≥ +0.2 → long ; ≤ -0.2 → short ; arası → flat
+      - confidence: motorun `guven` alanı (kapsam × sinyal netliği)
+      - evidence: KARAR_TUREV + faktör dökümü + erken-uyarılar
+      - _verifier_confirmed: kapsam ≥ 0.5 ise true (yetersiz veri → çürütme penaltısı)
+    VERİ YOK ise None döner → kurula danışman EKLENMEZ (fail-closed).
+    """
+    if result.get("KARAR_TUREV") == "VERİ YOK" or result.get("yon_skoru") is None:
+        return None
+    score = float(result["yon_skoru"])
+    if score >= 0.2:
+        stance = "long"
+    elif score <= -0.2:
+        stance = "short"
+    else:
+        stance = "flat"
+    fac = [f"{f['faktor']}={f['skor']}" for f in result.get("faktorler", [])
+           if f.get("skor") is not None]
+    uy = [w for w in result.get("erken_uyari", []) if "yok" not in w.lower()]
+    ev = (f"Türev motoru: {result['KARAR_TUREV']} (skor {score}, kapsam "
+          f"{result.get('kapsam')}). Faktörler: {', '.join(fac)}. "
+          + (("Erken-uyarı: " + " | ".join(uy)) if uy else "Kritik erken-uyarı yok."))
+    return {
+        "name": "turev-akis",
+        "stance": stance,
+        "confidence": float(result.get("guven", 0.3)),
+        "evidence": ev,
+        "_verifier_confirmed": bool((result.get("kapsam") or 0.0) >= 0.5),
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Türev-akış motoru (OI/funding/CVD/LSR/likidasyon → yön skoru)")
     ap.add_argument("--job", required=True, help="JSON job dosyası")
+    ap.add_argument("--emit-advisor", action="store_true",
+                    help="Çıktıyı karar-kurulu danışman formatında ver (stance/confidence/evidence + _verifier_confirmed)")
     args = ap.parse_args()
     job = json.loads(Path(args.job).expanduser().resolve().read_text(encoding="utf-8"))
-    print(json.dumps(analyze(job), ensure_ascii=False, indent=2))
+    result = analyze(job)
+    if args.emit_advisor:
+        adv = to_advisor(result)
+        print(json.dumps(adv, ensure_ascii=False, indent=2) if adv is not None
+              else json.dumps({"danisman": None, "neden": "VERİ YOK — kurula eklenmez"}, ensure_ascii=False))
+    else:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
 

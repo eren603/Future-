@@ -59,6 +59,19 @@ bayrakları (DELEVERAGING / TAZE SHORT / SOĞUMA) · `varsayimlar` defteri.
 - Bu skor türev verisini **karara dahil eder, geleceği bilmez** — garanti değil.
 - ⚠️ Yalnız analiz/karar-destek; canlı/otomatik emir **DAHİL DEĞİL**.
 
+## Karar-kurulu'na FORMAL bağlama (otomatik danışman)
+Türev skoru kurula **öznel metinle değil, motordan** girer:
+```
+python3 scripts/turev_akis.py --job job.json --emit-advisor
+```
+Bu, doğrudan bir kurul danışmanı üretir:
+- `stance` ← yön skoru işareti (≥+0.2 long / ≤−0.2 short / arası flat)
+- `confidence` ← motorun `guven` alanı (kapsam × sinyal netliği; öznel değil)
+- `evidence` ← faktör dökümü + erken-uyarı bayrakları
+- `_verifier_confirmed` ← kapsam ≥ 0.5 (yetersiz veri → çürütme penaltısı)
+VERİ YOK → danışman None → kurula **eklenmez** (fail-closed). Eşleme
+deterministiktir; aynı türev verisi → aynı danışman.
+
 ## Diğer becerilerle (paralel)
 - `karar-motoru` → kline kararı; bu motor → türev katmanı. İkisi `karar-kurulu`da birleşir.
 - `grafik-calisma` → SMC/likidite yapısı; türev skoru onun yön-biasını teyit/çürütür.

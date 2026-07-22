@@ -31,7 +31,22 @@ al (yön + güven + kanıt):
 - `portfoy-optimizasyonu` → (çok varlıklıysa) ağırlık.
 - `karar-motoru` → 15M/4H kline motoru kararı (varsa).
 - `data-analysis-deep-scan` → sayısal teyit/çürütme.
+- `turev-akis` → türev-akış (OI/funding/CVD/LSR/likidasyon) yön skoru **(fiyat-dışı tek kanal)**.
 > Motorlar bağımsızdır → bağımsız tool çağrılarıyla aynı turda paralel çalışır.
+
+#### Türev-akış danışmanı — FORMAL bağlama (öznel yorum devre dışı)
+Analizde türev paneli (CoinGlass/borsa; ekran görüntüsü ya da video karesi)
+mevcutsa `turev-akis` danışmanı **elle yazılmaz**, motordan üretilir:
+```
+python3 ../turev-akis/scripts/turev_akis.py --job turev.json --emit-advisor
+```
+Çıktı doğrudan bir kurul danışmanıdır: `stance` (yön skorunun işaretinden),
+`confidence` (motorun `guven` alanı = kapsam × netlik), `evidence` (faktör
+dökümü + erken-uyarılar). Bu danışmanı `advisors`'a olduğu gibi ekle; çıktının
+`_verifier_confirmed` alanını `verifier["turev-akis"].confirmed`'e taşı (kapsam
+< 0.5 ise false → çürütme penaltısı otomatik uygulanır). Motor "VERİ YOK"
+(danışman None) dönerse kurula **eklenmez** (fail-closed). Böylece türev katkısı
+öznel metin değil, tekrarlanabilir motor çıktısıdır.
 
 ### 2) Beş mercek — maksimum akıl yürütme
 Her motor çıktısını beş bağımsız mercekten geçir (kullanıcının karar-kurulu
