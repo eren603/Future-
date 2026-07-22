@@ -215,6 +215,8 @@ def synth(job: dict) -> dict:
         "rr": rr,
         "atr_kullanildi": atr,
         "rejim": r_durum,
+        "esik_kaynagi": str(job.get("thresholds_kaynak")
+                            or "varsayılan eşikler (varsayım — kalibre edilmemiş)"),
         "kapi_gerekceleri": gates,
         "katman_sirasi": "bağlam→yapı→arz-talep→likidite→fib→onay→risk",
         "not": ("Karar-destek; olasılık senaryosu, sinyal/garanti değil. "

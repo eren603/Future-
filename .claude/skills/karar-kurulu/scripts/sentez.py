@@ -135,6 +135,9 @@ def _decision(decision, conf, score, rows, job, *, agreement=0.0, dissent=None,
         "muhalefet": dissent or [],
         "kapi_gerekceleri": gate_reasons or [],
         "gecersizlik_kosulu": job.get("invalidation", "BELİRTİLMEDİ"),
+        "esik_kaynagi": ("tasarım varsayımı (fail-closed karar kapıları; risk "
+                         "iştahını kodlar, piyasa verisinden türetilmez — "
+                         "thresholds ile koşu başına değiştirilebilir)"),
         "danisman_ozeti": [
             {"ad": r["name"], "yon": {1: "long", -1: "short", 0: "nötr"}[r["dir"]],
              "guven": r["confidence"], "dogrulandi": r["confirmed"],

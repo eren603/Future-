@@ -66,6 +66,12 @@ Kurallar:
 - Her sayısal iddia bir dayanağa bağlanır (kullanıcı verisi / connector / varsayım).
 - Emin olunmayan nokta açıkça belirtilir; "bilmiyorum" demek geçerli ve doğru
   bir cevaptır.
+- **Eşik politikası:** motor eşikleri sabit SEÇİLMEZ; her koşuda o koşunun
+  verisinden istatistikle türetilir (`grafik-calisma/scripts/kalibrasyon.py`:
+  permütasyon, bootstrap, Wilson, MAE-quantile). Kalibre edilemeyen her sabit
+  çıktıda `varsayimlar`/`esik_kaynagi` ile açıkça etiketlenir — etiketsiz gizli
+  eşik yasak. Serbest ayar (eşiği "en iyi sonucu verene" çekmek = aşırı-uyum)
+  da yasak: türetim yalnız istatistiksel test + korkulukla yapılır.
 
 ### Sert yasaklar (%100 KARANTİNA — `uzman-modu/scripts/iddia_denetim.py` ile mekanik)
 1. **Uydurma/ölçülmemiş sayı:** kaynağı olmayan nicel iddia (ör. "%95 kapasite",

@@ -32,15 +32,19 @@ ya da Crypto.com MCP'den çekildi), seviyeler göz kararı DEĞİL şu zincirle 
 
 ```
 veri (OHLCV)
- → scripts/smc_tespit.py     # swing/BOS-CHoCH/OB/FVG/likidite/ATR/rejim OTOMATİK
-                             # (aynı veri = aynı seviye; öznellik yok). HTF verisi
-                             # de verilirse htf_bias çıkarır (MTF hizalama).
- → scripts/confluence.py     # tespit çıktısındaki confluence_job ile: katman
-                             # sırası + ATR-uyarlı SL + MTF kapısı + rejim kapısı
- → scripts/setup_dogrulama.py# AYNI kurulum sınıfı geçmiş veride edge üretti mi?
-                             # PF + Monte Carlo + yarı-dönem tutarlılık.
-                             # sinyal_izni=false ise SİNYAL VERİLMEZ (fail-closed).
- → karar-kurulu              # nihai tek karar (diğer motorlarla sentez)
+ → scripts/smc_tespit.py      # swing/BOS-CHoCH/OB/FVG/likidite/ATR/rejim OTOMATİK
+                              # (aynı veri = aynı seviye; öznellik yok). HTF verisi
+                              # de verilirse htf_bias çıkarır (MTF hizalama).
+ → scripts/setup_dogrulama.py # KALİBRASYON + KANIT (her koşuda bu veriyle):
+                              #  - MAE kalibrasyonu → SL tamponu (atr_mult) veriden
+                              #  - permütasyon testi → edge, rastgele girişten ayrışmalı
+                              #  - bootstrap CI → beklenti alt sınırı > 0
+                              #  - Wilson → önerilen min R:R = (1-wr_lo)/wr_lo
+                              # sinyal_izni=false ise SİNYAL VERİLMEZ (fail-closed).
+ → scripts/confluence.py      # tespit çıktısı + KALİBRE eşiklerle (atr_mult ve
+                              # min_rr setup_dogrulama.kalibrasyon'dan; job'a
+                              # thresholds_kaynak yaz) katman sıralı giriş/çıkış.
+ → karar-kurulu               # nihai tek karar (diğer motorlarla sentez)
 ```
 
 Kurallar: (1) `smc_tespit` çıktısındaki `confluence_job` doğrudan
@@ -49,6 +53,17 @@ Kurallar: (1) `smc_tespit` çıktısındaki `confluence_job` doğrudan
 BEKLE" olur. (3) Görsel-yalnız analizde (sayısal veri yoksa) bu zincir
 çalıştırılamaz; çıktı "yaklaşık/kanıtsız" etiketiyle verilir ve kullanıcıdan
 OHLCV istenir.
+
+## Dinamik eşik ilkesi (kalibrasyon.py)
+Piyasa durağan değildir: sabit eşik (dünkü 15 işlem / MC 0.6 / R:R 2) bir
+sonraki koşuda geçersiz olabilir. Bu yüzden eşikler SEÇİLMEZ, her koşuda o
+koşunun verisinden İSTATİSTİKLE türetilir (`scripts/kalibrasyon.py`):
+permütasyon p-değeri (edge ≠ piyasa sürüklenmesi), bootstrap CI, Wilson
+kötümser kazanma oranından min R:R, kazanan-MAE quantile'ından SL tamponu.
+İki tuzak da yasak: statik eşik VE serbest ayar (aşırı-uyum). Türetimler
+korkulukla sınırlıdır; kalibre edilemeyen her sabit çıktıdaki `varsayimlar`
+defterinde AÇIKÇA etiketlenir — gizli sabit eşik yasaktır. Her motor çıktısı
+`esik_kaynagi` alanıyla eşiklerin veri-türevi mi varsayım mı olduğunu bildirir.
 
 ## A) Görselden okuma (ekran görüntüsü / chart resmi)
 Kullanıcı bir grafik görseli gönderdiğinde şu sırayla analiz et:

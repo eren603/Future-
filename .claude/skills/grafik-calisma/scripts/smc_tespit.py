@@ -38,8 +38,9 @@ DEFAULTS = {
     "left": 2, "right": 2,
     "atr_period": 14, "adx_period": 14,
     "eq_tol_atr": 0.25,          # eşit tepe/dip toleransı (ATR çarpanı)
-    "adx_trend": 25.0, "adx_range": 20.0,
-    "vol_esik": 0.04,            # ATR/fiyat bunun üstündeyse yüksek-vol
+    "adx_trend": 25.0, "adx_range": 20.0,   # Wilder konvansiyonu (varsayım)
+    "vol_esik": None,            # None → KENDİ tarihinden kalibre (quantile)
+    "vol_quantile": 0.90,        # yüksek-vol = ATR% kendi tarihinin üst %10'unda
 }
 
 _KEYMAP = {"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume",
@@ -242,10 +243,29 @@ def detect(job: dict) -> dict:
         durum = "range"
     else:
         durum = "gecis"
-    yuksek_vol = bool(atr is not None and atr / close_last > p["vol_esik"])
+
+    # Yüksek-vol eşiği: sabit % değil, KENDİ tarihinin quantile'ı (veri-türevi).
+    # Kullanıcı vol_esik verirse o kullanılır (varsayım olarak etiketlenir).
+    atr_pct_s = (atr_s / df["close"]).replace([np.inf, -np.inf], np.nan).dropna()
+    if p["vol_esik"] is not None:
+        vol_esik = float(p["vol_esik"])
+        vol_kaynak = f"kullanıcı sabiti {vol_esik} (varsayım)"
+    elif len(atr_pct_s) >= 5:
+        vol_esik = float(np.quantile(atr_pct_s.to_numpy(),
+                                     float(p["vol_quantile"])))
+        vol_kaynak = (f"veri-türevi: ATR% tarihinin q{p['vol_quantile']} "
+                      f"= {round(vol_esik, 5)}")
+    else:
+        vol_esik = None
+        vol_kaynak = "VERİ YOK (ATR% serisi kısa)"
+    atr_pct_last = (atr / close_last) if atr else None
+    yuksek_vol = bool(atr_pct_last is not None and vol_esik is not None
+                      and atr_pct_last > vol_esik)
     regime = {"adx": round(adx, 2) if adx is not None else None,
               "durum": durum, "yuksek_vol": yuksek_vol,
-              "atr_pct": round(atr / close_last, 5) if atr else None}
+              "atr_pct": round(atr_pct_last, 5) if atr_pct_last else None,
+              "vol_esik": round(vol_esik, 5) if vol_esik is not None else None,
+              "vol_esik_kaynagi": vol_kaynak}
 
     highs, lows = find_swings(df, int(p["left"]), int(p["right"]))
     trend, events = structure_events(df, highs, lows, int(p["right"]))
@@ -307,6 +327,14 @@ def detect(job: dict) -> dict:
         "rejim": regime,
         "htf": htf_info,
         "confluence_job": confluence_job,
+        "varsayimlar": [
+            f"swing pencere left/right={p['left']}/{p['right']} (fraktal granülarite; varsayım)",
+            f"ATR/ADX periyodu={p['atr_period']}/{p['adx_period']} (Wilder konvansiyonu)",
+            f"ADX trend/range eşiği={p['adx_trend']}/{p['adx_range']} (Wilder konvansiyonu; "
+            "params ile ezilebilir)",
+            f"eşit tepe/dip toleransı={p['eq_tol_atr']}×ATR (varsayım)",
+            f"yüksek-vol eşiği: {vol_kaynak}",
+        ],
         "not": ("Tespitler algoritmiktir (aynı veri = aynı seviye). SMC kavramları "
                 "yorumsal bir çerçevedir; tespit nesnelliği doğruluk garantisi değildir."),
     }
