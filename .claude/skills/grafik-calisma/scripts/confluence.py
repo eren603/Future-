@@ -18,8 +18,16 @@ Girdi JSON:
   "order_blocks": [{"low":104,"high":106,"type":"demand"}],   # demand|supply
   "fvgs":         [{"low":104.5,"high":105.5,"type":"bull"}], # bull|bear
   "liquidity":    [{"price":125,"type":"buyside"},{"price":95,"type":"sellside"}],
-  "thresholds": {"min_confluence":0.5,"min_rr":2.0,"sl_buffer_frac":0.05}
+  "atr": 1.8,                                     # ops. ATR → SL tamponu volatilite-uyarlı
+  "regime": {"durum":"trend","yuksek_vol":false}, # ops. rejim filtresi (smc_tespit üretir)
+  "thresholds": {"min_confluence":0.5,"min_rr":2.0,"sl_buffer_frac":0.05,
+                 "atr_mult":1.0,"high_vol_rr_add":0.5}
 }
+
+Ek kapılar: htf_bias işlem yönüyle ÇELİŞİYORSA → BEKLE (MTF hizasızlık);
+rejim "range" iken BOS (devam) kurulumu → BEKLE; yüksek-vol'da gereken R:R
+high_vol_rr_add kadar artar. ATR verilirse SL tamponu = atr_mult*ATR
+(yoksa eski sl_buffer_frac*range).
 
 Determinist — rastgelelik yok. Uydurma yok: seviyeler yalnız verilen
 girdiden hesaplanır; eksik girdi kararı BEKLE'ye çeker (fail-closed).
@@ -77,6 +85,16 @@ def synth(job: dict) -> dict:
     min_conf = float(th.get("min_confluence", 0.5))
     min_rr = float(th.get("min_rr", 2.0))
     sl_buf_frac = float(th.get("sl_buffer_frac", 0.05))
+    atr_mult = float(th.get("atr_mult", 1.0))
+    hv_rr_add = float(th.get("high_vol_rr_add", 0.5))
+
+    atr = job.get("atr")
+    atr = float(atr) if atr is not None else None
+    regime = job.get("regime") or {}
+    if isinstance(regime, str):
+        regime = {"durum": regime}
+    r_durum = str(regime.get("durum", "")).lower() or None
+    r_yuksek_vol = bool(regime.get("yuksek_vol", False))
 
     gz, rng, imp_dir = _golden_zone(start, end)
 
@@ -91,10 +109,18 @@ def synth(job: dict) -> dict:
     score = W["structure"]
     factors = ["yapı(SMC): " + event + "/" + sdir]
 
-    # --- KATMAN 1: HTF bias hizası ---
-    htf = job.get("htf_bias")
-    if htf and str(htf).lower() == sdir:
+    # --- KATMAN 1: HTF bias hizası (MTF) ---
+    htf = str(job.get("htf_bias") or "").lower() or None
+    if htf == sdir:
         score += W["htf"]; factors.append("HTF bias hizalı")
+    elif htf in {"bull", "bear"}:            # HTF ters yönde → MTF hizasızlık
+        gates.append(f"HTF bias ({htf}) işlem yönüyle ({sdir}) çelişiyor — MTF hizasızlık")
+
+    # --- KATMAN 0: rejim filtresi ---
+    if r_durum == "trend":
+        factors.append("rejim: trend")
+    if r_durum == "range" and event == "BOS":
+        gates.append("range rejiminde devam (BOS) kurulumu — rejim filtresi")
 
     # --- KATMAN 3: arz-talep bölgeleri golden zone ile çakışıyor mu? ---
     want_ob = "demand" if is_long else "supply"
@@ -146,8 +172,9 @@ def synth(job: dict) -> dict:
         entry = gz[:]  # yalnız fib (confluence eksik → aşağıda kapıya takılır)
     entry_mid = (entry[0] + entry[1]) / 2.0
 
-    # --- KATMAN 7: risk. Geçersizlik = impulsu başlatan swing ötesi (+tampon) ---
-    buf = sl_buf_frac * rng
+    # --- KATMAN 7: risk. Geçersizlik = impulsu başlatan swing ötesi (+tampon).
+    #     ATR verildiyse tampon volatilite-uyarlı (atr_mult*ATR), yoksa range oranı.
+    buf = (atr_mult * atr) if (atr is not None and atr > 0) else (sl_buf_frac * rng)
     if is_long:
         sl_ref = min([start] + [o[0] for o in overlaps])
         sl = sl_ref - buf
@@ -165,8 +192,10 @@ def synth(job: dict) -> dict:
         gates.append("confluence eksik: golden zone hiçbir OB/FVG ile çakışmıyor (yalnız fib)")
     if score < min_conf:
         gates.append(f"confluence skoru {score:.2f} < {min_conf}")
-    if rr < min_rr:
-        gates.append(f"R:R {rr:.2f} < {min_rr}")
+    min_rr_eff = min_rr + (hv_rr_add if r_yuksek_vol else 0.0)
+    if rr < min_rr_eff:
+        gates.append(f"R:R {rr:.2f} < {min_rr_eff}"
+                     + (" (yüksek-vol: eşik artırıldı)" if r_yuksek_vol else ""))
 
     if gates:
         decision = "NÖTR-BEKLE"
@@ -184,6 +213,8 @@ def synth(job: dict) -> dict:
         "gecersizlik_sl": round(sl, 6),
         "hedefler": [round(t, 6) for t in targets[:2]],
         "rr": rr,
+        "atr_kullanildi": atr,
+        "rejim": r_durum,
         "kapi_gerekceleri": gates,
         "katman_sirasi": "bağlam→yapı→arz-talep→likidite→fib→onay→risk",
         "not": ("Karar-destek; olasılık senaryosu, sinyal/garanti değil. "
