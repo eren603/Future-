@@ -11,15 +11,44 @@ description: >-
   Tetikleyici kelimeler (TR/EN): grafik, chart, mum, candlestick, teknik analiz,
   technical analysis, SMC, smart money, ICT, CHoCH, BOS, order block, FVG,
   fibonacci, fib, golden zone, OTE, likidite, liquidity sweep, entry, giriş,
-  destek direnç, support resistance, trend, dashboard, plot.
-  Detaylı SMC metodolojisi için forex-trading-expert becerisinin
-  references/smart-money-concepts.md dosyasını kullanır.
+  destek direnç, support resistance, trend, dashboard, plot, ATR, rejim,
+  regime, MTF, çoklu zaman dilimi, edge, tarihsel doğrulama.
+  Çalışan motorlar: scripts/smc_tespit.py (OHLCV'den otomatik yapı/OB/FVG/
+  likidite/ATR/rejim tespiti), scripts/confluence.py (katman sıralı giriş/çıkış
+  + ATR-stop + MTF + rejim kapıları), scripts/setup_dogrulama.py (tarihsel
+  edge kanıtı — kanıt yoksa sinyal yok). Detaylı SMC metodolojisi için
+  forex-trading-expert becerisinin references/smart-money-concepts.md
+  dosyasını kullanır.
 ---
 
 # Grafik Okuma & SMC + Fibonacci Analizi
 
 Üç mod var: **görselden okuma**, **canlı veriden analiz**, **grafik üretme**.
 Hepsi otomatik; kullanıcı komut yazmaz.
+
+## Kesinlik boru hattı (SAYISAL VERİ VARSA ZORUNLU SIRA)
+Yön + giriş/çıkış istendiğinde ve OHLCV verisi mevcutsa (kullanıcı yapıştırdı
+ya da Crypto.com MCP'den çekildi), seviyeler göz kararı DEĞİL şu zincirle üretilir:
+
+```
+veri (OHLCV)
+ → scripts/smc_tespit.py     # swing/BOS-CHoCH/OB/FVG/likidite/ATR/rejim OTOMATİK
+                             # (aynı veri = aynı seviye; öznellik yok). HTF verisi
+                             # de verilirse htf_bias çıkarır (MTF hizalama).
+ → scripts/confluence.py     # tespit çıktısındaki confluence_job ile: katman
+                             # sırası + ATR-uyarlı SL + MTF kapısı + rejim kapısı
+ → scripts/setup_dogrulama.py# AYNI kurulum sınıfı geçmiş veride edge üretti mi?
+                             # PF + Monte Carlo + yarı-dönem tutarlılık.
+                             # sinyal_izni=false ise SİNYAL VERİLMEZ (fail-closed).
+ → karar-kurulu              # nihai tek karar (diğer motorlarla sentez)
+```
+
+Kurallar: (1) `smc_tespit` çıktısındaki `confluence_job` doğrudan
+`confluence.py`'ye verilir — elle seviye uydurulmaz. (2) `setup_dogrulama`
+`sinyal_izni=false` derse sonuç en fazla "kurulum var ama tarihsel kanıt yok →
+BEKLE" olur. (3) Görsel-yalnız analizde (sayısal veri yoksa) bu zincir
+çalıştırılamaz; çıktı "yaklaşık/kanıtsız" etiketiyle verilir ve kullanıcıdan
+OHLCV istenir.
 
 ## A) Görselden okuma (ekran görüntüsü / chart resmi)
 Kullanıcı bir grafik görseli gönderdiğinde şu sırayla analiz et:
