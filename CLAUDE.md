@@ -21,6 +21,7 @@ beceriyi uygula.
 | Pozisyon boyutu, lot, kaç birim, risk %, stop mesafesi, Kelly, kaldıraç, volatilite hedef, VaR/CVaR | `risk-yonetimi` |
 | Portföy dağılımı, varlık ağırlığı, çeşitlendirme, Markowitz, min-varyans, max-Sharpe, HRP, risk paritesi | `portfoy-optimizasyonu` |
 | Video/klip/ekran kaydı gönderimi, mp4/mov/webm, kare çıkarma, videodaki grafiği okuma | `video-isleme` (ffmpeg yoksa kendisi kurar; grafik kaydıysa kareler `grafik-calisma`ya gider) |
+| Türev verisi: açık faiz/OI, funding/fonlama, CVD, taker LSR, likidasyon/tasfiye, deleveraging, squeeze, CoinGlass paneli | `turev-akis` (kline-körlüğü panzehiri; OI/funding/CVD/LSR/likidasyon → sayısal yön skoru) |
 | Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
 | Ciddi analiz/karar/değerlendirme, "uzman gibi bak", derin inceleme, profesyonel görüş, strateji, çok-adımlı muhakeme | `uzman-modu` (ÜST-AKIL DİSİPLİNİ) |
 
@@ -48,6 +49,16 @@ DEĞİLDİR — motorlar yalnız analiz/backtest üretir.
 Ek kural (motor): Kullanıcı 15M+4H kline seti gönderdiğinde `karar-motoru`
 becerisi uygulanır — motor çıktısı OLDUĞU GİBİ verilir, üstüne alternatif
 senaryo yazılmaz; koşu sonrası `engine/state/` değişiklikleri commit+push edilir.
+
+Ek kural (türev-akış — kline-körlüğü kapatma): `karar-motoru` YALNIZ kline
+görür (OI/funding/CVD/likidasyona kördür — `engine/README.md`). Bu yüzden bir
+analizde CoinGlass/borsa türev paneli (ekran görüntüsü ya da video karesi)
+mevcutsa `turev-akis` becerisi motorla BİRLİKTE otomatik çalışır: panelden
+okunan OI/funding/CVD/taker-LSR/likidasyon değerleri `scripts/turev_akis.py`'ye
+verilir → sayısal yön skoru + DELEVERAGING/TAZE-SHORT/SOĞUMA erken-uyarıları
+üretilir ve `karar-kurulu`ya **sözel değil ölçülmüş** bir danışman olarak girer.
+Türev verisi okunmuşsa kurula lafla eklenmez; motor koşulur. Uydurma sayı yasak;
+eksik alan "VERİ YOK" (fail-closed). Canlı/otomatik emir DAHİL DEĞİL.
 
 Ek kural: Kullanıcı bir **grafik ekran görüntüsü** gönderirse (mum grafiği,
 fiyat grafiği), açıkça istemese bile `grafik-calisma` SMC + Fibonacci akışıyla
