@@ -1,67 +1,99 @@
 {
-  "son_bar": 1784754900000,
-  "son_bar_utc": "2026-07-22 21:15",
+  "son_bar": 1784804400000,
+  "son_bar_utc": "2026-07-23 11:00",
   "karar": {
     "karar": "BEKLE",
     "yon": null,
     "zincir": 1,
-    "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.67 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+    "neden": "BEKLE: SHORT sinyali var (zincir 1) ama kenar zayıf — R=0.54 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
   },
   "takip": null,
-  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-22 13:15).",
+  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-22 21:15).",
   "acik_bolgeler": [
     {
       "tip": "bear",
-      "ust": 66574.1,
-      "alt": 66472.0,
-      "ce": 66523.05,
-      "bar": 29,
-      "zaman": 1784682000000
+      "ust": 66020.0,
+      "alt": 66013.4,
+      "ce": 66016.7,
+      "bar": 70,
+      "zaman": 1784768400000
+    },
+    {
+      "tip": "bear",
+      "ust": 65986.7,
+      "alt": 65914.8,
+      "ce": 65950.75,
+      "bar": 71,
+      "zaman": 1784769300000
+    },
+    {
+      "tip": "bear",
+      "ust": 65863.3,
+      "alt": 65834.8,
+      "ce": 65849.05,
+      "bar": 72,
+      "zaman": 1784770200000
+    },
+    {
+      "tip": "bull",
+      "ust": 65476.5,
+      "alt": 65428.4,
+      "ce": 65452.45,
+      "bar": 98,
+      "zaman": 1784793600000
+    },
+    {
+      "tip": "bull",
+      "ust": 65557.6,
+      "alt": 65534.9,
+      "ce": 65546.25,
+      "bar": 99,
+      "zaman": 1784794500000
+    },
+    {
+      "tip": "bear",
+      "ust": 65710.1,
+      "alt": 65709.4,
+      "ce": 65709.75,
+      "bar": 109,
+      "zaman": 1784803500000
     }
   ],
   "swing_15m_son": [
     [
-      66100.0,
-      "H"
-    ],
-    [
-      65877.0,
+      65543.1,
       "L"
     ],
     [
-      66363.6,
+      65764.8,
       "H"
     ],
     [
-      65912.6,
+      65593.9,
       "L"
     ],
     [
-      66208.9,
+      65793.7,
       "H"
     ],
     [
-      65650.2,
+      65313.7,
       "L"
     ],
     [
-      65753.0,
+      65333.1,
       "L"
     ],
     [
-      65954.3,
+      65732.3,
       "H"
+    ],
+    [
+      65555.1,
+      "L"
     ]
   ],
   "swing_4h_son": [
-    [
-      65084.6,
-      "H"
-    ],
-    [
-      63736.1,
-      "L"
-    ],
     [
       65788.0,
       "H"
@@ -77,16 +109,24 @@
     [
       65505.0,
       "L"
+    ],
+    [
+      66363.6,
+      "H"
+    ],
+    [
+      65313.7,
+      "L"
     ]
   ],
   "rejim_4h": {
     "rejim": "FLAT",
-    "fark": 297.17499999998836,
-    "esik": 960.5050000000119
+    "fark": -197.43000000000757,
+    "esik": 617.2849999999889
   },
   "donus_dizisi": {
-    "yon": "LONG",
+    "yon": "SHORT",
     "adim": 4,
-    "supurme_ucu": 65977.0
+    "supurme_ucu": 65763.3
   }
 }
