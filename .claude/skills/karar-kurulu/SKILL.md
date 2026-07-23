@@ -69,8 +69,20 @@ fail-closed karar kapıları uygular. Zayıf skor / düşük uzlaşı / düşük
 → otomatik **NÖTR-BEKLE** (işlem yok).
 
 ## Çıktı (nihai karar kartı)
-`KARAR (LONG/SHORT/NÖTR-BEKLE)` · `güven_skoru` · `yön_skoru` · `uzlaşı` ·
-`muhalefet` · `geçersizlik_koşulu` · `danışman_özeti (kanıt + doğrulama)`.
+`YON_BIAS (LONG/SHORT)` · `KARAR (LONG/SHORT/NÖTR-BEKLE)` · `güven_skoru` ·
+`yön_skoru` · `uzlaşı` · `muhalefet` · `geçersizlik_koşulu` ·
+`danışman_özeti (kanıt + doğrulama)`.
+
+### ⚠️ YÖN ile KARAR AYRIDIR (zorunlu sunum)
+`YON_BIAS` alanı `yon_skoru` işaretinden gelir ve **KARAR kapısından
+bağımsızdır**: kapı NÖTR-BEKLE dese bile ağırlıklı kanıtın yönü (LONG/SHORT)
+her zaman basılır. Kullanıcıya iki satır ver:
+1. **YÖN:** `YON_BIAS` (long/short) — saklanmaz, "BEKLE" ardına gizlenmez.
+2. **İŞLEM KALİTESİ:** `KARAR` — temiz giriş (R≥1.35 + confluence kapıları) var
+   mı, yoksa "yön X ama temiz giriş için Y'yi bekle" mi.
+NÖTR-BEKLE bir **işlem-kalitesi** hükmüdür, yön reddi değil. Motor BEKLE
+verdiğinde bile motorun zincir-1/2 iç kurulumunun giriş/stop/T1'i motordan
+okunup verilir (uydurma değil).
 
 ## Zorunlu disiplin
 - Kararı **motor çıktılarına** dayandır; hiçbir motor sonuç üretmeden karar verme.

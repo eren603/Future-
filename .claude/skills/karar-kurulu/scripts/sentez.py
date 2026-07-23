@@ -124,10 +124,22 @@ def synth(job: dict) -> dict:
                      gate_reasons=reasons)
 
 
+def yon_bias(score) -> str:
+    """Ağırlıklı yön eğilimi — KARAR kapısından BAĞIMSIZ. Kullanıcıya her koşuda
+    net yön verilir: kapı BEKLE dese bile eğilim gizlenmez. Saf işaret: >0 LONG,
+    <0 SHORT, tam 0 ise NÖTR (gerçek berabere)."""
+    if score > 0:
+        return "LONG"
+    if score < 0:
+        return "SHORT"
+    return "NÖTR"
+
+
 def _decision(decision, conf, score, rows, job, *, agreement=0.0, dissent=None,
               gate_reasons=None, note=None) -> dict:
     return {
         "question": job.get("question", ""),
+        "YON_BIAS": yon_bias(score),
         "KARAR": decision,
         "guven_skoru": conf,
         "yon_skoru": score,

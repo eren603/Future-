@@ -116,8 +116,23 @@ def main():
         })
         assert h["KARAR"] == want, ("CANLILIK KIRILDI", stance, h["KARAR"])
 
+    # I) YON_BIAS kapıdan bağımsız: kapı BEKLE'ye düşürse bile yön SHORT basılır.
+    # short 0.5 + iki flat 0.6 → yön ağırlığı 0.5<0.6 kapısı BEKLE verir; skor hâlâ negatif.
+    i = sentez.synth({
+        "question": "I",
+        "advisors": [
+            {"name": "a", "stance": "short", "confidence": 0.5},
+            {"name": "b", "stance": "flat", "confidence": 0.6},
+            {"name": "c", "stance": "flat", "confidence": 0.6},
+        ],
+    })
+    assert i["yon_skoru"] < 0, i
+    assert i["KARAR"] == "NÖTR-BEKLE", ("kapı BEKLE bekleniyordu", i["KARAR"])
+    assert i["YON_BIAS"] == "SHORT", ("YÖN GİZLENDİ — kapı BEKLE ama yön SHORT olmalı", i)
+    assert sentez.yon_bias(0.3) == "LONG" and sentez.yon_bias(-0.3) == "SHORT" and sentez.yon_bias(0.0) == "NÖTR"
+
     print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
-          "yon-short, isaret-simetri, isaret-butunluk, canlilik")
+          "yon-short, isaret-simetri, isaret-butunluk, canlilik, yon-bias-kapidan-bagimsiz")
 
 
 if __name__ == "__main__":

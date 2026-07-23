@@ -37,6 +37,23 @@ muhakeme → adversarial doğrulama → `scripts/sentez.py` ile **güven-ağırl
 karar**. Çelişki/zayıf sinyalde karar **NÖTR-BEKLE**'dir (fail-closed). Yalnız
 karar-destek; canlı/otomatik emir DAHİL DEĞİL.
 
+Ek kural (YÖN ZORUNLU — her analizde otomatik, tetikleyicisiz): Bir piyasa
+analizi/karar çıktısı **DAİMA iki ayrı satırla** verilir; yön asla "BEKLE"
+ardında saklanmaz:
+1. **YÖN (bias): LONG veya SHORT.** `sentez.py`'nin `YON_BIAS` alanından gelir
+   (ağırlıklı `yon_skoru` işareti — kapıdan bağımsız). Motor BEKLE dese bile
+   ağırlıklı kanıtın yönü **açıkça** söylenir. Yön yalnız `yon_skoru` tam 0 ise
+   NÖTR olur (gerçek berabere) — bu nadirdir ve gerekçesiyle belirtilir.
+   Motorun BEKLE'ye bastırdığı zincir-1/2 kurulumunun kendi hesapladığı
+   giriş/stop/T1 seviyeleri de sözleşme gereği motordan okunup verilir (uydurma
+   değil; motorun iç çıktısı).
+2. **İŞLEM KALİTESİ (trade-gate): temiz giriş var mı?** Motorun R≥1.35 kapısı +
+   `confluence`/`setup_dogrulama` kapıları. "Temiz giriş VAR (seviyeler)" ya da
+   "Yön X ama temiz giriş için Y seviyesini/tepkiyi bekle (R şu an dar)".
+Yani BEKLE bir **işlem-kalitesi** hükmüdür, **yön reddi değildir** — ikisi
+karıştırılıp kullanıcı "BEKLE" ile oyalanmaz. Doğruluk sözleşmesi korunur:
+yön ağırlıklı kanıttan türetilir (uydurma değil), canlı/otomatik emir yine YOK.
+
 Ek kural (motorlar — paralel & zorunlu sonuç): Bu becerilerin her biri kendi
 içinde ÇALIŞAN Python motoruna sahiptir (`.claude/skills/<ad>/scripts/`). Bir
 soru birden çok motoru ilgilendiriyorsa **hepsi birlikte/paralel** uygulanır ve
