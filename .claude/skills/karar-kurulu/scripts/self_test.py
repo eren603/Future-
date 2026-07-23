@@ -88,7 +88,9 @@ def main():
     assert f["yon_skoru"] > 0, f
     assert abs(f["yon_skoru"] + e["yon_skoru"]) < 1e-9, (e["yon_skoru"], f["yon_skoru"])
 
-    # G) İŞARET BÜTÜNLÜĞÜ — LONG kararı verilince long ağırlığı short'tan büyük olmalı
+    # G) İŞARET BÜTÜNLÜĞÜ — LONG kararı verilince long ağırlığı short'tan büyük olmalı.
+    # (a/b doğrulanır; fail-closed default altında doğrulanmamış görüş penaltı alıp
+    # min_side kapısını düşürürdü — bu test yön bütünlüğünü ölçüyor, doğrulamayı değil.)
     g = sentez.synth({
         "question": "G",
         "advisors": [
@@ -96,6 +98,7 @@ def main():
             {"name": "b", "stance": "long", "confidence": 0.8},
             {"name": "c", "stance": "short", "confidence": 0.4},
         ],
+        "verifier": {"a": {"confirmed": True}, "b": {"confirmed": True}},
     })
     wl = sum(x["etkin_agirlik"] for x in g["danisman_ozeti"] if x["yon"] == "long")
     ws = sum(x["etkin_agirlik"] for x in g["danisman_ozeti"] if x["yon"] == "short")
@@ -131,8 +134,51 @@ def main():
     assert i["YON_BIAS"] == "SHORT", ("YÖN GİZLENDİ — kapı BEKLE ama yön SHORT olmalı", i)
     assert sentez.yon_bias(0.3) == "LONG" and sentez.yon_bias(-0.3) == "SHORT" and sentez.yon_bias(0.0) == "NÖTR"
 
+    # J) FAIL-CLOSED VARSAYILAN (Y1) — verifier girdisi OLMAYAN görüş doğrulanmamış
+    #    sayılır ve çürütme penaltısı alır (eski davranış: tam ağırlık = fail-OPEN).
+    j = sentez.synth({
+        "question": "J",
+        "advisors": [{"name": "x", "stance": "long", "confidence": 0.8}],  # verifier YOK
+    })
+    jx = j["danisman_ozeti"][0]
+    assert jx["dogrulandi"] is False, ("FAIL-CLOSED KIRILDI: doğrulama yoksa çürütülmüş sayılmalı", j)
+    assert jx["etkin_agirlik"] < 0.8, ("penaltı uygulanmalı (0.8×0.25=0.2)", jx)
+    assert jx["curutme"], ("çürütme gerekçesi yazılmalı", jx)
+
+    # K) DOĞRULAMA KÖPRÜSÜ (Y7) — danışman kendi _verifier_confirmed alanını taşırsa
+    #    (turev-akis to_advisor bunu üretir) sentez onu okur; ayrı verifier gerekmez.
+    k = sentez.synth({
+        "question": "K",
+        "advisors": [{"name": "turev-akis", "stance": "short", "confidence": 0.7,
+                      "_verifier_confirmed": True}],
+    })
+    kx = k["danisman_ozeti"][0]
+    assert kx["dogrulandi"] is True, ("_verifier_confirmed=True köprülenmeli", k)
+    assert abs(kx["etkin_agirlik"] - 0.7) < 1e-9, ("doğrulanınca tam ağırlık", kx)
+
+    # K2) Danışman _verifier_confirmed=False taşırsa → penaltı
+    k2 = sentez.synth({
+        "question": "K2",
+        "advisors": [{"name": "turev-akis", "stance": "short", "confidence": 0.7,
+                      "_verifier_confirmed": False}],
+    })
+    assert k2["danisman_ozeti"][0]["dogrulandi"] is False and \
+        k2["danisman_ozeti"][0]["etkin_agirlik"] < 0.7, k2
+
+    # L) ÖNCELİK — açık verifier girdisi danışmanın kendi alanını EZER.
+    l = sentez.synth({
+        "question": "L",
+        "advisors": [{"name": "turev-akis", "stance": "short", "confidence": 0.7,
+                      "_verifier_confirmed": True}],
+        "verifier": {"turev-akis": {"confirmed": False, "reason": "dış çürütme"}},
+    })
+    lx = l["danisman_ozeti"][0]
+    assert lx["dogrulandi"] is False, ("açık verifier _verifier_confirmed'i ezmeli", l)
+    assert lx["curutme"] == "dış çürütme", lx
+
     print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
-          "yon-short, isaret-simetri, isaret-butunluk, canlilik, yon-bias-kapidan-bagimsiz")
+          "yon-short, isaret-simetri, isaret-butunluk, canlilik, yon-bias-kapidan-bagimsiz, "
+          "fail-closed-varsayilan, dogrulama-koprusu, verifier-onceligi")
 
 
 if __name__ == "__main__":

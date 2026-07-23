@@ -13,6 +13,9 @@ Girdi JSON:
   ],
   "verifier": { "grafik-calisma": {"confirmed": true},
                 "backtest-motoru": {"confirmed": false, "reason":"tek dönem, overfit riski"} },
+  # FAIL-CLOSED: verifier'da girdisi OLMAYAN danışman DOĞRULANMAMIŞ sayılır ve
+  # çürütme penaltısı alır. Motor kendi doğrulamasını taşıyorsa (advisor içinde
+  # "_verifier_confirmed": true/false) o okunur. Kanıtsız görüş tam ağırlık ALMAZ.
   "invalidation": "4h kapanış swing low altı",
   "thresholds": {"score":0.15, "min_agreement":0.55, "refute_penalty":0.25,
                  "min_side_weight":0.6}
@@ -67,13 +70,29 @@ def synth(job: dict) -> dict:
         d = stance_dir(a.get("stance", "flat"))
         conf = float(a.get("confidence", 0.5))
         conf = min(max(conf, 0.0), 1.0)
+        # Fail-closed doğrulama çözümü. Öncelik:
+        #   1) açık verifier girdisi (job["verifier"][name]["confirmed"])
+        #   2) danışmanın kendi taşıdığı _verifier_confirmed alanı (ör. turev-akis
+        #      to_advisor bunu üretir — motor kendi kapsamını doğrular)
+        #   3) hiçbiri yoksa DOĞRULANMAMIŞ sayılır → çürütme penaltısı (fail-OPEN değil).
+        # Eski davranış get("confirmed", True) idi: doğrulanmayan görüş TAM ağırlık
+        # alıyordu — "fail-closed" sözleşmesinin tersi. Artık kanıt yoksa güvenilmez.
         v = verifier.get(name, {})
-        confirmed = bool(v.get("confirmed", True))
+        if "confirmed" in v:
+            confirmed = bool(v["confirmed"])
+            refute_reason = v.get("reason") if not confirmed else None
+        elif "_verifier_confirmed" in a:
+            confirmed = bool(a["_verifier_confirmed"])
+            refute_reason = ("motorun kendi doğrulaması yetersiz (kapsam/kanıt düşük)"
+                             if not confirmed else None)
+        else:
+            confirmed = False
+            refute_reason = "doğrulama YOK → fail-closed varsayılan (çürütme penaltısı)"
         eff = conf * (1.0 if confirmed else refute_pen)  # çürütülen görüş ağırlığı düşer
         rows.append({"name": name, "dir": d, "confidence": round(conf, 4),
                      "confirmed": confirmed, "eff_weight": round(eff, 4),
                      "evidence": a.get("evidence", ""),
-                     "reason_refuted": (v.get("reason") if not confirmed else None)})
+                     "reason_refuted": refute_reason})
 
     total_w = sum(r["eff_weight"] for r in rows)
     if total_w <= 0:

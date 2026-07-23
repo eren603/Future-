@@ -84,7 +84,7 @@ analiz et; derin SMC tanımları için `forex-trading-expert` referanslarını k
 Kurallar:
 1. Soru birden fazla kategoriye giriyorsa ilgili becerilerin **hepsini** birlikte
    uygula (örn. "şu kripto grafiğini analiz et" → `grafik-calisma` +
-   `finansal-veri-analizi`).
+   `data-analysis-deep-scan`).
 2. Beceri akışını görünür süreç olarak anlatma; **arka plan disiplini** olarak
    uygula, doğrudan sonucu ver.
 3. Soru finans/analiz/grafik ile **ilgili değilse** bu beceriler devreye girmez.

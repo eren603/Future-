@@ -35,6 +35,9 @@ def main():
     _check(o1)
     o2 = pf.run_job({"op": "optimize", "returns": rets, "method": "max_sharpe", "bars_per_year": 8760}, base=None)
     _check(o2)
+    # O14: markowitz optimizasyonu yakınsamayı raporlamalı (çöp ağırlık 'optimum' sanılmasın)
+    assert o1.get("converged") is True, o1
+    assert o2.get("converged") is True, o2
     o3 = pf.run_job({"op": "optimize", "returns": rets, "method": "hrp", "bars_per_year": 8760}, base=None)
     _check(o3)
     assert len(o3["leaf_order"]) == 4

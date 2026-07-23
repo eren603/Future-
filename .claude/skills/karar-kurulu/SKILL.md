@@ -78,9 +78,17 @@ fail-closed karar kapıları uygular. Zayıf skor / düşük uzlaşı / düşük
 bağımsızdır**: kapı NÖTR-BEKLE dese bile ağırlıklı kanıtın yönü (LONG/SHORT)
 her zaman basılır. Kullanıcıya iki satır ver:
 1. **YÖN:** `YON_BIAS` (long/short) — saklanmaz, "BEKLE" ardına gizlenmez.
-2. **İŞLEM KALİTESİ:** `KARAR` — temiz giriş (R≥1.35 + confluence kapıları) var
-   mı, yoksa "yön X ama temiz giriş için Y'yi bekle" mi.
-NÖTR-BEKLE bir **işlem-kalitesi** hükmüdür, yön reddi değil. Motor BEKLE
+2. **İŞLEM KALİTESİ:** `KARAR` — temiz giriş var mı, yoksa "yön X ama temiz
+   giriş için Y'yi bekle" mi.
+NÖTR-BEKLE bir **işlem-kalitesi** hükmüdür, yön reddi değil.
+
+> **Not (kapı kaynağı — doküman-kod hizası):** R≥1.35 ve confluence kapıları
+> `sentez.py`'de DEĞİL, işlem-kalitesi motorlarındadır: `karar-motoru`
+> (R≥1.35 gerçek risk-ödül kapısı) ve `grafik-calisma/confluence.py`
+> (min_rr + confluence + setup_dogrulama kapıları). `sentez.py` yalnız
+> danışman görüşlerini güven-ağırlıklı birleştirir (skor/uzlaşı/yön-ağırlığı
+> kapıları). Yani "temiz giriş" hükmü bu motorlardan gelir; kurul sentezi onu
+> raporlar, kendi içinde R hesaplamaz. Motor BEKLE
 verdiğinde bile motorun zincir-1/2 iç kurulumunun giriş/stop/T1'i motordan
 okunup verilir (uydurma değil).
 

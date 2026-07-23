@@ -314,6 +314,16 @@ def detect(job: dict) -> dict:
                 confluence_job["atr"] = round(atr, 8)
             if htf_bias:
                 confluence_job["htf_bias"] = htf_bias
+            # KALİBRASYON KÖPRÜSÜ (Y2): kalibre edilmiş eşikler (min_rr vb.) buradan
+            # confluence'a KODLA akar — eskiden confluence_job'da 'thresholds' hiç yoktu,
+            # bu yüzden confluence her koşuda varsayılan min_rr=2.0 kullanıyordu ("dinamik
+            # eşik" anlatısı çıktıyı etkilemeyen ölü koddu). Job 'confluence_thresholds'
+            # taşırsa (kalibrasyon.py ya da çağıran) olduğu gibi geçir; kaynağı da işaretle.
+            ct = job.get("confluence_thresholds") or job.get("thresholds")
+            if ct:
+                confluence_job["thresholds"] = ct
+                confluence_job["thresholds_kaynak"] = job.get(
+                    "thresholds_kaynak", "smc_tespit → confluence köprüsü (job'dan aktarıldı)")
 
     return {
         "bar_sayisi": n,

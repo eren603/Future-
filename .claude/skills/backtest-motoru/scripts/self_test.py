@@ -80,7 +80,32 @@ def main():
         assert _dir_ret(dn, -1.0) > 0, "short, düşen piyasada kâr etmeli"
         assert _dir_ret(dn, 1.0) < 0,  "long, düşen piyasada zarar etmeli"
 
-    print("SELF_TEST_OK: sma_cross, rsi, signal_column, monte_carlo, walk_forward, yon-isareti")
+        # 5) YILLIKLAŞTIRMA (O2) — timeframe'den bars_per_year türetimi.
+        #    15M → 35040 olmalı (8760 saatlik DEĞİL); aksi halde Sharpe ~2 kat düşük çıkar.
+        assert bt.resolve_bars_per_year({"timeframe": "15m"})[0] == 35040.0
+        assert bt.resolve_bars_per_year({"timeframe": "4h"})[0] == 2190.0
+        assert bt.resolve_bars_per_year({"timeframe": "1h"})[0] == 8760.0
+        assert bt.resolve_bars_per_year({"timeframe": "1d"})[0] == 365.0
+        # Açık bars_per_year timeframe'i ezer
+        assert bt.resolve_bars_per_year({"bars_per_year": 252, "timeframe": "15m"})[0] == 252.0
+        # Hiçbiri yoksa 8760 + uyarı
+        bpy, note = bt.resolve_bars_per_year({})
+        assert bpy == 8760.0 and note is not None
+        # Sharpe 15M ölçekte türetilen tabanla raporlanır ve metrikte görünür
+        job15 = {"input": str(csv), "strategy": {"type": "sma_cross", "fast": 10, "slow": 30},
+                 "timeframe": "15m"}
+        r15 = bt.run_job(job15, base=None)
+        assert r15["metrics"]["bars_per_year"] == 35040.0, r15["metrics"]
+        job1h = {"input": str(csv), "strategy": {"type": "sma_cross", "fast": 10, "slow": 30},
+                 "timeframe": "1h"}
+        r1h = bt.run_job(job1h, base=None)
+        # Aynı veri, daha yüksek yıllıklaştırma tabanı → |Sharpe| daha büyük (sqrt(4)=2x)
+        if r1h["metrics"]["sharpe"] != 0:
+            oran = r15["metrics"]["sharpe"] / r1h["metrics"]["sharpe"]
+            assert abs(oran - 2.0) < 1e-6, ("15M/1H Sharpe oranı sqrt(35040/8760)=2 olmalı", oran)
+
+    print("SELF_TEST_OK: sma_cross, rsi, signal_column, monte_carlo, walk_forward, "
+          "yon-isareti, bars-per-year-turetim")
 
 
 if __name__ == "__main__":

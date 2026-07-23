@@ -7,7 +7,8 @@ Girdi: JSON job.
     "strategy": {...},               # aşağıdaki tiplerden biri
     "fees_bps": 5.0, "slippage_bps": 2.0,
     "allow_short": true,
-    "bars_per_year": 8760,           # saatlik kripto=8760, günlük=252
+    "timeframe": "15m",              # dilimden bars_per_year türetilir (15m→35040, 4h→2190, 1h→8760, 1d→365)
+    "bars_per_year": 8760,           # AÇIK verilirse timeframe'i ezer; verilmezse timeframe'den türetilir
     "monte_carlo": {"runs": 1000},   # opsiyonel
     "walk_forward": {"train": 0.7}   # opsiyonel
   }
@@ -32,6 +33,37 @@ import pandas as pd
 
 class BacktestError(Exception):
     pass
+
+
+_TF_MINUTES = {
+    "1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30,
+    "1h": 60, "2h": 120, "4h": 240, "6h": 360, "8h": 480, "12h": 720,
+    "1d": 1440, "1w": 10080,
+}
+# Kripto 7/24 işlem görür → yıl = 365 gün.
+_MINUTES_PER_YEAR = 365 * 24 * 60  # 525600
+
+
+def resolve_bars_per_year(job: dict):
+    """bars_per_year'ı çöz. Öncelik: açık 'bars_per_year' > 'timeframe'/'interval'
+    diliminden türetme > varsayılan 8760 (saatlik) + uyarı.
+
+    Sharpe/Sortino = ort/std × sqrt(bars_per_year). Yanlış yıllıklaştırma metriği
+    doğrudan çarpar: 15M veriyi 8760 (saatlik) ile ölçmek Sharpe'ı sqrt(35040/8760)=2
+    kat DÜŞÜK gösterir → gerçek kenar 'zayıf sinyal' sanılır. Bu yüzden dilimden türet.
+    """
+    if job.get("bars_per_year") is not None:
+        return float(job["bars_per_year"]), None
+    tf = job.get("timeframe") or job.get("interval")
+    if tf is not None:
+        key = str(tf).strip().lower()
+        if key in _TF_MINUTES:
+            bpy = _MINUTES_PER_YEAR / _TF_MINUTES[key]
+            return float(bpy), f"bars_per_year={bpy:g} ({key} diliminden türetildi, kripto 365 gün)"
+        return 8760.0, (f"UYARI: tanınmayan timeframe '{tf}' → varsayılan 8760 (saatlik) "
+                        "kullanıldı; Sharpe yıllıklaştırması yanlış olabilir, 'bars_per_year' verin")
+    return 8760.0, ("UYARI: bars_per_year/timeframe verilmedi → varsayılan 8760 (saatlik). "
+                    "15M veri için 35040 olmalı; aksi halde Sharpe ~2 kat düşük çıkar")
 
 
 def load_ohlcv(source: str, base: Path | None) -> pd.DataFrame:
@@ -202,13 +234,17 @@ def monte_carlo(trade_returns: list[float], runs: int, seed: int) -> dict:
 
 def run_job(job: dict, base: Path | None) -> dict:
     frame = load_ohlcv(job["input"], base)
+    bars_per_year, bpy_note = resolve_bars_per_year(job)
     metrics = run_backtest(
         frame, job["strategy"],
         fees_bps=job.get("fees_bps", 5.0), slippage_bps=job.get("slippage_bps", 2.0),
-        allow_short=bool(job.get("allow_short", True)), bars_per_year=job.get("bars_per_year", 8760),
+        allow_short=bool(job.get("allow_short", True)), bars_per_year=bars_per_year,
     )
     trade_returns = metrics.pop("_trade_returns")
+    metrics["bars_per_year"] = round(bars_per_year, 4)  # yıllıklaştırma tabanını şeffaf yaz
     report = {"metrics": metrics}
+    if bpy_note:
+        report["bars_per_year_kaynak"] = bpy_note
 
     mc = job.get("monte_carlo")
     if mc:
@@ -222,10 +258,10 @@ def run_job(job: dict, base: Path | None) -> dict:
         if cut >= 5 and (n - cut) >= 5:
             tr = run_backtest(frame.iloc[:cut], job["strategy"], fees_bps=job.get("fees_bps", 5.0),
                               slippage_bps=job.get("slippage_bps", 2.0), allow_short=bool(job.get("allow_short", True)),
-                              bars_per_year=job.get("bars_per_year", 8760))
+                              bars_per_year=bars_per_year)
             te = run_backtest(frame.iloc[cut:], job["strategy"], fees_bps=job.get("fees_bps", 5.0),
                               slippage_bps=job.get("slippage_bps", 2.0), allow_short=bool(job.get("allow_short", True)),
-                              bars_per_year=job.get("bars_per_year", 8760))
+                              bars_per_year=bars_per_year)
             report["walk_forward"] = {
                 "train": {"total_return": tr["total_return"], "sharpe": tr["sharpe"], "num_trades": tr["num_trades"]},
                 "test": {"total_return": te["total_return"], "sharpe": te["sharpe"], "num_trades": te["num_trades"]},

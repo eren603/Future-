@@ -41,14 +41,28 @@ class TurevError(Exception):
 # Eşik KONVANSİYONLARI (piyasa parametresi değil; çıktıda 'varsayimlar'da raporlanır).
 # Funding: Binance perp 8h; |f| bu eşiği aşarsa "kalabalık" sayılır (contrarian).
 KONVANSIYON = {
-    "funding_asiri": 0.01,        # % — üstü aşırı-long (contrarian ayı), altı-negatif aşırı-short
-    "funding_ilimli": 0.003,      # % — bunun altı "soğuk/nötr"
+    # Funding eşikleri (Binance 8h perp). ÖNEMLİ: Binance'in taban/nötr fonlaması
+    # ~%0.01/8h'tir (yıllık ~%10.95 faiz bileşeni) — bu KALABALIK değil, normaldir.
+    # Eski eşik 0.01 + ">=" bu tabanı "aşırı-long contrarian AYI" işaretliyordu →
+    # sistematik aşağı yanlılık. Kalabalık/aşırı funding piyasa konvansiyonunda
+    # ~%0.05/8h ve üstüdür; taban ~%0.01 ve altı soğuk/nötrdür.
+    "funding_asiri": 0.05,        # % — üstü aşırı-long (contrarian ayı), altı-negatif aşırı-short
+    "funding_ilimli": 0.01,       # % — |f| bunun altı "soğuk/nötr" (Binance taban fonlaması)
     "oi_delta_min": 0.005,        # OI serisinin göreli değişimi bu eşiği aşmalı (gürültü filtresi)
     "cvd_delta_min": 0.0,         # CVD yönü işareti (>0 alıcı)
     "lsr_ust": 1.05, "lsr_alt": 0.95,   # taker LSR nötr bandı
     "liq_orani": 2.0,             # bir taraf diğerinin bu katıysa kaskad sinyali
     # Faktör ağırlıkları (toplam 1.0) — OI/fiyat matrisi en ağır (erken-uyarının kalbi)
     "w_oi": 0.34, "w_funding": 0.18, "w_cvd": 0.18, "w_lsr": 0.15, "w_liq": 0.15,
+    # to_advisor eşleme eşikleri (tek-kaynak; gizli sabit yok — deftere yazılır)
+    "stance_esigi": 0.2,          # |yon_skoru| bunun altı → flat (kararsız)
+    "kapsam_esigi": 0.5,          # okunan kapsam bunun altı → doğrulanmamış (fail-closed)
+    # Faktör skor büyüklükleri (yön işareti kanıttan; büyüklük konvansiyon).
+    # Deftere yazılır: OI/fiyat ±1.0 (taze giriş) / ±0.6 (deleveraging) / +0.4 (zayıf),
+    # funding ±1.0 (aşırı) / ±0.3 (ılımlı), CVD ±0.7, LSR ±0.5, likidasyon ±0.8.
+    "mag_oi_taze": 1.0, "mag_oi_delev": 0.6, "mag_oi_zayif": 0.4,
+    "mag_funding_asiri": 1.0, "mag_funding_ilimli": 0.3,
+    "mag_cvd": 0.7, "mag_lsr": 0.5, "mag_liq": 0.8,
 }
 
 
@@ -58,8 +72,14 @@ def varsayim_defteri(extra=None):
         f"funding aşırı eşiği=%{k['funding_asiri']} / ılımlı=%{k['funding_ilimli']} (Binance 8h perp konvansiyonu)",
         f"OI göreli değişim gürültü filtresi={k['oi_delta_min']} (|Δ| altı = yatay sayılır)",
         f"taker LSR nötr bandı=[{k['lsr_alt']},{k['lsr_ust']}]",
-        f"likidasyon kaskad oranı={k['liq_orani']}x (bir taraf diğerinin katı)",
+        f"likidasyon kaskad oranı={k['liq_orani']}x (bir taraf diğerinin katı; tek-taraflı kaskad dahil)",
         f"ağırlıklar OI/funding/CVD/LSR/liq = {k['w_oi']}/{k['w_funding']}/{k['w_cvd']}/{k['w_lsr']}/{k['w_liq']}",
+        (f"faktör skor büyüklükleri (yön işareti kanıttan, büyüklük konvansiyon): "
+         f"OI taze=±{k['mag_oi_taze']}/deleveraging=∓{k['mag_oi_delev']}/zayıf=+{k['mag_oi_zayif']}, "
+         f"funding aşırı=±{k['mag_funding_asiri']}/ılımlı=±{k['mag_funding_ilimli']}, "
+         f"CVD=±{k['mag_cvd']}, LSR=±{k['mag_lsr']}, likidasyon=±{k['mag_liq']}"),
+        (f"danışman eşleme eşikleri: stance |skor|≥{k['stance_esigi']} yön verir, "
+         f"okunan kapsam≥{k['kapsam_esigi']} doğrulanmış sayılır (altı fail-closed çürütme)"),
         "Bu skor türev verisini KARARA DAHİL EDER; geleceği bilmez, garanti vermez.",
     ]
     return d + list(extra or [])
@@ -90,13 +110,13 @@ def _oi_price_signal(oi_series, price_series, p):
     if not oi_up and not oi_dn:
         return 0.0, f"OI yatay (Δ%{doi*100:.2f}) → türev-yönsüz"
     if oi_up and px_up:
-        return +1.0, f"OI↑%{doi*100:.2f} + fiyat↑ → taze LONG / sağlıklı trend (boğa)"
+        return +p["mag_oi_taze"], f"OI↑%{doi*100:.2f} + fiyat↑ → taze LONG / sağlıklı trend (boğa)"
     if oi_up and not px_up:
-        return -1.0, f"OI↑%{doi*100:.2f} + fiyat↓ → taze SHORT giriyor (ayı baskısı)"
+        return -p["mag_oi_taze"], f"OI↑%{doi*100:.2f} + fiyat↓ → taze SHORT giriyor (ayı baskısı)"
     if oi_dn and px_up:
-        return +0.4, f"OI↓%{doi*100:.2f} + fiyat↑ → short kapama (zayıf boğa, konviksiyonsuz)"
+        return +p["mag_oi_zayif"], f"OI↓%{doi*100:.2f} + fiyat↑ → short kapama (zayıf boğa, konviksiyonsuz)"
     # oi_dn and price down
-    return -0.6, f"OI↓%{doi*100:.2f} + fiyat↓ → long tasfiyesi / deleveraging (ayı, ama dip-tükenme olabilir)"
+    return -p["mag_oi_delev"], f"OI↓%{doi*100:.2f} + fiyat↓ → long tasfiyesi / deleveraging (ayı, ama dip-tükenme olabilir)"
 
 
 def _funding_signal(funding, p):
@@ -104,13 +124,13 @@ def _funding_signal(funding, p):
         return None, "VERİ YOK (funding)"
     f = float(funding)
     if f >= p["funding_asiri"]:
-        return -1.0, f"funding %{f} ≥ %{p['funding_asiri']} → aşırı-long kalabalık (contrarian AYI)"
+        return -p["mag_funding_asiri"], f"funding %{f} ≥ %{p['funding_asiri']} → aşırı-long kalabalık (contrarian AYI)"
     if f <= -p["funding_asiri"]:
-        return +1.0, f"funding %{f} ≤ -%{p['funding_asiri']} → aşırı-short kalabalık (contrarian BOĞA)"
+        return +p["mag_funding_asiri"], f"funding %{f} ≤ -%{p['funding_asiri']} → aşırı-short kalabalık (contrarian BOĞA)"
     if abs(f) <= p["funding_ilimli"]:
         return 0.0, f"funding %{f} soğuk/nötr (|f| ≤ %{p['funding_ilimli']}) → kaldıraç iştahı düşük"
     # ılımlı pozitif/negatif: hafif contrarian
-    return (-0.3 if f > 0 else +0.3), f"funding %{f} ılımlı → hafif contrarian eğilim"
+    return (-p["mag_funding_ilimli"] if f > 0 else +p["mag_funding_ilimli"]), f"funding %{f} ılımlı → hafif contrarian eğilim"
 
 
 def _cvd_signal(cvd_series, p):
@@ -120,9 +140,9 @@ def _cvd_signal(cvd_series, p):
     if d is None:
         return None, "VERİ YOK (CVD serisi <2 nokta)"
     if d > p["cvd_delta_min"]:
-        return +0.7, f"CVD↑ (Δ%{d*100:.1f}) → net alıcı emici (boğa)"
+        return +p["mag_cvd"], f"CVD↑ (Δ%{d*100:.1f}) → net alıcı emici (boğa)"
     if d < -p["cvd_delta_min"]:
-        return -0.7, f"CVD↓ (Δ%{d*100:.1f}) → net satıcı (ayı)"
+        return -p["mag_cvd"], f"CVD↓ (Δ%{d*100:.1f}) → net satıcı (ayı)"
     return 0.0, "CVD yatay"
 
 
@@ -133,9 +153,9 @@ def _lsr_signal(taker_lsr, p):
     # Taker LSR: >1 takerlar net ALICI. Ama aşırı kalabalık contrarian okunur.
     # Basit yön: bandın içinde nötr; üstü boğa, altı ayı — ama momentum sinyali olarak.
     if r > p["lsr_ust"]:
-        return +0.5, f"taker LSR {r} > {p['lsr_ust']} → takerlar net alıcı (momentum boğa)"
+        return +p["mag_lsr"], f"taker LSR {r} > {p['lsr_ust']} → takerlar net alıcı (momentum boğa)"
     if r < p["lsr_alt"]:
-        return -0.5, f"taker LSR {r} < {p['lsr_alt']} → takerlar net satıcı (momentum ayı)"
+        return -p["mag_lsr"], f"taker LSR {r} < {p['lsr_alt']} → takerlar net satıcı (momentum ayı)"
     return 0.0, f"taker LSR {r} nötr bandda"
 
 
@@ -145,11 +165,14 @@ def _liq_signal(liq_long, liq_short, p):
     ll, ls = abs(float(liq_long)), abs(float(liq_short))
     if ll == 0 and ls == 0:
         return 0.0, "likidasyon yok"
-    # Long tasfiyesi baskın → aşağı kaskad (ayı); short tasfiyesi baskın → yukarı squeeze (boğa)
-    if ls > 0 and ll >= p["liq_orani"] * max(ls, 1e-9):
-        return -0.8, f"long likidasyon {ll} >> short {ls} → aşağı kaskad (ayı)"
-    if ll > 0 and ls >= p["liq_orani"] * max(ll, 1e-9):
-        return +0.8, f"short likidasyon {ls} >> long {ll} → yukarı squeeze (boğa)"
+    # Long tasfiyesi baskın → aşağı kaskad (ayı); short tasfiyesi baskın → yukarı squeeze (boğa).
+    # NOT: bir taraf tam 0 olan TEK-TARAFLI kaskad en güçlü sinyaldir; eski `ls>0`/`ll>0`
+    # bekçileri bu durumu "dengeli" 0.0'a düşürüp motoru tam gerektiğinde susturuyordu.
+    # max(...,1e-9) sıfıra-bölmeyi zaten engellediği için bekçiler kaldırıldı.
+    if ll >= p["liq_orani"] * max(ls, 1e-9):
+        return -p["mag_liq"], f"long likidasyon {ll} >> short {ls} → aşağı kaskad (ayı)"
+    if ls >= p["liq_orani"] * max(ll, 1e-9):
+        return +p["mag_liq"], f"short likidasyon {ls} >> long {ll} → yukarı squeeze (boğa)"
     return 0.0, f"likidasyon dengeli (long {ll} / short {ls})"
 
 
@@ -231,22 +254,23 @@ def analyze(job: dict) -> dict:
     }
 
 
-def to_advisor(result: dict) -> dict | None:
+def to_advisor(result: dict, p: dict | None = None) -> dict | None:
     """Motor çıktısını karar-kurulu danışmanına ÇEVİRİR (öznel yorum devreden çıkar).
 
-    Eşleme kuralı (deterministik):
-      - stance: yon_skoru ≥ +0.2 → long ; ≤ -0.2 → short ; arası → flat
+    Eşleme kuralı (deterministik; eşikler KONVANSIYON'dan tek-kaynak, params ile ezilebilir):
+      - stance: |yon_skoru| ≥ stance_esigi → long/short ; arası → flat
       - confidence: motorun `guven` alanı (kapsam × sinyal netliği)
       - evidence: KARAR_TUREV + faktör dökümü + erken-uyarılar
-      - _verifier_confirmed: kapsam ≥ 0.5 ise true (yetersiz veri → çürütme penaltısı)
+      - _verifier_confirmed: kapsam ≥ kapsam_esigi ise true (yetersiz veri → çürütme penaltısı)
     VERİ YOK ise None döner → kurula danışman EKLENMEZ (fail-closed).
     """
+    p = p or KONVANSIYON
     if result.get("KARAR_TUREV") == "VERİ YOK" or result.get("yon_skoru") is None:
         return None
     score = float(result["yon_skoru"])
-    if score >= 0.2:
+    if score >= p["stance_esigi"]:
         stance = "long"
-    elif score <= -0.2:
+    elif score <= -p["stance_esigi"]:
         stance = "short"
     else:
         stance = "flat"
@@ -261,7 +285,7 @@ def to_advisor(result: dict) -> dict | None:
         "stance": stance,
         "confidence": float(result.get("guven", 0.3)),
         "evidence": ev,
-        "_verifier_confirmed": bool((result.get("kapsam") or 0.0) >= 0.5),
+        "_verifier_confirmed": bool((result.get("kapsam") or 0.0) >= p["kapsam_esigi"]),
     }
 
 
@@ -274,7 +298,7 @@ def main() -> int:
     job = json.loads(Path(args.job).expanduser().resolve().read_text(encoding="utf-8"))
     result = analyze(job)
     if args.emit_advisor:
-        adv = to_advisor(result)
+        adv = to_advisor(result, {**KONVANSIYON, **(job.get("params") or {})})
         print(json.dumps(adv, ensure_ascii=False, indent=2) if adv is not None
               else json.dumps({"danisman": None, "neden": "VERİ YOK — kurula eklenmez"}, ensure_ascii=False))
     else:

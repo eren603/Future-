@@ -44,6 +44,42 @@ def test_short_squeeze_liq():
     assert lq["skor"] == 0.8, lq  # short tasfiyesi baskin -> yukari squeeze
 
 
+def test_liq_tek_tarafli():
+    # Y3: TEK-TARAFLI likidasyon EN GÜÇLÜ kaskaddır; eski kod (ls>0/ll>0 bekçileri)
+    # bir taraf 0 olunca "dengeli" 0.0 döndürüp motoru tam gerektiğinde susturuyordu.
+    r = analyze({"liq_long": 10.0, "liq_short": 0.0})   # yalnız long tasfiyesi → aşağı kaskad
+    lq = [x for x in r["faktorler"] if x["faktor"] == "liquidation"][0]
+    assert lq["skor"] == -0.8, ("tek-taraflı long tasfiyesi ayı -0.8 olmalı", lq)
+    r2 = analyze({"liq_long": 0.0, "liq_short": 8.0})   # yalnız short tasfiyesi → squeeze
+    lq2 = [x for x in r2["faktorler"] if x["faktor"] == "liquidation"][0]
+    assert lq2["skor"] == 0.8, ("tek-taraflı short tasfiyesi boğa +0.8 olmalı", lq2)
+    # Gerçekten dengeli (oran<2x) hâlâ 0.0
+    r3 = analyze({"liq_long": 10.0, "liq_short": 8.0})
+    lq3 = [x for x in r3["faktorler"] if x["faktor"] == "liquidation"][0]
+    assert lq3["skor"] == 0.0, ("oran<2x dengeli olmalı", lq3)
+
+
+def test_funding_taban_notr():
+    # Y4: Binance TABAN fonlaması %0.01 KALABALIK DEĞİL → nötr olmalı. Eski eşik
+    # (0.01 + ">=") bu tabanı "-1.0 aşırı-long contrarian AYI" işaretleyip her koşuya
+    # sistematik aşağı yanlılık enjekte ediyordu.
+    r = analyze({"funding": 0.01})
+    f = [x for x in r["faktorler"] if x["faktor"] == "funding"][0]
+    assert f["skor"] == 0.0, ("taban funding %0.01 nötr olmalı, aşırı değil", f)
+    # Gerçekten kalabalık funding (%0.06) → -1.0 contrarian ayı
+    r2 = analyze({"funding": 0.06})
+    f2 = [x for x in r2["faktorler"] if x["faktor"] == "funding"][0]
+    assert f2["skor"] == -1.0, ("kalabalık funding contrarian ayı olmalı", f2)
+
+
+def test_varsayim_defteri_sabitler():
+    # Y5: faktör büyüklükleri + eşleme eşikleri deftere yazılmalı ("gizli sabit yok")
+    r = analyze({"funding": 0.0})
+    metin = " ".join(r["varsayimlar"])
+    assert "faktör skor büyüklükleri" in metin, metin
+    assert "eşleme eşikleri" in metin, metin
+
+
 def test_veri_yok_fail_closed():
     # Hicbir alan yok -> VERI YOK, yon uretilmez (fail-closed)
     r = analyze({})
@@ -103,7 +139,8 @@ def main():
         if name.startswith("test_") and callable(fn):
             fn()
     print("SELF_TEST_OK: taze-short, deleveraging, saglikli-trend, funding-contrarian, "
-          "short-squeeze, veri-yok-failclosed, kismi-kapsam, notr, "
+          "short-squeeze, liq-tek-tarafli, funding-taban-notr, varsayim-defteri-sabitler, "
+          "veri-yok-failclosed, kismi-kapsam, notr, "
           "advisor-esleme, advisor-veriyok-none, advisor-notr, advisor-kapsam-confirmed")
     return 0
 

@@ -70,12 +70,21 @@ def markowitz(returns: pd.DataFrame, method: str, ann: float, long_only: bool, r
 
     res = minimize(obj, w0, method="SLSQP", bounds=bounds, constraints=cons,
                    options={"maxiter": 500, "ftol": 1e-10})
-    w = res.x / res.x.sum()
+    # FAIL-CLOSED (O14): SLSQP yakınsamazsa res.x kısıtları (Σw=1, sınırlar) sağlamayan
+    # ÇÖP olabilir; bunu 'optimum' diye sunmak yanlış. Yakınsama başarısızsa hata ver.
+    if not res.success:
+        raise PortfolioError(
+            f"{method} optimizasyonu yakınsamadı (SLSQP: {res.message!r}); "
+            "sonuç güvenilir değil — girdi getirilerini/kısıtları kontrol edin")
+    denom = res.x.sum()
+    if not np.isfinite(denom) or abs(denom) < 1e-12:
+        raise PortfolioError(f"{method}: ağırlık toplamı ~0/geçersiz ({denom}); normalize edilemez")
+    w = res.x / denom
     ret, vol = _stats(w, mu, cov, ann)
     sharpe = (ret - rf) / vol if vol > 0 else 0.0
     return {"method": method, "weights": _wdict(returns.columns, w),
             "expected_return": round(ret, 6), "volatility": round(vol, 6),
-            "sharpe": round(float(sharpe), 4)}
+            "sharpe": round(float(sharpe), 4), "converged": bool(res.success)}
 
 
 def hrp(returns: pd.DataFrame, ann: float) -> dict:
