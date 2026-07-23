@@ -59,17 +59,26 @@ def test_liq_tek_tarafli():
     assert lq3["skor"] == 0.0, ("oran<2x dengeli olmalı", lq3)
 
 
-def test_funding_taban_notr():
-    # Y4: Binance TABAN fonlaması %0.01 KALABALIK DEĞİL → nötr olmalı. Eski eşik
-    # (0.01 + ">=") bu tabanı "-1.0 aşırı-long contrarian AYI" işaretleyip her koşuya
-    # sistematik aşağı yanlılık enjekte ediyordu.
-    r = analyze({"funding": 0.01})
-    f = [x for x in r["faktorler"] if x["faktor"] == "funding"][0]
-    assert f["skor"] == 0.0, ("taban funding %0.01 nötr olmalı, aşırı değil", f)
-    # Gerçekten kalabalık funding (%0.06) → -1.0 contrarian ayı
-    r2 = analyze({"funding": 0.06})
-    f2 = [x for x in r2["faktorler"] if x["faktor"] == "funding"][0]
-    assert f2["skor"] == -1.0, ("kalabalık funding contrarian ayı olmalı", f2)
+def _fund(v):
+    return [x for x in analyze({"funding": v})["faktorler"] if x["faktor"] == "funding"][0]["skor"]
+
+
+def test_funding_merdiveni():
+    # Y4 + kademe: MONOTON contrarian merdiven. Taban nötr (Y4 çekirdeği), ama gerçekten
+    # kalabalık (0.03–0.05) bölge hafife ALINMAZ — aksi halde bıçak sırtında meşru
+    # SHORT'lar LONG'a aşırı-döner. Eski kod 0.01'i -1.0 sanıp sistematik aşağı yanlıydı.
+    assert _fund(0.01) == 0.0, "taban %0.01 nötr (aşırı değil)"
+    assert _fund(0.005) == 0.0, "taban-altı nötr"
+    assert _fund(0.02) == -0.3, "ılımlı elevated → -0.3"
+    assert _fund(0.03) == -0.6, "kalabalık → -0.6 (hafife alınmaz)"
+    assert _fund(0.04) == -0.6, "kalabalık → -0.6"
+    assert _fund(0.05) == -1.0, "aşırı → -1.0"
+    assert _fund(0.06) == -1.0, "aşırı → -1.0"
+    # Simetri: short-yoğun negatif funding contrarian BOĞA, aynı büyüklükte
+    assert _fund(-0.03) == +0.6 and _fund(-0.05) == +1.0, "negatif taraf simetrik contrarian boğa"
+    # Monotonluk: |f| arttıkça |skor| azalmaz
+    vals = [abs(_fund(v)) for v in (0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06)]
+    assert all(b >= a for a, b in zip(vals, vals[1:])), ("funding merdiveni monoton değil", vals)
 
 
 def test_varsayim_defteri_sabitler():
@@ -139,7 +148,7 @@ def main():
         if name.startswith("test_") and callable(fn):
             fn()
     print("SELF_TEST_OK: taze-short, deleveraging, saglikli-trend, funding-contrarian, "
-          "short-squeeze, liq-tek-tarafli, funding-taban-notr, varsayim-defteri-sabitler, "
+          "short-squeeze, liq-tek-tarafli, funding-merdiveni-monoton, varsayim-defteri-sabitler, "
           "veri-yok-failclosed, kismi-kapsam, notr, "
           "advisor-esleme, advisor-veriyok-none, advisor-notr, advisor-kapsam-confirmed")
     return 0

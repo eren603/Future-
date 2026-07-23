@@ -46,8 +46,13 @@ KONVANSIYON = {
     # Eski eşik 0.01 + ">=" bu tabanı "aşırı-long contrarian AYI" işaretliyordu →
     # sistematik aşağı yanlılık. Kalabalık/aşırı funding piyasa konvansiyonunda
     # ~%0.05/8h ve üstüdür; taban ~%0.01 ve altı soğuk/nötrdür.
-    "funding_asiri": 0.05,        # % — üstü aşırı-long (contrarian ayı), altı-negatif aşırı-short
-    "funding_ilimli": 0.01,       # % — |f| bunun altı "soğuk/nötr" (Binance taban fonlaması)
+    # Funding merdiveni MONOTON ve piyasa-temelli (APR ~ f%×3×365): taban 0.01 (~%11
+    # APR) nötr, 0.03 (~%33) kalabalık, 0.05 (~%55) aşırı. Tek keskin sıçrama yerine
+    # kademe: gerçekten kalabalık (0.03–0.05) funding hafife alınmaz ama taban da
+    # sahte-ayı sanılmaz (Y4). Eşiğe "en iyi sonucu verene" çekilmedi; konvansiyon.
+    "funding_asiri": 0.05,        # % — |f| ≥ bu: aşırı-long/short kalabalık (güçlü contrarian)
+    "funding_kalabalik": 0.03,    # % — |f| ≥ bu: gerçekten kalabalık (orta-güçlü contrarian)
+    "funding_ilimli": 0.01,       # % — |f| ≤ bu: soğuk/nötr (Binance taban fonlaması)
     "oi_delta_min": 0.005,        # OI serisinin göreli değişimi bu eşiği aşmalı (gürültü filtresi)
     "cvd_delta_min": 0.0,         # CVD yönü işareti (>0 alıcı)
     "lsr_ust": 1.05, "lsr_alt": 0.95,   # taker LSR nötr bandı
@@ -59,9 +64,9 @@ KONVANSIYON = {
     "kapsam_esigi": 0.5,          # okunan kapsam bunun altı → doğrulanmamış (fail-closed)
     # Faktör skor büyüklükleri (yön işareti kanıttan; büyüklük konvansiyon).
     # Deftere yazılır: OI/fiyat ±1.0 (taze giriş) / ±0.6 (deleveraging) / +0.4 (zayıf),
-    # funding ±1.0 (aşırı) / ±0.3 (ılımlı), CVD ±0.7, LSR ±0.5, likidasyon ±0.8.
+    # funding ±1.0 (aşırı) / ±0.6 (kalabalık) / ±0.3 (ılımlı), CVD ±0.7, LSR ±0.5, likidasyon ±0.8.
     "mag_oi_taze": 1.0, "mag_oi_delev": 0.6, "mag_oi_zayif": 0.4,
-    "mag_funding_asiri": 1.0, "mag_funding_ilimli": 0.3,
+    "mag_funding_asiri": 1.0, "mag_funding_kalabalik": 0.6, "mag_funding_ilimli": 0.3,
     "mag_cvd": 0.7, "mag_lsr": 0.5, "mag_liq": 0.8,
 }
 
@@ -69,7 +74,10 @@ KONVANSIYON = {
 def varsayim_defteri(extra=None):
     k = KONVANSIYON
     d = [
-        f"funding aşırı eşiği=%{k['funding_asiri']} / ılımlı=%{k['funding_ilimli']} (Binance 8h perp konvansiyonu)",
+        (f"funding merdiveni (|f|, Binance 8h): ≤%{k['funding_ilimli']} nötr → "
+         f"%{k['funding_ilimli']}–%{k['funding_kalabalik']} ılımlı(±{k['mag_funding_ilimli']}) → "
+         f"%{k['funding_kalabalik']}–%{k['funding_asiri']} kalabalık(±{k['mag_funding_kalabalik']}) → "
+         f"≥%{k['funding_asiri']} aşırı(±{k['mag_funding_asiri']}); contrarian, monoton"),
         f"OI göreli değişim gürültü filtresi={k['oi_delta_min']} (|Δ| altı = yatay sayılır)",
         f"taker LSR nötr bandı=[{k['lsr_alt']},{k['lsr_ust']}]",
         f"likidasyon kaskad oranı={k['liq_orani']}x (bir taraf diğerinin katı; tek-taraflı kaskad dahil)",
@@ -123,14 +131,20 @@ def _funding_signal(funding, p):
     if funding is None:
         return None, "VERİ YOK (funding)"
     f = float(funding)
-    if f >= p["funding_asiri"]:
-        return -p["mag_funding_asiri"], f"funding %{f} ≥ %{p['funding_asiri']} → aşırı-long kalabalık (contrarian AYI)"
-    if f <= -p["funding_asiri"]:
-        return +p["mag_funding_asiri"], f"funding %{f} ≤ -%{p['funding_asiri']} → aşırı-short kalabalık (contrarian BOĞA)"
-    if abs(f) <= p["funding_ilimli"]:
+    af = abs(f)
+    # Merdiven: nötr taban → ılımlı → kalabalık → aşırı. Kademeli/monoton.
+    # Contrarian işaret: pozitif funding (long kalabalık) → AYI; negatif → BOĞA.
+    if af <= p["funding_ilimli"]:
         return 0.0, f"funding %{f} soğuk/nötr (|f| ≤ %{p['funding_ilimli']}) → kaldıraç iştahı düşük"
-    # ılımlı pozitif/negatif: hafif contrarian
-    return (-p["mag_funding_ilimli"] if f > 0 else +p["mag_funding_ilimli"]), f"funding %{f} ılımlı → hafif contrarian eğilim"
+    if af >= p["funding_asiri"]:
+        mag, sev = p["mag_funding_asiri"], "aşırı"
+    elif af >= p["funding_kalabalik"]:
+        mag, sev = p["mag_funding_kalabalik"], "kalabalık"
+    else:
+        mag, sev = p["mag_funding_ilimli"], "ılımlı"
+    if f > 0:
+        return -mag, f"funding %{f} {sev} (long yoğun) → contrarian AYI katkısı -{mag}"
+    return +mag, f"funding %{f} {sev} (short yoğun) → contrarian BOĞA katkısı +{mag}"
 
 
 def _cvd_signal(cvd_series, p):
