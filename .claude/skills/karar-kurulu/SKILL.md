@@ -101,6 +101,21 @@ sağlanmazsa danışmanın ağırlığı `sentez.py`'de otomatik düşer. Doğru
 Örnek plan: `grafik-calisma` + `turev-akis` (danışman) + `backtest` (doğrulayıcı)
 → 3 motor paralel → tek `KARAR`.
 
+### Farklı arayüzlü motorları bağlama (karar-motoru)
+`--job` almayan / JSON'u stdout yerine dosyaya yazan motorlar da bağlanır:
+- `args`: serbest CLI argümanları (ör. `["--m15", "...", "--h4", "...", "--state-dir", TMP]`).
+- `result_file`: motorun yazdığı JSON çıktısı (ör. `TMP/durum.json`).
+- `result_path`: sonucun içindeki karar alt-nesnesi (ör. `"karar"`).
+- `confidence`: motorun güven alanı yoksa sabit güven (ör. karar-motoru için 0.6).
+```json
+{"name":"karar-motoru", "script":"engine/karar_motoru.py", "confidence":0.6,
+ "args":["--m15","engine/girdi/m15.json","--h4","engine/girdi/h4.json","--state-dir","/tmp/st"],
+ "result_file":"/tmp/st/durum.json", "result_path":"karar"}
+```
+⚠️ `karar-motoru` gerçek `engine/state`'i değiştirir — kurul koşusunda daima
+**geçici `--state-dir`** ver (canlı defteri bozma). Motor BEKLE derse kurulda
+**nötr** oy verir → konviksiyonu düşürür ama tek başına yön dayatmaz.
+
 ## Çıktı (nihai karar kartı)
 `KARAR (LONG/SHORT/NÖTR-BEKLE)` · `güven_skoru` · `yön_skoru` · `uzlaşı` ·
 `muhalefet` · `geçersizlik_koşulu` · `danışman_özeti (kanıt + doğrulama)`.

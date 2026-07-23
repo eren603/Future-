@@ -157,6 +157,42 @@ def main():
     assert dv["grafik-calisma"]["confirmed"] is True, k
     assert names["grafik-calisma"]["dogrulandi"] is True, k
 
+    # K) KARAR-MOTORU bağlama — args + result_file + result_path (durum.json → karar).
+    #    Örnek kline (engine/girdi) BEKLE verir → nötr oy; grafik+türev LONG baskın.
+    import tempfile
+    with tempfile.TemporaryDirectory() as sdir:
+        kmplan = {
+            "question": "karar-motoru bağlama testi",
+            "tasks": [
+                {"name": "karar-motoru", "script": "engine/karar_motoru.py",
+                 "confidence": 0.6, "result_path": "karar",
+                 "args": ["--m15", "engine/girdi/m15.json",
+                          "--h4", "engine/girdi/h4.json", "--state-dir", sdir],
+                 "result_file": str(Path(sdir) / "durum.json")},
+                {"name": "grafik-calisma", "weight": 1.0,
+                 "script": ".claude/skills/grafik-calisma/scripts/confluence.py",
+                 "job": {"structure": {"event": "CHoCH", "direction": "bull"},
+                         "impulse": {"start": 100.0, "end": 120.0},
+                         "htf_bias": "bull",
+                         "order_blocks": [{"low": 104, "high": 106, "type": "demand"}],
+                         "fvgs": [{"low": 104.5, "high": 105.5, "type": "bull"}],
+                         "liquidity": [{"price": 128, "type": "buyside"},
+                                       {"price": 95, "type": "sellside"}], "atr": 1.5}},
+                {"name": "turev-akis", "weight": 1.0,
+                 "script": ".claude/skills/turev-akis/scripts/turev_akis.py",
+                 "job": {"price_series": [64000, 64500, 65200, 66000, 66800],
+                         "oi_series": [100, 102, 105, 108, 111], "funding": 0.03,
+                         "cvd_series": [10, 12, 15, 19, 24], "taker_lsr": 1.35,
+                         "liq_long": 0.5, "liq_short": 9.0}},
+            ],
+        }
+        km = kurul_kosu.run_council(kmplan, kurul_kosu.REPO)
+        kn = {r["ad"]: r for r in km["danisman_ozeti"]}
+        assert "karar-motoru" in kn, km               # args+result_file ile oy verdi
+        assert kn["karar-motoru"]["yon"] == "nötr", km  # örnek veri BEKLE
+        assert km["KARAR"] == "LONG", km              # iki hizalı danışman baskın
+        assert km["paralel_kosu"]["ok"] == 3, km["paralel_kosu"]
+
     # J) DOĞRULAYICI KURALI (backtest-şekilli sonuç, noktalı alan yolu) birim testi
     ok, _ = kurul_kosu._eval_rule(
         {"profit_factor": 1.8, "monte_carlo": {"p50": 0.12}},
@@ -173,7 +209,8 @@ def main():
 
     print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
           "yon-short, isaret-simetri, isaret-butunluk, canlilik, "
-          "KOPRU-tam-kurul(grafik+turev+dogrulayici), dogrulayici-kural")
+          "KOPRU-tam-kurul(grafik+turev+dogrulayici), karar-motoru-baglama, "
+          "dogrulayici-kural")
 
 
 if __name__ == "__main__":

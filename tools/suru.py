@@ -38,28 +38,46 @@ def _run_one(task: dict, timeout: float, repo_root: Path) -> dict:
     if not spath.exists():
         return {"name": name, "ok": False, "error": f"script yok: {spath}",
                 "result": None}
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
-                                     encoding="utf-8") as tf:
-        json.dump(task.get("job", {}), tf, ensure_ascii=False)
-        jobfile = tf.name
+    cmd = [sys.executable, str(spath)]
+    jobfile = None
+    # Girdi biçimi: --job (varsayılan) ve/veya serbest CLI argümanları (args)
+    if "job" in task:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
+                                         encoding="utf-8") as tf:
+            json.dump(task.get("job", {}), tf, ensure_ascii=False)
+            jobfile = tf.name
+        cmd += ["--job", jobfile]
+    if task.get("args"):
+        cmd += [str(a) for a in task["args"]]     # ör. --m15/--h4/--state-dir
     try:
-        proc = subprocess.run([sys.executable, str(spath), "--job", jobfile],
-                              capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              timeout=timeout, cwd=str(repo_root))
     except subprocess.TimeoutExpired:
         return {"name": name, "ok": False, "error": "timeout", "result": None}
     finally:
-        try:
-            Path(jobfile).unlink()
-        except OSError:
-            pass
+        if jobfile:
+            try:
+                Path(jobfile).unlink()
+            except OSError:
+                pass
     if proc.returncode != 0:
         return {"name": name, "ok": False,
                 "error": (proc.stderr or proc.stdout)[-300:], "result": None}
-    try:
-        result = json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        return {"name": name, "ok": False, "error": "çıktı JSON değil",
-                "result": proc.stdout[-300:]}
+    # Sonuç kaynağı: result_file (motor JSON'u dosyaya yazıyorsa) ya da stdout
+    rf = task.get("result_file")
+    if rf:
+        rfp = (repo_root / rf) if not Path(rf).is_absolute() else Path(rf)
+        try:
+            result = json.loads(rfp.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            return {"name": name, "ok": False,
+                    "error": f"result_file okunamadı: {e}", "result": None}
+    else:
+        try:
+            result = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            return {"name": name, "ok": False, "error": "çıktı JSON değil",
+                    "result": proc.stdout[-300:]}
     return {"name": name, "ok": True, "error": None, "result": result,
             "weight": float(task.get("weight", 1.0))}
 

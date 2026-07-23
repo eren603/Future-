@@ -83,20 +83,23 @@ def _eval_rule(result: dict, rule: dict) -> tuple[bool, str]:
     return True, "sağlamlık kuralları sağlandı"
 
 
-def _pick_confidence(result: dict, hint: str | None, direction: float) -> float:
-    """Güveni: (1) task ipucu alanı, (2) bilinen güven alanları, (3) |yön|."""
+def _pick_confidence(result: dict, hint: str | None, direction: float,
+                     fixed: float | None = None) -> float:
+    """Güven: (1) task ipucu alanı, (2) bilinen güven alanları, (3) task sabiti,
+    (4) |yön|. 0..1'e kırpılır."""
+    c = None
     if hint and isinstance(result.get(hint), (int, float)):
         c = float(result[hint])
-    else:
-        c = None
+    if c is None:
         for k in _CONF_FIELDS:
             v = result.get(k)
             if isinstance(v, (int, float)):
                 c = float(v)
                 break
+    if c is None and isinstance(fixed, (int, float)):
+        c = float(fixed)                    # plan sabiti (ör. karar-motoru için)
     if c is None:
         c = min(1.0, abs(direction))        # yön büyüklüğü güvene vekil
-    # 0..1'e sıkıştır (bazı alanlar 0..1 dışı olabilir → kırp)
     return min(max(c, 0.0), 1.0)
 
 
@@ -112,18 +115,24 @@ def _evidence(result: dict, fields: list[str] | None) -> str:
 
 
 def _to_advisor(name: str, result: dict, task: dict):
-    """Motor sonucunu kurul danışmanına çevir. Yön yoksa None (çekimser)."""
+    """Motor sonucunu kurul danışmanına çevir. Yön yoksa None (çekimser).
+    task['result_path'] verilirse önce o noktalı alt-nesne alınır (ör. karar-motoru
+    durum.json → 'karar')."""
     if not isinstance(result, dict):
         return None, None
+    rp = task.get("result_path")
+    base = _resolve_path(result, rp) if rp else result
+    if not isinstance(base, dict):
+        return None, None
     # 1) Zaten danışman biçiminde mi? (ör. turev_akis --emit-advisor)
-    if "stance" in result and "confidence" in result:
-        adv = {"name": name, "stance": result["stance"],
-               "confidence": float(result["confidence"]),
-               "evidence": result.get("evidence", "")}
-        vconf = result.get("_verifier_confirmed", True)
+    if "stance" in base and "confidence" in base:
+        adv = {"name": name, "stance": base["stance"],
+               "confidence": float(base["confidence"]),
+               "evidence": base.get("evidence", "")}
+        vconf = base.get("_verifier_confirmed", True)
         return adv, bool(vconf)
     # 2) Yön skoru çıkar
-    d = suru._extract_direction(result)
+    d = suru._extract_direction(base)
     if d is None:
         return None, None
     if d > 0.05:
@@ -132,8 +141,9 @@ def _to_advisor(name: str, result: dict, task: dict):
         stance = "short"
     else:
         stance = "flat"
-    conf = _pick_confidence(result, task.get("confidence_field"), d)
-    ev = _evidence(result, task.get("evidence_fields"))
+    conf = _pick_confidence(base, task.get("confidence_field"), d,
+                            task.get("confidence"))
+    ev = _evidence(base, task.get("evidence_fields"))
     return {"name": name, "stance": stance, "confidence": conf, "evidence": ev}, True
 
 
