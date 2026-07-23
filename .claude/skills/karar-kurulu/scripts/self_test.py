@@ -116,38 +116,64 @@ def main():
         })
         assert h["KARAR"] == want, ("CANLILIK KIRILDI", stance, h["KARAR"])
 
-    # I) KÖPRÜ — kurul_kosu: GERÇEK paralel fan-out (suru) → danışman → sentez.
-    #    turev-akis motoru yön üretir (oy verir); risk motoru yön üretmez (çekimser).
+    # I) KÖPRÜ — kurul_kosu: GERÇEK paralel fan-out (suru) → danışman/doğrulayıcı → sentez.
+    #    grafik-calisma + turev-akis → yönsel danışman (oy verir).
+    #    risk → doğrulayıcı rol (grafik'i teyit eder; units>0).
     import kurul_kosu  # noqa: E402
     plan = {
-        "question": "Köprü testi: türev + risk paralel",
-        "invalidation": "test",
-        "thresholds": {"min_side_weight": 0.3},  # tek danışman geçebilsin
+        "question": "Tam kurul: grafik + türev danışman, risk doğrulayıcı",
+        "invalidation": "4h swing low altı",
         "timeout": 60,
         "tasks": [
+            {"name": "grafik-calisma", "weight": 1.0,
+             "script": ".claude/skills/grafik-calisma/scripts/confluence.py",
+             "job": {"structure": {"event": "CHoCH", "direction": "bull"},
+                     "impulse": {"start": 100.0, "end": 120.0}, "htf_bias": "bull",
+                     "order_blocks": [{"low": 104, "high": 106, "type": "demand"}],
+                     "fvgs": [{"low": 104.5, "high": 105.5, "type": "bull"}],
+                     "liquidity": [{"price": 128, "type": "buyside"},
+                                   {"price": 95, "type": "sellside"}], "atr": 1.5}},
             {"name": "turev-akis", "weight": 1.0,
              "script": ".claude/skills/turev-akis/scripts/turev_akis.py",
              "job": {"price_series": [64000, 64500, 65200, 66000, 66800],
                      "oi_series": [100, 102, 105, 108, 111], "funding": 0.03,
                      "cvd_series": [10, 12, 15, 19, 24], "taker_lsr": 1.35,
                      "liq_long": 0.5, "liq_short": 9.0}},
-            {"name": "risk", "weight": 1.0,
+            {"name": "risk-dogrulayici", "role": "verifier",
+             "verifies": "grafik-calisma",
+             "confirm_if": {"field": "units", "op": ">", "value": 0},
              "script": ".claude/skills/risk-yonetimi/scripts/risk.py",
              "job": {"op": "position_size", "method": "fixed_fractional",
                      "equity": 10000, "risk_pct": 1.0, "entry": 100, "stop": 98}},
         ],
     }
     k = kurul_kosu.run_council(plan, kurul_kosu.REPO)
-    assert k["paralel_kosu"]["ok"] == 2, k["paralel_kosu"]
     names = {r["ad"]: r for r in k["danisman_ozeti"]}
-    assert "turev-akis" in names, k                    # yön verdi → oy verdi
-    assert names["turev-akis"]["yon"] == "long", k     # 0.481 > 0 → long
-    cekimser = {c["name"] for c in k["paralel_kosu"]["cekimser"]}
-    assert "risk" in cekimser, k                        # yön yok → çekimser
-    assert k["KARAR"] in ("LONG", "SHORT", "NÖTR-BEKLE"), k
+    assert "grafik-calisma" in names and names["grafik-calisma"]["yon"] == "long", k
+    assert "turev-akis" in names and names["turev-akis"]["yon"] == "long", k
+    assert k["KARAR"] == "LONG", k                       # iki hizalı danışman → LONG
+    # doğrulayıcı çalıştı ve grafik'i teyit etti
+    dv = {d["verifies"]: d for d in k["paralel_kosu"]["dogrulayicilar"]}
+    assert dv["grafik-calisma"]["confirmed"] is True, k
+    assert names["grafik-calisma"]["dogrulandi"] is True, k
+
+    # J) DOĞRULAYICI KURALI (backtest-şekilli sonuç, noktalı alan yolu) birim testi
+    ok, _ = kurul_kosu._eval_rule(
+        {"profit_factor": 1.8, "monte_carlo": {"p50": 0.12}},
+        {"all": [{"field": "profit_factor", "op": ">", "value": 1.0},
+                 {"field": "monte_carlo.p50", "op": ">", "value": 0}]})
+    assert ok is True
+    bad, why = kurul_kosu._eval_rule(
+        {"profit_factor": 0.7},
+        {"field": "profit_factor", "op": ">", "value": 1.0})
+    assert bad is False and "profit_factor" in why
+    # fail-closed: alan yoksa doğrulanamaz → False
+    miss, _ = kurul_kosu._eval_rule({}, {"field": "sharpe", "op": ">", "value": 0})
+    assert miss is False
 
     print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
-          "yon-short, isaret-simetri, isaret-butunluk, canlilik, KOPRU-paralel-fanout")
+          "yon-short, isaret-simetri, isaret-butunluk, canlilik, "
+          "KOPRU-tam-kurul(grafik+turev+dogrulayici), dogrulayici-kural")
 
 
 if __name__ == "__main__":

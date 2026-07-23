@@ -82,7 +82,24 @@ Akış: **suru (paralel fan-out) → sonuç→danışman eşlemesi → sentez**.
 - Zaten danışman biçiminde çıkan motor (ör. `turev_akis --emit-advisor`) doğrudan
   kullanılır; `_verifier_confirmed` → doğrulayıcıya taşınır.
 - Hiç danışman yoksa karar **NÖTR-BEKLE** (fail-closed). Çıktıya `paralel_kosu`
-  (ok/fail/çekimser) şeffaflığı eklenir. Canlı/otomatik emir **DAHİL DEĞİL**.
+  (ok/fail/çekimser/doğrulayıcılar) şeffaflığı eklenir. Canlı/otomatik emir **DAHİL DEĞİL**.
+
+### Roller: danışman vs doğrulayıcı
+Bir motor yön üretiyorsa (grafik-calisma `KARAR`, turev-akis `yon_skoru`) **danışman**
+olur (oy verir). Yön üretmeyen motor (ör. **backtest-motoru** — strateji sağlamlık
+ölçer) `role:"verifier"` ile **doğrulayıcı** olur: bir danışmanı sayısal kuralla
+teyit/çürütür, sahte yön uydurmaz.
+```json
+{"name":"backtest", "role":"verifier", "verifies":"grafik-calisma",
+ "confirm_if":{"all":[{"field":"metrics.total_return","op":">","value":0},
+                      {"field":"metrics.win_rate","op":">","value":0.4}]},
+ "script":".../backtest.py", "job":{...}}
+```
+`confirm_if` noktalı alan yolu destekler (`metrics.profit_factor`). Kural
+sağlanmazsa danışmanın ağırlığı `sentez.py`'de otomatik düşer. Doğrulayıcı motor
+çökerse **çürütme yapılmaz** (doğrulanamadı diye not düşülür — fail-closed).
+Örnek plan: `grafik-calisma` + `turev-akis` (danışman) + `backtest` (doğrulayıcı)
+→ 3 motor paralel → tek `KARAR`.
 
 ## Çıktı (nihai karar kartı)
 `KARAR (LONG/SHORT/NÖTR-BEKLE)` · `güven_skoru` · `yön_skoru` · `uzlaşı` ·

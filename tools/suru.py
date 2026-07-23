@@ -64,20 +64,31 @@ def _run_one(task: dict, timeout: float, repo_root: Path) -> dict:
             "weight": float(task.get("weight", 1.0))}
 
 
+_DIR_WORDS = {
+    "long": 1.0, "al": 1.0, "buy": 1.0, "bull": 1.0, "boğa": 1.0, "boga": 1.0,
+    "short": -1.0, "sat": -1.0, "sell": -1.0, "bear": -1.0, "ayı": -1.0,
+    "ayi": -1.0, "bekle": 0.0, "wait": 0.0, "notr": 0.0, "nötr": 0.0,
+    "neutral": 0.0, "nötr-bekle": 0.0, "notr-bekle": 0.0, "flat": 0.0,
+}
+
+
 def _extract_direction(result: dict) -> float | None:
-    """Sonuçtan yön skoru çıkar (varsa): -1..+1. Bilinen alan adları taranır."""
+    """Sonuçtan yön skoru çıkar (varsa): -1..+1. Önce nihai KARAR/sayısal skor,
+    sonra yön-etiketi alanları taranır (sıra önemlidir: KARAR kapıları içerir)."""
     if not isinstance(result, dict):
         return None
-    for key in ("yon_skoru", "direction", "score", "yon", "signal"):
+    # sayısal yön skoru öncelikli
+    for key in ("yon_skoru", "direction", "score", "signal"):
         v = result.get(key)
         if isinstance(v, (int, float)):
             return float(v)
+    # nihai karar / yön etiketi (motorun kendi kapılarını yansıtır)
+    for key in ("KARAR", "karar", "yon", "yon_bias", "bias", "stance"):
+        v = result.get(key)
         if isinstance(v, str):
-            m = {"long": 1.0, "al": 1.0, "buy": 1.0, "short": -1.0,
-                 "sat": -1.0, "sell": -1.0, "bekle": 0.0, "wait": 0.0,
-                 "notr": 0.0, "neutral": 0.0}
-            if v.lower() in m:
-                return m[v.lower()]
+            w = v.strip().lower()
+            if w in _DIR_WORDS:
+                return _DIR_WORDS[w]
     return None
 
 

@@ -45,7 +45,42 @@ class KurulKosuError(Exception):
 
 
 _CONF_FIELDS = ("guven", "guven_skoru", "confidence", "council_conf",
-                "guven_araligi", "kapsam")
+                "guven_araligi", "kapsam", "confluence_skoru")
+
+
+def _resolve_path(result: dict, dotted: str):
+    """Noktalı alan yolu: 'monte_carlo.p50' → result['monte_carlo']['p50']."""
+    cur = result
+    for part in dotted.split("."):
+        if isinstance(cur, dict) and part in cur:
+            cur = cur[part]
+        else:
+            return None
+    return cur
+
+
+_OPS = {">": lambda a, b: a > b, ">=": lambda a, b: a >= b,
+        "<": lambda a, b: a < b, "<=": lambda a, b: a <= b,
+        "==": lambda a, b: a == b, "!=": lambda a, b: a != b}
+
+
+def _eval_rule(result: dict, rule: dict) -> tuple[bool, str]:
+    """Doğrulama kuralı: {"all":[{"field","op","value"}, ...]} ya da tek koşul.
+    Tüm koşullar sağlanırsa confirmed=True. Alan yoksa/sayısal değilse → False
+    (fail-closed: doğrulanamayan iddia teyit edilmez)."""
+    conds = rule.get("all") if isinstance(rule.get("all"), list) else [rule]
+    for c in conds:
+        field = c.get("field")
+        val = _resolve_path(result, str(field)) if field else None
+        if not isinstance(val, (int, float)):
+            return False, f"{field}: sayısal değer yok (doğrulanamadı)"
+        op = c.get("op", ">")
+        fn = _OPS.get(op)
+        if fn is None:
+            return False, f"bilinmeyen op: {op}"
+        if not fn(float(val), float(c.get("value", 0))):
+            return False, f"{field}={val} koşulu sağlamıyor ({op} {c.get('value')})"
+    return True, "sağlamlık kuralları sağlandı"
 
 
 def _pick_confidence(result: dict, hint: str | None, direction: float) -> float:
@@ -110,20 +145,43 @@ def run_council(plan: dict, repo_root: Path | None = None) -> dict:
     # 1) GERÇEK paralel fan-out
     swarm = suru.run_swarm({"tasks": tasks, "timeout": plan.get("timeout", 60)}, root)
 
-    # 2) Sonuç → danışman
-    advisors, verifier, abstained = [], {}, []
+    # 2) Sonuç → danışman / doğrulayıcı
+    advisors, verifier, abstained, verifiers_run = [], {}, [], []
     task_by_name = {t.get("name"): t for t in tasks}
     for r in swarm["results"]:
         name = r["name"]
+        task = task_by_name.get(name, {})
+        role = str(task.get("role", "advisor")).lower()
+
+        # DOĞRULAYICI rol (ör. backtest): yön oyu vermez, bir danışmanı teyit/çürütür
+        if role == "verifier":
+            target = task.get("verifies")
+            rule = task.get("confirm_if")
+            if not target or not isinstance(rule, dict):
+                abstained.append({"name": name,
+                                  "reason": "verifier: 'verifies'/'confirm_if' eksik"})
+                continue
+            if not r["ok"]:
+                # doğrulanamadı (motor çöktü) → çürütme YAPMA, sadece not düş
+                abstained.append({"name": name,
+                                  "reason": f"verifier çalışmadı: {r.get('error','')}"})
+                continue
+            ok, why = _eval_rule(r["result"], rule)
+            verifier[target] = {"confirmed": ok, "reason": None if ok else why}
+            verifiers_run.append({"name": name, "verifies": target,
+                                  "confirmed": ok, "reason": why})
+            continue
+
+        # DANIŞMAN rol (varsayılan)
         if not r["ok"]:
             abstained.append({"name": name, "reason": r.get("error", "hata")})
             continue
-        adv, vconf = _to_advisor(name, r["result"], task_by_name.get(name, {}))
+        adv, vconf = _to_advisor(name, r["result"], task)
         if adv is None:
             abstained.append({"name": name, "reason": "yön skoru yok (çekimser)"})
             continue
         advisors.append(adv)
-        if vconf is not None:
+        if vconf is not None and name not in verifier:
             verifier[name] = {"confirmed": bool(vconf)}
 
     # 3) Fail-closed: danışman yoksa BEKLE
@@ -133,7 +191,8 @@ def run_council(plan: dict, repo_root: Path | None = None) -> dict:
                 "muhalefet": [], "kapi_gerekceleri": ["hiçbir motor yön üretmedi"],
                 "gecersizlik_kosulu": plan.get("invalidation", "BELİRTİLMEDİ"),
                 "danisman_ozeti": [], "cekimser": abstained,
-                "paralel_kosu": {"ok": swarm["ok_count"], "fail": swarm["failed"]},
+                "paralel_kosu": {"ok": swarm["ok_count"], "fail": swarm["failed"],
+                                 "dogrulayicilar": verifiers_run},
                 "not": "Fan-out sonuç verdi ama yön yok → fail-closed BEKLE. "
                        "Canlı emir DAHİL DEĞİL."}
 
@@ -146,7 +205,8 @@ def run_council(plan: dict, repo_root: Path | None = None) -> dict:
     })
     # 5) Paralel-koşu şeffaflığı ekle
     decision["paralel_kosu"] = {"ok": swarm["ok_count"], "fail": swarm["failed"],
-                                "cekimser": abstained}
+                                "cekimser": abstained,
+                                "dogrulayicilar": verifiers_run}
     return decision
 
 
