@@ -417,8 +417,17 @@ def label_outcome(prev, bars):
     return "Önceki %s: giriş HENÜZ TETİKLENMEDİ (bölge bekliyor)." % yon
 
 
+# Akıbet kodları — TEK KAYNAK (iki-liste drift önlemi).
+# TERMINAL_OUTCOMES: pozisyonu kapatıp deftere yazan sonuçlar.
+# Sıra önemli: outcome_code ilk eşleşeni döndürür (INVALIDATION-EXIT metni küçük
+# harf "iptal" içerir; "İPTAL" büyük-İ olduğundan yanlış eşleşmez).
+TERMINAL_OUTCOMES = ("İPTAL", "STOP", "T1 ve T2", "BELİRSİZ", "INVALIDATION-EXIT")
+NONTERMINAL_OUTCOMES = ("TETİKLENMEDİ", "AÇIK")
+OUTCOME_CODES = TERMINAL_OUTCOMES + NONTERMINAL_OUTCOMES
+
+
 def outcome_code(text):
-    for code in ("İPTAL", "STOP", "T1 ve T2", "BELİRSİZ", "TETİKLENMEDİ", "AÇIK"):
+    for code in OUTCOME_CODES:
         if code in text:
             return code
     return "DİĞER"
@@ -658,8 +667,7 @@ def main(argv=None):
                      prev.get("son_bar_utc", "?")))
     else:
         akibet = label_outcome(takip, bars15)
-    TERMINAL = ("İPTAL", "STOP", "T1 ve T2", "BELİRSİZ")
-    if takip is not None and outcome_code(akibet) in TERMINAL:
+    if takip is not None and outcome_code(akibet) in TERMINAL_OUTCOMES:
         append_ledger({"karar_zamani": takip["son_bar"],
                        "etiket_zamani": bars15[-1].t,
                        "karar": takip["karar"], "sonuc": outcome_code(akibet)})

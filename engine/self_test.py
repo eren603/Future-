@@ -89,6 +89,14 @@ def test_outcome_label():
     bars4 = [mk(2000, 100, 101, 99, 97.5)]
     txt4 = km.label_outcome(takip_m, bars4)
     check("akibet-market-exit", "INVALIDATION-EXIT" in txt4, txt4)
+    # K1 regresyonu: INVALIDATION-EXIT TERMINAL bir koda eşlenmeli (defter kapanır),
+    # 'DİĞER' DEĞİL. Ayrıca outcome_code her terminal/nonterminal kodu tanımalı.
+    check("outcome-invalidation-terminal", km.outcome_code(txt4) == "INVALIDATION-EXIT",
+          km.outcome_code(txt4))
+    check("outcome-invalidation-in-terminal", "INVALIDATION-EXIT" in km.TERMINAL_OUTCOMES,
+          str(km.TERMINAL_OUTCOMES))
+    for _c in km.OUTCOME_CODES:
+        check("outcome-code-tanir-%s" % _c, km.outcome_code("... %s ..." % _c) == _c, _c)
 
 
 # ---------------------------------------------------------------- uçtan uca
