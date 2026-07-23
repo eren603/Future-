@@ -68,6 +68,22 @@ Motor **güven-ağırlıklı** (çoğunluk oyu değil) yön skoru, uzlaşı, muh
 fail-closed karar kapıları uygular. Zayıf skor / düşük uzlaşı / düşük yön-ağırlığı
 → otomatik **NÖTR-BEKLE** (işlem yok).
 
+## Tek komut: GERÇEK paralel kurul koşusu (kurul_kosu.py)
+
+Fan-out'u elle yapmak yerine `scripts/kurul_kosu.py` motorları **`tools/suru.py`
+ile gerçekten paralel** koşar, her motor sonucunu otomatik danışmana çevirir ve
+`sentez.py`'yi çağırıp **tek karar** üretir:
+```
+python3 scripts/kurul_kosu.py --plan plan.json
+```
+`plan.tasks[]` = `{name, script, job, weight, confidence_field?, evidence_fields?}`.
+Akış: **suru (paralel fan-out) → sonuç→danışman eşlemesi → sentez**.
+- Motor sonucunda yön (yon_skoru/score/…) yoksa o motor **çekimser** (oy vermez).
+- Zaten danışman biçiminde çıkan motor (ör. `turev_akis --emit-advisor`) doğrudan
+  kullanılır; `_verifier_confirmed` → doğrulayıcıya taşınır.
+- Hiç danışman yoksa karar **NÖTR-BEKLE** (fail-closed). Çıktıya `paralel_kosu`
+  (ok/fail/çekimser) şeffaflığı eklenir. Canlı/otomatik emir **DAHİL DEĞİL**.
+
 ## Çıktı (nihai karar kartı)
 `KARAR (LONG/SHORT/NÖTR-BEKLE)` · `güven_skoru` · `yön_skoru` · `uzlaşı` ·
 `muhalefet` · `geçersizlik_koşulu` · `danışman_özeti (kanıt + doğrulama)`.

@@ -116,8 +116,38 @@ def main():
         })
         assert h["KARAR"] == want, ("CANLILIK KIRILDI", stance, h["KARAR"])
 
+    # I) KÖPRÜ — kurul_kosu: GERÇEK paralel fan-out (suru) → danışman → sentez.
+    #    turev-akis motoru yön üretir (oy verir); risk motoru yön üretmez (çekimser).
+    import kurul_kosu  # noqa: E402
+    plan = {
+        "question": "Köprü testi: türev + risk paralel",
+        "invalidation": "test",
+        "thresholds": {"min_side_weight": 0.3},  # tek danışman geçebilsin
+        "timeout": 60,
+        "tasks": [
+            {"name": "turev-akis", "weight": 1.0,
+             "script": ".claude/skills/turev-akis/scripts/turev_akis.py",
+             "job": {"price_series": [64000, 64500, 65200, 66000, 66800],
+                     "oi_series": [100, 102, 105, 108, 111], "funding": 0.03,
+                     "cvd_series": [10, 12, 15, 19, 24], "taker_lsr": 1.35,
+                     "liq_long": 0.5, "liq_short": 9.0}},
+            {"name": "risk", "weight": 1.0,
+             "script": ".claude/skills/risk-yonetimi/scripts/risk.py",
+             "job": {"op": "position_size", "method": "fixed_fractional",
+                     "equity": 10000, "risk_pct": 1.0, "entry": 100, "stop": 98}},
+        ],
+    }
+    k = kurul_kosu.run_council(plan, kurul_kosu.REPO)
+    assert k["paralel_kosu"]["ok"] == 2, k["paralel_kosu"]
+    names = {r["ad"]: r for r in k["danisman_ozeti"]}
+    assert "turev-akis" in names, k                    # yön verdi → oy verdi
+    assert names["turev-akis"]["yon"] == "long", k     # 0.481 > 0 → long
+    cekimser = {c["name"] for c in k["paralel_kosu"]["cekimser"]}
+    assert "risk" in cekimser, k                        # yön yok → çekimser
+    assert k["KARAR"] in ("LONG", "SHORT", "NÖTR-BEKLE"), k
+
     print("SELF_TEST_OK: konsensus, celiski, curutme-penaltisi, karar-kapilari, "
-          "yon-short, isaret-simetri, isaret-butunluk, canlilik")
+          "yon-short, isaret-simetri, isaret-butunluk, canlilik, KOPRU-paralel-fanout")
 
 
 if __name__ == "__main__":
