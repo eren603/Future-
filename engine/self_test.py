@@ -73,10 +73,22 @@ def test_outcome_label():
     bars2 = [mk(2000, 100, 101, 99, 101), mk(3000, 101, 121, 100, 120)]
     txt2 = km.label_outcome(takip, bars2)
     check("akibet-t2", "T1 ve T2" in txt2, txt2)
-    # tetiklenmeden iptal (gövde kapanış 96 altı)
-    bars3 = [mk(2000, 104, 105, 103, 104), mk(3000, 104, 104, 95.5, 95.5)]
-    txt3 = km.label_outcome(takip, bars3)
+    # LIMIT girişi tetiklenmeden İPTAL: SHORT bölge [100,102], iptal close>102;
+    # bar bölgeye DEĞMEDEN (low 102.3>102) 103'e kapanır → İPTAL
+    karar_s = {"karar": "SHORT", "yon": "SHORT", "giris_alt": 100.0, "giris_ust": 102.0,
+               "giris": 101.0, "stop": 104.0, "iptal": 102.0, "t1": 95.0, "t2": 90.0}
+    takip_s = {"son_bar": 1000, "karar": karar_s}
+    bars3 = [mk(2000, 102.5, 103.0, 102.3, 103.0)]
+    txt3 = km.label_outcome(takip_s, bars3)
     check("akibet-iptal", "İPTAL" in txt3, txt3)
+    # MARKET girişi (bölge tek nokta) anında dolar; gövde iptal (98) altına kapanınca
+    # INVALIDATION-EXIT (stop 95 değil) — market emri İPTAL olamaz
+    karar_m = {"karar": "LONG", "yon": "LONG", "giris_alt": 100.0, "giris_ust": 100.0,
+               "giris": 100.0, "stop": 95.0, "iptal": 98.0, "t1": 110.0, "t2": 120.0}
+    takip_m = {"son_bar": 1000, "karar": karar_m}
+    bars4 = [mk(2000, 100, 101, 99, 97.5)]
+    txt4 = km.label_outcome(takip_m, bars4)
+    check("akibet-market-exit", "INVALIDATION-EXIT" in txt4, txt4)
 
 
 # ---------------------------------------------------------------- uçtan uca

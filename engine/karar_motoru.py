@@ -374,11 +374,14 @@ def label_outcome(prev, bars):
     after = [b for b in bars if b.t > prev["son_bar"]]
     if not after:
         return "Önceki %s kararından sonra yeni bar yok — akıbet ölçülemez (VERİ YOK)." % yon
-    triggered = False
+    # MARKET girişi (bölge tek nokta) ANINDA dolar — iptal-öncesi-dokunuş beklemez.
+    # LIMIT girişi (bölge) bölgeye dokununca dolar; dokunmadan iptal olursa İPTAL.
+    market = abs(hi - lo) < 1e-6
+    triggered = market
     t1_hit = False
     for b in after:
         if not triggered:
-            # giriş tetiklenmeden iptal: gövde kapanışı iptal seviyesi ötesinde
+            # LIMIT: giriş tetiklenmeden iptal (gövde kapanışı iptal seviyesi ötesinde)
             if (yon == "LONG" and b.c < iptal) or (yon == "SHORT" and b.c > iptal):
                 return ("Önceki %s: giriş TETİKLENMEDEN İPTAL (gövde kapanış %.6g, "
                         "iptal %.6g, %s)." % (yon, b.c, iptal, fmt_ts(b.t)))
@@ -399,6 +402,14 @@ def label_outcome(prev, bars):
                 return "Önceki %s: giriş tetiklendi, T1 ve T2 GELDİ (%s)." % (yon, fmt_ts(b.t))
             if t1_now:
                 t1_hit = True
+            # MARKET girişte invalidation POST-FILL exit gibi çalışır (yumuşak-stop):
+            # pozisyon açık, gövde iptal seviyesinin gerisine kapanırsa çıkılır.
+            if market and not t1_hit and (
+                    (yon == "LONG" and b.c < iptal) or (yon == "SHORT" and b.c > iptal)):
+                r = ((b.c - lo) / abs(lo - stop)) if yon == "LONG" else ((lo - b.c) / abs(lo - stop))
+                return ("Önceki %s: MARKET giriş doldu, gövde iptal (%.6g) gerisine "
+                        "kapandı → INVALIDATION-EXIT %.6g (%s), gerçek R≈%.2f."
+                        % (yon, iptal, b.c, fmt_ts(b.t), r))
     if triggered:
         return ("Önceki %s: giriş tetiklendi, %s — pozisyon AÇIK görünümde "
                 "(son bar %s)." % (yon, "T1 geldi, T2 bekliyor" if t1_hit else
