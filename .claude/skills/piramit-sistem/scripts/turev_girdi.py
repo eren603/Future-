@@ -361,12 +361,15 @@ def main(argv=None) -> int:
             job["_ham_hatalari"] = ham["hatalar"]
         if uy:
             job.setdefault("_uyarilar", []).extend(uy)
-    if http and http["hatalar"]:
-        job["_ag_hatalari"] = http["hatalar"]
+    # Ağ hataları DOSYAYA yazılmaz: turev.json yalnız VERİDEN türemeli.
+    # Aksi halde "ağ denendi mi" bilgisi dosyanın parmak izini oynatır →
+    # veri değişmediği halde boru hattı yeniden koşar (gereksiz + depo kirliliği).
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(json.dumps(job, ensure_ascii=False, indent=2),
                                encoding="utf-8")
+    if http and http["hatalar"]:
+        job["_ag_hatalari"] = http["hatalar"]        # yalnız stdout/kanca için
     print(json.dumps(job, ensure_ascii=False, indent=2))
     return 0
 
