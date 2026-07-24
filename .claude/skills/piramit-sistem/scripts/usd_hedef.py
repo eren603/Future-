@@ -81,6 +81,9 @@ def hesapla(job: dict) -> dict:
 
     h_lo, h_hi = sorted(float(x) for x in hedef_band)
     s = 1 if yon == "long" else -1
+    hedef_tipi = str(job.get("hedef_tipi", "brut")).lower()
+    if hedef_tipi not in ("brut", "net"):
+        raise HedefError("hedef_tipi 'brut' ya da 'net' olmalı")
 
     # --- çevrim: USDT → fiyat mesafesi ---
     stop_mesafe = stop_usdt / kontrat
@@ -88,8 +91,15 @@ def hesapla(job: dict) -> dict:
     hedef_hi_mesafe = h_hi / kontrat
     nominal = kontrat * fiyat
     komisyon = nominal * (p["komisyon_bps_tek_yon"] / 10000.0) * 2
+    # NET hedef istenmişse komisyon eklenerek BRÜT hedefe çevrilir; kapılar
+    # daima brüt üzerinden işler (fiyat mesafesi brüt hedefle belirlenir).
+    brut_lo, brut_hi = ((h_lo, h_hi) if hedef_tipi == "brut"
+                        else (h_lo + komisyon, h_hi + komisyon))
+    h_lo, h_hi = brut_lo, brut_hi
 
     cevrim = {
+        "hedef_tipi": hedef_tipi,
+        "hedef_brut_usdt": [round(h_lo, 2), round(h_hi, 2)],
         "nominal_usdt": round(nominal, 2),
         "stop_mesafe_puan": round(stop_mesafe, 4),
         "hedef_mesafe_puan": [round(hedef_lo_mesafe, 4), round(hedef_hi_mesafe, 4)],
@@ -189,6 +199,10 @@ def hesapla(job: dict) -> dict:
         "dusen_kapilar": [k["kapi"] for k in kapilar if not k["gecti"]],
         "varsayimlar": [
             f"komisyon {p['komisyon_bps_tek_yon']} bps/tek yön taker (borsa varsayımı)",
+            (f"hedef BRÜT tanımlı (kullanıcı kararı): kapılar brüt üzerinden; "
+             f"net kazanç ayrıca raporlanır"
+             if hedef_tipi == "brut" else
+             "hedef NET tanımlı: komisyon eklenip brüte çevrildi, kapılar brütle"),
             f"stop ölçek bandı [{p['min_stop_atr']}, {p['max_stop_atr']}]×ATR ve uzak "
             f"hedef eşiği {p['far_target_atr']}×ATR — rr_denetim konvansiyonuyla AYNI",
             "tasfiye mesafesi kaba: teminat/kontrat (bakım teminatı ve fonlama hariç)",

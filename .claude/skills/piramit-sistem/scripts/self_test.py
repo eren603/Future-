@@ -451,6 +451,18 @@ def main() -> int:
         aritmetik = (abs(c["stop_mesafe_puan"] - 100/3) < 1e-3  # çıktı 4 haneye yuvarlı
                      and c["hedef_mesafe_puan"] == [45.0, 50.0]
                      and c["R_band"] == [1.35, 1.5])
+        # brüt/net ayrımı: net istenirse komisyon eklenip brüte çevrilmeli
+        brut = UH.hesapla(TABAN)                      # varsayılan brüt
+        net = UH.hesapla({**TABAN, "hedef_tipi": "net"})
+        brut_net_ok = (brut["cevrim"]["hedef_brut_usdt"] == [135.0, 150.0]
+                       and net["cevrim"]["hedef_brut_usdt"][0] > 135.0
+                       and abs(net["cevrim"]["net_kazanc_band_usdt"][0] - 135.0) < 0.01)
+        kontrol("T22b brüt/net ayrımı", brut_net_ok,
+                f"brüt hedef {brut['cevrim']['hedef_brut_usdt']} → net "
+                f"{brut['cevrim']['net_kazanc_band_usdt']} | net istenirse brüt "
+                f"{net['cevrim']['hedef_brut_usdt']} → net "
+                f"{net['cevrim']['net_kazanc_band_usdt']}")
+
         kontrol("T22 sabit-USDT motoru: çevrim + 5 kapı",
                 iyi["HUKUM"] == "UYGUN" and aritmetik
                 and "R ≥ r_min" in dusuk_r["dusen_kapilar"]

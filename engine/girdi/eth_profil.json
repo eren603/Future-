@@ -1,0 +1,18 @@
+{
+  "_aciklama": "ETHUSDT sabit-USDT işlem profili — kullanıcı kararı, her koşuda uygulanır",
+  "sembol": "ETHUSDT",
+  "kontrat": 3.0,
+  "teminat": 400.0,
+  "kaldirac": 100,
+  "stop_usdt": 100.0,
+  "hedef_usdt": [135, 150],
+  "hedef_tipi": "brut",
+  "esikler": { "r_min": 1.35 },
+  "_kullanici_kararlari": [
+    "1-A: yalnız R >= 1.35 kurulumlar alınır (hedef >= 135 USDT)",
+    "risk her işlemde sabit 100 USDT",
+    "hedef BRÜT (komisyon öncesi); net ayrıca raporlanır",
+    "kurulum ölçeği 4H (ölçümle seçildi), tetik 15M",
+    "gerçek kaldıraç ~14x (3 ETH nominal / 400 teminat); 100x borsa ayarı"
+  ]
+}
