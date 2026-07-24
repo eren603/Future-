@@ -34,6 +34,9 @@ SAYI = re.compile(r"(?<![\d.,])[-+]?\d+(?:[.,]\d+)?")
 # Taramadan önce maskelenir; sayıldıkları ama denetlenmedikleri raporlanır.
 ZAMAN = re.compile(r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?"
                    r"|(?<!\d)\d{1,2}:\d{2}(?::\d{2})?(?!\d)")
+# Git commit kısaltması (3b9fb42) da piyasa iddiası DEĞİLDİR. Yalnız EN AZ BİR
+# harf içeren onaltılık öbek maskelenir — saf rakam (ör. 6461155 fiyat) asla.
+SHA = re.compile(r"(?<![\w.])(?=[0-9a-f]{7,40}(?![\w]))[0-9]*[a-f][0-9a-f]*")
 
 
 def rapor_sayilari(nesne, kume=None) -> set:
@@ -61,6 +64,8 @@ def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
     kaynak = rapor_sayilari(rapor)
     zaman_sayisi = len(ZAMAN.findall(metin))
     metin = ZAMAN.sub(lambda m: "#" * len(m.group()), metin)   # zaman maskele
+    sha_sayisi = len(SHA.findall(metin))
+    metin = SHA.sub(lambda m: "#" * len(m.group()), metin)     # commit maskele
     bulundu, kaynaksiz, yapisal = [], [], []
     for m in SAYI.finditer(metin):
         ham = m.group()
@@ -81,6 +86,7 @@ def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
         "toplam_sayi": len(bulundu) + len(kaynaksiz) + len(yapisal),
         "bulundu": len(bulundu), "yapisal_atlanan": len(yapisal),
         "zaman_damgasi_atlanan": zaman_sayisi,
+        "commit_kimligi_atlanan": sha_sayisi,
         "KAYNAKSIZ": kaynaksiz,
         "gecti": not kaynaksiz,
         "sinir": ("Yalnız SAYI kaynağı denetlenir; anlam/çıkarım doğruluğu "
