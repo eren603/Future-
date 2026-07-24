@@ -5,6 +5,20 @@
 # Idempotent, non-interactive, web-only.
 set -euo pipefail
 
+# --- Piramit hazırlık raporu (her ortamda; uzak/yerel farketmez) ---
+# Not: asıl otomatik koşu UserPromptSubmit kancasındadır
+# (.claude/hooks/piramit_auto.py) — burada yalnız DURUM bildirilir.
+PIRAMIT="${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/scripts/piramit.py"
+if [ -f "$PIRAMIT" ]; then
+  if python3 -c "import pandas, numpy, scipy" >/dev/null 2>&1; then
+    echo "[PİRAMİT] Boru hattı hazır (K1→K5). Piyasa analizi/kararında VARSAYILAN yol; tetikleyici gerekmez."
+  else
+    echo "[PİRAMİT] Boru hattı var ama pandas/numpy/scipy eksik — motorlar koşamaz. Kurulum denenecek; olmazsa elle koşuya düşülür (AÇIKÇA söylenmeli)."
+  fi
+else
+  echo "[PİRAMİT] Boru hattı dosyası YOK — motorlar elle koşulur."
+fi
+
 # Only run in Claude Code on the web (remote) environment.
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0

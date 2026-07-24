@@ -8,9 +8,12 @@ SMC/likidite okuması).
 Bu dosya her oturumda otomatik yüklenir; aşağıdaki disiplin `/komut` beklemeden
 **her ciddi analiz/kararda** uygulanır (ayrıntılar aşağıdaki "Ek kural"larda):
 
-1. **Motorlar birlikte koşar** (aynı turda, ayrı çağrılarla — otomatik fan-out
-   KODU yok) → her biri **gerçek sayısal sonuç** üretir. Dosyadan okunmayan sayı
-   kullanılmaz.
+1. **Motorlar birlikte koşar** — varsayılan yol `piramit-sistem`
+   (`scripts/piramit.py`): K1 LLM → K2 AI AJAN → K3 ÇOKLU-AJAN → K4 AGI → K5 SI
+   katmanlarını **kapılarıyla** sırayla koşturan ÇALIŞAN orkestratör (elle
+   zincirleme değil). Boru hattı koşamıyorsa (şema dışı/eksik veri) motorlar
+   aynı turda ayrı çağrılarla elle koşulur. Her durumda her motor **gerçek
+   sayısal sonuç** üretir; dosyadan okunmayan sayı kullanılmaz.
 2. **5 danışman merceği:** Muhalif / İlk-Prensipler / Genişletici / Dış-Göz /
    Uygulayıcı — her biri farklı kör noktayı yakalar.
 3. **Güven-ağırlıklı sentez** (`karar-kurulu/scripts/sentez.py`) → **iki satır:**
@@ -45,6 +48,7 @@ beceriyi uygula.
 | Video/klip/ekran kaydı gönderimi, mp4/mov/webm, kare çıkarma, videodaki grafiği okuma | `video-isleme` (ffmpeg yoksa kendisi kurar; grafik kaydıysa kareler `grafik-calisma`ya gider) |
 | Türev verisi: açık faiz/OI, funding/fonlama, CVD, taker LSR, likidasyon/tasfiye, deleveraging, squeeze, CoinGlass paneli | `turev-akis` (kline-körlüğü panzehiri; OI/funding/CVD/LSR/likidasyon → sayısal yön skoru) |
 | Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
+| Tam analiz / tam boru hattı: 15M+4H kline (+ varsa türev paneli), "bütün motorları çalıştır", "en alttan en üste", çok katmanlı değerlendirme | `piramit-sistem` (**VARSAYILAN YOL** — K1→K5, `scripts/piramit.py`) |
 | Ciddi analiz/karar/değerlendirme, "uzman gibi bak", derin inceleme, profesyonel görüş, strateji, çok-adımlı muhakeme | `uzman-modu` (ÜST-AKIL DİSİPLİNİ) |
 
 Ek kural (üst-akıl): Ciddi/analitik her soruda `uzman-modu` arka planda
@@ -61,6 +65,23 @@ becerisi devreye girer; ilgili tüm motorları **birlikte (aynı turda, bağıms
 `scripts/sentez.py` ile **güven-ağırlıklı tek karar**. Çelişki/zayıf sinyalde
 karar **NÖTR-BEKLE**'dir (fail-closed). Yalnız karar-destek; canlı/otomatik emir
 DAHİL DEĞİL.
+
+Ek kural (PİRAMİT — VARSAYILAN YOL, TETİKLEYİCİ GEREKMEZ): Bir piyasa
+analizi/kararı üretilecekse motorlar ELLE zincirlenmez; `piramit-sistem`
+becerisinin `scripts/piramit.py` boru hattı koşulur (K1 LLM → K2 AI AJAN →
+K3 ÇOKLU-AJAN → K4 AGI → K5 SI). Gerekçe: elle zincirde motor atlanabilir,
+`verifier` boş bırakılıp fail-OPEN'a düşülebilir, `rr_denetim` unutulabilir ve
+danışman güveni **elle takdir** edilerek kaynaksız sayı üretilebilir — boru
+hattı bunların hepsini mekanikleştirir (güven motorun kendi çıktısından gelir).
+Kullanıcı `/komut` yazmaz; `.claude/hooks/piramit_auto.py` (UserPromptSubmit)
+her istemde girdiyi kontrol eder, `engine/girdi/` verisi DEĞİŞMİŞSE boru hattını
+koşar ve iki-satır özetini bağlama enjekte eder; veri değişmemişse son koşunun
+özetini taşır (gereksiz koşu ve hafıza kirliliği yok). Boru hattı bir katman
+kapısında durursa çıktı OLDUĞU GİBİ verilir — durduğu katman ve gerekçesi
+gizlenmez, eksik veriyle karar UYDURULMAZ. Boru hattı koşamıyorsa (şema dışı
+veri, motor hatası) elle koşuya düşülür ve bu AÇIKÇA söylenir.
+⚠️ K4/K5'in "AGI/SI" adları resimdeki piramide sadakattir; teknik iddia
+DEĞİLDİR (K4 = çelişki/doğrulama denetçisi, K5 = sentez + Wilson kalibrasyonu).
 
 Ek kural (YÖN ZORUNLU — her analizde otomatik, tetikleyicisiz): Bir piyasa
 analizi/karar çıktısı **DAİMA iki ayrı satırla** verilir; yön asla "BEKLE"
