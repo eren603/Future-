@@ -25,6 +25,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 import piramit as P  # noqa: E402
 import akibet_etiketle as AE  # noqa: E402
+import turev_girdi as TG  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -222,6 +223,38 @@ def main() -> int:
                 and not (sd13 / "defter_karar-motoru.jsonl").exists(),
                 f"yazılan={list(y1['yazilan'])}, satır={len(satirlar)}, "
                 f"2. çağrı atlandı={bool(y2['atlanan'])}")
+
+        # ---- T14: CVD çevrimdışı hesabı (kline körlüğü panzehiri) ---------
+        # 12 alanlı Binance kline: alan 5 = hacim, alan 9 = taker ALIŞ hacmi.
+        # delta = 2×taker − hacim → 2×60−100 = +20/bar → kümülatif 20, 40, 60
+        kl = tmp / "kline12.json"
+        kl.write_text(json.dumps([
+            [i * 900000, "100", "101", "99", "100", "100.0", 0, "0", 10,
+             "60.0", "0", "0"] for i in range(3)]), encoding="utf-8")
+        c14 = TG.cvd_serisi(kl)
+        # taker < yarı hacim → satıcı baskısı (negatif delta) kontrolü
+        kl2 = tmp / "kline12b.json"
+        kl2.write_text(json.dumps([
+            [i * 900000, "100", "101", "99", "100", "100.0", 0, "0", 10,
+             "30.0", "0", "0"] for i in range(2)]), encoding="utf-8")
+        c14b = TG.cvd_serisi(kl2)
+        kontrol("T14 CVD çevrimdışı: alıcı +20/bar, satıcı -40/bar",
+                c14["cvd_series"] == [20.0, 40.0, 60.0]
+                and c14b["cvd_series"] == [-40.0, -80.0],
+                f"alıcı={c14['cvd_series']} satıcı={c14b['cvd_series']}")
+
+        # ---- T15: eksik kanal UYDURULMAZ (fail-closed) --------------------
+        seri15 = tmp / "seri15.jsonl"
+        TG.snapshot_ekle(seri15, {"ts": "a", "price": 100.0, "oi": 10.0})
+        tekrar = TG.snapshot_ekle(seri15, {"ts": "a", "price": 100.0, "oi": 10.0})
+        job15 = TG.uret(kl, seri15, {}, None)
+        kontrol("T15 eksik türev kanalı uydurulmaz + tekilleme",
+                (not tekrar["eklendi"]) and "oi_series" not in job15
+                and "funding" not in job15 and "liq_long" not in job15
+                and any("oi:" in e for e in job15["_eksikler"])
+                and job15.get("cvd_series"),
+                f"tekilleme={not tekrar['eklendi']}, eksik={len(job15['_eksikler'])} kanal, "
+                f"CVD var={bool(job15.get('cvd_series'))}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"

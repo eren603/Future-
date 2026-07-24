@@ -122,6 +122,21 @@ python .claude/skills/piramit-sistem/scripts/self_test.py
   (4) doğrulama çürütülmemiş. Eksikse hüküm **"TEMİZ GİRİŞ YOK"** + hangi
   koşulun düştüğü tek tek yazılır.
 
+## Türev kanalı — panel beklemeden (kline körlüğü panzehiri)
+
+`scripts/turev_girdi.py` türev girdisini kendiliğinden üretir:
+
+| Kanal | Kaynak | Ağ gerekir mi? |
+|---|---|---|
+| **CVD** | Kullanıcının KENDİ 12 alanlı Binance kline'ı: `delta = 2×taker_alış − hacim` (alan 9) | **Hayır** — her zaman çalışır |
+| **OI + hizalı fiyat** | Anlık görüntü defteri `engine/state/turev_seri.jsonl` (`--oi-snapshot` ile eklenir; ör. Crypto.com MCP `open_interest`) | Hayır (görüntü elle/MCP ile eklenir) |
+| **funding, taker-LSR** | Binance vadeli genel uçları (`premiumIndex`, `takerlongshortRatio`) | Evet — engellenirse `VERİ YOK` + neden raporlanır |
+| **likidasyon** | Yalnız panelden elle (`--ek`) — genel REST ucu yok | — |
+
+Kaynak borsa kline'dan farklıysa çıktıda `[VARSAYIM] vekil gösterge` etiketi
+düşer. Eksik kanal **uydurulmaz**: `turev-akis` kapsamı düşükse skoru
+`VERİ YOK`'a çeker ve danışman doğrulanmamış sayılır (fail-closed).
+
 ## Doğruluk sözleşmesi
 
 - Her sayı bir motorun **dosyadan okunan** çıktısıdır; boru hattı sayı üretmez.

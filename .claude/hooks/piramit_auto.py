@@ -93,6 +93,33 @@ def _ek_kanallar(job: dict) -> list:
     return giren
 
 
+def _turev_uret(onceki: dict) -> dict:
+    """Türev girdisini KENDİLİĞİNDEN üret (kline körlüğü panzehiri).
+
+    CVD kullanıcının kendi kline'ından çevrimdışı hesaplanır — panel
+    beklenmez. OI anlık görüntü defterinden, funding/LSR ağ izin verirse
+    Binance vadeli genel uçlarından gelir. Ağ bir kez engellenirse bu oturum
+    boyunca yeniden denenmez (her istemde boşuna beklenmesin).
+    """
+    uretec = SKILL / "scripts" / "turev_girdi.py"
+    m15 = GIRDI / "m15.json"
+    if not (uretec.exists() and m15.exists()):
+        return {"durum": "üreteç ya da m15 yok — türev girdisi üretilmedi"}
+    argv = [sys.executable, str(uretec), "--m15", str(m15),
+            "--seri", str(REPO / "engine" / "state" / "turev_seri.jsonl"),
+            "--out", str(GIRDI / "turev.json")]
+    if not onceki.get("http_engelli"):
+        argv.append("--http")
+    try:
+        pr = subprocess.run(argv, capture_output=True, text=True, timeout=60,
+                            cwd=str(REPO))
+        job = json.loads(pr.stdout) if pr.stdout.strip().startswith("{") else {}
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError) as e:
+        return {"durum": f"türev üreteci çalışmadı ({type(e).__name__})"}
+    return {"kaynaklar": job.get("_kaynaklar", {}), "eksikler": job.get("_eksikler", []),
+            "http_engelli": bool(job.get("_ag_hatalari"))}
+
+
 def _durum_oku() -> dict:
     try:
         return json.loads(DURUM.read_text(encoding="utf-8"))
@@ -170,6 +197,16 @@ def main() -> int:
         return 0
 
     onceki = _durum_oku()
+    # Türev girdisi HER İSTEMDE tazelenir (CVD determinist: aynı kline = aynı
+    # dosya → gereksiz koşu tetiklenmez). Parmak izi bundan SONRA alınır ki
+    # yeni OI görüntüsü/funding boru hattını kendiliğinden yeniden koştursun.
+    turev = _turev_uret(onceki)
+    if turev.get("kaynaklar") is not None:
+        onceki["http_engelli"] = turev.get("http_engelli", onceki.get("http_engelli"))
+        var = ", ".join(turev["kaynaklar"]) or "yok"
+        print(f"[PİRAMİT] Türev kanalı otomatik üretildi → dolu: {var} | "
+              f"eksik: {len(turev.get('eksikler', []))} kanal (uydurulmadı)")
+    fp = _fp()
     if onceki.get("fp") == fp and onceki.get("ozet"):
         print("[PİRAMİT] Girdi verisi DEĞİŞMEDİ — yeniden koşulmadı; son koşunun "
               "sonucu (motor hafızası kirletilmedi):")
@@ -194,7 +231,8 @@ def main() -> int:
     print(ozet)
     try:
         DURUM.parent.mkdir(parents=True, exist_ok=True)
-        DURUM.write_text(json.dumps({"fp": fp, "ozet": ozet, "kod": kod},
+        DURUM.write_text(json.dumps({"fp": fp, "ozet": ozet, "kod": kod,
+                                     "http_engelli": bool(onceki.get("http_engelli"))},
                                     ensure_ascii=False, indent=2), encoding="utf-8")
     except OSError:
         pass

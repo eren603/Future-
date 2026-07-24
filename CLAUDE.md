@@ -142,6 +142,15 @@ verilir → sayısal yön skoru + DELEVERAGING/TAZE-SHORT/SOĞUMA erken-uyarıla
 üretilir ve `karar-kurulu`ya **sözel değil ölçülmüş** bir danışman olarak girer.
 Türev verisi okunmuşsa kurula lafla eklenmez; motor koşulur. Uydurma sayı yasak;
 eksik alan "VERİ YOK" (fail-closed). Canlı/otomatik emir DAHİL DEĞİL.
+PANEL YOKSA DA KÖRLÜK KAPANIR: `piramit-sistem/scripts/turev_girdi.py` **CVD'yi
+kullanıcının KENDİ kline'ından çevrimdışı hesaplar** (12 alanlı Binance
+kline'ının 9. alanı = taker alış hacmi; delta = 2×taker − hacim). Kanca bunu her
+istemde üretip `engine/girdi/turev.json`'a yazar → türev danışmanı kurula
+kendiliğinden girer. OI, anlık görüntü defterinden (`engine/state/turev_seri.jsonl`;
+MCP/borsa görüntüleri `--oi-snapshot` ile eklenir), funding/LSR ağ izin verirse
+Binance vadeli genel uçlarından gelir; likidasyon yalnız elle panelden. Eksik
+kanal UYDURULMAZ — motor kapsamı düşükse skoru VERİ YOK'a çeker ve danışman
+doğrulanmamış sayılır (fail-closed).
 
 Ek kural: Kullanıcı bir **grafik ekran görüntüsü** gönderirse (mum grafiği,
 fiyat grafiği), açıkça istemese bile `grafik-calisma` SMC + Fibonacci akışıyla

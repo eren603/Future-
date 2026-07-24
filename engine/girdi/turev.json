@@ -1,0 +1,43 @@
+{
+  "cvd_series": [
+    -1523.381,
+    -1508.643,
+    -1497.38,
+    -1659.043,
+    -1614.449,
+    -1457.377,
+    -1120.88,
+    -946.792,
+    -879.725,
+    -236.665,
+    -529.138,
+    -1554.453,
+    -1040.927,
+    -1232.892,
+    -1437.129,
+    -1374.024,
+    -1505.245,
+    -2305.601,
+    -2251.254,
+    -1869.103,
+    -1764.297,
+    -1772.738,
+    -1627.329,
+    -1496.836
+  ],
+  "_kaynaklar": {
+    "cvd": "hesaplandı (110 bar, kaynak: kullanıcının kendi kline'ı, taker alış hacmi alan 9)"
+  },
+  "_eksikler": [
+    "oi: en az 2 anlık görüntü gerekli (mevcut 1) → VERİ YOK",
+    "funding: VERİ YOK",
+    "taker LSR: VERİ YOK",
+    "likidasyon: VERİ YOK — genel REST ucu yok, panelden elle girilir"
+  ],
+  "_not": "Eksik kanal UYDURULMAZ; turev-akis kapsamı düşükse skoru VERİ YOK'a çeker (fail-closed).",
+  "_ag_hatalari": [
+    "funding: URLError — <urlopen error Tunnel connection failed: 403 Forbidden>",
+    "taker_lsr: URLError — <urlopen error Tunnel connection failed: 403 Forbidden>",
+    "oi_hist: URLError — <urlopen error Tunnel connection failed: 403 Forbidden>"
+  ]
+}

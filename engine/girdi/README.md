@@ -15,7 +15,7 @@ fail-closed atlanır (uydurma girdi üretilmez):
 
 | Dosya | Devreye giren motor |
 |---|---|
-| `turev.json` | `turev-akis` — OI/funding/CVD/taker-LSR/likidasyon (kline-körlüğü panzehiri) |
+| `turev.json` | `turev-akis` — OI/funding/CVD/taker-LSR/likidasyon (kline-körlüğü panzehiri). **Kanca bu dosyayı KENDİSİ üretir** (`turev_girdi.py`): CVD çevrimdışı hesaplanır, diğer kanallar bulunabilirse eklenir. Elle panel değerlerini eklemek isterseniz dosyayı düzenleyin — bir sonraki istemde üzerine yazılır, kalıcı elle değer için `--ek` dosyası kullanın. |
 | `ohlcv.csv` | `data-analysis-deep-scan` profil + SMC tablo kaynağı |
 | `risk.json` | `risk-yonetimi` — pozisyon boyutu/Kelly/vol-hedef |
 | `backtest.json` | `backtest-motoru` — PF/Sharpe/Monte Carlo |
