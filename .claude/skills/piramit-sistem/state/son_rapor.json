@@ -1,0 +1,574 @@
+{
+  "sistem": "PİRAMİT — LLM→AI AJAN→ÇOKLU-AJAN→AGI→SI",
+  "soru": "otomatik koşu — engine/girdi verisi değişti",
+  "sembol": "engine/girdi",
+  "katman_sirasi": [
+    "K1-LLM",
+    "K2-AI-AJAN",
+    "K3-COKLU-AJAN",
+    "K4-AGI",
+    "K5-SI"
+  ],
+  "katmanlar": [
+    {
+      "katman": "K1-LLM",
+      "rol": "ham veri + bütünlük denetimi (çıkarım yok)",
+      "kanallar": {
+        "m15": "/home/user/Future-/engine/girdi/m15.json",
+        "h4": "/home/user/Future-/engine/girdi/h4.json",
+        "ohlcv_csv": "VERİ YOK",
+        "returns_csv": "VERİ YOK",
+        "video": "VERİ YOK"
+      },
+      "olcumler": {
+        "m15_bar": 110,
+        "m15_son_bar": 1784889000000,
+        "h4_bar": 30,
+        "h4_son_bar": 1784880000000
+      },
+      "profil": null,
+      "veri_sozlesmesi": null,
+      "video": null,
+      "eksikler": [
+        "ohlcv_csv: VERİ YOK",
+        "returns_csv: VERİ YOK",
+        "video: VERİ YOK"
+      ],
+      "gecti": true,
+      "kapi": "K1 kapısı GEÇİLDİ: en az bir tam fiyat kanalı var."
+    },
+    {
+      "katman": "K2-AI-AJAN",
+      "rol": "tek ajan + araç; motorlar birbirini görmez",
+      "motor_sonuclari": {
+        "karar-motoru": {
+          "karar": {
+            "karar": "SHORT",
+            "yon": "SHORT",
+            "zincir": 1,
+            "neden": "Dönüş dizisi 4/4 tamam: 65164.8 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 65338 gövdeyle kırıldı.",
+            "giris_alt": 65046.9,
+            "giris_ust": 65274.5,
+            "giris": 65160.7,
+            "stop": 65290.7,
+            "iptal": 65274.5,
+            "t1": 64979.9,
+            "t2": 64976.7,
+            "iptal_kural": "Giriş tetiklenmeden 15M gövde kapanışı 65274.5 ötesine geçerse bölge geçersiz.",
+            "hedef_kaynak": "likidite",
+            "r": 1.39
+          },
+          "son_bar_utc": "2026-07-24 10:30",
+          "akibet_onceki": "İLK KOŞU — kıyas yok.",
+          "rejim_4h": {
+            "rejim": "DOWN",
+            "fark": -607.5350000000035,
+            "esik": 526.1250000000073
+          },
+          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-24 10:30 UTC\nVeri: 15M 110 bar (2026-07-23 07:15→2026-07-24 10:30), 4H 30 bar (2026-07-19 12:00→2026-07-24 08:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: İLK KOŞU — kıyas yok.\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=146.26 | son bar hacim sırası=0.03125 | 4H |MA5-MA20| eşiği=526.125 (fark=-607.535, rejim=DOWN)\n----------------------------------------------------------------\nKARAR : SHORT  (zincir adımı 1)\nNEDEN : Dönüş dizisi 4/4 tamam: 65164.8 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 65338 gövdeyle kırıldı.\nGİRİŞ : 65046.9 – 65274.5 bölgesi (CE 65160.7)\nSTOP  : 65290.7\nİPTAL : Giriş tetiklenmeden 15M gövde kapanışı 65274.5 ötesine geçerse bölge geçersiz.\nT1    : 64979.9 | T2: 64976.7 (kaynak: likidite)\nR     : 1.39 (T1'e; giriş-stop mesafesine göre)\n================================================================",
+          "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu"
+        },
+        "smc_tespit": {
+          "trend": "bear",
+          "rejim": {
+            "adx": 21.77,
+            "durum": "gecis",
+            "yuksek_vol": false,
+            "atr_pct": 0.00202,
+            "vol_esik": 0.00255,
+            "vol_esik_kaynagi": "veri-türevi: ATR% tarihinin q0.9 = 0.00255"
+          },
+          "atr": 131.18257211,
+          "olaylar": [
+            {
+              "i": 12,
+              "type": "BOS",
+              "direction": "bull",
+              "kirilan_seviye": 65732.3,
+              "impulse_start": 65333.1,
+              "impulse_start_i": 2
+            },
+            {
+              "i": 17,
+              "type": "CHoCH",
+              "direction": "bear",
+              "kirilan_seviye": 65555.1,
+              "impulse_start": 65756.6,
+              "impulse_start_i": 14
+            },
+            {
+              "i": 26,
+              "type": "BOS",
+              "direction": "bear",
+              "kirilan_seviye": 64927.3,
+              "impulse_start": 65756.6,
+              "impulse_start_i": 14
+            },
+            {
+              "i": 31,
+              "type": "BOS",
+              "direction": "bear",
+              "kirilan_seviye": 64801.0,
+              "impulse_start": 65215.3,
+              "impulse_start_i": 26
+            },
+            {
+              "i": 42,
+              "type": "BOS",
+              "direction": "bear",
+              "kirilan_seviye": 64688.0,
+              "impulse_start": 65003.6,
+              "impulse_start_i": 34
+            },
+            {
+              "i": 51,
+              "type": "CHoCH",
+              "direction": "bull",
+              "kirilan_seviye": 64924.9,
+              "impulse_start": 64636.0,
+              "impulse_start_i": 42
+            },
+            {
+              "i": 67,
+              "type": "CHoCH",
+              "direction": "bear",
+              "kirilan_seviye": 64976.7,
+              "impulse_start": 65189.5,
+              "impulse_start_i": 64
+            },
+            {
+              "i": 79,
+              "type": "CHoCH",
+              "direction": "bull",
+              "kirilan_seviye": 65164.8,
+              "impulse_start": 64890.5,
+              "impulse_start_i": 77
+            },
+            {
+              "i": 94,
+              "type": "BOS",
+              "direction": "bull",
+              "kirilan_seviye": 65440.0,
+              "impulse_start": 65213.0,
+              "impulse_start_i": 87
+            },
+            {
+              "i": 102,
+              "type": "CHoCH",
+              "direction": "bear",
+              "kirilan_seviye": 65338.0,
+              "impulse_start": 65780.0,
+              "impulse_start_i": 96
+            }
+          ],
+          "htf": {
+            "trend": "bear",
+            "olay_sayisi": 4
+          },
+          "swing_sayisi": {
+            "high": 14,
+            "low": 15
+          },
+          "varsayimlar": [
+            "swing pencere left/right=2/2 (fraktal granülarite; varsayım)",
+            "ATR/ADX periyodu=14/14 (Wilder konvansiyonu)",
+            "ADX trend/range eşiği=25.0/20.0 (Wilder konvansiyonu; params ile ezilebilir)",
+            "eşit tepe/dip toleransı=0.25×ATR (varsayım)",
+            "yüksek-vol eşiği: veri-türevi: ATR% tarihinin q0.9 = 0.00255"
+          ]
+        },
+        "grafik-calisma": {
+          "KARAR": "NÖTR-BEKLE",
+          "yon_bias": "bear",
+          "confluence_skoru": 0.75,
+          "confluence_faktorleri": [
+            "yapı(SMC): CHOCH/bear",
+            "HTF bias hizalı",
+            "FVG çakışması",
+            "likidite hedefi var"
+          ],
+          "golden_zone": [
+            65451.3654,
+            65595.8958
+          ],
+          "giris_bolgesi": [
+            65478.4,
+            65592.7
+          ],
+          "giris_orta": 65535.55,
+          "gecersizlik_sl": 65911.182572,
+          "hedefler": [
+            65335.55,
+            64978.3
+          ],
+          "rr": 0.532,
+          "atr_kullanildi": 131.18257211,
+          "rejim": "gecis",
+          "esik_kaynagi": "varsayılan eşikler (varsayım — kalibre edilmemiş)",
+          "kapi_gerekceleri": [
+            "R:R 0.53 < 2.0"
+          ],
+          "katman_sirasi": "bağlam→yapı→arz-talep→likidite→fib→onay→risk",
+          "not": "Karar-destek; olasılık senaryosu, sinyal/garanti değil. Onay (alt-TF tetik) girişten önce beklenir. Canlı emir DAHİL DEĞİL."
+        },
+        "setup_dogrulama": {
+          "SONUC": "VERİ YETERSİZ",
+          "sinyal_izni": false,
+          "gerekce": "işlem 4 < taban 10 — istatistik kurulamaz",
+          "esik_kaynagi": "veri-türevi (her koşuda bu veriyle yeniden kalibre)",
+          "kalibrasyon": {
+            "atr_mult_kalibre": {
+              "atr_mult": 1.0,
+              "kaynak": "MAE verisi yok → varsayılan 1.0 (varsayım)"
+            },
+            "permutasyon": {
+              "p": 1.0,
+              "null_ortalama": -0.2103,
+              "null_q95": 0.875,
+              "n_perm": 200
+            },
+            "bootstrap_ci_R": [
+              -1.344,
+              -1.2701
+            ],
+            "onerilen_min_rr": {
+              "min_rr": 5.0,
+              "wr_wilson_lo": 0.0,
+              "kaynak": "Wilson alt sınırı 0 → korkuluk üst sınırı (fail-closed)"
+            }
+          },
+          "varsayimlar": [
+            "alpha=0.05 (anlamlılık; istatistik konvansiyonu)",
+            "CI güven=0.95 (konvansiyon)",
+            "n_taban=10 işlem (küçük örneklemde test anlamsız; istatistik tabanı)",
+            "R:R korkuluğu=(1.0, 5.0) (türetim sınırı; aşırı-uyum freni)",
+            "ATR-çarpan korkuluğu=(0.5, 3.0) (türetim sınırı)",
+            "MAE quantile=0.9 (kazananların kapsanma oranı)",
+            "tp_rr=1.5 (hedef tasarımı; likidite-hedefli sürümde veriye bağlanabilir)",
+            "fees+slippage=5.0+2.0 bps (borsa varsayımı)",
+            "kurulum tanımı: golden-zone retest (0.618-0.786) — SMC çerçevesi yorumsaldır"
+          ]
+        }
+      },
+      "hatalar": [
+        {
+          "motor": "turev-akis",
+          "hata": "türev paneli VERİ YOK — kurula EKLENMEZ (fail-closed)"
+        }
+      ],
+      "motor_sayisi": 4,
+      "gecti": true,
+      "kapi": "K2 kapısı GEÇİLDİ: 4 motor bağımsız sayısal sonuç üretti."
+    },
+    {
+      "katman": "K3-COKLU-AJAN",
+      "rol": "motorlar → danışman kurulu; güven K5 ağırlıklarıyla ölçeklenir",
+      "danismanlar": [
+        {
+          "name": "karar-motoru",
+          "stance": "short",
+          "confidence": 0.7296,
+          "evidence": "SHORT (zincir 1, R=1.39): Dönüş dizisi 4/4 tamam: 65164.8 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 65338 gövdeyle kırıldı.",
+          "_ham_confidence": 0.7296,
+          "_agirlik": 1.0
+        },
+        {
+          "name": "grafik-calisma",
+          "stance": "flat",
+          "confidence": 0.75,
+          "evidence": "NÖTR-BEKLE | confluence=0.75 faktörler=['yapı(SMC): CHOCH/bear', 'HTF bias hizalı', 'FVG çakışması', 'likidite hedefi var'] | rejim=gecis | kapılar=['R:R 0.53 < 2.0']",
+          "_ham_confidence": 0.75,
+          "_agirlik": 1.0
+        }
+      ],
+      "seviyeler": {
+        "karar-motoru": {
+          "yon": "short",
+          "entry": 65160.7,
+          "stop": 65290.7,
+          "target": 64979.9,
+          "kaynak": "karar-motoru (tek-kaynak çıktı)"
+        }
+      },
+      "agirlik_kaynagi": {
+        "agirliklar": {},
+        "kaynak": "agirlik.json VERİ YOK — ilk koşu, tüm ağırlıklar 1.0 (nötr)"
+      },
+      "notlar": [],
+      "gecti": true,
+      "kapi": "K3 kapısı GEÇİLDİ: 2 danışman (1 yönlü)."
+    },
+    {
+      "katman": "K4-AGI",
+      "rol": "alanlar-arası genelleme: doğrulama + çelişki + şişirilmiş-R + 5 mercek",
+      "verifier": {
+        "karar-motoru": {
+          "confirmed": true
+        },
+        "grafik-calisma": {
+          "confirmed": false,
+          "reason": "işlem 4 < taban 10 — istatistik kurulamaz"
+        }
+      },
+      "dogrulama_gerekceleri": {
+        "karar-motoru": "R=1.39 vs R_MIN=1.35; karar=SHORT",
+        "grafik-calisma": "setup_dogrulama: VERİ YETERSİZ — işlem 4 < taban 10 — istatistik kurulamaz"
+      },
+      "rr_denetimi": {
+        "karar-motoru": {
+          "verdict": "TUTARLI",
+          "yon": "short",
+          "R_rapor": 1.39,
+          "R_gercekci": 1.39,
+          "stop_atr": 0.99,
+          "hedef_atr": 1.38,
+          "gerekli_stop_mesafe": 130.0,
+          "gerekce": [
+            "stop 0.99×ATR, hedef 1.38×ATR — ölçekler uyumlu"
+          ],
+          "esik_kaynagi": "ATR-ölçek konvansiyonu (stop gürültüyü aşmalı; uzak hedef geniş stop ister) — esikler ile koşu başına değiştirilebilir",
+          "esikler": {
+            "min_stop_atr": 0.8,
+            "swing_stop_atr": 2.0,
+            "far_target_atr": 3.0
+          },
+          "not": "Rapor edilen R şişirilmişse GERÇEKÇİ R kullanılır. Karar-destek; canlı/otomatik emir DAHİL DEĞİL."
+        }
+      },
+      "celiskiler": [
+        "MTF bağlam: karar-motoru rejim=DOWN | smc HTF={'trend': 'bear', 'olay_sayisi': 4}",
+        "KLİNE KÖRLÜĞÜ AÇIK: türev kanalı (OI/funding/CVD/LSR/likidasyon) kurula girmedi — karar yalnız fiyat yapısına dayanıyor."
+      ],
+      "mercekler": {
+        "muhalif": {
+          "kaynak": "grafik-calisma",
+          "rol": "kurul içindeki zıt-yön danışman(lar)ı",
+          "baglanma": "otomatik"
+        },
+        "ilk_prensipler": {
+          "kaynak": "karar-motoru",
+          "rol": "ham fiyattan zincirle türetilmiş karar (anlatısız)",
+          "baglanma": "otomatik"
+        },
+        "genisletici": {
+          "kaynak": "VERİ YOK",
+          "rol": "fiyat dışı kanal (OI/funding/CVD/LSR/likidasyon)",
+          "baglanma": "BAĞLANMADI — kanıt yok"
+        },
+        "dis_goz": {
+          "kaynak": "setup_dogrulama",
+          "rol": "tarihsel/örneklem-dışı kanıt (anlatıdan bağımsız)",
+          "baglanma": "otomatik"
+        },
+        "uygulayici": {
+          "kaynak": "grafik-calisma",
+          "rol": "uygulanabilir seviye/işlem kalitesi",
+          "baglanma": "otomatik"
+        }
+      },
+      "baglanmayan_mercekler": [
+        "genisletici"
+      ],
+      "gecti": true,
+      "kapi": "K4 kapısı GEÇİLDİ: 2 danışman doğrulamadan geçti, 1 R denetlendi, 1 mercek kanıta bağlanamadı."
+    },
+    {
+      "katman": "K5-SI",
+      "rol": "(a) güven-ağırlıklı sentez → (b) geçmiş akıbetten ağırlık türetme",
+      "sentez": {
+        "question": "otomatik koşu — engine/girdi verisi değişti",
+        "YON_BIAS": "SHORT",
+        "KARAR": "SHORT",
+        "guven_skoru": 0.4747,
+        "yon_skoru": -0.7956,
+        "uzlasi": 0.7956,
+        "muhalefet": [
+          "grafik-calisma"
+        ],
+        "kapi_gerekceleri": [],
+        "gecersizlik_kosulu": "Giriş tetiklenmeden 15M gövde kapanışı 65274.5 ötesine geçerse bölge geçersiz.",
+        "esik_kaynagi": "tasarım varsayımı (fail-closed karar kapıları; risk iştahını kodlar, piyasa verisinden türetilmez — thresholds ile koşu başına değiştirilebilir)",
+        "danisman_ozeti": [
+          {
+            "ad": "karar-motoru",
+            "yon": "short",
+            "guven": 0.7296,
+            "dogrulandi": true,
+            "etkin_agirlik": 0.7296,
+            "kanit": "SHORT (zincir 1, R=1.39): Dönüş dizisi 4/4 tamam: 65164.8 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 65338 gövdeyle kırıldı.",
+            "curutme": null
+          },
+          {
+            "ad": "grafik-calisma",
+            "yon": "nötr",
+            "guven": 0.75,
+            "dogrulandi": false,
+            "etkin_agirlik": 0.1875,
+            "kanit": "NÖTR-BEKLE | confluence=0.75 faktörler=['yapı(SMC): CHOCH/bear', 'HTF bias hizalı', 'FVG çakışması', 'likidite hedefi var'] | rejim=gecis | kapılar=['R:R 0.53 < 2.0']",
+            "curutme": "işlem 4 < taban 10 — istatistik kurulamaz"
+          }
+        ],
+        "not": "Karar-destek çıktısıdır; kesinlik/sinyal değil. Canlı emir DAHİL DEĞİL."
+      },
+      "sentez_girdisi": {
+        "question": "otomatik koşu — engine/girdi verisi değişti",
+        "advisors": [
+          {
+            "name": "karar-motoru",
+            "stance": "short",
+            "confidence": 0.7296,
+            "evidence": "SHORT (zincir 1, R=1.39): Dönüş dizisi 4/4 tamam: 65164.8 seviyesi süpürüldü, geri alındı, yüksek-hacim displacement FVG bıraktı, BOS 65338 gövdeyle kırıldı."
+          },
+          {
+            "name": "grafik-calisma",
+            "stance": "flat",
+            "confidence": 0.75,
+            "evidence": "NÖTR-BEKLE | confluence=0.75 faktörler=['yapı(SMC): CHOCH/bear', 'HTF bias hizalı', 'FVG çakışması', 'likidite hedefi var'] | rejim=gecis | kapılar=['R:R 0.53 < 2.0']"
+          }
+        ],
+        "verifier": {
+          "karar-motoru": {
+            "confirmed": true
+          },
+          "grafik-calisma": {
+            "confirmed": false,
+            "reason": "işlem 4 < taban 10 — istatistik kurulamaz"
+          }
+        },
+        "invalidation": "Giriş tetiklenmeden 15M gövde kapanışı 65274.5 ötesine geçerse bölge geçersiz."
+      },
+      "islem_kalitesi": {
+        "hukum": "TEMİZ GİRİŞ VAR",
+        "ozet": "TEMİZ GİRİŞ VAR (karar-motoru): giriş 65160.7, stop 65290.7, T1 64979.9, R_gerçekçi 1.39 (rr_denetim TUTARLI)",
+        "adaylar": [
+          {
+            "motor": "karar-motoru",
+            "yon": "short",
+            "entry": 65160.7,
+            "stop": 65290.7,
+            "target": 64979.9,
+            "kaynak": "karar-motoru (tek-kaynak çıktı)",
+            "R_gercekci": 1.39,
+            "rr_verdict": "TUTARLI"
+          }
+        ],
+        "engeller": [],
+        "seviyeler": {
+          "karar-motoru": {
+            "yon": "short",
+            "entry": 65160.7,
+            "stop": 65290.7,
+            "target": 64979.9,
+            "kaynak": "karar-motoru (tek-kaynak çıktı)"
+          }
+        },
+        "rr_denetimi": {
+          "karar-motoru": {
+            "verdict": "TUTARLI",
+            "yon": "short",
+            "R_rapor": 1.39,
+            "R_gercekci": 1.39,
+            "stop_atr": 0.99,
+            "hedef_atr": 1.38,
+            "gerekli_stop_mesafe": 130.0,
+            "gerekce": [
+              "stop 0.99×ATR, hedef 1.38×ATR — ölçekler uyumlu"
+            ],
+            "esik_kaynagi": "ATR-ölçek konvansiyonu (stop gürültüyü aşmalı; uzak hedef geniş stop ister) — esikler ile koşu başına değiştirilebilir",
+            "esikler": {
+              "min_stop_atr": 0.8,
+              "swing_stop_atr": 2.0,
+              "far_target_atr": 3.0
+            },
+            "not": "Rapor edilen R şişirilmişse GERÇEKÇİ R kullanılır. Karar-destek; canlı/otomatik emir DAHİL DEĞİL."
+          }
+        },
+        "kapi_kurali": "hizalı seviye + rr_denetim TUTARLI + R_gercekci ≥ 1.35 + doğrulama çürütülmemiş",
+        "not": "Seviyeler motorların tek-kaynak çıktısıdır; şişirilmiş R rr_denetim.py ile mekanik elenmiştir. BEKLE = kalite hükmü, yön reddi değil."
+      },
+      "pozisyon_boyutu": null,
+      "portfoy": null,
+      "kalibrasyon": {
+        "agirliklar": {
+          "karar-motoru": 1.0
+        },
+        "ayrinti": {
+          "karar-motoru": {
+            "n": 2,
+            "wins": 0,
+            "kaynak": "/home/user/Future-/engine/state/defter.jsonl",
+            "atlanan": 0,
+            "pozisyonsuz": 1,
+            "wilson_lo": 0.0,
+            "agirlik": 1.0,
+            "durum": "VERİ YOK — ölçülmüş sonuç 2 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
+          }
+        },
+        "uretildigi_bar": "2026-07-24 10:30",
+        "etiketleme": {
+          "karar-motoru": {
+            "etiketlenen": 0,
+            "elle_korunan": 3,
+            "olculemeyen": 0,
+            "bar_havuzu": {
+              "bar": 110,
+              "ilk": 1784790900000,
+              "son": 1784889000000
+            },
+            "arsiv": {
+              "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
+              "eklenen_bar": 0,
+              "toplam_bar": 110
+            }
+          }
+        },
+        "kural": "agirlik = clamp(2 × wilson_lo(kazanan, n), 0.4, 1.0); n < n_taban (10) → 1.0 (değiştirilmez)",
+        "not": "Bu ağırlıklar BİR SONRAKİ koşunun K3 katmanında uygulanır. Ölçülmemiş sonuç istatistiğe girmez — 'öğrendim' iddiası kanıtsız üretilmez.",
+        "danisman_defterleri": {
+          "yazilan": {},
+          "atlanan": [],
+          "karar_zamani": 1784889000000
+        }
+      },
+      "gecti": true,
+      "kapi": "K5 kapısı GEÇİLDİ: nihai karar üretildi ve geri besleme yazıldı."
+    }
+  ],
+  "varsayimlar": [
+    "karar-motoru güven eşlemesi: zincir tabanı {'1': 0.7, '2': 0.6, '3': 0.5}, BEKLE=0.4, R bonusu ≤0.2 (R_MIN=1.35 motordan) — KONVANSİYON, piyasa eşiği değil",
+    "grafik-calisma güveni = confluence_skoru (motorun kendi çıktısı, eşleme yok)",
+    "turev-akis güveni = motorun kendi to_advisor çıktısı (eşleme yok)",
+    "K2 kapısı ≥2 motor, K3 kapısı ≥2 danışman — yapı kuralı",
+    "SI ağırlığı = clamp(2×wilson_lo, 0.4, 1.0); taban wr=0.5"
+  ],
+  "not": "Yalnız karar-destek. Canlı/otomatik emir DAHİL DEĞİL. Her sayı bir motorun dosyadan okunan çıktısıdır.",
+  "ZIRVE": {
+    "YON_BIAS": "SHORT",
+    "ISLEM_KALITESI": "TEMİZ GİRİŞ VAR",
+    "sentez_karari": "SHORT",
+    "guven_skoru": 0.4747,
+    "yon_skoru": -0.7956,
+    "uzlasi": 0.7956,
+    "muhalefet": [
+      "grafik-calisma"
+    ],
+    "kapi_gerekceleri": [],
+    "gecersizlik": "Giriş tetiklenmeden 15M gövde kapanışı 65274.5 ötesine geçerse bölge geçersiz.",
+    "seviyeler": {
+      "karar-motoru": {
+        "yon": "short",
+        "entry": 65160.7,
+        "stop": 65290.7,
+        "target": 64979.9,
+        "kaynak": "karar-motoru (tek-kaynak çıktı)"
+      }
+    },
+    "pozisyon_boyutu": null,
+    "ulasilan_katman": "K5-SI (zirve)",
+    "iki_satir": {
+      "1_YON": "YÖN (bias): SHORT — ağırlıklı yön skoru -0.7956, uzlaşı 0.7956 (kapıdan bağımsız; BEKLE yön reddi değildir)",
+      "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: TEMİZ GİRİŞ VAR (karar-motoru): giriş 65160.7, stop 65290.7, T1 64979.9, R_gerçekçi 1.39 (rr_denetim TUTARLI)"
+    }
+  },
+  "durum": "TAMAM — piramidin tepesine ulaşıldı"
+}

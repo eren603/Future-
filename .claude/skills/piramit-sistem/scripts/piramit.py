@@ -900,12 +900,18 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     """
     defterler = job.get("akibet_defterleri") or {}
     sdir = (k2["motor_sonuclari"].get("karar-motoru") or {}).get("state_dir")
+    # Defter OKUMA dizini yazma dizininden AYRIDIR: kum havuzu koşusunda
+    # (motor bu barı zaten işlemiş) yeni karar sahte akıbetle deftere yazılmaz,
+    # ama GEÇMİŞ sicil yine GERÇEK defterden okunur. Aksi halde kum havuzu
+    # koşusu öğrenilmiş ağırlıkları siler ve sistem hafızasını kaybeder.
+    okuma = _yol(job.get("defter_dizini"), taban) or (
+        Path(str(job["defter_dizini"])) if job.get("defter_dizini")
+        else (Path(sdir) if sdir else ENGINE / "state"))
     if "karar-motoru" not in defterler:
-        defterler["karar-motoru"] = str(Path(sdir) / "defter.jsonl") if sdir \
-            else str(ENGINE / "state" / "defter.jsonl")
+        defterler["karar-motoru"] = str(okuma / "defter.jsonl")
     # Danışman defterleri (defter_<motor>.jsonl) otomatik dahil edilir →
     # her motor KENDİ siciliyle kalibre olur (ağırlık asimetrisi kapanır).
-    kok = Path(sdir) if sdir else (ENGINE / "state")
+    kok = okuma
     for p in sorted(kok.glob("defter_*.jsonl")):
         ad = p.stem[len("defter_"):]
         defterler.setdefault(ad, str(p))

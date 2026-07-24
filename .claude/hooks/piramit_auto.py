@@ -134,6 +134,10 @@ def _kos() -> tuple[str, int]:
         # Bar arşivi fiyat GERÇEĞİdir (karar hafızası değil) — kum havuzu
         # koşusunda bile gerçek arşive yazılır ki kayan pencere telafi edilsin.
         "bar_arsivi": str(REPO / "engine" / "state" / "bar_arsivi.jsonl"),
+        # Sicil OKUMA dizini daima GERÇEK hafızadır: kum havuzu koşusu yeni
+        # kararı sahte akıbetle yazmaz ama geçmiş sicili okur ve etiketler —
+        # yoksa öğrenilmiş ağırlıklar her kum havuzu koşusunda silinirdi.
+        "defter_dizini": str(REPO / "engine" / "state"),
         "_hafiza": ("KUM HAVUZU — motor bu barı zaten işlemişti; gerçek defter "
                     "korunuyor" if kum else "GERÇEK — yeni bar, hafıza güncellenir"),
     }
