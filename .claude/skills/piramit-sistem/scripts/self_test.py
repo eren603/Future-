@@ -29,6 +29,7 @@ import turev_girdi as TG  # noqa: E402
 import paket_ac as PA  # noqa: E402
 import gozlemci as GZ  # noqa: E402
 import iddia_denetle as ID  # noqa: E402
+import usd_hedef as UH  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -427,6 +428,38 @@ def main() -> int:
                 and any(abs(k["deger"] - 87.3) < 1e-9 for k in i_kotu["KAYNAKSIZ"]),
                 f"kaynaklı metin geçti={i_iyi['gecti']}, uydurma %87.3 yakalandı="
                 f"{not i_kotu['gecti']}")
+
+        # ---- T22: sabit-USDT hedef motoru kapıları ------------------------
+        TABAN = {"sembol": "ETHUSDT", "yon": "long", "kontrat": 3.0,
+                 "teminat": 400.0, "stop_usdt": 100.0, "hedef_usdt": [135, 150],
+                 "fiyat": 1859.61, "atr_kurulum": 23.58,
+                 "giris_adaylari": [1859.61],
+                 "likidite_hedefleri": [1906.0],          # band İÇİNDE
+                 "karsi_yapi_seviyeleri": [1847.89]}
+        iyi = UH.hesapla(TABAN)
+        # (a) R kapısı: hedef 90–120 → R 0.9–1.2 < 1.35
+        dusuk_r = UH.hesapla({**TABAN, "hedef_usdt": [90, 120]})
+        # (b) stop ölçeği: 15m ATR ile stop 7.14×ATR → ölçek dışı
+        yanlis_tf = UH.hesapla({**TABAN, "atr_kurulum": 4.67})
+        # (c) yapı kapısı: likidite bandın dışında
+        yapisiz = UH.hesapla({**TABAN, "likidite_hedefleri": [1909.9]})
+        # (d) tasfiye kapısı: teminat 90 USDT → tasfiye 30 puan < stop 33.33
+        tasfiye = UH.hesapla({**TABAN, "teminat": 90.0})
+        # çevrim aritmetiği birebir doğru mu?
+        c = iyi["cevrim"]
+        aritmetik = (abs(c["stop_mesafe_puan"] - 100/3) < 1e-3  # çıktı 4 haneye yuvarlı
+                     and c["hedef_mesafe_puan"] == [45.0, 50.0]
+                     and c["R_band"] == [1.35, 1.5])
+        kontrol("T22 sabit-USDT motoru: çevrim + 5 kapı",
+                iyi["HUKUM"] == "UYGUN" and aritmetik
+                and "R ≥ r_min" in dusuk_r["dusen_kapilar"]
+                and "stop ölçeği" in yanlis_tf["dusen_kapilar"]
+                and "yapı hedefi bandın içinde" in yapisiz["dusen_kapilar"]
+                and "tasfiye > stop" in tasfiye["dusen_kapilar"],
+                f"uygun={iyi['HUKUM']}, düşük-R reddi={bool(dusuk_r['dusen_kapilar'])}, "
+                f"15m ölçek reddi={'stop ölçeği' in yanlis_tf['dusen_kapilar']}, "
+                f"yapısız hedef reddi={'yapı hedefi bandın içinde' in yapisiz['dusen_kapilar']}, "
+                f"tasfiye reddi={'tasfiye > stop' in tasfiye['dusen_kapilar']}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
