@@ -596,6 +596,29 @@ def main() -> int:
                 f"Δskor={yd['skor_delta']}, sürücü={len(k26['onemli_degisimler'])} "
                 f"değişim, kayıtsız fail-closed=True")
 
+        # ---- T27: çapraz-sembol hafıza izolasyonu -------------------------
+        # İkinci sembol (ör. ETH) kendi state dizininde koşunca ana sembolün
+        # öğrenilmiş ağırlığı EZİLMEMELİ. Bu bir P0'dı: tek global agirlik.json
+        # ETH koşusunda BTC sicilinin yerine geçiyordu (2026-07-24).
+        ana = P.ENGINE / "state"
+        ikinci = P.ENGINE / "state" / "eth"
+        kum = tmp / "kum_havuzu"
+        y_ana, y_ikinci = P._hafiza_yolu(ana), P._hafiza_yolu(ikinci)
+        # kum havuzu: YAZMA geçici dizine, OKUMA gerçek sicile → ana hafıza
+        y_kum = P._hafiza_yolu(P._okuma_dizini(
+            {"state_dir": str(kum), "defter_dizini": str(ana)}, tmp))
+        # T4/T5 sicili (engine/state dışı): hafıza sicilin yanında, depo
+        # hafıza dizini geçici koşularla KİRLENMEZ
+        y_test = P._hafiza_yolu(tmp / "kal_state")
+        kontrol("T27 çapraz-sembol hafıza izolasyonu",
+                y_ana == P.AGIRLIK_DOSYA and y_ikinci != y_ana
+                and y_ikinci.name == "agirlik_eth.json" and y_kum == y_ana
+                and y_test == (tmp / "kal_state" / "agirlik.json").resolve()
+                and P.HAFIZA_DIR not in y_test.parents,
+                f"ana={y_ana.name}, ikinci={y_ikinci.name}, "
+                f"kum_havuzu→{y_kum.name} (gerçek sicil), "
+                f"geçici sicil→kendi dizini ({y_test.parent.name}/)")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi

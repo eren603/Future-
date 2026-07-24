@@ -30,6 +30,10 @@ YAPISAL = {0, 1, 2, 3, 4, 5, 10, 100}
 # Negatif işaret yalnız rakam/nokta ile ÖNCELENMEMİŞSE geçerlidir; aksi halde
 # "64515.6-64707.5" gibi ARALIKLAR negatif sayı sanılır (yanlış KAYNAKSIZ).
 SAYI = re.compile(r"(?<![\d.,])[-+]?\d+(?:[.,]\d+)?")
+# Zaman damgaları piyasa iddiası DEĞİLDİR (2026-07-24, 22:04:53, 10:30).
+# Taramadan önce maskelenir; sayıldıkları ama denetlenmedikleri raporlanır.
+ZAMAN = re.compile(r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?"
+                   r"|(?<!\d)\d{1,2}:\d{2}(?::\d{2})?(?!\d)")
 
 
 def rapor_sayilari(nesne, kume=None) -> set:
@@ -55,6 +59,8 @@ def rapor_sayilari(nesne, kume=None) -> set:
 
 def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
     kaynak = rapor_sayilari(rapor)
+    zaman_sayisi = len(ZAMAN.findall(metin))
+    metin = ZAMAN.sub(lambda m: "#" * len(m.group()), metin)   # zaman maskele
     bulundu, kaynaksiz, yapisal = [], [], []
     for m in SAYI.finditer(metin):
         ham = m.group()
@@ -74,10 +80,12 @@ def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
     return {
         "toplam_sayi": len(bulundu) + len(kaynaksiz) + len(yapisal),
         "bulundu": len(bulundu), "yapisal_atlanan": len(yapisal),
+        "zaman_damgasi_atlanan": zaman_sayisi,
         "KAYNAKSIZ": kaynaksiz,
         "gecti": not kaynaksiz,
         "sinir": ("Yalnız SAYI kaynağı denetlenir; anlam/çıkarım doğruluğu "
-                  "denetlenmez (elle ikinci-göz gerekir)."),
+                  "denetlenmez (elle ikinci-göz gerekir). Zaman damgaları "
+                  "maskelenir — piyasa iddiası değildir."),
     }
 
 

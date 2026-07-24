@@ -59,7 +59,7 @@ STATE_DIR = SKILL_DIR / "state"        # KOŞU ARTIĞI: silinebilir, gitignore'd
 # aynı klasörde olsaydı bir temizlik komutu (rm -rf state) SI hafızasını
 # sessizce silerdi (bir kez oldu: commit 9a86f62'de index'ten düştü).
 HAFIZA_DIR = SKILL_DIR / "hafiza"
-AGIRLIK_DOSYA = HAFIZA_DIR / "agirlik.json"
+AGIRLIK_DOSYA = HAFIZA_DIR / "agirlik.json"    # ana sembol (engine/state)
 ESKI_AGIRLIK = STATE_DIR / "agirlik.json"      # geriye uyumluluk (taşıma)
 
 MOTOR = {
@@ -477,11 +477,59 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
 # ==========================================================================
 # K3 — ÇOKLU-AJAN: motorlar → danışman kurulu (K5 ağırlıklarıyla)
 # ==========================================================================
-def _agirliklar() -> dict:
-    p = AGIRLIK_DOSYA if AGIRLIK_DOSYA.exists() else ESKI_AGIRLIK
+def _okuma_dizini(job: dict, taban: Path, k2: dict | None = None) -> Path:
+    """Defter OKUMA dizini (sicil buradan okunur; yazma dizininden AYRI).
+
+    Kum havuzu koşusunda `state_dir` geçici dizindir ama `defter_dizini` gerçek
+    sicili gösterir — sicil oradan okunur, öğrenilmiş ağırlık silinmez.
+    """
+    p = _yol(job.get("defter_dizini"), taban)
+    if p is not None:
+        return Path(str(p))
+    if job.get("defter_dizini"):
+        return Path(str(job["defter_dizini"]))
+    sdir = None
+    if k2:
+        sdir = ((k2.get("motor_sonuclari") or {}).get("karar-motoru")
+                or {}).get("state_dir")
+    if not sdir:
+        sdir = _yol(job.get("state_dir"), taban) or job.get("state_dir")
+    return Path(str(sdir)) if sdir else (ENGINE / "state")
+
+
+def _hafiza_yolu(okuma) -> Path:
+    """Ağırlık dosyası defter-okuma dizinine göre AD ALANLIDIR.
+
+    Neden: ikinci bir sembolü (ör. ETH) kendi state dizininde koşturmak, tek
+    global agirlik.json'u O SEMBOLÜN siciliyle EZİYORDU — BTC'nin öğrenilmiş
+    ağırlığı sessizce 1.0'a dönerdi (çapraz-sembol hafıza çarpışması, 2026-07-24
+    ETH koşusunda gözlendi). Her sicil kendi hafızasını taşır; ana sembol
+    (engine/state) geriye uyumlu olarak agirlik.json'da kalır.
+    """
+    okuma = Path(str(okuma))
+    try:
+        r_ok, r_var = okuma.resolve(), (ENGINE / "state").resolve()
+    except OSError:
+        return AGIRLIK_DOSYA
+    if r_ok == r_var:
+        return AGIRLIK_DOSYA
+    try:
+        ad = "_".join(r_ok.relative_to(r_var).parts)      # engine/state/eth → eth
+    except ValueError:
+        # engine/state DIŞI sicil (geçici test dizini, harici defter): hafıza
+        # sicilin yanında tutulur — depo hafıza dizini geçici koşularla
+        # kirlenmez, ama aynı sicil aynı dosyayı bulur (determinist).
+        return r_ok / "agirlik.json"
+    return HAFIZA_DIR / f"agirlik_{ad}.json"
+
+
+def _agirliklar(hafiza_p: Path | None = None) -> dict:
+    hafiza_p = hafiza_p or AGIRLIK_DOSYA
+    p = hafiza_p if hafiza_p.exists() else (
+        ESKI_AGIRLIK if hafiza_p == AGIRLIK_DOSYA else hafiza_p)
     if not p.exists():
-        return {"agirliklar": {}, "kaynak": f"agirlik.json {YOK} — ilk koşu, "
-                                            "tüm ağırlıklar 1.0 (nötr)"}
+        return {"agirliklar": {}, "kaynak": f"{p.name} {YOK} — bu sicilin ilk "
+                                            "koşusu, tüm ağırlıklar 1.0 (nötr)"}
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
         return {"agirliklar": d.get("agirliklar", {}) or {},
@@ -491,9 +539,9 @@ def _agirliklar() -> dict:
         return {"agirliklar": {}, "kaynak": f"agirlik.json BOZUK ({e}) → nötr 1.0"}
 
 
-def k3_coklu(k1: dict, k2: dict) -> dict:
+def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
     m = k2["motor_sonuclari"]
-    agir = _agirliklar()
+    agir = _agirliklar(hafiza_p)
     W = agir["agirliklar"]
     danismanlar, notlar, seviyeler = [], [], {}
 
@@ -1183,9 +1231,7 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     # (motor bu barı zaten işlemiş) yeni karar sahte akıbetle deftere yazılmaz,
     # ama GEÇMİŞ sicil yine GERÇEK defterden okunur. Aksi halde kum havuzu
     # koşusu öğrenilmiş ağırlıkları siler ve sistem hafızasını kaybeder.
-    okuma = _yol(job.get("defter_dizini"), taban) or (
-        Path(str(job["defter_dizini"])) if job.get("defter_dizini")
-        else (Path(sdir) if sdir else ENGINE / "state"))
+    okuma = _okuma_dizini(job, taban, k2)
     if "karar-motoru" not in defterler:
         defterler["karar-motoru"] = str(okuma / "defter.jsonl")
     # Danışman defterleri (defter_<motor>.jsonl) otomatik dahil edilir →
@@ -1232,9 +1278,14 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
                 "Ölçülmemiş sonuç istatistiğe girmez — 'öğrendim' iddiası "
                 "kanıtsız üretilmez."),
     }
-    HAFIZA_DIR.mkdir(parents=True, exist_ok=True)
-    AGIRLIK_DOSYA.write_text(json.dumps(kayit, ensure_ascii=False, indent=2),
-                             encoding="utf-8")
+    # Ağırlık dosyası SİCİLE göre ad alanlıdır: ikinci sembolün koşusu ana
+    # sembolün öğrenilmiş ağırlığını EZEMEZ (çapraz-sembol hafıza çarpışması).
+    hafiza_p = _hafiza_yolu(okuma)
+    kayit["sicil_dizini"] = str(okuma)
+    kayit["hafiza_dosyasi"] = str(hafiza_p)
+    hafiza_p.parent.mkdir(parents=True, exist_ok=True)
+    hafiza_p.write_text(json.dumps(kayit, ensure_ascii=False, indent=2),
+                        encoding="utf-8")
     return kayit
 
 
@@ -1277,7 +1328,10 @@ def kos(job: dict, taban: Path) -> dict:
     if not k2["gecti"]:
         return _durdur(rapor, "K2-AI-AJAN", k2["kapi"])
 
-    k3 = k3_coklu(k1, k2)
+    # K3 OKUMA ile K5 YAZMA aynı ad alanını kullanır (aynı sicil → aynı dosya).
+    hafiza_p = _hafiza_yolu(_okuma_dizini(job, taban, k2))
+    rapor["hafiza_dosyasi"] = str(hafiza_p)
+    k3 = k3_coklu(k1, k2, hafiza_p)
     rapor["katmanlar"].append(k3)
     if not k3["gecti"]:
         return _durdur(rapor, "K3-COKLU-AJAN", k3["kapi"])

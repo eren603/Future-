@@ -1,36 +1,35 @@
 {
-  "sembol": "BTCUSDT",
-  "son_bar": 1784889000000,
-  "son_bar_utc": "2026-07-24 10:30",
-  "son_kapanis": 65160.7,
+  "sembol": "engine/girdi",
+  "son_bar": 1784930400000,
+  "son_bar_utc": "2026-07-24 22:00",
+  "son_kapanis": 64611.55,
   "YON_BIAS": "SHORT",
-  "yon_skoru": -0.7956,
-  "guven_skoru": 0.4747,
-  "uzlasi": 0.7956,
+  "yon_skoru": -0.8792,
+  "guven_skoru": 0.5798,
+  "uzlasi": 0.8792,
   "islem_kalitesi": "TEMİZ GİRİŞ VAR",
   "islem_seviyeleri": {
-    "giris": 65160.7,
-    "stop": 65290.7,
-    "hedef": 64979.9,
-    "giris_alt": 65046.9,
-    "giris_ust": 65274.5
+    "giris": 64611.55,
+    "stop": 64877.6,
+    "hedef": 64104.1
   },
   "danismanlar": {
     "karar-motoru": "short",
     "grafik-calisma": "flat",
-    "turev-akis": "long"
+    "turev-akis": "short",
+    "gorsel-teyit": "short"
   },
   "surucu": {
     "trend": "bear",
-    "adx": 21.77,
-    "atr": 131.18,
-    "rejim": "gecis",
-    "turev_skor": 0.7,
-    "turev_kapsam": 0.18,
-    "funding": null,
-    "lsr": null,
-    "cvd_delta": 0.7,
-    "oi_delta": null,
-    "liq_long": null
+    "adx": 19.22,
+    "atr": 102.55944987,
+    "rejim": "range",
+    "turev_skor": -0.661,
+    "turev_kapsam": 1.0,
+    "funding": 0.0,
+    "lsr": -0.5,
+    "cvd_delta": -0.7,
+    "oi_delta": -1.0,
+    "liq_long": -0.8
   }
 }

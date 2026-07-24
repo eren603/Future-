@@ -1,0 +1,39 @@
+{
+  "agirliklar": {
+    "karar-motoru": 1.0
+  },
+  "ayrinti": {
+    "karar-motoru": {
+      "n": 0,
+      "wins": 0,
+      "kaynak": "/home/user/Future-/engine/state/eth/defter.jsonl VERİ YOK",
+      "atlanan": 0,
+      "pozisyonsuz": 0,
+      "wilson_lo": null,
+      "agirlik": 1.0,
+      "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
+    }
+  },
+  "uretildigi_bar": "2026-07-24 22:00",
+  "etiketleme": {
+    "karar-motoru": {
+      "etiketlenen": 0,
+      "elle_korunan": 0,
+      "olculemeyen": 0,
+      "bar_havuzu": {
+        "bar": 200,
+        "ilk": 1784751300000,
+        "son": 1784930400000
+      },
+      "arsiv": {
+        "arsiv": "/home/user/Future-/engine/state/eth/bar_arsivi.jsonl",
+        "eklenen_bar": 0,
+        "toplam_bar": 200
+      }
+    }
+  },
+  "kural": "agirlik = clamp(2 × wilson_lo(kazanan, n), 0.4, 1.0); n < n_taban (10) → 1.0 (değiştirilmez)",
+  "not": "Bu ağırlıklar BİR SONRAKİ koşunun K3 katmanında uygulanır. Ölçülmemiş sonuç istatistiğe girmez — 'öğrendim' iddiası kanıtsız üretilmez.",
+  "sicil_dizini": "/home/user/Future-/engine/state/eth",
+  "hafiza_dosyasi": "/home/user/Future-/.claude/skills/piramit-sistem/hafiza/agirlik_eth.json"
+}
