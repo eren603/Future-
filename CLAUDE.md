@@ -3,6 +3,28 @@
 Bu depo finans/kripto piyasa analizi odaklıdır (Binance futures, fable paneli,
 SMC/likidite okuması).
 
+## VARSAYILAN ÇALIŞMA MODU (otomatik — tetikleyici GEREKMEZ)
+
+Bu dosya her oturumda otomatik yüklenir; aşağıdaki disiplin `/komut` beklemeden
+**her ciddi analiz/kararda** uygulanır (ayrıntılar aşağıdaki "Ek kural"larda):
+
+1. **Motorlar birlikte koşar** (aynı turda, ayrı çağrılarla — otomatik fan-out
+   KODU yok) → her biri **gerçek sayısal sonuç** üretir. Dosyadan okunmayan sayı
+   kullanılmaz.
+2. **5 danışman merceği:** Muhalif / İlk-Prensipler / Genişletici / Dış-Göz /
+   Uygulayıcı — her biri farklı kör noktayı yakalar.
+3. **Güven-ağırlıklı sentez** (`karar-kurulu/scripts/sentez.py`) → **iki satır:**
+   YÖN (bias, gizlenmez) + İŞLEM KALİTESİ (temiz giriş var mı / tepki bekle).
+4. **Doğruluk sözleşmesi:** gerçek/varsayım/yorum ayrılır; eksik = "VERİ YOK";
+   uydurma yok. İkinci-göz **ELLE** yapılır — grounding mekanikleştirilemez, sahte
+   otorite bir denetçiye devredilmez.
+5. **Şişirilmiş R YASAK:** stop/hedef içeren, motorun tek-kaynaklı çıktısı olmayan
+   her R `karar-kurulu/scripts/rr_denetim.py`'den geçer (ATR-tutarsız = R_gercekci).
+6. **Memnun etme yok:** kullanıcının iddiası dahil hiçbir iddia kanıtsız kabul
+   edilmez; akıcı anlatı otomatik "daha kaliteli" sayılmaz (araç-bağımsız sınanır).
+
+⚠️ Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL.
+
 ## Otomatik beceri kullanımı (TETİKLEYİCİ GEREKMEZ)
 
 Kullanıcı **hiçbir `/komut` yazmaz.** Bir soru **finans**, **analiz**, **veri**
