@@ -84,6 +84,7 @@ KONVANSIYON = {
     # wilson_lo = 0.50 (yazı-tura alt sınırı) → ağırlık 1.00 (nötr, ceza yok).
     "agirlik_alt": 0.40, "agirlik_ust": 1.00, "agirlik_taban_wr": 0.50,
     # Kapılar
+    "gorsel_tavan": 0.50,        # elle görsel okumanın azami güveni (ölçüm değil)
     "min_motor_k2": 2,           # K2: en az bu kadar motor sayısal sonuç üretmeli
     "min_danisman_k3": 2,        # K3: en az bu kadar YÖNLÜ danışman
     # backtest doğrulama kapısı (yalnız job'da `dogrular` beyan edilirse kullanılır)
@@ -241,6 +242,39 @@ def k1_llm(job: dict, taban: Path) -> dict:
         video = {"ok": r["ok"], "rapor": r["cikti"], "hata": r["hata"],
                  "not": "Kare OKUMA elle yapılır (grafik-calisma); mekanik değil."}
 
+    # --- ZORUNLU GİRDİLER (kullanıcı sözleşmesi: her koşuda gelmeli) --------
+    # Bunlar "opsiyonel kanal" DEĞİLDİR. Eksikse koşu durmaz ama eksiklik
+    # çıktının EN ÜSTÜNDE taşınır — sessizce atlanamaz.
+    zorunlu, zorunlu_eksik = {}, []
+    lik = _yol((veri.get("likidasyon") or "engine/girdi/turev_ham/likidasyon.json"), taban)
+    if lik:
+        try:
+            d = json.loads(lik.read_text(encoding="utf-8"))
+            if _num(d.get("liq_long")) is not None and _num(d.get("liq_short")) is not None:
+                zorunlu["likidasyon"] = {"liq_long": _num(d["liq_long"]),
+                                         "liq_short": _num(d["liq_short"]),
+                                         "kaynak": str(d.get("kaynak", "elle/CoinGlass"))}
+            else:
+                zorunlu_eksik.append("likidasyon: dosya var ama liq_long/liq_short sayısal değil")
+        except (OSError, json.JSONDecodeError) as e:
+            zorunlu_eksik.append(f"likidasyon: okunamadı ({type(e).__name__})")
+    else:
+        zorunlu_eksik.append("likidasyon: CoinGlass long/short değerleri GELMEDİ "
+                             "→ türev kapsamı eksik kalır")
+    gor = _yol((veri.get("gorsel") or "engine/girdi/gorsel_okuma.json"), taban)
+    if gor:
+        try:
+            g = json.loads(gor.read_text(encoding="utf-8"))
+            if str(g.get("trend", "")).lower() in ("bull", "bear", "yatay"):
+                zorunlu["gorsel"] = g
+            else:
+                zorunlu_eksik.append("görsel okuma: `trend` alanı bull|bear|yatay değil")
+        except (OSError, json.JSONDecodeError) as e:
+            zorunlu_eksik.append(f"görsel okuma: okunamadı ({type(e).__name__})")
+    else:
+        zorunlu_eksik.append("görsel okuma: grafik ekran görüntüsü/video GELMEDİ "
+                             "→ mekanik SMC tespiti karşılıklı teyit edilemez")
+
     m15_ok = isinstance(olcumler.get("m15_bar"), int) and olcumler["m15_bar"] > 0
     h4_ok = isinstance(olcumler.get("h4_bar"), int) and olcumler["h4_bar"] > 0
     gecti = (m15_ok and h4_ok) or bool(p_csv)
@@ -251,6 +285,7 @@ def k1_llm(job: dict, taban: Path) -> dict:
     return {"katman": "K1-LLM", "rol": "ham veri + bütünlük denetimi (çıkarım yok)",
             "kanallar": kanal, "olcumler": olcumler, "profil": profil,
             "veri_sozlesmesi": sozlesme, "video": video, "eksikler": eksik,
+            "zorunlu_girdiler": zorunlu, "zorunlu_eksik": zorunlu_eksik,
             "gecti": gecti, "kapi": kapi}
 
 
@@ -389,7 +424,7 @@ def _agirliklar() -> dict:
         return {"agirliklar": {}, "kaynak": f"agirlik.json BOZUK ({e}) → nötr 1.0"}
 
 
-def k3_coklu(k2: dict) -> dict:
+def k3_coklu(k1: dict, k2: dict) -> dict:
     m = k2["motor_sonuclari"]
     agir = _agirliklar()
     W = agir["agirliklar"]
@@ -454,6 +489,25 @@ def k3_coklu(k2: dict) -> dict:
         notlar.append(f"turev-akis: danışman üretilmedi ({YOK}) → kurula eklenmedi "
                       "(fail-closed)")
 
+    # --- görsel okuma (ELLE) — mekanik SMC'nin karşılıklı teyidi -----------
+    # Ölçüm DEĞİL, okumadır: güveni tavanla sınırlanır ve doğrulaması
+    # smc_tespit ile UYUŞMASINA bağlıdır (K4). Uyuşmazsa çürütülür.
+    g = (k1.get("zorunlu_girdiler") or {}).get("gorsel")
+    if isinstance(g, dict):
+        trend = str(g.get("trend", "")).lower()
+        stance = {"bull": "long", "bear": "short"}.get(trend, "flat")
+        conf = _num(g.get("guven"))
+        conf = KONVANSIYON["gorsel_tavan"] if conf is None else \
+            _clamp(conf, 0.0, KONVANSIYON["gorsel_tavan"])
+        kanit = (f"Görsel okuma ({g.get('zaman_dilimi', '?')}): trend={trend}, "
+                 f"yapı={g.get('yapi_olayi', YOK)}, seviyeler={g.get('seviyeler', YOK)}. "
+                 f"{g.get('not', '')}".strip())
+        danismanlar.append({"name": "gorsel-teyit", "stance": stance,
+                            "confidence": round(conf, 4), "evidence": kanit,
+                            "_kaynak": "ELLE GÖRSEL OKUMA (ölçüm değil)"})
+        notlar.append(f"gorsel-teyit güveni {KONVANSIYON['gorsel_tavan']} tavanıyla "
+                      "sınırlandı: elle okuma mekanik ölçümle eş tutulmaz")
+
     # --- K5 geri beslemesi: güven × ağırlık --------------------------------
     for d in danismanlar:
         w = _num(W.get(d["name"]))
@@ -493,7 +547,7 @@ def _bt_dogrular(bt_kayit) -> tuple:
                       f"p≥{KONVANSIYON['bt_min_prob_profit']})")
 
 
-def k4_agi(job: dict, k2: dict, k3: dict) -> dict:
+def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
     m = k2["motor_sonuclari"]
     verifier, gerekce = {}, {}
 
@@ -553,10 +607,35 @@ def k4_agi(job: dict, k2: dict, k3: dict) -> dict:
                                       f"→ gerçekçi={rap.get('r_gercekci')}"}
             gerekce[ad] = f"rr_denetim: {rap.get('verdict')} — {rap.get('gerekce')}"
 
+    celiskiler = []          # tek liste: görsel teyit + zorunlu eksik + matris
+
+    # --- GÖRSEL ↔ MEKANİK karşılıklı teyit (kullanıcı sözleşmesi) ----------
+    # Elle görsel okuma, mekanik smc_tespit ile UYUŞUYORSA doğrulanır; aksi
+    # halde çürütülür. İki bağımsız yol aynı yapıyı görüyorsa güven artar;
+    # görmüyorsa bu bir UYARIDIR, gizlenmez.
+    gor = (k1.get("zorunlu_girdiler") or {}).get("gorsel")
+    if isinstance(gor, dict) and any(d["name"] == "gorsel-teyit" for d in k3["danismanlar"]):
+        smc_trend = str((m.get("smc_tespit") or {}).get("trend", "")).lower()
+        gor_trend = str(gor.get("trend", "")).lower()
+        uyum = (smc_trend == gor_trend) and smc_trend in ("bull", "bear")
+        verifier["gorsel-teyit"] = {
+            "confirmed": bool(uyum),
+            "reason": (f"mekanik smc_tespit trend={smc_trend or YOK} vs görsel "
+                       f"okuma trend={gor_trend or YOK} — "
+                       f"{'UYUMLU' if uyum else 'UYUMSUZ'}")}
+        gerekce["gorsel-teyit"] = verifier["gorsel-teyit"]["reason"]
+        if not uyum:
+            celiskiler.append(f"GÖRSEL-MEKANİK ÇELİŞKİSİ: göz {gor_trend or YOK} "
+                              f"diyor, algoritma {smc_trend or YOK} diyor — "
+                              "biri yanılıyor; karar bu belirsizlikle veriliyor.")
+
+    # --- ZORUNLU GİRDİ EKSİKLERİ (sessizce atlanamaz) ---------------------
+    for e in (k1.get("zorunlu_eksik") or []):
+        celiskiler.append(f"ZORUNLU GİRDİ EKSİK — {e}")
+
     # --- çelişki matrisi ----------------------------------------------------
     stances = {d["name"]: d["stance"] for d in k3["danismanlar"]}
     yonler = {s for s in stances.values() if s != "flat"}
-    celiskiler = []
     if len(yonler) > 1:
         celiskiler.append(f"YÖN ÇELİŞKİSİ: {stances} — motorlar zıt yönde; "
                           "sentez güven-ağırlıklı çözer, çoğunluk oyu değil.")
@@ -992,12 +1071,12 @@ def kos(job: dict, taban: Path) -> dict:
     if not k2["gecti"]:
         return _durdur(rapor, "K2-AI-AJAN", k2["kapi"])
 
-    k3 = k3_coklu(k2)
+    k3 = k3_coklu(k1, k2)
     rapor["katmanlar"].append(k3)
     if not k3["gecti"]:
         return _durdur(rapor, "K3-COKLU-AJAN", k3["kapi"])
 
-    k4 = k4_agi(job, k2, k3)
+    k4 = k4_agi(job, k1, k2, k3)
     rapor["katmanlar"].append(k4)
 
     k5 = k5_si(job, taban, k1, k2, k3, k4)
@@ -1020,6 +1099,8 @@ def kos(job: dict, taban: Path) -> dict:
         "seviyeler": ik["seviyeler"],
         "pozisyon_boyutu": k5.get("pozisyon_boyutu"),
         "ulasilan_katman": "K5-SI (zirve)",
+        "ZORUNLU_EKSIK": k1.get("zorunlu_eksik") or [],
+        "zorunlu_girdiler": list((k1.get("zorunlu_girdiler") or {}).keys()),
         "iki_satir": {
             "1_YON": f"YÖN (bias): {s.get('YON_BIAS')} — ağırlıklı yön skoru "
                      f"{s.get('yon_skoru')}, uzlaşı {s.get('uzlasi')} "
@@ -1069,6 +1150,11 @@ def ozet_metin(rapor: dict) -> str:
                 L.append(f"  · {d['name']:<16} {d['stance']:<6} güven={d['confidence']} "
                          f"(ham {d['_ham_confidence']} × ağırlık {d['_agirlik']})")
     L.append("-" * 68)
+    if z.get("ZORUNLU_EKSIK"):
+        L.append("⚠ ZORUNLU GİRDİ EKSİK (sözleşme gereği her koşuda gelmeli):")
+        for e in z["ZORUNLU_EKSIK"]:
+            L.append(f"   ✖ {e}")
+        L.append("-" * 68)
     if "iki_satir" in z:
         L.append(z["iki_satir"]["1_YON"])
         L.append(z["iki_satir"]["2_ISLEM_KALITESI"])

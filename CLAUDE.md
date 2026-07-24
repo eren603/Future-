@@ -83,6 +83,20 @@ veri, motor hatası) elle koşuya düşülür ve bu AÇIKÇA söylenir.
 ⚠️ K4/K5'in "AGI/SI" adları resimdeki piramide sadakattir; teknik iddia
 DEĞİLDİR (K4 = çelişki/doğrulama denetçisi, K5 = sentez + Wilson kalibrasyonu).
 
+Ek kural (ZORUNLU GİRDİLER — her koşuda, atlanamaz): Bir piyasa analizi
+üretilecekse şu üçü BİRLİKTE beklenir ve hiçbiri sessizce atlanamaz:
+(1) `piramit_veri_*.json` paketi (15M+4H kline + OI + funding + taker-LSR),
+(2) **CoinGlass likidasyon** long/short değerleri →
+`engine/girdi/turev_ham/likidasyon.json` (türev kapsamını 1.00'e çıkarır),
+(3) **grafik ekran görüntüsü ya da video** → görsel okuma
+`engine/girdi/gorsel_okuma.json`'a yazılır (video ise önce `video-isleme`
+kareleri çıkarır). Görsel okuma bir ÖLÇÜM DEĞİLDİR: güveni `gorsel_tavan`
+(0.50) ile sınırlıdır ve doğrulaması `smc_tespit` trendiyle UYUŞMASINA
+bağlıdır — uyuşmazsa çürütülür ve "GÖRSEL-MEKANİK ÇELİŞKİSİ" bayrağı düşer
+(göz ile algoritma birbirini teyit eder). Eksik olan zorunlu girdi K1'de
+tespit edilir, K4'te çelişki olarak taşınır ve çıktının EN ÜSTÜNDE
+"⚠ ZORUNLU GİRDİ EKSİK" satırıyla gösterilir; eksikle karar UYDURULMAZ.
+
 Ek kural (YÖN ZORUNLU — her analizde otomatik, tetikleyicisiz): Bir piyasa
 analizi/karar çıktısı **DAİMA iki ayrı satırla** verilir; yön asla "BEKLE"
 ardında saklanmaz:

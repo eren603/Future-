@@ -137,6 +137,19 @@ Kaynak borsa kline'dan farklıysa çıktıda `[VARSAYIM] vekil gösterge` etiket
 düşer. Eksik kanal **uydurulmaz**: `turev-akis` kapsamı düşükse skoru
 `VERİ YOK`'a çeker ve danışman doğrulanmamış sayılır (fail-closed).
 
+## Zorunlu girdiler (her koşuda — atlanamaz)
+
+| # | Girdi | Nereye | Ne açar |
+|---|---|---|---|
+| 1 | `piramit_veri_*.json` (`veri_topla.py`) | `paket_ac.py` dağıtır | 15M+4H kline, OI, funding, taker-LSR → 5 motor |
+| 2 | CoinGlass likidasyon (long/short) | `engine/girdi/turev_ham/likidasyon.json` | türev kapsamı 0.85 → **1.00**, kaskad/squeeze uyarısı |
+| 3 | Grafik ekran görüntüsü / video | `engine/girdi/gorsel_okuma.json` (video ise `video-isleme` önce kare çıkarır) | **görsel ↔ mekanik karşılıklı teyit** |
+
+Görsel okuma ölçüm DEĞİLDİR: güveni `gorsel_tavan` (0.50) ile sınırlanır,
+doğrulaması `smc_tespit` trendiyle uyuşmaya bağlıdır. Uyuşmazsa çürütülür ve
+`GÖRSEL-MEKANİK ÇELİŞKİSİ` bayrağı düşer. Eksik zorunlu girdi K1'de yakalanır,
+K4'te çelişki olur, çıktının en üstünde `⚠ ZORUNLU GİRDİ EKSİK` ile gösterilir.
+
 ## Doğruluk sözleşmesi
 
 - Her sayı bir motorun **dosyadan okunan** çıktısıdır; boru hattı sayı üretmez.

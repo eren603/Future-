@@ -342,6 +342,45 @@ def main() -> int:
                 f"short-bozuk reddi={not bozuk}, short-sağlam kabul={saglam}, "
                 f"long-bozuk reddi={not long_bozuk}")
 
+        # ---- T19: zorunlu girdiler + görsel/mekanik karşılıklı teyit ------
+        gp = tmp / "gorsel.json"
+        lp = tmp / "likidasyon.json"
+        lp.write_text(json.dumps({"liq_long": 12.4, "liq_short": 31.8}),
+                      encoding="utf-8")
+        # (a) EKSİK durumda uyarı taşınmalı
+        r19a = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4)}))
+        eksik_var = len(r19a["ZIRVE"].get("ZORUNLU_EKSIK", [])) == 2
+        # (b) görsel MEKANİKLE UYUMLU → doğrulanır
+        smc_trend = None
+        for k in r19a["katmanlar"]:
+            if k["katman"] == "K2-AI-AJAN":
+                smc_trend = (k["motor_sonuclari"].get("smc_tespit") or {}).get("trend")
+        gp.write_text(json.dumps({"trend": smc_trend, "guven": 0.9,
+                                  "zaman_dilimi": "15m"}), encoding="utf-8")
+        r19b = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4),
+                               "gorsel": str(gp), "likidasyon": str(lp)}))
+        K19 = {k["katman"]: k for k in r19b["katmanlar"]}
+        adv = {d["name"]: d for d in K19["K3-COKLU-AJAN"]["danismanlar"]}
+        gt = adv.get("gorsel-teyit", {})
+        onay = K19["K4-AGI"]["verifier"].get("gorsel-teyit", {}).get("confirmed")
+        # (c) görsel TERS → çürütülür + çelişki bayrağı
+        ters = "bull" if smc_trend == "bear" else "bear"
+        gp.write_text(json.dumps({"trend": ters, "guven": 0.9}), encoding="utf-8")
+        r19c = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4),
+                               "gorsel": str(gp), "likidasyon": str(lp)}))
+        K19c = {k["katman"]: k for k in r19c["katmanlar"]}
+        red = K19c["K4-AGI"]["verifier"].get("gorsel-teyit", {}).get("confirmed") is False
+        bayrak = any("GÖRSEL-MEKANİK ÇELİŞKİSİ" in c
+                     for c in K19c["K4-AGI"]["celiskiler"])
+        kontrol("T19 zorunlu girdi kapısı + görsel/mekanik karşılıklı teyit",
+                eksik_var and gt.get("stance") in ("long", "short")
+                and gt.get("confidence") <= P.KONVANSIYON["gorsel_tavan"]
+                and onay is True and red and bayrak
+                and not r19b["ZIRVE"]["ZORUNLU_EKSIK"],
+                f"eksik uyarısı={eksik_var}, görsel güven={gt.get('confidence')} "
+                f"(tavan {P.KONVANSIYON['gorsel_tavan']}), uyumlu onay={onay}, "
+                f"ters red={red}, çelişki bayrağı={bayrak}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
