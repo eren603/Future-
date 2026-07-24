@@ -4,7 +4,7 @@ description: >-
   Orkestratör / nihai karar becerisi. Bir soru KARAR gerektirdiğinde (al/sat/bekle,
   yön, "ne yapmalıyım", "nihai karar", "kurul kararı", "hepsini birleştir",
   karmaşık/çok yönlü değerlendirme) OTOMATİK devreye girer — slash komutu gerekmez.
-  Depodaki diğer motorları PARALEL çalıştırır, 5 mercekle maksimum akıl yürütür,
+  Depodaki diğer motorları birlikte (aynı turda, bağımsız çağrılarla) çalıştırır, 5 mercekle maksimum akıl yürütür,
   adversarial doğrulamadan geçirir ve TEK nihai karar üretir. Çalışan sentez
   motoru: scripts/sentez.py (güven-ağırlıklı; çoğunluk oyu değil). Tetikleyici
   kelimeler (TR/EN): karar, nihai karar, kurul, ne yapmalıyım, al/sat/bekle, yön,
@@ -22,9 +22,10 @@ Bir **karar** gerektiğinde bu beceri diğerlerini yönetir. Amaç: dağınık m
 
 ## Akış (4 aşama)
 
-### 1) Fan-out — motorları PARALEL çalıştır
+### 1) Motorları birlikte çalıştır (aynı turda, bağımsız çağrılarla)
 Soruya uyan tüm motorları birlikte koştur ve her birinden **yapısal bir görüş**
-al (yön + güven + kanıt):
+al (yön + güven + kanıt). Not: otomatik fan-out/orkestrasyon KODU yoktur —
+"birlikte" = aynı turda ayrı tool çağrıları (LLM seviyesinde eşzamanlı):
 - `grafik-calisma` → SMC/Fib: yön + giriş/geçersizlik.
 - `backtest-motoru` → strateji istatistiği + Monte Carlo sağlamlığı.
 - `risk-yonetimi` → Kelly/pozisyon uygunluğu (kenar var mı?).

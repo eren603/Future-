@@ -20,7 +20,7 @@ karantina). Kaynaksız iddia buraya girmez.
 ## Karşılık — bu teknikler depoda nerede kurulu
 - Self-Consistency + ToT → `karar-kurulu` (5 mercek, güven-ağırlıklı sentez)
 - ReAct → motorları çalıştırma (`backtest-motoru`, `data-analysis-deep-scan`, MCP verisi)
-- Reflexion → `uzman-modu/scripts/iddia_denetim.py` (ikinci göz)
+- Reflexion → elle ikinci göz (kanıt disiplini; grounding mekanikleştirilemez)
 - Rol + niyet + tam-spec → aşağıdaki trade prompt şablonu
 
 ## Kayıt için düzeltme (dürüstlük)
@@ -52,7 +52,8 @@ Karşı-kanıta rağmen ayakta kalanlar (yönlendirme değil, doğruluk için):
 1. **Tam bağlam + niyet** (eksik bilgi vermemek) — model varsayım uydurmasın diye.
 2. **Araçla üretim / ReAct** — iddiayı hafızadan değil veriden çıkarmak;
    halüsinasyonu azaltır. (Kanıt tabanı en sağlam olan.)
-3. **İkinci-göz doğrulama** — `iddia_denetim.py`; kaynaksız iddiayı eler.
+3. **İkinci-göz doğrulama** — elle kanıt disiplini; kaynaksız iddiayı eler
+   (sayısal başlık iddiaları araç-bağımsız aritmetikle: ör. R → `rr_denetim`).
 4. **Efor** — zor işte daha çok muhakeme.
 Rol/CoT/ToT ise "yararlı olabilir ama garantisi zayıf" kategorisine iner.
 

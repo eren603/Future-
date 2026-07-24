@@ -6,8 +6,7 @@ description: >-
   strateji ya da çok-adımlı muhakeme gerektirdiğinde OTOMATİK devreye girer —
   slash komutu gerekmez. Cevabı varsayılan yüzeysel seviyeden, disiplinli uzman
   seviyesine çıkarır: rol + niyet + tam bağlam + çok-mercekli muhakeme + kanıt +
-  ikinci-göz doğrulama. Çalışan denetçi: scripts/iddia_denetim.py (dayanaksız/
-  dairesel iddiayı karantinaya alır). Tetikleyici kelimeler (TR/EN): uzman,
+  elle ikinci-göz (Reflexion) disiplini. Tetikleyici kelimeler (TR/EN): uzman,
   profesyonel, derin analiz, değerlendir, incele, karar, strateji, muhakeme,
   neden, expert, deep dive, assess, rationale.
   Anthropic Fable 5 kullanım rehberi (rol, niyet, tam-spec, doğrulama,
@@ -46,16 +45,22 @@ arka planda uygulanır — kullanıcıya süreç anlatılmaz, doğrudan uzman ç
    çalıştırarak üret (`data-analysis-deep-scan`, `backtest-motoru`, MCP verisi).
 6. **İkinci göz (Reflexion):** cevabı yayınlamadan önce iddiaları denetle.
 
-## İkinci-göz doğrulama (mekanik — zorunlu)
-Nihai cevaptaki iddiaları yapılandır ve çalıştır:
-```
-python3 scripts/iddia_denetim.py --job job.json
-```
-Her iddia: `type` (gerçek/varsayım/yorum) + `evidence` + `verified`.
-- 'gerçek' iddia **kanıtsız veya doğrulanmamışsa** → KARANTİNA.
-- Dairesel/kendine-atıf (hafızadan) → KARANTİNA.
-- Herhangi bir 'gerçek' iddia karantinada → **genel sonuç REVİZE**: cevabı
-  yayınlama, o kısmı düzelt, denetimi tekrarla.
+## İkinci göz (Reflexion — ELLE disiplin, otomatik araç DEĞİL)
+Cevabı yayınlamadan önce her iddiayı **elle** sınıflandır ve sına. Bu bir
+muhakeme adımıdır; iddia-grounding metinden mekanikleştirilemez (bir aracın
+"kanıt var mı" kararı ancak kanıt-metninin biçimine bakabilir → sahte
+güven/sahte-red üretir; bu yüzden burada araç YOK, disiplin var):
+- Her iddia: `gerçek` / `varsayım` / `yorum` olarak etiketle.
+- `gerçek` iddia → gerçek bir dayanağa (motor çıktısı / panel / veri) bağlı mı?
+  Değilse **çıkar ya da varsayım/yorum'a indir.**
+- Dairesel/kendine-atıf/hafızadan iddia → **çıkar.**
+- Sayısal bir başlık iddiası (R, eşik, yüzde) araç-BAĞIMSIZ aritmetikle sınanır
+  (ör. R için `karar-kurulu/scripts/rr_denetim.py` — bu GERÇEKTEN çalışan bir
+  hesaplama; grounding sezgisi değil).
+- Herhangi bir dayanaksız `gerçek` kalırsa → cevabı yayınlama, düzelt.
+> Not: Mekanikleştirilebilen kontroller (R tutarlılığı `rr_denetim`, ağırlıklı
+> sentez `sentez.py`, yapı `karar_motoru`) araçla yapılır; grounding gibi
+> mekanikleşmeyen kontrol elle yapılır — sahte-otorite bir denetçiye devredilmez.
 
 ## Çıktı biçimi (uzman)
 - Önce **sonuç/karar** (tek cümle), sonra gerekçe.
@@ -65,8 +70,8 @@ Her iddia: `type` (gerçek/varsayım/yorum) + `evidence` + `verified`.
 
 ## Diğer becerilerle
 Bu beceri bir **disiplin katmanıdır**; tüm motorların üstünde çalışır.
-`karar-kurulu` orkestratörü de bu protokolü kullanır: fan-out → 5 mercek →
-ikinci-göz (`iddia_denetim.py` + adversarial Skeptic) → tek karar.
+`karar-kurulu` orkestratörü de bu protokolü kullanır: motorları birlikte koştur
+→ 5 mercek → elle ikinci-göz + adversarial Skeptic → tek karar.
 
 ## Referanslar (kaynaklı)
 - `references/teknikler.md` — protokolün dayandığı teknikler + doğrulanmış

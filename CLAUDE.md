@@ -27,15 +27,18 @@ beceriyi uygula.
 
 Ek kural (üst-akıl): Ciddi/analitik her soruda `uzman-modu` arka planda
 uygulanır — rol + niyet + tam bağlam + çok-mercekli muhakeme + araçla üretim +
-`scripts/iddia_denetim.py` ile ikinci-göz doğrulama. Dayanaksız/dairesel 'gerçek'
-iddia karantinaya alınır → cevap yayınlanmadan düzeltilir. Süslü/hafızadan/
+**elle ikinci-göz** (Reflexion) disiplini. Dayanaksız/dairesel 'gerçek' iddia
+çıkarılır → cevap yayınlanmadan düzeltilir. (İddia-grounding metinden
+mekanikleştirilemez; sahte-otorite bir denetçiye devredilmez — mekanikleşen
+kontroller `rr_denetim`/`sentez`/motorlar ile, grounding elle.) Süslü/hafızadan/
 dairesel cevap YASAK.
 
 Ek kural (orkestratör): Bir soru NİHAİ KARAR gerektirdiğinde `karar-kurulu`
-becerisi devreye girer; ilgili tüm motorları **paralel** çalıştırır → 5 mercekle
-muhakeme → adversarial doğrulama → `scripts/sentez.py` ile **güven-ağırlıklı tek
-karar**. Çelişki/zayıf sinyalde karar **NÖTR-BEKLE**'dir (fail-closed). Yalnız
-karar-destek; canlı/otomatik emir DAHİL DEĞİL.
+becerisi devreye girer; ilgili tüm motorları **birlikte (aynı turda, bağımsız
+çağrılarla)** koşturur → 5 mercekle muhakeme → adversarial doğrulama →
+`scripts/sentez.py` ile **güven-ağırlıklı tek karar**. Çelişki/zayıf sinyalde
+karar **NÖTR-BEKLE**'dir (fail-closed). Yalnız karar-destek; canlı/otomatik emir
+DAHİL DEĞİL.
 
 Ek kural (YÖN ZORUNLU — her analizde otomatik, tetikleyicisiz): Bir piyasa
 analizi/karar çıktısı **DAİMA iki ayrı satırla** verilir; yön asla "BEKLE"
@@ -73,11 +76,12 @@ ATR o koşunun kline'ından hesaplanır. Cazip/akıcı anlatı otomatik "daha ka
 sayılmaz (narrative-fluency yanılgısı); başlık sayıları araç-bağımsız aritmetikle
 sınanır. Bu, "serbest ayar/aşırı-uyum" panzehiridir.
 
-Ek kural (motorlar — paralel & zorunlu sonuç): Bu becerilerin her biri kendi
+Ek kural (motorlar — birlikte & zorunlu sonuç): Bu becerilerin her biri kendi
 içinde ÇALIŞAN Python motoruna sahiptir (`.claude/skills/<ad>/scripts/`). Bir
-soru birden çok motoru ilgilendiriyorsa **hepsi birlikte/paralel** uygulanır ve
-her biri **gerçek sayısal sonuç** üretir — bir motor sonuç üretmeden cevap
-tamamlanmış sayılmaz. Zincir örneği: `grafik-calisma` (SMC/Fib sinyali) →
+soru birden çok motoru ilgilendiriyorsa **hepsi birlikte** (aynı turda, ayrı
+çağrılarla; otomatik fan-out kodu YOK — birlikte demek elle art arda/tek turda
+demektir) uygulanır ve her biri **gerçek sayısal sonuç** üretir — bir motor
+sonuç üretmeden cevap tamamlanmış sayılmaz. Zincir örneği: `grafik-calisma` (SMC/Fib sinyali) →
 `backtest-motoru` (test + Monte Carlo) → `risk-yonetimi` (Kelly/pozisyon) →
 `portfoy-optimizasyonu` (ağırlık). ⚠️ Canlı/otomatik emir (gerçek para) DAHİL
 DEĞİLDİR — motorlar yalnız analiz/backtest üretir.
@@ -121,7 +125,7 @@ Kurallar:
   eşik yasak. Serbest ayar (eşiği "en iyi sonucu verene" çekmek = aşırı-uyum)
   da yasak: türetim yalnız istatistiksel test + korkulukla yapılır.
 
-### Sert yasaklar (%100 KARANTİNA — `uzman-modu/scripts/iddia_denetim.py` ile mekanik)
+### Sert yasaklar (ELLE uygulanan kanıt disiplini — mekanik denetçiye devredilmez)
 1. **Uydurma/ölçülmemiş sayı:** kaynağı olmayan nicel iddia (ör. "%95 kapasite",
    "%90 doğruluk") gerçek gibi sunulamaz → karantina.
 2. **Uydurma kıdem/kimlik:** kanıtlanamaz özgeçmiş (ör. "30 yıllık coin futures

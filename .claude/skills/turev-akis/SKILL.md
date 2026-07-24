@@ -76,4 +76,4 @@ deterministiktir; aynı türev verisi → aynı danışman.
 - `karar-motoru` → kline kararı; bu motor → türev katmanı. İkisi `karar-kurulu`da birleşir.
 - `grafik-calisma` → SMC/likidite yapısı; türev skoru onun yön-biasını teyit/çürütür.
 - `video-isleme` → CoinGlass video karesinden OI/CVD/LSR okur → bu motora besler.
-- `uzman-modu/iddia_denetim.py` → türev iddiaları da yayın öncesi denetlenir.
+- `uzman-modu` → türev iddiaları da yayın öncesi elle ikinci-gözden geçer.

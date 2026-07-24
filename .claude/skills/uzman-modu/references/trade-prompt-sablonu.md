@@ -55,7 +55,7 @@ tanımlanır.
     <guven_skoru/>
     <gerekce kanit="zorunlu"/>
     <riskler_belirsizlikler/>
-    <ikinci_goz>dayanaksız/uydurma sayı var mı? (iddia_denetim mantığı)</ikinci_goz>
+    <ikinci_goz>dayanaksız/uydurma sayı var mı? (elle kanıt disiplini; R → rr_denetim)</ikinci_goz>
   </cikti>
 
   <dogruluk>Karar-destektir — sinyal/garanti değil; olasılık/geçmiş performanstır. Canlı/otomatik emir YOK.</dogruluk>
