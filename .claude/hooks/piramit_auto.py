@@ -131,6 +131,9 @@ def _kos() -> tuple[str, int]:
         "sembol": "engine/girdi",
         "veri": {"m15": str(GIRDI / "m15.json"), "h4": str(GIRDI / "h4.json")},
         "state_dir": str(sdir),
+        # Bar arşivi fiyat GERÇEĞİdir (karar hafızası değil) — kum havuzu
+        # koşusunda bile gerçek arşive yazılır ki kayan pencere telafi edilsin.
+        "bar_arsivi": str(REPO / "engine" / "state" / "bar_arsivi.jsonl"),
         "_hafiza": ("KUM HAVUZU — motor bu barı zaten işlemişti; gerçek defter "
                     "korunuyor" if kum else "GERÇEK — yeni bar, hafıza güncellenir"),
     }

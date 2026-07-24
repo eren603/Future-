@@ -24,6 +24,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 import piramit as P  # noqa: E402
+import akibet_etiketle as AE  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -150,6 +151,67 @@ def main() -> int:
                 (a["YON_BIAS"], a["yon_skoru"], a["ISLEM_KALITESI"]) ==
                 (b["YON_BIAS"], b["yon_skoru"], b["ISLEM_KALITESI"]),
                 f"{a['YON_BIAS']}/{a['yon_skoru']} == {b['YON_BIAS']}/{b['yon_skoru']}")
+
+        # ================= AKIBET ETİKETLEYİCİ (SI döngüsünün yakıtı) =======
+        P_ET = {**AE.KONVANSIYON, "azami_bekleme": 3, "azami_tutma": 5}
+        MARKET_SHORT = {"karar": "SHORT", "yon": "SHORT", "giris_alt": 100.0,
+                        "giris_ust": 100.0, "giris": 100.0, "stop": 102.0,
+                        "t1": 96.0, "iptal": 101.0}
+
+        def _bar(t, o, h, l, c):
+            return (t, o, h, l, c, 1.0)
+
+        # T8: hedef vuruldu → R = |giriş-T1| / |giriş-stop| = 4/2 = +2.0
+        b8 = [_bar(1, 100, 100.5, 99.5, 100), _bar(2, 100, 100.2, 95.5, 96)]
+        s8 = AE.simule_et(MARKET_SHORT, 1, b8, P_ET)
+        kontrol("T8 etiketleyici: hedef → +2.0R",
+                s8["olculebilir"] and s8["sonuc"] == "T1" and s8["r"] == 2.0,
+                f"{s8['sonuc']} r={s8.get('r')}")
+
+        # T9: stop vuruldu → R = -1.0 (aynı barda hedef de olsa STOP sayılır)
+        b9 = [_bar(1, 100, 100.5, 99.5, 100), _bar(2, 100, 102.5, 95.0, 102)]
+        s9 = AE.simule_et(MARKET_SHORT, 1, b9, P_ET)
+        kontrol("T9 etiketleyici: stop → -1.0R (aynı barda hedef olsa da)",
+                s9["olculebilir"] and s9["sonuc"] == "STOP" and s9["r"] == -1.0,
+                f"{s9['sonuc']} r={s9.get('r')}")
+
+        # T10: LIMIT bölgeye dokunulmadı → pozisyon yok, R YAZILMAZ
+        limit = {**MARKET_SHORT, "giris_alt": 105.0, "giris_ust": 106.0,
+                 "iptal": 107.0}
+        b10 = [_bar(i, 100, 100.5, 99.0, 100) for i in range(1, 7)]
+        s10 = AE.simule_et(limit, 1, b10, P_ET)
+        kontrol("T10 etiketleyici: dolmayan limit → R yazılmaz",
+                (not s10["olculebilir"]) and "İPTAL" in s10["sonuc"],
+                s10["sonuc"])
+
+        # T11: elle yazılmış gercek_r EZİLMEZ; ölçülebilir satır etiketlenir
+        dft = tmp / "defter_test.jsonl"
+        dft.write_text(
+            json.dumps({"karar_zamani": 1, "karar": MARKET_SHORT,
+                        "gercek_r": -0.526, "not": "elle düzeltme"},
+                       ensure_ascii=False) + "\n" +
+            json.dumps({"karar_zamani": 1, "karar": MARKET_SHORT},
+                       ensure_ascii=False) + "\n", encoding="utf-8")
+        rap = AE.etiketle(dft, b8, P_ET, yaz=True)
+        satir = [json.loads(x) for x in dft.read_text(encoding="utf-8").splitlines() if x.strip()]
+        kontrol("T11 etiketleyici: elle etiket korunur, boş olan doldurulur",
+                rap["elle_korunan"] == 1 and rap["etiketlenen"] == 1
+                and satir[0]["gercek_r"] == -0.526 and satir[1]["gercek_r"] == 2.0
+                and satir[1]["etiketleyici"].startswith("otomatik"),
+                f"korunan={rap['elle_korunan']}, etiketlenen={rap['etiketlenen']}, "
+                f"yeni r={satir[1]['gercek_r']}")
+
+        # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
+        ars = tmp / "arsiv.jsonl"
+        AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
+        yeni_pencere = [_bar(9, 90, 91, 89, 90)]         # karar barı ARTIK yok
+        kapsamsiz = AE.simule_et(MARKET_SHORT, 1, yeni_pencere, P_ET)
+        birlesik = AE.bar_yukle([str(ars)])
+        kapsamli = AE.simule_et(MARKET_SHORT, 1, birlesik, P_ET)
+        kontrol("T12 bar arşivi kayan pencereyi telafi eder",
+                (not kapsamsiz["olculebilir"]) and kapsamli["olculebilir"]
+                and kapsamli["r"] == 2.0,
+                f"arşivsiz={kapsamsiz['sonuc'][:28]}… | arşivli r={kapsamli.get('r')}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
         if yedek is not None:

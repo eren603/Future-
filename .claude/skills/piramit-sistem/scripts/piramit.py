@@ -65,6 +65,7 @@ MOTOR = {
     "verify_data": SKILLS / "data-analysis-deep-scan" / "scripts" / "verify_data.py",
     "video_isle": SKILLS / "video-isleme" / "scripts" / "video_isle.py",
     "karar_motoru": ENGINE / "karar_motoru.py",
+    "akibet_etiketle": SKILL_DIR / "scripts" / "akibet_etiketle.py",
 }
 
 # --------------------------------------------------------------------------
@@ -635,10 +636,16 @@ def _wilson_lo(wins: int, n: int) -> float:
 
 
 def _defter_oku(p: Path) -> dict:
-    """Defterden ÖLÇÜLMÜŞ sonuçları çıkarır. Ölçülemeyen satır SAYILMAZ."""
+    """Defterden ÖLÇÜLMÜŞ sonuçları çıkarır. Ölçülemeyen satır SAYILMAZ.
+
+    R == 0 olan satır da SAYILMAZ: bu "pozisyon açılmadı" demektir (İPTAL /
+    tetiklenmedi / belirsiz). Kayıp sayılırsa motor, hiç almadığı işlemden
+    ceza alır — istatistik yanlı olur.
+    """
     if not p.exists():
-        return {"n": 0, "wins": 0, "kaynak": f"{p} {YOK}", "atlanan": 0}
-    n = w = atlanan = 0
+        return {"n": 0, "wins": 0, "kaynak": f"{p} {YOK}", "atlanan": 0,
+                "pozisyonsuz": 0}
+    n = w = atlanan = pozisyonsuz = 0
     for satir in p.read_text(encoding="utf-8").splitlines():
         satir = satir.strip()
         if not satir:
@@ -652,10 +659,14 @@ def _defter_oku(p: Path) -> dict:
         if r is None:
             atlanan += 1      # sonucu ÖLÇÜLMEMİŞ karar istatistiğe girmez
             continue
+        if r == 0.0:
+            pozisyonsuz += 1  # pozisyon açılmadı → ne kazanç ne kayıp
+            continue
         n += 1
         if r > 0:
             w += 1
-    return {"n": n, "wins": w, "kaynak": str(p), "atlanan": atlanan}
+    return {"n": n, "wins": w, "kaynak": str(p), "atlanan": atlanan,
+            "pozisyonsuz": pozisyonsuz}
 
 
 def k5_si(job: dict, taban: Path, k2: dict, k3: dict, k4: dict) -> dict:
@@ -784,6 +795,36 @@ def _gecersizlik(k2: dict) -> str:
     return str(km.get("iptal_kural") or YOK)
 
 
+def _etiketle(job: dict, taban: Path, defterler: dict, sdir) -> dict:
+    """Akıbet etiketleyiciyi koştur: ölçülmemiş kararlara fiyat yolundan R yaz.
+
+    Bar arşivi 15M penceresinin kaymasını telafi eder (eski karar pencereden
+    düşse bile ölçülebilir). Arşiv fiyat GERÇEĞİdir, karar hafızası değildir —
+    bu yüzden kum havuzu koşusunda bile gerçek arşive yazılabilir (job'daki
+    `bar_arsivi` ile yönlendirilir).
+    """
+    m15 = _yol((job.get("veri") or {}).get("m15"), taban)
+    if m15 is None:
+        return {"durum": f"{YOK} — m15 yok, akıbet etiketlenmedi"}
+    arsiv = _yol(job.get("bar_arsivi"), taban) or (
+        Path(str(job.get("bar_arsivi"))) if job.get("bar_arsivi")
+        else Path(str(sdir)) / "bar_arsivi.jsonl")
+    raporlar = {}
+    for motor, yol in defterler.items():
+        p = _yol(yol, taban) or Path(str(yol))
+        r = _kos(MOTOR["akibet_etiketle"],
+                 ["--defter", str(p), "--m15", str(m15),
+                  "--arsiv", str(arsiv), "--yaz"])
+        if r["ok"] and isinstance(r["cikti"], dict):
+            c = r["cikti"]
+            raporlar[motor] = {k: c.get(k) for k in
+                               ("etiketlenen", "elle_korunan", "olculemeyen",
+                                "bar_havuzu", "arsiv")}
+        else:
+            raporlar[motor] = {"durum": "etiketleyici ÇALIŞMADI", "hata": r["hata"]}
+    return raporlar
+
+
 def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     """SI geri beslemesi: ölçülmüş akıbetlerden motor ağırlığı türet.
 
@@ -800,6 +841,11 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     if "karar-motoru" not in defterler:
         defterler["karar-motoru"] = str(Path(sdir) / "defter.jsonl") if sdir \
             else str(ENGINE / "state" / "defter.jsonl")
+
+    # --- ÖNCE etiketleme: ölçülmemiş kararların akıbeti fiyat yolundan yazılır
+    # (elle yazım beklenmez; elle yazılmış gercek_r ezilmez). Bu adım olmadan
+    # kalibrasyon sonsuza dek "n < n_taban" der ve SI katmanı öğrenemez.
+    etiket = _etiketle(job, taban, defterler, sdir)
 
     agirliklar, ayrinti = {}, {}
     n_taban = None
@@ -825,6 +871,7 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     bar = (k2["motor_sonuclari"].get("karar-motoru") or {}).get("son_bar_utc", YOK)
     kayit = {
         "agirliklar": agirliklar, "ayrinti": ayrinti, "uretildigi_bar": bar,
+        "etiketleme": etiket,
         "kural": ("agirlik = clamp(2 × wilson_lo(kazanan, n), "
                   f"{KONVANSIYON['agirlik_alt']}, {KONVANSIYON['agirlik_ust']}); "
                   f"n < n_taban ({n_taban}) → 1.0 (değiştirilmez)"),

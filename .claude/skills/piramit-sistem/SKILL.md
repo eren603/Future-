@@ -90,8 +90,16 @@ python .claude/skills/piramit-sistem/scripts/self_test.py
 
 1. **(a) Sentez** — `sentez.py` güven-ağırlıklı tek karar üretir (çoğunluk oyu
    değil). Çıktı **iki satır**: `YÖN (bias)` + `İŞLEM KALİTESİ`.
-2. **(b) Geri besleme** — geçmiş kararların **ölçülmüş** akıbeti okunur
-   (`defter.jsonl` → `gercek_r`), Wilson alt sınırıyla motor ağırlığı türetilir:
+2. **(b) Akıbet etiketleme** (`scripts/akibet_etiketle.py`) — ölçülmemiş her
+   karar sonraki 15M barlarda **mekanik simüle edilir** → `gercek_r` yazılır.
+   Elle yazılmış `gercek_r` **asla ezilmez** (insan düzeltmesi otoritedir).
+   Muhafazakâr kurallar: LIMIT dolum bölgenin aleyhte kenarından, aynı barda
+   stop+hedef → STOP, dolmadan iptal → pozisyon yok (**R yazılmaz**), çıkış
+   yoksa AÇIK (**R yazılmaz**). 15M penceresi kaydığı için barlar
+   `engine/state/bar_arsivi.jsonl`'de biriktirilir — eski kararlar pencereden
+   düşse bile ölçülebilir kalır.
+3. **(c) Geri besleme** — ölçülmüş akıbetler okunur (`gercek_r`; `R == 0` =
+   pozisyon açılmadı → **sayılmaz**), Wilson alt sınırıyla ağırlık türetilir:
 
    ```
    agirlik = clamp(2 × wilson_lo(kazanan, n), 0.40, 1.00)
