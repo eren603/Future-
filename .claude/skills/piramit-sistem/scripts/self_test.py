@@ -60,7 +60,7 @@ def main() -> int:
         print(f"ATLANDI: {P.ENGINE/'girdi'} altında m15/h4 yok — test verisi gerekli.")
         return 1
 
-    agirlik_p = P.STATE_DIR / "agirlik.json"
+    agirlik_p = P.AGIRLIK_DOSYA
     yedek = agirlik_p.read_text(encoding="utf-8") if agirlik_p.exists() else None
     tmp = Path(tempfile.mkdtemp(prefix="piramit_test_"))
     try:

@@ -54,7 +54,13 @@ SKILL_DIR = _HERE.parent
 SKILLS = SKILL_DIR.parent
 REPO = SKILLS.parent.parent
 ENGINE = REPO / "engine"
-STATE_DIR = SKILL_DIR / "state"
+STATE_DIR = SKILL_DIR / "state"        # KOŞU ARTIĞI: silinebilir, gitignore'da
+# HAFIZA: öğrenilmiş ağırlıklar. Koşu artıklarından AYRI dizinde tutulur —
+# aynı klasörde olsaydı bir temizlik komutu (rm -rf state) SI hafızasını
+# sessizce silerdi (bir kez oldu: commit 9a86f62'de index'ten düştü).
+HAFIZA_DIR = SKILL_DIR / "hafiza"
+AGIRLIK_DOSYA = HAFIZA_DIR / "agirlik.json"
+ESKI_AGIRLIK = STATE_DIR / "agirlik.json"      # geriye uyumluluk (taşıma)
 
 MOTOR = {
     "smc_tespit": SKILLS / "grafik-calisma" / "scripts" / "smc_tespit.py",
@@ -416,7 +422,7 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
 # K3 — ÇOKLU-AJAN: motorlar → danışman kurulu (K5 ağırlıklarıyla)
 # ==========================================================================
 def _agirliklar() -> dict:
-    p = STATE_DIR / "agirlik.json"
+    p = AGIRLIK_DOSYA if AGIRLIK_DOSYA.exists() else ESKI_AGIRLIK
     if not p.exists():
         return {"agirliklar": {}, "kaynak": f"agirlik.json {YOK} — ilk koşu, "
                                             "tüm ağırlıklar 1.0 (nötr)"}
@@ -1037,9 +1043,9 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
                 "Ölçülmemiş sonuç istatistiğe girmez — 'öğrendim' iddiası "
                 "kanıtsız üretilmez."),
     }
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-    (STATE_DIR / "agirlik.json").write_text(
-        json.dumps(kayit, ensure_ascii=False, indent=2), encoding="utf-8")
+    HAFIZA_DIR.mkdir(parents=True, exist_ok=True)
+    AGIRLIK_DOSYA.write_text(json.dumps(kayit, ensure_ascii=False, indent=2),
+                             encoding="utf-8")
     return kayit
 
 
