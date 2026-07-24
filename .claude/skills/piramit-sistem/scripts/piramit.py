@@ -200,7 +200,9 @@ def k1_llm(job: dict, taban: Path) -> dict:
         p = _yol(veri.get(ad), taban)
         if p:
             try:
-                olcumler[f"{ad}_bar"] = len(_klines_to_candles(p))
+                mumlar = _klines_to_candles(p)
+                olcumler[f"{ad}_bar"] = len(mumlar)
+                olcumler[f"{ad}_son_bar"] = mumlar[-1]["time"] if mumlar else YOK
             except Exception as e:  # noqa: BLE001
                 olcumler[f"{ad}_bar"] = YOK
                 eksik.append(f"{ad}: parse edilemedi ({type(e).__name__}: {e})")
@@ -669,7 +671,7 @@ def _defter_oku(p: Path) -> dict:
             "pozisyonsuz": pozisyonsuz}
 
 
-def k5_si(job: dict, taban: Path, k2: dict, k3: dict, k4: dict) -> dict:
+def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dict:
     # ---------- (a) ÖNCE: güven-ağırlıklı en yüksek sentez ------------------
     sentez_job = {
         "question": job.get("soru") or job.get("sembol") or "nihai karar",
@@ -719,7 +721,11 @@ def k5_si(job: dict, taban: Path, k2: dict, k3: dict, k4: dict) -> dict:
             else {"durum": "portföy motoru ÇALIŞMADI", "hata": pr["hata"]}
 
     # ---------- (b) SONRA: kendini-kalibre eden geri besleme ---------------
+    sdir = (k2["motor_sonuclari"].get("karar-motoru") or {}).get("state_dir") \
+        or str(ENGINE / "state")
+    danisman_defter = _danisman_defterleri(k1, k2, k3, sdir)
     kal = _kalibre_et(job, taban, k2)
+    kal["danisman_defterleri"] = danisman_defter
 
     return {"katman": "K5-SI",
             "rol": "(a) güven-ağırlıklı sentez → (b) geçmiş akıbetten ağırlık türetme",
@@ -795,6 +801,62 @@ def _gecersizlik(k2: dict) -> str:
     return str(km.get("iptal_kural") or YOK)
 
 
+def _danisman_defterleri(k1: dict, k2: dict, k3: dict, sdir) -> dict:
+    """Her YÖNLÜ danışmanın kararını KENDİ defterine yazar.
+
+    Ağırlık asimetrisi panzehiri: yalnız `karar-motoru`nun defteri olduğu
+    sürece kalibrasyon tek motoru cezalandırır, diğerleri sonsuza dek 1.0
+    kalır — bu adil değil, ölçülmemiş güven demektir. Artık her danışman
+    kendi kararının sicilini tutar; etiketleyici hepsini aynı kuralla ölçer.
+
+    `karar-motoru` HARİÇ: onun defterini motorun kendisi yazar (çift yazım
+    istatistiği şişirirdi). Aynı bar için ikinci kayıt YAZILMAZ (tekilleme).
+    """
+    sdir = Path(str(sdir))
+    t = (k1.get("olcumler") or {}).get("m15_son_bar")
+    if not isinstance(t, int):
+        return {"durum": f"{YOK} — karar barı zamanı okunamadı, danışman defteri yazılmadı"}
+    sevs = k3.get("seviyeler") or {}
+    yazilan, atlanan = {}, []
+    for ad, s in sevs.items():
+        if ad == "karar-motoru":
+            continue                      # motorun kendi defteri var
+        if None in (s.get("entry"), s.get("stop"), s.get("target")):
+            atlanan.append(f"{ad}: giriş/stop/hedef eksik → yazılmadı ({YOK})")
+            continue
+        p = sdir / f"defter_{ad}.jsonl"
+        if p.exists():                    # aynı bar iki kez yazılmasın
+            var = [x for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
+            if var:
+                try:
+                    if json.loads(var[-1]).get("karar_zamani") == t:
+                        atlanan.append(f"{ad}: bu bar zaten yazılmış (tekilleme)")
+                        continue
+                except json.JSONDecodeError:
+                    pass
+        gc = (k2["motor_sonuclari"].get(ad) or {})
+        bolge = gc.get("giris_bolgesi") if isinstance(gc, dict) else None
+        alt, ust = ((float(bolge[0]), float(bolge[1]))
+                    if isinstance(bolge, list) and len(bolge) == 2
+                    else (float(s["entry"]), float(s["entry"])))
+        kayit = {
+            "karar_zamani": t, "motor": ad, "kaynak": "piramit K5",
+            "karar": {"karar": s["yon"].upper(), "yon": s["yon"].upper(),
+                      "giris_alt": alt, "giris_ust": ust,
+                      "giris": float(s["entry"]), "stop": float(s["stop"]),
+                      "t1": float(s["target"]),
+                      # confluence `iptal` üretmez → uydurulmaz: stop kullanılır
+                      "iptal": float(s["stop"])},
+            "varsayim": "iptal seviyesi motordan gelmedi → stop kullanıldı "
+                        "(muhafazakâr; uydurma seviye üretilmedi)",
+        }
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(kayit, ensure_ascii=False) + "\n")
+        yazilan[ad] = str(p)
+    return {"yazilan": yazilan, "atlanan": atlanan, "karar_zamani": t}
+
+
 def _etiketle(job: dict, taban: Path, defterler: dict, sdir) -> dict:
     """Akıbet etiketleyiciyi koştur: ölçülmemiş kararlara fiyat yolundan R yaz.
 
@@ -841,6 +903,12 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     if "karar-motoru" not in defterler:
         defterler["karar-motoru"] = str(Path(sdir) / "defter.jsonl") if sdir \
             else str(ENGINE / "state" / "defter.jsonl")
+    # Danışman defterleri (defter_<motor>.jsonl) otomatik dahil edilir →
+    # her motor KENDİ siciliyle kalibre olur (ağırlık asimetrisi kapanır).
+    kok = Path(sdir) if sdir else (ENGINE / "state")
+    for p in sorted(kok.glob("defter_*.jsonl")):
+        ad = p.stem[len("defter_"):]
+        defterler.setdefault(ad, str(p))
 
     # --- ÖNCE etiketleme: ölçülmemiş kararların akıbeti fiyat yolundan yazılır
     # (elle yazım beklenmez; elle yazılmış gercek_r ezilmez). Bu adım olmadan
@@ -926,7 +994,7 @@ def kos(job: dict, taban: Path) -> dict:
     k4 = k4_agi(job, k2, k3)
     rapor["katmanlar"].append(k4)
 
-    k5 = k5_si(job, taban, k2, k3, k4)
+    k5 = k5_si(job, taban, k1, k2, k3, k4)
     rapor["katmanlar"].append(k5)
     if not k5["gecti"]:
         return _durdur(rapor, "K5-SI", k5["kapi"])

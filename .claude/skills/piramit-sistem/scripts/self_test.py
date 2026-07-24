@@ -201,6 +201,28 @@ def main() -> int:
                 f"korunan={rap['elle_korunan']}, etiketlenen={rap['etiketlenen']}, "
                 f"yeni r={satir[1]['gercek_r']}")
 
+        # ---- T13: danışman defterleri (ağırlık asimetrisi panzehiri) -------
+        sd13 = tmp / "d13"
+        sd13.mkdir(parents=True, exist_ok=True)
+        k1f = {"olcumler": {"m15_son_bar": 12345}}
+        k2f = {"motor_sonuclari": {"grafik-calisma": {"giris_bolgesi": [100.0, 101.0]}}}
+        k3f = {"seviyeler": {
+            "grafik-calisma": {"yon": "short", "entry": 100.5, "stop": 102.0,
+                               "target": 96.0},
+            "karar-motoru": {"yon": "short", "entry": 1.0, "stop": 2.0, "target": 0.5}}}
+        y1 = P._danisman_defterleri(k1f, k2f, k3f, sd13)
+        y2 = P._danisman_defterleri(k1f, k2f, k3f, sd13)   # aynı bar → tekilleme
+        dp = sd13 / "defter_grafik-calisma.jsonl"
+        satirlar = [x for x in dp.read_text(encoding="utf-8").splitlines() if x.strip()]
+        kayit = json.loads(satirlar[0])
+        kontrol("T13 danışman defteri: yazıldı, karar-motoru hariç, tekilleme çalışıyor",
+                list(y1["yazilan"]) == ["grafik-calisma"] and len(satirlar) == 1
+                and not y2["yazilan"] and kayit["karar"]["giris_alt"] == 100.0
+                and kayit["karar"]["iptal"] == 102.0
+                and not (sd13 / "defter_karar-motoru.jsonl").exists(),
+                f"yazılan={list(y1['yazilan'])}, satır={len(satirlar)}, "
+                f"2. çağrı atlandı={bool(y2['atlanan'])}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
