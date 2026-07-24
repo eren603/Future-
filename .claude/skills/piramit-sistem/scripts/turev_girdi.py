@@ -148,6 +148,82 @@ def http_kanallar(sembol: str) -> dict:
     return {"veri": sonuc, "hatalar": hatalar}
 
 
+# --------------------------------------------------------------------------
+# 3b) ELLE YAPIŞTIRILAN ham API yanıtları (ağ engelliyken tam çözüm)
+# --------------------------------------------------------------------------
+HAM_DOSYA = {
+    "funding": "premiumIndex.json",              # /fapi/v1/premiumIndex
+    "oi_hist": "openInterestHist.json",          # /futures/data/openInterestHist
+    "taker_lsr": "takerlongshortRatio.json",     # /futures/data/takerlongshortRatio
+}
+HAM_LIKIDASYON = "likidasyon.json"               # elle: {"liq_long":..,"liq_short":..}
+
+
+def ham_oku(dizin: Path, sembol: str) -> dict:
+    """Tarayıcıdan kopyalanan ham Binance yanıtlarını oku.
+
+    Ağ politikası engelliyken kanal doldurmanın YOLU budur: kullanıcı adresi
+    tarayıcıda açar, JSON'u dosyaya yapıştırır. Biçim API'nin kendisidir —
+    dönüştürme yapılmaz, uydurma alan eklenmez. Bozuk/boş dosya sessizce
+    geçilmez: hata listesine yazılır.
+    """
+    veri, hatalar, yas = {}, [], {}
+    if not dizin or not dizin.exists():
+        return {"veri": veri, "hatalar": hatalar, "yas": yas}
+    for ad, dosya in HAM_DOSYA.items():
+        p = dizin / dosya
+        if not p.exists():
+            continue
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            hatalar.append(f"{dosya}: okunamadı ({type(e).__name__}) → atlandı")
+            continue
+        # premiumIndex tüm sembolleri döndürebilir → istenen sembolü seç
+        if ad == "funding" and isinstance(d, list):
+            d = next((x for x in d if str(x.get("symbol")) == sembol), None)
+            if d is None:
+                hatalar.append(f"{dosya}: {sembol} bulunamadı → atlandı")
+                continue
+        if isinstance(d, list) and d:
+            sym = str(d[0].get("symbol", sembol))
+            if sym != sembol:
+                hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
+                               "(yanlış sembol karara giremez)")
+                continue
+            ts = d[-1].get("timestamp")
+        else:
+            ts = (d or {}).get("time")
+        veri[ad] = d
+        if isinstance(ts, (int, float)):
+            yas[ad] = int(ts)
+    p = dizin / HAM_LIKIDASYON
+    if p.exists():
+        try:
+            veri["likidasyon"] = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            hatalar.append(f"{HAM_LIKIDASYON}: okunamadı ({type(e).__name__})")
+    return {"veri": veri, "hatalar": hatalar, "yas": yas}
+
+
+def yas_kontrol(yas: dict, m15: Path | None, tolerans_bar: int = 8) -> list:
+    """Yapıştırılan veri kline'ın son barından ÇOK eskiyse uyar (gizlenmez)."""
+    uyari = []
+    if not yas or m15 is None or not m15.exists():
+        return uyari
+    try:
+        ham = json.loads(m15.read_text(encoding="utf-8"))
+        son_bar = int(ham[-1][0])
+    except (OSError, json.JSONDecodeError, IndexError, ValueError, TypeError):
+        return uyari
+    for ad, ts in yas.items():
+        fark_dk = (son_bar - ts) / 60000.0
+        if abs(fark_dk) > tolerans_bar * 15:
+            uyari.append(f"[VARSAYIM] {ad}: yapıştırılan veri kline son barından "
+                         f"{fark_dk:+.0f} dk uzakta — eşzamanlı değil")
+    return uyari
+
+
 def http_isle(h: dict) -> dict:
     """Ham HTTP yanıtlarını turev-akis alanlarına çevir (eksik = YOK)."""
     v, out = h.get("veri") or {}, {}
@@ -173,8 +249,18 @@ def http_isle(h: dict) -> dict:
 # --------------------------------------------------------------------------
 # İş üretimi
 # --------------------------------------------------------------------------
-def uret(m15: Path | None, seri: Path | None, ek: dict, http: dict | None) -> dict:
+def uret(m15: Path | None, seri: Path | None, ek: dict, http: dict | None,
+         ham: dict | None = None) -> dict:
     job, kaynak, eksik = {}, {}, []
+
+    # ham (elle yapıştırılan) kanallar HTTP ile aynı işleyiciden geçer;
+    # çakışırsa ham öncelikli (kullanıcı bilerek yapıştırdı)
+    hamp = http_isle(ham) if ham else {}
+    if ham and (ham.get("veri") or {}).get("likidasyon"):
+        lk = ham["veri"]["likidasyon"]
+        for k in ("liq_long", "liq_short"):
+            if _f(lk.get(k)) is not None and _f(ek.get(k)) is None:
+                ek[k] = _f(lk[k])
 
     # --- CVD (çevrimdışı) ---
     if m15 is not None:
@@ -188,10 +274,11 @@ def uret(m15: Path | None, seri: Path | None, ek: dict, http: dict | None) -> di
         eksik.append(f"cvd: m15 verilmedi ({YOK})")
 
     # --- OI + hizalı fiyat (öncelik: HTTP serisi > anlık görüntü defteri) ---
-    hp = http_isle(http) if http else {}
+    hp = {**(http_isle(http) if http else {}), **hamp}   # ham öncelikli
     if hp.get("oi_series") and hp.get("price_series"):
         job["oi_series"], job["price_series"] = hp["oi_series"], hp["price_series"]
-        kaynak["oi"] = "Binance vadeli openInterestHist (15m) — kline ile AYNI borsa"
+        kaynak["oi"] = ("Binance vadeli openInterestHist (15m) — kline ile AYNI borsa"
+                        + (" [elle yapıştırıldı]" if hamp.get("oi_series") else ""))
     else:
         snaps = snapshot_oku(seri) if seri else []
         if len(snaps) >= 2:
@@ -212,7 +299,10 @@ def uret(m15: Path | None, seri: Path | None, ek: dict, http: dict | None) -> di
         if _f(ek.get(alan)) is not None:
             job[alan] = _f(ek[alan]); kaynak[alan] = "elle verildi (--ek)"
         elif _f(hp.get(alan)) is not None:
-            job[alan] = hp[alan]; kaynak[alan] = "Binance vadeli genel uç"
+            job[alan] = hp[alan]
+            kaynak[alan] = ("Binance vadeli genel uç"
+                            + (" [elle yapıştırıldı]" if hamp.get(alan) is not None
+                               else ""))
         else:
             eksik.append(f"{ad}: {YOK}")
 
@@ -238,6 +328,7 @@ def main(argv=None) -> int:
     ap.add_argument("--ek", help="elle okunan alanlar (JSON: funding/taker_lsr/liq_long/liq_short)")
     ap.add_argument("--oi-snapshot", help="seriye anlık görüntü ekle (JSON) ve çık")
     ap.add_argument("--http", action="store_true", help="çevrimiçi kanalları dene")
+    ap.add_argument("--ham", help="tarayıcıdan yapıştırılan ham API yanıtları dizini")
     ap.add_argument("--sembol", default="BTCUSDT")
     a = ap.parse_args(argv)
 
@@ -261,8 +352,15 @@ def main(argv=None) -> int:
         except (OSError, json.JSONDecodeError):
             ek = {}
     http = http_kanallar(a.sembol) if a.http else None
+    ham = ham_oku(Path(a.ham), a.sembol) if a.ham else None
     job = uret(Path(a.m15) if a.m15 else None,
-               Path(a.seri) if a.seri else None, ek, http)
+               Path(a.seri) if a.seri else None, ek, http, ham)
+    if ham:
+        uy = yas_kontrol(ham.get("yas", {}), Path(a.m15) if a.m15 else None)
+        if ham["hatalar"]:
+            job["_ham_hatalari"] = ham["hatalar"]
+        if uy:
+            job.setdefault("_uyarilar", []).extend(uy)
     if http and http["hatalar"]:
         job["_ag_hatalari"] = http["hatalar"]
     if a.out:

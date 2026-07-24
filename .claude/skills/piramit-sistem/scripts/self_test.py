@@ -256,6 +256,38 @@ def main() -> int:
                 f"tekilleme={not tekrar['eklendi']}, eksik={len(job15['_eksikler'])} kanal, "
                 f"CVD var={bool(job15.get('cvd_series'))}")
 
+        # ---- T16: tarayıcıdan yapıştırılan ham Binance yanıtları ----------
+        hd = tmp / "ham"
+        hd.mkdir(parents=True, exist_ok=True)
+        (hd / "premiumIndex.json").write_text(json.dumps(
+            {"symbol": "BTCUSDT", "lastFundingRate": "0.00021000",
+             "time": 1784889000000}), encoding="utf-8")
+        (hd / "openInterestHist.json").write_text(json.dumps([
+            {"symbol": "BTCUSDT", "sumOpenInterest": "80000.0",
+             "sumOpenInterestValue": "5200000000.0", "timestamp": 1784888100000},
+            {"symbol": "BTCUSDT", "sumOpenInterest": "79000.0",
+             "sumOpenInterestValue": "5135000000.0", "timestamp": 1784889000000}]),
+            encoding="utf-8")
+        (hd / "takerlongshortRatio.json").write_text(json.dumps([
+            {"buySellRatio": "0.8500", "symbol": "BTCUSDT",
+             "timestamp": 1784889000000}]), encoding="utf-8")
+        h16 = TG.ham_oku(hd, "BTCUSDT")
+        j16 = TG.uret(kl, None, {}, None, h16)
+        # yanlış sembol karara GİREMEZ
+        (hd / "takerlongshortRatio.json").write_text(json.dumps([
+            {"buySellRatio": "9.9", "symbol": "ETHUSDT",
+             "timestamp": 1784889000000}]), encoding="utf-8")
+        h16b = TG.ham_oku(hd, "BTCUSDT")
+        j16b = TG.uret(kl, None, {}, None, h16b)
+        kontrol("T16 ham yapıştırma: 4 kanal okunur, yanlış sembol reddedilir",
+                j16.get("funding") == 0.021 and j16.get("taker_lsr") == 0.85
+                and j16.get("oi_series") == [80000.0, 79000.0]
+                and j16.get("price_series") == [65000.0, 65000.0]
+                and "taker_lsr" not in j16b and any("ETHUSDT" in e for e in h16b["hatalar"]),
+                f"funding={j16.get('funding')} lsr={j16.get('taker_lsr')} "
+                f"oi={j16.get('oi_series')} | yanlış sembol reddi="
+                f"{'taker_lsr' not in j16b}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi

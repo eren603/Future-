@@ -107,6 +107,7 @@ def _turev_uret(onceki: dict) -> dict:
         return {"durum": "üreteç ya da m15 yok — türev girdisi üretilmedi"}
     argv = [sys.executable, str(uretec), "--m15", str(m15),
             "--seri", str(REPO / "engine" / "state" / "turev_seri.jsonl"),
+            "--ham", str(GIRDI / "turev_ham"),
             "--out", str(GIRDI / "turev.json")]
     if not onceki.get("http_engelli"):
         argv.append("--http")
