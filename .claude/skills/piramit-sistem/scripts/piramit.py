@@ -41,6 +41,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+_SCRIPTS = Path(__file__).resolve().parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+import gozlemci as GZ  # noqa: E402
+
 # --------------------------------------------------------------------------
 # Depo yerleşimi
 # --------------------------------------------------------------------------
@@ -1108,7 +1113,20 @@ def kos(job: dict, taban: Path) -> dict:
             "2_ISLEM_KALITESI": f"İŞLEM KALİTESİ: {ik['ozet']}",
         },
     }
-    rapor["durum"] = "TAMAM — piramidin tepesine ulaşıldı"
+    # --- GÖZLEMCİ AJANLAR: her katmanın çalışması artefaktla denetlenir ---
+    denetim = GZ.denetle(rapor)
+    rapor["DENETIM"] = denetim
+    rapor["ZIRVE"]["DENETIM"] = {
+        "ozet": denetim["ozet"], "ihlal": denetim["ihlal"],
+        "uyari": denetim["uyari"], "muhurlendi": denetim["muhurlendi"]}
+    if denetim["muhurlendi"]:
+        # Kritik ihlal: YÖN gösterilir (kanıt yönü gizlenmez) ama işlem MÜHÜRLÜ.
+        rapor["ZIRVE"]["ISLEM_KALITESI"] = "DENETİM İHLALİ — İŞLEM YOK (mühürlendi)"
+        rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
+            "İŞLEM KALİTESİ: DENETİM İHLALİ — işlem yok. Gözlemci bulguları: "
+            + " | ".join(denetim["kritik_ihlal"]))
+    rapor["durum"] = ("TAMAM — piramidin tepesine ulaşıldı"
+                      + (" (DENETİM MÜHÜRÜ)" if denetim["muhurlendi"] else ""))
     _deftere_yaz(rapor)
     return rapor
 
@@ -1162,6 +1180,15 @@ def ozet_metin(rapor: dict) -> str:
     else:
         L.append(f"ULAŞILAN KATMAN: {z.get('ulasilan_katman', YOK)}")
         L.append(f"NEDEN: {z.get('neden', YOK)}")
+    d = (rapor.get("DENETIM") or {})
+    if d:
+        L.append("-" * 68)
+        L.append(f"GÖZLEMCİ DENETİMİ: {d.get('ozet', YOK)}"
+                 + ("  ⛔ MÜHÜRLÜ" if d.get("muhurlendi") else "  ✔ temiz"))
+        for x in (d.get("ihlal") or [])[:4]:
+            L.append(f"   ⛔ {x[:110]}")
+        for x in (d.get("uyari") or [])[:4]:
+            L.append(f"   ⚠ {x[:110]}")
     L.append("=" * 68)
     L.append("⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.")
     return "\n".join(L)

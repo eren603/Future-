@@ -27,6 +27,8 @@ import piramit as P  # noqa: E402
 import akibet_etiketle as AE  # noqa: E402
 import turev_girdi as TG  # noqa: E402
 import paket_ac as PA  # noqa: E402
+import gozlemci as GZ  # noqa: E402
+import iddia_denetle as ID  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -380,6 +382,51 @@ def main() -> int:
                 f"eksik uyarısı={eksik_var}, görsel güven={gt.get('confidence')} "
                 f"(tavan {P.KONVANSIYON['gorsel_tavan']}), uyumlu onay={onay}, "
                 f"ters red={red}, çelişki bayrağı={bayrak}")
+
+        # ---- T20: gözlemci ajanlar ihlali GERÇEKTEN yakalıyor mu? ---------
+        temiz = GZ.denetle(r1)
+        # (a) UYDURMA: kaynağı olmayan danışman enjekte et
+        import copy  # noqa: PLC0415
+        sahte = copy.deepcopy(r1)
+        Ks = {k["katman"]: k for k in sahte["katmanlar"]}
+        Ks["K3-COKLU-AJAN"]["danismanlar"].append(
+            {"name": "hayalet-motor", "stance": "long", "confidence": 0.9,
+             "evidence": "kaynaksız", "_ham_confidence": 0.9, "_agirlik": 1.0})
+        d_uyd = GZ.denetle(sahte)
+        # (b) EKSIK_AKTARIM: K3 danışmanını sentezden düşür
+        sahte2 = copy.deepcopy(r1)
+        Ks2 = {k["katman"]: k for k in sahte2["katmanlar"]}
+        Ks2["K5-SI"]["sentez"]["danisman_ozeti"] = \
+            Ks2["K5-SI"]["sentez"]["danisman_ozeti"][:1]
+        d_eks = GZ.denetle(sahte2)
+        # (c) MEMNUN_ETME: yön skoru ile YON_BIAS'ı çelişir yap
+        sahte3 = copy.deepcopy(r1)
+        Ks3 = {k["katman"]: k for k in sahte3["katmanlar"]}
+        Ks3["K5-SI"]["sentez"]["YON_BIAS"] = "LONG"
+        Ks3["K5-SI"]["sentez"]["yon_skoru"] = -0.5
+        d_mem = GZ.denetle(sahte3)
+        kontrol("T20 gözlemci ajanlar ihlali yakalıyor (uydurma/eksik/memnun etme)",
+                (not temiz["muhurlendi"])
+                and any("UYDURMA" in x for x in d_uyd["kritik_ihlal"])
+                and any("EKSIK_AKTARIM" in x for x in d_eks["kritik_ihlal"])
+                and any("MEMNUN_ETME" in x for x in d_mem["kritik_ihlal"])
+                and d_uyd["muhurlendi"] and d_eks["muhurlendi"] and d_mem["muhurlendi"],
+                f"temiz koşu mühürsüz={not temiz['muhurlendi']}, "
+                f"uydurma yakalandı={bool(d_uyd['kritik_ihlal'])}, "
+                f"eksik aktarım={bool(d_eks['kritik_ihlal'])}, "
+                f"memnun etme={bool(d_mem['kritik_ihlal'])}")
+
+        # ---- T21: iddia denetçisi kaynaksız sayıyı yakalıyor mu? ----------
+        kaynakli_sayi = r1["ZIRVE"]["yon_skoru"]
+        m_iyi = f"Yön skoru {kaynakli_sayi} olarak ölçüldü."
+        m_kotu = f"Yön skoru {kaynakli_sayi} ve isabet oranı %87.3 idi."
+        i_iyi = ID.denetle(m_iyi, r1)
+        i_kotu = ID.denetle(m_kotu, r1)
+        kontrol("T21 iddia denetçisi: kaynaksız sayı yakalanır",
+                i_iyi["gecti"] and (not i_kotu["gecti"])
+                and any(abs(k["deger"] - 87.3) < 1e-9 for k in i_kotu["KAYNAKSIZ"]),
+                f"kaynaklı metin geçti={i_iyi['gecti']}, uydurma %87.3 yakalandı="
+                f"{not i_kotu['gecti']}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"

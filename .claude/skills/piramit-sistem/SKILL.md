@@ -137,6 +137,25 @@ Kaynak borsa kline'dan farklıysa çıktıda `[VARSAYIM] vekil gösterge` etiket
 düşer. Eksik kanal **uydurulmaz**: `turev-akis` kapsamı düşükse skoru
 `VERİ YOK`'a çeker ve danışman doğrulanmamış sayılır (fail-closed).
 
+## Gözlemci ajanlar (her katmanda, kanıtlı)
+
+`scripts/gozlemci.py` — her katmanın artefaktını denetler (zihnini değil):
+
+| İhlal | Ne arar | Kanıt |
+|---|---|---|
+| **UYDURMA** | üst katmandaki sayı/danışman alt katmanda var mı | değer eşleşmesi, motor kaynağı |
+| **HAFIZA** | K1 çıkarım yapmış mı; ağırlık bu koşudan mı gelmiş | alan denetimi, dosya yolu |
+| **DAİRESEL** | danışman kendi çıktısıyla mı doğrulanıyor | verifier kaynağı ≠ danışman |
+| **EKSİK_AKTARIM** | alt katman sonucu sessizce düşmüş mü | giren/çıkan sayımı |
+| **TÜNEL** | karar tek kanıt ailesine mi dayanıyor | onaylı aile sayısı |
+| **MEMNUN_ETME** | kapılar uygulanmış mı, fail-OPEN var mı | çürütme sayısı, skor–karar tutarlılığı |
+| **SIRADAN** | motor çıktısı şema derinliğini karşılıyor mu | zorunlu alan denetimi |
+| **ÇARPIŞMA** | bağımsız motorlar aynı sayıyı mı üretmiş | seviye karşılaştırması |
+
+Kritik ihlalde (UYDURMA/DAİRESEL/EKSİK_AKTARIM/MEMNUN_ETME) **işlem kalitesi
+mühürlenir**: YÖN gösterilir, işlem verilmez. `scripts/iddia_denetle.py` ise
+sunulacak metindeki her sayının raporda karşılığı var mı diye bakar.
+
 ## Zorunlu girdiler (her koşuda — atlanamaz)
 
 | # | Girdi | Nereye | Ne açar |

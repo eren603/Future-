@@ -83,6 +83,25 @@ veri, motor hatası) elle koşuya düşülür ve bu AÇIKÇA söylenir.
 ⚠️ K4/K5'in "AGI/SI" adları resimdeki piramide sadakattir; teknik iddia
 DEĞİLDİR (K4 = çelişki/doğrulama denetçisi, K5 = sentez + Wilson kalibrasyonu).
 
+Ek kural (GÖZLEMCİ AJANLAR — her katmanda, tetikleyicisiz): Her katmanın
+(K1…K5) bir gözlemcisi vardır (`piramit-sistem/scripts/gozlemci.py`) ve katmanın
+ZİHNİNİ değil ARTEFAKTINI denetler: hangi dosya okundu, hangi motor koştu, hangi
+sayı nereden geldi, üst katmana ne gitti. Denetlenen ihlaller: UYDURMA (üst
+katmandaki sayı/danışman alt katmanda kaynaksız), HAFIZA (o koşunun verisinden
+değil sabitten/önceki koşudan üretim; K1 çıkarım YAPAMAZ), DAİRESEL (danışman
+kendi çıktısıyla doğrulanıyor), EKSİK_AKTARIM (alt katmanda üretilip üst katmana
+ne giren ne gerekçeyle dışlanan sonuç = sessiz kayıp/yarıda kesme), TÜNEL (karar
+tek kanıt ailesine dayanıyor), MEMNUN_ETME (kapılar uygulanmamış, doğrulama
+fail-OPEN, karar kendi skoruyla çelişiyor), SIRADAN (motor çıktısı şema
+derinliğini karşılamıyor), ÇARPIŞMA (bağımsız motorlar aynı sayıyı üretmiş =
+biri diğerini kopyalamış). Kritik ihlalde (UYDURMA/DAİRESEL/EKSİK_AKTARIM/
+MEMNUN_ETME) **işlem kalitesi MÜHÜRLENİR** — YÖN yine gösterilir ama "işlem yok"
+denir (fail-closed). Uyarılar gizlenmez, çıktının altında listelenir.
+Ek olarak `scripts/iddia_denetle.py` KULLANICIYA SUNULACAK METNİ denetler:
+metindeki her sayı koşu raporunda birebir var mı? KAYNAKSIZ çıkan sayı ya
+rapordan düzeltilir ya metinden çıkarılır. Bu araç ANLAM denetlemez (yorum
+doğruluğu elle ikinci-göz işidir) — yalnız uydurma SAYIYA karşı korkuluktur.
+
 Ek kural (ZORUNLU GİRDİLER — her koşuda, atlanamaz): Bir piyasa analizi
 üretilecekse şu üçü BİRLİKTE beklenir ve hiçbiri sessizce atlanamaz:
 (1) `piramit_veri_*.json` paketi (15M+4H kline + OI + funding + taker-LSR),
