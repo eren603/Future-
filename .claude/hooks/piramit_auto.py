@@ -44,18 +44,53 @@ KURAL = (
 )
 
 
+# Otomatik yolda okunan OPSİYONEL kanallar: dosya varsa ilgili motor boru
+# hattına KENDİLİĞİNDEN girer, yoksa fail-closed atlanır (uydurma girdi yok).
+EK_KANAL = {
+    "turev.json": ("veri", "turev"),        # turev-akis (kline-körlüğü panzehiri)
+    "ohlcv.csv": ("veri", "ohlcv_csv"),     # tablo kaynağı (data-analysis + SMC)
+    "risk.json": (None, "risk"),            # risk-yonetimi (pozisyon boyutu)
+    "backtest.json": (None, "backtest"),    # backtest-motoru
+    "portfoy.json": (None, "portfoy"),      # portfoy-optimizasyonu
+    "video.mp4": ("veri", "video"),         # video-isleme (kare çıkarma)
+    "veri_sozlesmesi.json": ("veri", "veri_sozlesmesi"),  # verify_data
+}
+
+
 def _fp() -> str | None:
-    """Girdi verisinin parmak izi. Dosya yoksa None."""
+    """Girdi verisinin parmak izi (ek kanallar dahil). Dosya yoksa None."""
     h = hashlib.sha256()
     var = False
-    for ad in ("m15.json", "h4.json"):
+    for ad in ("m15.json", "h4.json", *EK_KANAL):
         p = GIRDI / ad
         if p.exists():
+            h.update(ad.encode())
             h.update(p.read_bytes())
-            var = True
+            var = var or ad in ("m15.json", "h4.json")
         else:
             h.update(b"YOK")
     return h.hexdigest() if var else None
+
+
+def _ek_kanallar(job: dict) -> list:
+    """engine/girdi altındaki opsiyonel dosyaları job'a bağla; hangileri girdi?"""
+    giren = []
+    for ad, (bolum, anahtar) in EK_KANAL.items():
+        p = GIRDI / ad
+        if not p.exists():
+            continue
+        try:
+            deger = (json.loads(p.read_text(encoding="utf-8"))
+                     if p.suffix == ".json" else str(p))
+        except (OSError, json.JSONDecodeError) as e:
+            giren.append(f"{ad}: OKUNAMADI ({type(e).__name__}) — atlandı")
+            continue
+        if bolum == "veri":
+            job["veri"][anahtar] = deger
+        else:
+            job[anahtar] = deger
+        giren.append(ad)
+    return giren
 
 
 def _durum_oku() -> dict:
@@ -99,6 +134,9 @@ def _kos() -> tuple[str, int]:
         "_hafiza": ("KUM HAVUZU — motor bu barı zaten işlemişti; gerçek defter "
                     "korunuyor" if kum else "GERÇEK — yeni bar, hafıza güncellenir"),
     }
+    ek = _ek_kanallar(job)
+    if ek:
+        print(f"[PİRAMİT] Ek kanal(lar) otomatik bağlandı: {', '.join(ek)}")
     jp = SKILL / "state" / "_job" / "otomatik_job.json"
     jp.parent.mkdir(parents=True, exist_ok=True)
     jp.write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
