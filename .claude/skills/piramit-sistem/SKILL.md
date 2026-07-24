@@ -137,6 +137,19 @@ Kaynak borsa kline'dan farklıysa çıktıda `[VARSAYIM] vekil gösterge` etiket
 düşer. Eksik kanal **uydurulmaz**: `turev-akis` kapsamı düşükse skoru
 `VERİ YOK`'a çeker ve danışman doğrulanmamış sayılır (fail-closed).
 
+## Hesap verme + kıyas (her yeni veride İLK İŞ)
+
+`scripts/kiyas.py` — yeni analizden **önce** iki soru:
+
+| # | Soru | Nerede | Nasıl ölçülür |
+|---|---|---|---|
+| ① | **Önceki seviyeler tuttu mu?** | K1 (ölçüm, çıkarım değil) | `akibet_etiketle.simule_et` — tetiklendi mi, stop/hedef, gerçekleşen R |
+| ② | **Piyasa döndü mü?** | K5 (yeni sentez gerekli) | yön DEVAM/DÖNÜŞ/NÖTRE ÇEKİLDİ + sürücü tablosu (trend, ADX, ATR, türev skoru/kapsamı, funding, LSR, CVD, OI, likidasyon) + danışman duruş dönüşleri |
+
+Her koşu sonunda `onceki_kosu.json` anlık görüntüsü yazılır. Kayıt yoksa
+**"ilk analiz"** denir — geçmiş uydurulmaz. Gözlemci: kayıt varken akıbet
+ölçülmemişse ya da kıyas koşmamışsa **EKSİK_AKTARIM ihlali**.
+
 ## Çapraz-varlık ve sabit-kısıt motorları (boru hattı içinde)
 
 | Motor | Katman | İşi |

@@ -79,6 +79,7 @@ MOTOR = {
     "akibet_etiketle": SKILL_DIR / "scripts" / "akibet_etiketle.py",
     "korelasyon": SKILL_DIR / "scripts" / "korelasyon.py",
     "usd_hedef": SKILL_DIR / "scripts" / "usd_hedef.py",
+    "kiyas": SKILL_DIR / "scripts" / "kiyas.py",
 }
 
 # --------------------------------------------------------------------------
@@ -288,6 +289,25 @@ def k1_llm(job: dict, taban: Path) -> dict:
         zorunlu_eksik.append("görsel okuma: grafik ekran görüntüsü/video GELMEDİ "
                              "→ mekanik SMC tespiti karşılıklı teyit edilemez")
 
+    # --- HESAP VERME: önceki koşunun verdiği seviyeler tuttu mu? ----------
+    # Bu bir ÖLÇÜMDÜR (çıkarım değil) → K1'e aittir. Yeni analizden ÖNCE
+    # cevaplanır; kayıt yoksa "ilk analiz" denir, geçmiş uydurulmaz.
+    akibet = {"durum": f"{YOK} — önceki koşu kaydı aranmadı"}
+    onceki_kayit = _onceki_kosu(job, taban)
+    p15o = _yol(veri.get("m15"), taban)
+    if p15o is not None:
+        try:
+            if str(_SCRIPTS) not in sys.path:
+                sys.path.insert(0, str(_SCRIPTS))
+            import kiyas as KY  # noqa: PLC0415
+            import akibet_etiketle as _AE  # noqa: PLC0415
+            arsiv = _yol(job.get("bar_arsivi"), taban) or (
+                Path(str(job.get("bar_arsivi"))) if job.get("bar_arsivi") else None)
+            kaynaklar = [str(p15o)] + ([str(arsiv)] if arsiv and arsiv.exists() else [])
+            akibet = KY.akibet_olc(onceki_kayit, _AE.bar_yukle(kaynaklar))
+        except Exception as e:  # noqa: BLE001 — ölçüm hatası gizlenmez
+            akibet = {"durum": f"ölçüm HATASI ({type(e).__name__}: {e})"}
+
     m15_ok = isinstance(olcumler.get("m15_bar"), int) and olcumler["m15_bar"] > 0
     h4_ok = isinstance(olcumler.get("h4_bar"), int) and olcumler["h4_bar"] > 0
     gecti = (m15_ok and h4_ok) or bool(p_csv)
@@ -299,6 +319,7 @@ def k1_llm(job: dict, taban: Path) -> dict:
             "kanallar": kanal, "olcumler": olcumler, "profil": profil,
             "veri_sozlesmesi": sozlesme, "video": video, "eksikler": eksik,
             "zorunlu_girdiler": zorunlu, "zorunlu_eksik": zorunlu_eksik,
+            "onceki_karar_akibeti": akibet, "onceki_kayit_var": bool(onceki_kayit),
             "gecti": gecti, "kapi": kapi}
 
 
@@ -875,6 +896,52 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
             "kapi": "K5 kapısı GEÇİLDİ: nihai karar üretildi ve geri besleme yazıldı."}
 
 
+def _onceki_kosu(job: dict, taban: Path) -> dict:
+    """Önceki koşunun anlık görüntüsü (varsa). Okuma dizini GERÇEK hafızadır."""
+    okuma = _yol(job.get("defter_dizini"), taban) or (
+        Path(str(job["defter_dizini"])) if job.get("defter_dizini")
+        else (_yol(job.get("state_dir"), taban) or ENGINE / "state"))
+    p = Path(okuma) / "onceki_kosu.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
+    """Bu koşunun kıyaslanabilir özeti — BİR SONRAKİ koşu bununla karşılaştırır."""
+    m = k2.get("motor_sonuclari") or {}
+    smc = m.get("smc_tespit") or {}
+    rej = smc.get("rejim") or {}
+    tv = (m.get("turev-akis") or {}).get("rapor") or {}
+    fak = {f.get("faktor"): f.get("skor") for f in (tv.get("faktorler") or [])}
+    ik = k5.get("islem_kalitesi") or {}
+    aday = (ik.get("adaylar") or [{}])[0] if ik.get("adaylar") else {}
+    return {
+        "sembol": zirve.get("sembol"),
+        "son_bar": (k1.get("olcumler") or {}).get("m15_son_bar"),
+        "son_bar_utc": (m.get("karar-motoru") or {}).get("son_bar_utc", YOK),
+        "son_kapanis": _num((m.get("karar-motoru") or {}).get("karar", {}).get("giris")),
+        "YON_BIAS": zirve.get("YON_BIAS"), "yon_skoru": zirve.get("yon_skoru"),
+        "guven_skoru": zirve.get("guven_skoru"), "uzlasi": zirve.get("uzlasi"),
+        "islem_kalitesi": zirve.get("ISLEM_KALITESI"),
+        "islem_seviyeleri": ({"giris": aday.get("entry"), "stop": aday.get("stop"),
+                              "hedef": aday.get("target")} if aday else {}),
+        "danismanlar": {d["name"]: d["stance"] for d in (k3.get("danismanlar") or [])},
+        "surucu": {
+            "trend": smc.get("trend"), "adx": _num(rej.get("adx")),
+            "atr": _num(smc.get("atr")), "rejim": rej.get("durum"),
+            "turev_skor": _num(tv.get("yon_skoru")),
+            "turev_kapsam": _num(tv.get("kapsam")),
+            "funding": fak.get("funding"), "lsr": fak.get("taker_lsr"),
+            "cvd_delta": fak.get("cvd"), "oi_delta": fak.get("oi_price"),
+            "liq_long": fak.get("liquidation"),
+        },
+    }
+
+
 def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
     """İŞLEM KALİTESİ hükmü — YÖN'den AYRI (CLAUDE.md iki-satır kuralı).
 
@@ -1247,6 +1314,34 @@ def kos(job: dict, taban: Path) -> dict:
             "2_ISLEM_KALITESI": f"İŞLEM KALİTESİ: {ik['ozet']}",
         },
     }
+    # --- KIYAS: eski veri neyi gösteriyordu, yeni veri neyi gösteriyor? ---
+    onceki = _onceki_kosu(job, taban)
+    yeni_gor = _anlik_goruntu(k1, k2, k3, k5, rapor["ZIRVE"])
+    yeni_gor["sembol"] = job.get("sembol", YOK)
+    try:
+        if str(_SCRIPTS) not in sys.path:
+            sys.path.insert(0, str(_SCRIPTS))
+        import kiyas as KY  # noqa: PLC0415
+        kiyas = KY.kiyasla(onceki, yeni_gor)
+    except Exception as e:  # noqa: BLE001
+        kiyas = {"durum": f"kıyas HATASI ({type(e).__name__}: {e})"}
+    rapor["KIYAS"] = kiyas
+    rapor["ZIRVE"]["ONCEKI_AKIBET"] = k1.get("onceki_karar_akibeti")
+    rapor["ZIRVE"]["KIYAS"] = {
+        "yon": kiyas.get("YON_DEGISIMI"), "fiyat": kiyas.get("fiyat"),
+        "onemli_degisimler": kiyas.get("onemli_degisimler"),
+        "danisman_donusleri": kiyas.get("danisman_donusleri")}
+    # anlık görüntüyü YAZ (bir sonraki koşu bununla kıyaslayacak)
+    try:
+        sdir = Path(str(_yol(job.get("state_dir"), taban)
+                        or job.get("state_dir") or (ENGINE / "state")))
+        sdir.mkdir(parents=True, exist_ok=True)
+        (sdir / "onceki_kosu.json").write_text(
+            json.dumps(yeni_gor, ensure_ascii=False, indent=2), encoding="utf-8")
+        rapor["ZIRVE"]["_anlik_goruntu"] = str(sdir / "onceki_kosu.json")
+    except OSError as e:
+        rapor["ZIRVE"]["_anlik_goruntu"] = f"YAZILAMADI ({e})"
+
     # --- GÖZLEMCİ AJANLAR: her katmanın çalışması artefaktla denetlenir ---
     denetim = GZ.denetle(rapor)
     rapor["DENETIM"] = denetim
@@ -1302,6 +1397,30 @@ def ozet_metin(rapor: dict) -> str:
                 L.append(f"  · {d['name']:<16} {d['stance']:<6} güven={d['confidence']} "
                          f"(ham {d['_ham_confidence']} × ağırlık {d['_agirlik']})")
     L.append("-" * 68)
+    ak = z.get("ONCEKI_AKIBET") or {}
+    ky = (z.get("KIYAS") or {}).get("yon") or {}
+    if ak or ky:
+        L.append("① ÖNCEKİ KARARIN AKIBETİ (hesap verme):")
+        if ak.get("durum") == "ÖLÇÜLDÜ":
+            sv = ak.get("verilen_seviyeler") or {}
+            L.append(f"   {ak.get('onceki_yon')} — verilen: giriş {sv.get('giris')}, "
+                     f"stop {sv.get('stop')}, hedef {sv.get('hedef')}")
+            L.append(f"   SONUÇ: {ak.get('sonuc')} | gerçekleşen R = {ak.get('gercek_r')}")
+        else:
+            L.append(f"   {ak.get('durum', YOK)}")
+        if ky:
+            L.append("② KIYAS (eski veri → yeni veri):")
+            L.append(f"   {ky.get('etiket')} — {ky.get('aciklama')} "
+                     f"(skor {ky.get('skor_onceki')} → {ky.get('skor_yeni')})")
+            fy = (z.get("KIYAS") or {}).get("fiyat")
+            if isinstance(fy, dict):
+                L.append(f"   fiyat {fy.get('onceki')} → {fy.get('yeni')} "
+                         f"({fy.get('yuzde'):+g}%)")
+            for d in ((z.get("KIYAS") or {}).get("onemli_degisimler") or [])[:4]:
+                L.append(f"   • {d}")
+            for d in ((z.get("KIYAS") or {}).get("danisman_donusleri") or [])[:3]:
+                L.append(f"   ↻ {d}")
+        L.append("-" * 68)
     if z.get("ZORUNLU_EKSIK"):
         L.append("⚠ ZORUNLU GİRDİ EKSİK (sözleşme gereği her koşuda gelmeli):")
         for e in z["ZORUNLU_EKSIK"]:

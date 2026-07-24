@@ -1,0 +1,36 @@
+{
+  "sembol": "BTCUSDT",
+  "son_bar": 1784889000000,
+  "son_bar_utc": "2026-07-24 10:30",
+  "son_kapanis": 65160.7,
+  "YON_BIAS": "SHORT",
+  "yon_skoru": -0.7956,
+  "guven_skoru": 0.4747,
+  "uzlasi": 0.7956,
+  "islem_kalitesi": "TEMİZ GİRİŞ VAR",
+  "islem_seviyeleri": {
+    "giris": 65160.7,
+    "stop": 65290.7,
+    "hedef": 64979.9,
+    "giris_alt": 65046.9,
+    "giris_ust": 65274.5
+  },
+  "danismanlar": {
+    "karar-motoru": "short",
+    "grafik-calisma": "flat",
+    "turev-akis": "long"
+  },
+  "surucu": {
+    "trend": "bear",
+    "adx": 21.77,
+    "atr": 131.18,
+    "rejim": "gecis",
+    "turev_skor": 0.7,
+    "turev_kapsam": 0.18,
+    "funding": null,
+    "lsr": null,
+    "cvd_delta": 0.7,
+    "oi_delta": null,
+    "liq_long": null
+  }
+}

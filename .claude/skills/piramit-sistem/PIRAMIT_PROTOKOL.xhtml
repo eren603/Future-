@@ -4,8 +4,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="tr" lang="tr">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <title>PİRAMİT PROTOKOLÜ v2.1 — her konu için katmanlı çalışma şeması</title>
-  <meta name="surum" content="2.1" />
+  <title>PİRAMİT PROTOKOLÜ v2.2 — her konu için katmanlı çalışma şeması</title>
+  <meta name="surum" content="2.2" />
   <meta name="kapsam" content="konudan bagimsiz (finans bir ornektir)" />
   <style type="text/css">
     body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -40,7 +40,7 @@
 </head>
 <body>
 
-<h1>PİRAMİT PROTOKOLÜ v2.1</h1>
+<h1>PİRAMİT PROTOKOLÜ v2.2</h1>
 
 <p><strong>Amaç:</strong> Bir soruyu en alttan (ham veri) en üste (karar) taşırken
 her katmanın gerçekten çalıştığını <em>kanıtla</em> göstermek. Finans bu protokolün
@@ -76,6 +76,13 @@ bir kapıdan geçer, her kapı bir gözlemciyle denetlenir; kanıt yoksa karar
 <pre>
   GİRDİLER (konuya göre; hepsi ZORUNLU — eksik olan bağırılır)
         │
+        ▼
+ ┌──────────────────────────────────────────────────────────────────┐
+ │ K0 · HESAP VERME + KIYAS   (yeni veri geldiyse İLK İŞ)           │
+ │  ① önceki koşunun seviyeleri tuttu mu? (tetik/stop/hedef, R)     │
+ │  ② eski veri → yeni veri: yön DEVAM mı DÖNÜŞ mü? hangi sürücü?   │
+ │  kayıt yoksa "ilk analiz" — geçmiş UYDURULMAZ                    │
+ └──────────────┬───────────────────────────────────────────────────┘
         ▼
  ┌──────────────────────────────┐      ┌────────────────────────────┐
  │ K1 · VERİ                    │─────▶│ GÖZLEMCİ-1                 │
@@ -121,7 +128,8 @@ bir kapıdan geçer, her kapı bir gözlemciyle denetlenir; kanıt yoksa karar
         ▼
    İDDİA DENETÇİSİ: sunulacak metindeki her sayı raporda var mı?
         ▼
-   ÇIKTI: ① SONUÇ/YÖN   ② EYLEM KALİTESİ   ③ GEÇERSİZLİK KOŞULU
+   ÇIKTI: ⓪ ÖNCEKİ KARARIN AKIBETİ + KIYAS  (en üstte)
+          ① SONUÇ/YÖN   ② EYLEM KALİTESİ   ③ GEÇERSİZLİK KOŞULU
 </pre>
 
 <h2>2 · Katmanların görevi ve kapıları</h2>
@@ -201,7 +209,31 @@ kapısı kapanmış / doğrulaması çürütülmüş kaynak muhaliftir.</dd>
 <p>Ayrıca her çıktı <strong>gerçek / varsayım / yorum / VERİ YOK</strong> ayrımını
 taşır ve kritik ihlal varsa mühür satırı en üstte görünür.</p>
 
-<h2>5b · Çapraz-varlık ve sabit-kısıt motorları (v2.1)</h2>
+<h2>5a · Hesap verme ve kıyas — döngüyü kapatan halka (v2.2)</h2>
+<p>Bir sistem kendi geçmiş çıktısını ölçmüyorsa öğrenemez, üstelik
+<em>hesap da vermez</em>. Bu yüzden yeni veri geldiğinde ilk iş analiz değil,
+<strong>önceki analizin sınavı</strong>dır.</p>
+<table>
+<tr><th>Adım</th><th>Soru</th><th>Ölçüm</th><th>Fail-closed</th></tr>
+<tr><td>① HESAP VERME</td>
+    <td>Verilen giriş/stop/hedef ne oldu?</td>
+    <td>Sonraki barlarda ileri simülasyon: tetiklendi mi, stop mu, hedef mi;
+        gerçekleşen R. Muhafazakâr: aleyhte kenardan dolum, aynı barda
+        stop+hedef → STOP.</td>
+    <td>Kayıt yoksa "ilk analiz"; ölçülemezse nedeni yazılır</td></tr>
+<tr><td>② KIYAS</td>
+    <td>Piyasa döndü mü, hangi sürücü değişti?</td>
+    <td>Yön: DEVAM / DÖNÜŞ / NÖTRE ÇEKİLDİ + skor deltası. Sürücü tablosu:
+        trend, ADX, oynaklık, türev skoru ve kapsamı, funding, taker-LSR, CVD,
+        açık faiz, likidasyon. Ayrıca danışman duruş dönüşleri.</td>
+    <td>Kıyas koşmazsa gözlemci EKSİK_AKTARIM ihlali verir</td></tr>
+</table>
+<p class="not"><strong>Neden yön yetmez:</strong> yön DEVAM etse bile sürücü
+değişmiş olabilir — ör. "short devam" ama artık taze short girişi yok, sadece
+eski pozisyonlar kapanıyor. Bu ayrım yeni kararın kalitesini belirler ve kıyas
+yapılmazsa görünmez.</p>
+
+<h2>5b · Çapraz-varlık ve sabit-kısıt motorları (v2.2)</h2>
 <p>İki ek motor boru hattının <em>içindedir</em> — elle koşulmaz, gözlemci
 kapsamındadır:</p>
 <table>
@@ -222,7 +254,7 @@ kapsamındadır:</p>
 </table>
 <p class="not"><strong>Neden içeride:</strong> v2.0'da bu iki adım elle
 koşuluyordu ve 18 denetimin hiçbiri onlara bakmıyordu — protokolün kendi
-"her adım denetlenmeli" kuralının ihlaliydi. v2.1 bunu kapatır; gözlemci
+"her adım denetlenmeli" kuralının ihlaliydi. v2.2 bunu kapatır; gözlemci
 sayısı 18 → 20'ye çıkar ve "beyan edilip koşmayan motor" ayrı bir ihlal olur.</p>
 
 <h2>5c · Ölçek seçimi — kurulum ve tetik ayrı şeydir</h2>

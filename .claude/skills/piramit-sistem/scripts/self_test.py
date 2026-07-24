@@ -31,6 +31,7 @@ import gozlemci as GZ  # noqa: E402
 import iddia_denetle as ID  # noqa: E402
 import usd_hedef as UH  # noqa: E402
 import korelasyon as KOR  # noqa: E402
+import kiyas as KY  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -564,6 +565,36 @@ def main() -> int:
                 f"K2 beyan denetimi={k2_beyan}, K5 usd denetimi={k5_usd}, "
                 f"K4 çelişki={kor_celiski}, atlama yakalandı="
                 f"{bool(d_ihlal['kritik_ihlal'])}")
+
+        # ---- T26: HESAP VERME + KIYAS (önceki karar tuttu mu, piyasa döndü mü)
+        # (a) akıbet: bilinen sonuçlu senaryo — SHORT hedefe gitti
+        b26 = [(1, 100, 100.5, 99.5, 100, 1.0), (2, 100, 100.2, 95.5, 96, 1.0)]
+        onceki = {"son_bar": 1, "son_bar_utc": "T-1", "YON_BIAS": "SHORT",
+                  "yon_skoru": -0.5, "son_kapanis": 100.0,
+                  "islem_seviyeleri": {"giris": 100.0, "stop": 102.0, "hedef": 96.0},
+                  "danismanlar": {"m1": "short", "m2": "long"},
+                  "surucu": {"trend": "bear", "adx": 25.0, "turev_skor": 0.7}}
+        a26 = KY.akibet_olc(onceki, b26, {"azami_bekleme": 3, "azami_tutma": 5})
+        # (b) kıyas: yön DÖNÜŞÜ + sürücü değişimi yakalanmalı
+        yeni = {"son_bar_utc": "T0", "YON_BIAS": "LONG", "yon_skoru": 0.4,
+                "son_kapanis": 96.0,
+                "danismanlar": {"m1": "long", "m2": "long"},
+                "surucu": {"trend": "bull", "adx": 25.5, "turev_skor": -0.6}}
+        k26 = KY.kiyasla(onceki, yeni)
+        yd = k26["YON_DEGISIMI"]
+        # (c) kayıt yoksa UYDURMA yok — VERİ YOK demeli
+        bos = KY.kiyasla({}, yeni)
+        bos_a = KY.akibet_olc({}, b26)
+        kontrol("T26 hesap verme + kıyas (akıbet ölçümü, yön dönüşü, fail-closed)",
+                a26["durum"] == "ÖLÇÜLDÜ" and a26["sonuc"] == "T1"
+                and a26["gercek_r"] == 2.0
+                and yd["etiket"] == "DÖNÜŞ" and yd["skor_delta"] == 0.9
+                and any("türev" in d for d in k26["onemli_degisimler"])
+                and any("m1" in d for d in k26["danisman_donusleri"])
+                and P.YOK in bos["durum"] and P.YOK in bos_a["durum"],
+                f"akıbet={a26['sonuc']} R={a26['gercek_r']}, yön={yd['etiket']} "
+                f"Δskor={yd['skor_delta']}, sürücü={len(k26['onemli_degisimler'])} "
+                f"değişim, kayıtsız fail-closed=True")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"

@@ -102,6 +102,22 @@ metindeki her sayı koşu raporunda birebir var mı? KAYNAKSIZ çıkan sayı ya
 rapordan düzeltilir ya metinden çıkarılır. Bu araç ANLAM denetlemez (yorum
 doğruluğu elle ikinci-göz işidir) — yalnız uydurma SAYIYA karşı korkuluktur.
 
+Ek kural (HESAP VERME + KIYAS — her yeni veride İLK İŞ, atlanamaz): Yeni veri
+geldiğinde YENİ analizden ÖNCE iki soru cevaplanır (`scripts/kiyas.py`):
+(1) HESAP VERME: bir önceki koşuda verilen giriş/stop/hedef seviyeleri yeni
+barlarda ne oldu — tetiklendi mi, stop mu oldu, hedefe mi gitti, gerçekleşen R
+kaç? Ölçüm `akibet_etiketle.simule_et` ile aynı muhafazakâr kurallarla yapılır
+(aleyhte kenardan dolum, aynı barda stop+hedef → STOP). (2) KIYAS: eski veri ne
+gösteriyordu, yeni veri ne gösteriyor — yön DEVAM mı etti, DÖNDÜ mü, NÖTRE mi
+çekildi; hangi sürücü değişti (trend, ADX, ATR, türev skoru/kapsamı, funding,
+LSR, CVD, OI, likidasyon) ve hangi danışman duruş değiştirdi. Yön AYNI kalsa
+bile sürücü değişimi kararın kalitesini değiştirir — bu yüzden kıyas atlanamaz.
+Her koşu sonunda `onceki_kosu.json` anlık görüntüsü yazılır (kum havuzu
+koşusunda gerçek hafızaya DEĞİL, sandığa). Kayıt yoksa "ilk analiz" denir,
+geçmiş UYDURULMAZ. Gözlemci: kayıt varken akıbet ölçülmemişse ya da kıyas
+koşmamışsa EKSİK_AKTARIM ihlali verir. Çıktıda bu iki başlık EN ÜSTTE,
+YÖN/İŞLEM satırlarından ÖNCE gösterilir.
+
 Ek kural (ÇAPRAZ-VARLIK + SABİT KISIT — boru hattı içinde, elle koşulmaz):
 İkinci bir sembol varsa `korelasyon.py` K2'de koşar ve K4'te risk çarpanına
 çevrilir: |ρ| ≥ 0.85 → KOPYA POZİSYON, aynı yönde ikinci pozisyon bağımsız

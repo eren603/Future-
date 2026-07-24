@@ -119,6 +119,25 @@ def gozlemci_k1(k1: dict) -> list:
     else:
         b.append(_bulgu("EKSIK_AKTARIM", "TEMİZ",
                         f"{len(beyan)} kanalın her biri ya ölçüldü ya gerekçeyle eksik yazıldı"))
+    # 3b) HESAP VERME: önceki kayıt varsa akıbet ÖLÇÜLMÜŞ olmalı
+    ak = k1.get("onceki_karar_akibeti") or {}
+    durum = str(ak.get("durum", YOK))
+    if k1.get("onceki_kayit_var"):
+        if durum.startswith("ölçüm HATASI"):
+            b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
+                            f"önceki koşu kaydı VAR ama akıbet ölçülemedi: {durum}"))
+        elif durum == "ÖLÇÜLDÜ":
+            b.append(_bulgu("HAFIZA", "TEMİZ",
+                            f"önceki karar hesabı verildi: {ak.get('onceki_yon')} → "
+                            f"{ak.get('sonuc')}, gerçekleşen R={ak.get('gercek_r')} "
+                            f"(seviyeler {ak.get('verilen_seviyeler')})"))
+        else:
+            b.append(_bulgu("HAFIZA", "UYARI",
+                            f"önceki kayıt var ama akıbet ölçülemedi: {durum[:90]}"))
+    else:
+        b.append(_bulgu("HAFIZA", "TEMİZ",
+                        "önceki koşu kaydı yok → ilk analiz; geçmiş UYDURULMADI"))
+
     # 4) Zorunlu girdi sözleşmesi
     ze = k1.get("zorunlu_eksik") or []
     if ze:
@@ -404,6 +423,34 @@ def denetle(rapor: dict) -> dict:
     if k5 and k5.get("sentez"):
         katman_bulgu["K5-SI"] = gozlemci_k5(k3, k4, k5, zirve,
                                             rapor.get("_job"), k2)
+
+    # --- KIYAS denetimi: kayıt varsa kıyas KOŞMUŞ olmalı, sayıları izlenebilir
+    kiyas = rapor.get("KIYAS") or {}
+    if "K5-SI" in katman_bulgu:
+        if k1.get("onceki_kayit_var"):
+            if kiyas.get("durum") == "KIYASLANDI":
+                yd = kiyas.get("YON_DEGISIMI") or {}
+                katman_bulgu["K5-SI"].append(_bulgu(
+                    "EKSIK_AKTARIM", "TEMİZ",
+                    f"kıyas koştu: {yd.get('onceki')} → {yd.get('yeni')} "
+                    f"({yd.get('etiket')}), {len(kiyas.get('onemli_degisimler') or [])} "
+                    "sürücü değişimi raporlandı"))
+                # kıyas sayıları alt katmanda var mı?
+                alt = _sayilar({"k2": k2, "k3": k3, "k5": k5})
+                ust = _sayilar({"y": (yd.get("skor_yeni"))})
+                kaynaksiz = sorted(x for x in ust if x not in alt)
+                katman_bulgu["K5-SI"].append(_bulgu(
+                    "UYDURMA", "İHLAL" if kaynaksiz else "TEMİZ",
+                    (f"kıyastaki kaynaksız sayı: {kaynaksiz}" if kaynaksiz
+                     else "kıyas sayıları bu koşunun çıktılarında birebir bulundu")))
+            else:
+                katman_bulgu["K5-SI"].append(_bulgu(
+                    "EKSIK_AKTARIM", "İHLAL",
+                    f"önceki kayıt VAR ama kıyas koşmadı: {kiyas.get('durum', YOK)}"))
+        else:
+            katman_bulgu["K5-SI"].append(_bulgu(
+                "EKSIK_AKTARIM", "TEMİZ",
+                "önceki kayıt yok → kıyas yapılmadı (ilk analiz, uydurma yok)"))
 
     ihlaller = [(kat, b) for kat, bl in katman_bulgu.items() for b in bl
                 if b["durum"] == "İHLAL"]
