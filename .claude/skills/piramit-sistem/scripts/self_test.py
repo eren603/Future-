@@ -328,6 +328,20 @@ def main() -> int:
                 f"yazılan={len(r17['yazilan'])}, yanlış sembol reddi={red}, "
                 f"kısa kline reddi={'m15' not in r17b['yazilan']}")
 
+        # ---- T18: motor geometri kapısı (bayat kurulum reddi) -------------
+        sys.path.insert(0, str(P.ENGINE))
+        import karar_motoru as KM  # noqa: PLC0415
+        # gerçek olay: SHORT ama stop girişin ALTINDA (fiyat kurulumun üstüne döndü)
+        bozuk, sebep = KM.geometri_gecerli("SHORT", 64213.8, 64170.0, 64104.1)
+        saglam, _ = KM.geometri_gecerli("SHORT", 64213.8, 64290.0, 64104.1)
+        long_bozuk, _ = KM.geometri_gecerli("LONG", 100.0, 105.0, 110.0)
+        long_saglam, _ = KM.geometri_gecerli("LONG", 100.0, 98.0, 110.0)
+        kontrol("T18 motor geometri kapısı: bayat/ters kurulum reddedilir",
+                (not bozuk) and saglam and (not long_bozuk) and long_saglam
+                and "short sırası bozuk" in sebep,
+                f"short-bozuk reddi={not bozuk}, short-sağlam kabul={saglam}, "
+                f"long-bozuk reddi={not long_bozuk}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi

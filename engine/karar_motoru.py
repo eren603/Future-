@@ -336,6 +336,29 @@ def detect_bos_15m(bars, swings):
     return None
 
 
+def geometri_gecerli(yon, giris, stop, t1):
+    """Kurulum geometrisi yönle tutarlı mı? (LONG: stop < giriş < T1, SHORT: tersi)
+
+    Dönen: (gecerli, sebep). rr_denetim.py ile AYNI kural — iki yerde iki farklı
+    doğruluk kaynağı olmasın diye burada da mekanik uygulanır.
+    """
+    try:
+        g, s, t = float(giris), float(stop), float(t1)
+    except (TypeError, ValueError):
+        return False, "giriş/stop/T1 sayısal değil"
+    if yon == "LONG":
+        if not (s < g < t):
+            return False, ("long sırası bozuk: stop %.6g / giriş %.6g / hedef %.6g "
+                           "(beklenen stop<giriş<hedef)" % (s, g, t))
+    elif yon == "SHORT":
+        if not (s > g > t):
+            return False, ("short sırası bozuk: stop %.6g / giriş %.6g / hedef %.6g "
+                           "(beklenen stop>giriş>hedef)" % (s, g, t))
+    else:
+        return False, "yön LONG/SHORT değil"
+    return True, "geometri tutarlı"
+
+
 def regime_4h(bars4h):
     closes = [b.c for b in bars4h]
     n = len(closes)
@@ -539,6 +562,21 @@ def decide(bars15, bars4h):
                  "neden": ("BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, "
                            "4H rejim %s (|MA5-MA20| eşik altında)." % rej["rejim"])}
 
+    if karar["karar"] != "BEKLE":
+        # GEOMETRİ KAPISI (fail-closed): stop/giriş/hedef yön sırası doğru olmalı.
+        # Neden gerekli: zincir 2/3 stopu KURULUM barlarından, girişi GÜNCEL
+        # kapanıştan alır. Fiyat kırılımdan sonra kurulum barlarının ötesine
+        # dönerse stop girişin yanlış tarafında kalır — kurulum bayattır.
+        # R hesabı abs() kullandığı için bunu GİZLERDİ (bozuk geometride bile
+        # makul bir R üretirdi). Artık karar burada durur ve gerekçesi yazılır.
+        gecerli, gsebep = geometri_gecerli(karar["yon"], karar["giris"],
+                                           karar["stop"], karar["t1"])
+        if not gecerli:
+            karar = {"karar": "BEKLE", "yon": None, "zincir": karar["zincir"],
+                     "neden": ("BEKLE: %s kurulumu GEÇERSİZ geometri — %s. Kurulum "
+                               "barlarından hesaplanan stop güncel fiyata göre yanlış "
+                               "tarafta; fiyat kurulumun ötesine döndü (bayat sinyal)."
+                               % (karar["yon"], gsebep))}
     if karar["karar"] != "BEKLE":
         risk = abs(karar["giris"] - karar["stop"])
         karar["r"] = round(abs(karar["t1"] - karar["giris"]) / risk, 2) if risk > 0 else None
