@@ -48,16 +48,39 @@ dökümü + erken-uyarılar). Bu danışmanı `advisors`'a olduğu gibi ekle; ç
 (danışman None) dönerse kurula **eklenmez** (fail-closed). Böylece türev katkısı
 öznel metin değil, tekrarlanabilir motor çıktısıdır.
 
-### 2) Beş mercek — maksimum akıl yürütme
-Her motor çıktısını beş bağımsız mercekten geçir (kullanıcının karar-kurulu
-tasarımı): **Muhalif** (zayıflık/risk), **İlk-Prensipler** (asıl problem),
-**Genişletici** (kaçırılan fırsat), **Dış-Göz** (basit gözden kaçan),
-**Uygulayıcı** (uygulanabilir mi). Mercekler birbirinden etkilenmez.
+### 2) Beş danışman merceği — maksimum akıl yürütme
+Her motor çıktısını beş bağımsız arketip-mercekten geçir ("The 5 Advisors";
+mercekler birbirinden ETKİLENMEZ, her biri farklı kör noktayı yakalar):
+1. **Muhalif / The Contrarian** — "bu ne yüzden ÇÖKER?" Kurulumu öldürecek
+   senaryo (tepki riski, likidite tuzağı, geç giriş, dar menzil).
+2. **İlk-Prensipler / First Principles** — problemi çıplak çerçevele; etiketleri
+   at, ham yapıyı (trend/aralık, kenar mı orta mı) yeniden sor.
+3. **Genişletici / The Expansionist** — kaçırılan yukarı/aşağı potansiyel;
+   scalp mı yoksa daha büyük swing mi? (ama R'yi ŞİŞİRMEDEN — bkz. adım 4).
+4. **Dış-Göz / The Outsider** — bağlamsız taze göz: "hiç işlem gerekir mi,
+   yoksa orta-aralık chop mu?"
+5. **Uygulayıcı / The Executor** — "Pazartesi somut ne yaparsın?" Net giriş/
+   stop/hedef/geçersizlik ya da "şu tepkiyi bekle".
+Beş mercek çelişirse sentez fail-closed'a yaklaşır; yakınsarsa güven artar.
 
 ### 3) Adversarial doğrulama (Skeptic)
 Her görüşü **diğer motorların sayısıyla** karşı-sına. Dayanağı olmayan/tek-dönem/
 overfit görüşü `verifier.confirmed=false` işaretle → ağırlığı otomatik düşer
 (fable-judge mantığı). Kanıtla eşleşmeyen iddia karara tam ağırlıkla giremez.
+
+### 3b) R:R tutarlılık kapısı — ŞİŞİRİLMİŞ R YASAK (mekanik, zorunlu)
+Bir kurulumun R:R'si sunulacaksa (giriş/stop/hedef) ve o R **motorun kendi tek
+kaynaklı çıktısı DEĞİLSE** (ör. 5 mercekte el ile swing hedefi/stop kuruldu),
+`rr_denetim.py`'den GEÇMEDEN yayınlanamaz:
+```
+python3 scripts/rr_denetim.py --job rr.json   # {yon,entry,stop,target,atr}
+```
+Araç, DAR stopu (scalp ölçeği) UZAK hedefle (swing ölçeği) eşleştirip R'yi yapay
+yükseltmeyi mekanik yakalar (ATR-ölçek): stop < ~1×ATR veya "uzak hedef + dar
+stop" → **ŞİŞİRİLMİŞ** → çıktıda **R_gercekci** kullanılır, R_rapor değil. ATR o
+koşunun kline'ından hesaplanır (uydurma eşik yok). Motorun kendi içinde-tutarlı
+R'si (stop ve hedef aynı ölçekte) TUTARLI geçer. Bu, "serbest ayar/aşırı-uyum"
+panzehiridir: cazip ama aritmetiği tutmayan R karara giremez.
 
 ### 4) Başkan sentezi — sentez.py ile TEK karar
 Görüşleri + doğrulayıcı oylarını JSON'a koy ve çalıştır:
@@ -92,8 +115,27 @@ NÖTR-BEKLE bir **işlem-kalitesi** hükmüdür, yön reddi değil.
 verdiğinde bile motorun zincir-1/2 iç kurulumunun giriş/stop/T1'i motordan
 okunup verilir (uydurma değil).
 
+## Birleşik sentez çıktı formatı (STANDART — her karar analizinde)
+Nihai çıktı DAİMA şu tek-temiz yapıda verilir (motor mekaniği + 5 mercek
+çerçevesi, şişirilmiş sayı olmadan):
+1. **Motorlar (kanıt):** karar-motoru/turev/sentez'in gerçek sayıları — her biri
+   dosyadan okundu, tek satır.
+2. **5 mercek (çerçeve):** Muhalif/İlk-Prensipler/Genişletici/Dış-Göz/Uygulayıcı
+   — kısa, her biri bir motor/panel kanıtına bağlı (anlatı için sayı uydurma).
+3. **YÖN (bias):** `YON_BIAS` — saklanmaz.
+4. **İŞLEM KALİTESİ:** temiz giriş var mı / tepki bekle; seviyeler **motordan**
+   (fact) ve varsa el-ile swing çerçevesi **rr_denetim'den geçmiş R** ile
+   (yorum olarak etiketli). **"R_rapor" değil, ŞİŞİRİLMİŞSE "R_gercekci".**
+5. **Gerçek/varsayım/yorum ayrımı:** motordan gelen = gerçek; el-ile türetilen
+   (swing seviyesi/R) = yorum, açıkça etiketli.
+
 ## Zorunlu disiplin
 - Kararı **motor çıktılarına** dayandır; hiçbir motor sonuç üretmeden karar verme.
 - Çelişki/belirsizlikte **BEKLE** meşru ve doğru karardır (fail-closed).
 - Çıktı **karar-destektir, sinyal/garanti değil**; canlı/otomatik emir **yok**.
 - Doğruluk sözleşmesi: gerçek/varsayım/yorum ayrılır, "VERİ YOK" işaretlenir.
+- **Şişirilmiş R yasak:** stop/hedef içeren her R, motorun tek-kaynaklı çıktısı
+  değilse `rr_denetim.py`'den geçer; ATR-tutarsız (dar-stop+uzak-hedef) R
+  yayınlanamaz — `R_gercekci` kullanılır. Cazip anlatı ≠ geçerli aritmetik.
+- **Narrative-fluency yanılgısına düşme:** akıcı/etkileyici çıktı otomatik "daha
+  kaliteli" değildir; başlık sayıları araç-bağımsız (ATR/aritmetik) sınanır.

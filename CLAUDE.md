@@ -54,6 +54,25 @@ Yani BEKLE bir **işlem-kalitesi** hükmüdür, **yön reddi değildir** — iki
 karıştırılıp kullanıcı "BEKLE" ile oyalanmaz. Doğruluk sözleşmesi korunur:
 yön ağırlıklı kanıttan türetilir (uydurma değil), canlı/otomatik emir yine YOK.
 
+Ek kural (BİRLEŞİK SENTEZ ÇIKTISI — her karar analizinde standart): Nihai analiz
+DAİMA tek-temiz yapıda verilir: **(1) Motorlar (kanıt)** — karar-motoru/turev/
+sentez'in dosyadan okunan gerçek sayıları; **(2) 5 danışman merceği (çerçeve)** —
+Muhalif/İlk-Prensipler/Genişletici/Dış-Göz/Uygulayıcı, her biri bir motor/panel
+kanıtına bağlı (anlatı için sayı UYDURMA); **(3) YÖN** (`YON_BIAS`); **(4) İŞLEM
+KALİTESİ** — seviyeler motordan (gerçek), el-ile swing çerçevesi varsa
+`rr_denetim.py`'den geçmiş **R_gercekci** ile (yorum etiketli); **(5) gerçek/
+varsayım/yorum ayrımı**. Motor mekaniği + 5 mercek birlikte; ne kuru motor
+çıktısı ne süslü anlatı — ikisinin kusursuz sentezi.
+
+Ek kural (ŞİŞİRİLMİŞ R YASAK — mekanik, tetikleyicisiz): Stop/hedef içeren bir R
+sunulacaksa ve o R motorun tek-kaynaklı çıktısı DEĞİLSE (ör. 5 mercekte el ile
+swing hedefi/stop kuruldu), `karar-kurulu/scripts/rr_denetim.py`'den GEÇMEDEN
+yayınlanamaz. Araç, dar-stop (scalp) + uzak-hedef (swing) eşleşmesiyle R'yi yapay
+şişirmeyi ATR-ölçekle mekanik yakalar → **ŞİŞİRİLMİŞSE R_gercekci kullanılır.**
+ATR o koşunun kline'ından hesaplanır. Cazip/akıcı anlatı otomatik "daha kaliteli"
+sayılmaz (narrative-fluency yanılgısı); başlık sayıları araç-bağımsız aritmetikle
+sınanır. Bu, "serbest ayar/aşırı-uyum" panzehiridir.
+
 Ek kural (motorlar — paralel & zorunlu sonuç): Bu becerilerin her biri kendi
 içinde ÇALIŞAN Python motoruna sahiptir (`.claude/skills/<ad>/scripts/`). Bir
 soru birden çok motoru ilgilendiriyorsa **hepsi birlikte/paralel** uygulanır ve
