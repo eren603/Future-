@@ -60,6 +60,8 @@ SEMA_DERINLIK = {
     "grafik-calisma": ("KARAR", "confluence_skoru", "kapi_gerekceleri"),
     "setup_dogrulama": ("SONUC", "sinyal_izni", "gerekce"),
     "turev-akis": ("rapor", "danisman"),
+    "smc_tespit_h4": ("trend", "atr", "likidite"),
+    "korelasyon": ("korelasyon", "beta", "gozlem", "HUKUM"),
 }
 
 
@@ -129,10 +131,28 @@ def gozlemci_k1(k1: dict) -> list:
 # --------------------------------------------------------------------------
 # K2 gözlemcisi — "her motor gerçekten koştu mu, bağımsız mı?"
 # --------------------------------------------------------------------------
-def gozlemci_k2(k2: dict) -> list:
+def gozlemci_k2(k2: dict, job: dict | None = None) -> list:
     b = []
     m = k2.get("motor_sonuclari") or {}
     hatalar = k2.get("hatalar") or []
+    # 0) BEYAN EDİLEN ama koşmayan motor (sessiz atlama) — job'a bakılır
+    if job:
+        beyan = []
+        if job.get("korelasyon"):
+            beyan.append(("korelasyon", "korelasyon" in m))
+        if job.get("backtest"):
+            beyan.append(("backtest-motoru", "backtest-motoru" in m))
+        kacan = [ad for ad, kostu in beyan if not kostu
+                 and not any(h.get("motor") == ad for h in hatalar)]
+        if kacan:
+            b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
+                            f"job'da BEYAN EDİLEN {kacan} motoru ne koştu ne hata verdi "
+                            "— sessizce atlandı"))
+        elif beyan:
+            b.append(_bulgu("EKSIK_AKTARIM", "TEMİZ",
+                            f"beyan edilen {len(beyan)} ek motorun tamamı koştu ya da "
+                            "gerekçeli hata verdi: "
+                            + ", ".join(a for a, _ in beyan)))
     # 1) Sessiz kayıp: denenen her motor ya sonuç ya hata olarak görünmeli
     denenen = set(m) | {h.get("motor") for h in hatalar}
     if len(denenen) < len(m) + len(hatalar):
@@ -298,9 +318,27 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
 # --------------------------------------------------------------------------
 # K5 gözlemcisi — "zirvedeki her sayı alt katmanda var mı?"
 # --------------------------------------------------------------------------
-def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict) -> list:
+def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
+                job: dict | None = None, k2: dict | None = None) -> list:
     b = []
     sentez = k5.get("sentez") or {}
+    # 0) usd_hedef: beyan edildiyse koşmalı ve sayıları izlenebilir olmalı
+    usd = k5.get("usd_hedef")
+    if job and job.get("usd_profil"):
+        kostu = isinstance(usd, dict) and usd.get("HUKUM")
+        if not kostu:
+            b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
+                            f"usd_profil BEYAN EDİLDİ ama sabit-USDT motoru sonuç "
+                            f"üretmedi: {(usd or {}).get('durum', YOK)}"))
+        else:
+            kaynak = (usd.get("_girdi_kaynagi") or {})
+            atr_alt = _sayilar((k2 or {}).get("motor_sonuclari", {}).get("smc_tespit_h4"))
+            atr_ust = _sayilar({"a": (usd.get("cevrim") or {}).get("stop_atr_kat")})
+            b.append(_bulgu("UYDURMA", "TEMİZ" if kaynak else "UYARI",
+                            (f"sabit-USDT girdileri kaynaklı: {kaynak}"
+                             if kaynak else "girdi kaynağı beyan edilmemiş") +
+                            f" | hüküm={usd.get('HUKUM')}, düşen kapı="
+                            f"{usd.get('dusen_kapilar')}"))
     # 1) EKSIK_AKTARIM: K3 danışmanlarının tamamı sentezе girdi mi?
     giren = {a.get("ad") for a in (sentez.get("danisman_ozeti") or [])}
     beklenen = {d["name"] for d in (k3.get("danismanlar") or [])}
@@ -358,13 +396,14 @@ def denetle(rapor: dict) -> dict:
     if k1:
         katman_bulgu["K1-LLM"] = gozlemci_k1(k1)
     if k2:
-        katman_bulgu["K2-AI-AJAN"] = gozlemci_k2(k2)
+        katman_bulgu["K2-AI-AJAN"] = gozlemci_k2(k2, rapor.get("_job"))
     if k3:
         katman_bulgu["K3-COKLU-AJAN"] = gozlemci_k3(k2, k3, k1)
     if k4:
         katman_bulgu["K4-AGI"] = gozlemci_k4(k3, k4)
     if k5 and k5.get("sentez"):
-        katman_bulgu["K5-SI"] = gozlemci_k5(k3, k4, k5, zirve)
+        katman_bulgu["K5-SI"] = gozlemci_k5(k3, k4, k5, zirve,
+                                            rapor.get("_job"), k2)
 
     ihlaller = [(kat, b) for kat, bl in katman_bulgu.items() for b in bl
                 if b["durum"] == "İHLAL"]

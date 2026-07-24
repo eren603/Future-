@@ -77,6 +77,8 @@ MOTOR = {
     "video_isle": SKILLS / "video-isleme" / "scripts" / "video_isle.py",
     "karar_motoru": ENGINE / "karar_motoru.py",
     "akibet_etiketle": SKILL_DIR / "scripts" / "akibet_etiketle.py",
+    "korelasyon": SKILL_DIR / "scripts" / "korelasyon.py",
+    "usd_hedef": SKILL_DIR / "scripts" / "usd_hedef.py",
 }
 
 # --------------------------------------------------------------------------
@@ -377,6 +379,39 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
             hatalar.append({"motor": "setup_dogrulama",
                             "hata": r["hata"] or r["metin"][:300]})
 
+    # --- grafik-calisma 4H: KURULUM ölçeği (sabit-USDT motorunun ATR/likidite
+    # kaynağı; ölçümle 4H seçildi — 15m yapısı 33 puanlık stopla ilgisiz) -----
+    if ph4:
+        r = _kos(MOTOR["smc_tespit"], [],
+                 girdi_job={"candles": _klines_to_candles(ph4)})
+        if r["ok"] and isinstance(r["cikti"], dict):
+            c = r["cikti"]
+            sonuc["smc_tespit_h4"] = {k: c.get(k) for k in
+                                      ("trend", "rejim", "atr", "likidite",
+                                       "order_blocks", "acik_fvgler", "olaylar")}
+        else:
+            hatalar.append({"motor": "smc_tespit_h4",
+                            "hata": r["hata"] or r["metin"][:300]})
+
+    # --- korelasyon: ikinci sembol bağımsız bahis mi, kopya mı? -------------
+    kor = job.get("korelasyon")
+    if isinstance(kor, dict) and kor:
+        pa = _yol(kor.get("a"), taban) or p15
+        pb = _yol(kor.get("b"), taban)
+        if pa and pb:
+            r = _kos(MOTOR["korelasyon"],
+                     ["--a", str(pa), "--b", str(pb),
+                      "--ad-a", str(kor.get("ad_a", "A")),
+                      "--ad-b", str(kor.get("ad_b", "B"))])
+            if r["ok"] and isinstance(r["cikti"], dict):
+                sonuc["korelasyon"] = r["cikti"]
+            else:
+                hatalar.append({"motor": "korelasyon",
+                                "hata": r["hata"] or r["metin"][:300]})
+        else:
+            hatalar.append({"motor": "korelasyon",
+                            "hata": f"karşılaştırma serisi {YOK} (a/b yolu çözülemedi)"})
+
     # --- turev-akis: kline-körlüğü panzehiri --------------------------------
     turev = veri.get("turev")
     if isinstance(turev, dict) and turev:
@@ -640,6 +675,18 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
                               f"diyor, algoritma {smc_trend or YOK} diyor — "
                               "biri yanılıyor; karar bu belirsizlikle veriliyor.")
 
+    # --- KORELASYON RİSKİ: ikinci pozisyon gizli kaldıraç mı? -------------
+    kor = m.get("korelasyon")
+    if isinstance(kor, dict) and _num(kor.get("korelasyon")) is not None:
+        rho, hk = _num(kor["korelasyon"]), str(kor.get("HUKUM", YOK))
+        carp = _num(kor.get("toplam_risk_carpani")) or 1.0
+        if carp > 1.0:
+            celiskiler.append(
+                f"KORELASYON RİSKİ: {kor.get('cift', YOK)} ρ={rho} → {hk}; aynı yönde "
+                f"ikinci pozisyon bağımsız bahis DEĞİL, toplam risk ×{carp} sayılmalı.")
+        else:
+            celiskiler.append(f"Korelasyon ölçüldü: ρ={rho} → {hk} (risk ×{carp}).")
+
     # --- ZORUNLU GİRDİ EKSİKLERİ (sessizce atlanamaz) ---------------------
     for e in (k1.get("zorunlu_eksik") or []):
         celiskiler.append(f"ZORUNLU GİRDİ EKSİK — {e}")
@@ -782,6 +829,9 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     # ---------- işlem kalitesi: seviyeler MOTORDAN, R denetlenmiş -----------
     islem = _islem_kalitesi(k3, k4, sentez)
 
+    # ---------- sabit-USDT hedef motoru (kullanıcı profili) ----------------
+    usd = _usd_hedef(job, taban, k2, k3, sentez)
+
     # ---------- pozisyon boyutu (risk-yonetimi) ----------------------------
     boyut = None
     rj = job.get("risk")
@@ -819,7 +869,7 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
 
     return {"katman": "K5-SI",
             "rol": "(a) güven-ağırlıklı sentez → (b) geçmiş akıbetten ağırlık türetme",
-            "sentez": sentez, "sentez_girdisi": sentez_job,
+            "sentez": sentez, "sentez_girdisi": sentez_job, "usd_hedef": usd,
             "islem_kalitesi": islem, "pozisyon_boyutu": boyut, "portfoy": portfoy,
             "kalibrasyon": kal, "gecti": True,
             "kapi": "K5 kapısı GEÇİLDİ: nihai karar üretildi ve geri besleme yazıldı."}
@@ -884,6 +934,72 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
             "not": "Seviyeler motorların tek-kaynak çıktısıdır; şişirilmiş R "
                    "rr_denetim.py ile mekanik elenmiştir. BEKLE = kalite hükmü, "
                    "yön reddi değil."}
+
+
+def _usd_hedef(job: dict, taban: Path, k2: dict, k3: dict, sentez: dict) -> dict:
+    """Sabit-USDT profilini (ör. 3 ETH / stop -100 / hedef 135-150) boru hattına
+    bağlar: seviye adayları K3'ten, ATR ve likidite 4H yapı motorundan gelir.
+
+    Profil job'da yoksa çalışmaz — ama BEYAN edilip çalışmazsa gözlemci bunu
+    EKSİK_AKTARIM olarak yakalar (sessiz atlama yok).
+    """
+    prof = job.get("usd_profil")
+    if isinstance(prof, str):
+        p = _yol(prof, taban)
+        if p is None:
+            return {"durum": f"{YOK} — usd_profil dosyası bulunamadı: {prof}"}
+        try:
+            prof = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            return {"durum": f"profil okunamadı ({type(e).__name__})"}
+    if not isinstance(prof, dict) or not prof:
+        return {"durum": f"{YOK} — usd_profil beyan edilmedi (motor koşmadı)"}
+
+    m = k2["motor_sonuclari"]
+    h4 = m.get("smc_tespit_h4") or {}
+    atr = _num(h4.get("atr"))
+    if atr is None:
+        return {"durum": f"{YOK} — 4H ATR yok (kurulum ölçeği belirlenemedi)"}
+    # Referans fiyat = GÜNCEL kapanış (nominal/kaldıraç bunun üzerinden).
+    # Giriş adayları ayrıca motorlardan gelir; market girişi de daima adaydır.
+    p15 = _yol((job.get("veri") or {}).get("m15"), taban)
+    fiyat = _num(_klines_to_candles(p15)[-1]["close"]) if p15 else None
+    km = (m.get("karar-motoru") or {}).get("karar") or {}
+    if fiyat is None:
+        fiyat = _num(km.get("giris")) or _num((m.get("grafik-calisma") or {}).get("giris_orta"))
+    if fiyat is None:
+        return {"durum": f"{YOK} — referans fiyat okunamadı"}
+
+    yon = str(sentez.get("YON_BIAS", "")).lower()
+    if yon not in ("long", "short"):
+        return {"durum": f"{YOK} — YON_BIAS long/short değil ({yon})"}
+
+    lik = [_num(x.get("price")) for x in (h4.get("likidite") or [])]
+    lik = [x for x in lik if x is not None]
+    hedefler = sorted([x for x in lik if x < fiyat], reverse=True)[:6] if yon == "short" \
+        else sorted([x for x in lik if x > fiyat])[:6]
+    karsi = sorted([x for x in lik if x > fiyat])[:6] if yon == "short" \
+        else sorted([x for x in lik if x < fiyat], reverse=True)[:6]
+
+    adaylar = [fiyat]                      # market girişi daima aday
+    for sv in (k3.get("seviyeler") or {}).values():
+        v = _num(sv.get("entry"))
+        if v is not None:
+            adaylar.append(v)
+    gc_orta = _num((m.get("grafik-calisma") or {}).get("giris_orta"))
+    if gc_orta is not None:
+        adaylar.append(gc_orta)             # confluence bölgesi de aday
+    ujob = {**{k: v for k, v in prof.items() if not str(k).startswith("_")},
+            "yon": yon, "fiyat": fiyat, "atr_kurulum": atr,
+            "giris_adaylari": sorted(set(adaylar)),
+            "likidite_hedefleri": hedefler, "karsi_yapi_seviyeleri": karsi}
+    r = _kos(MOTOR["usd_hedef"], [], girdi_job=ujob)
+    if r["ok"] and isinstance(r["cikti"], dict):
+        return {**r["cikti"], "_girdi_kaynagi": {
+            "atr_kurulum": "smc_tespit_h4.atr (4H — kurulum ölçeği)",
+            "fiyat": "karar-motoru.giris / confluence / son kapanış",
+            "likidite": f"smc_tespit_h4.likidite ({len(lik)} seviye)"}}
+    return {"durum": "usd_hedef motoru ÇALIŞMADI", "hata": r["hata"]}
 
 
 def _gecersizlik(k2: dict) -> str:
@@ -1077,6 +1193,12 @@ def kos(job: dict, taban: Path) -> dict:
         "not": ("Yalnız karar-destek. Canlı/otomatik emir DAHİL DEĞİL. "
                 "Her sayı bir motorun dosyadan okunan çıktısıdır."),
     }
+
+    # Gözlemci "beyan edilip koşmayan motor" denetimi yapabilsin diye job'un
+    # beyan alanları rapora taşınır (tam job DEĞİL — yalnız beyanlar).
+    rapor["_job"] = {k: job.get(k) for k in
+                     ("korelasyon", "usd_profil", "backtest", "risk", "portfoy")
+                     if job.get(k)}
 
     k1 = k1_llm(job, taban)
     rapor["katmanlar"].append(k1)

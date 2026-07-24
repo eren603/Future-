@@ -169,6 +169,12 @@ def _kos() -> tuple[str, int]:
         "_hafiza": ("KUM HAVUZU — motor bu barı zaten işlemişti; gerçek defter "
                     "korunuyor" if kum else "GERÇEK — yeni bar, hafıza güncellenir"),
     }
+    # Karşılaştırma sembolü varsa korelasyon boru hattına girer (gözlemci
+    # kapsamında koşar — elle koşu artık gerekmiyor).
+    eth_m15 = GIRDI / "eth" / "m15.json"
+    if eth_m15.exists():
+        job["korelasyon"] = {"a": str(GIRDI / "m15.json"), "b": str(eth_m15),
+                             "ad_a": "BTC", "ad_b": "ETH"}
     ek = _ek_kanallar(job)
     if ek:
         print(f"[PİRAMİT] Ek kanal(lar) otomatik bağlandı: {', '.join(ek)}")

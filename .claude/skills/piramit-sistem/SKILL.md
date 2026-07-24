@@ -137,6 +137,16 @@ Kaynak borsa kline'dan farklıysa çıktıda `[VARSAYIM] vekil gösterge` etiket
 düşer. Eksik kanal **uydurulmaz**: `turev-akis` kapsamı düşükse skoru
 `VERİ YOK`'a çeker ve danışman doğrulanmamış sayılır (fail-closed).
 
+## Çapraz-varlık ve sabit-kısıt motorları (boru hattı içinde)
+
+| Motor | Katman | İşi |
+|---|---|---|
+| `korelasyon.py` | K2 → K4 | İki varlığın hizalı log getirileri → ρ, beta, R², kararlılık. \|ρ\|≥0.85 → **KOPYA POZİSYON**, K4'te "toplam risk ×2" çelişkisi |
+| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; ATR ve likidite **4H yapı motorundan** (`smc_tespit_h4`) gelir |
+
+İkisi de **beyan edilip koşmazsa** gözlemci `EKSİK_AKTARIM` ihlali verir —
+elle koşu artık gerekmez ve sessiz atlama mümkün değildir.
+
 ## Gözlemci ajanlar (her katmanda, kanıtlı)
 
 `scripts/gozlemci.py` — her katmanın artefaktını denetler (zihnini değil):

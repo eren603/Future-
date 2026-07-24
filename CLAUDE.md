@@ -102,6 +102,16 @@ metindeki her sayı koşu raporunda birebir var mı? KAYNAKSIZ çıkan sayı ya
 rapordan düzeltilir ya metinden çıkarılır. Bu araç ANLAM denetlemez (yorum
 doğruluğu elle ikinci-göz işidir) — yalnız uydurma SAYIYA karşı korkuluktur.
 
+Ek kural (ÇAPRAZ-VARLIK + SABİT KISIT — boru hattı içinde, elle koşulmaz):
+İkinci bir sembol varsa `korelasyon.py` K2'de koşar ve K4'te risk çarpanına
+çevrilir: |ρ| ≥ 0.85 → KOPYA POZİSYON, aynı yönde ikinci pozisyon bağımsız
+bahis DEĞİLDİR, toplam risk ×2 sayılır. Dolar cinsi kısıt (kontrat + sabit
+stop + hedef bandı) varsa `usd_hedef.py` K5'te koşar; ATR ve likidite
+KURULUM ÖLÇEĞİ yapısından (`smc_tespit_h4`) gelir — stop/ATR ∈ [0.8, 2.0]
+olan dilim kurulum ölçeğidir, alt dilim yalnız TETİK içindir. Her iki motor
+da job'da BEYAN EDİLİP koşmazsa gözlemci EKSİK_AKTARIM ihlali verir (sessiz
+atlama yok).
+
 Ek kural (ZORUNLU GİRDİLER — her koşuda, atlanamaz): Bir piyasa analizi
 üretilecekse şu üçü BİRLİKTE beklenir ve hiçbiri sessizce atlanamaz:
 (1) `piramit_veri_*.json` paketi (15M+4H kline + OI + funding + taker-LSR),

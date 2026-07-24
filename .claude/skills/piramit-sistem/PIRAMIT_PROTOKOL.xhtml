@@ -4,8 +4,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="tr" lang="tr">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <title>PİRAMİT PROTOKOLÜ v2.0 — her konu için katmanlı çalışma şeması</title>
-  <meta name="surum" content="2.0" />
+  <title>PİRAMİT PROTOKOLÜ v2.1 — her konu için katmanlı çalışma şeması</title>
+  <meta name="surum" content="2.1" />
   <meta name="kapsam" content="konudan bagimsiz (finans bir ornektir)" />
   <style type="text/css">
     body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -40,7 +40,7 @@
 </head>
 <body>
 
-<h1>PİRAMİT PROTOKOLÜ v2.0</h1>
+<h1>PİRAMİT PROTOKOLÜ v2.1</h1>
 
 <p><strong>Amaç:</strong> Bir soruyu en alttan (ham veri) en üste (karar) taşırken
 her katmanın gerçekten çalıştığını <em>kanıtla</em> göstermek. Finans bu protokolün
@@ -88,8 +88,10 @@ bir kapıdan geçer, her kapı bir gözlemciyle denetlenir; kanıt yoksa karar
  │ K2 · TEKİL AJAN              │─────▶│ GÖZLEMCİ-2                 │
  │  her araç AYRI, birbirini    │      │ her araç sonuç/hata verdi? │
  │  GÖRMEDEN koşar              │      │ çıktı derinliği tam mı?    │
- └──────────────┬───────────────┘      │ ÇARPIŞMA: aynı sayı mı?    │
-   KAPI: en az 2 bağımsız araç sonuç üretmeli    └────────────────────┘
+ │  + KURULUM ÖLÇEĞİ yapısı     │      │ ÇARPIŞMA: aynı sayı mı?    │
+ │  + ÇAPRAZ-VARLIK korelasyonu │      │ BEYAN edilip koşmayan var? │
+ └──────────────┬───────────────┘      └────────────────────────────┘
+   KAPI: en az 2 bağımsız araç sonuç üretmeli
         ▼
  ┌──────────────────────────────┐      ┌────────────────────────────┐
  │ K3 · ÇOKLU-AJAN              │─────▶│ GÖZLEMCİ-3                 │
@@ -109,10 +111,11 @@ bir kapıdan geçer, her kapı bir gözlemciyle denetlenir; kanıt yoksa karar
  │ K5 · SENTEZ + ÖĞRENME        │─────▶│ GÖZLEMCİ-5                 │
  │  (a) güven-ağırlıklı tek     │      │ zirvedeki sayı altta var?  │
  │      sonuç (çoğunluk DEĞİL)  │      │ sonuç kendi skoruyla       │
- │  (b) geçmiş kararları ölç    │      │ tutarlı mı?                │
- │  (c) ağırlıkları güncelle    │      └────────────────────────────┘
+ │  (b) SABİT-KISIT sınavı      │      │ tutarlı mı?                │
+ │  (c) geçmiş kararları ölç    │      │ kısıt motoru koştu mu,     │
+ │  (d) ağırlıkları güncelle    │      │ girdisi nereden geldi?     │
+ └──────────────┬───────────────┘      └────────────────────────────┘
  └──────────────┬───────────────┘
-        ▼
    KRİTİK İHLAL VAR MI? ──EVET──▶ ⛔ EYLEM MÜHÜRLENİR (yön yine gösterilir)
         │HAYIR
         ▼
@@ -137,11 +140,13 @@ bir kapıdan geçer, her kapı bir gözlemciyle denetlenir; kanıt yoksa karar
     <td>Güveni elle takdir etmek</td>
     <td class="kapi">&lt; 2 danışman varsa dur</td></tr>
 <tr><td><strong>K4 ÇAPRAZ DENETİM</strong></td>
-    <td>Kim kimi doğruluyor, kim kiminle çelişiyor; 5 mercek bağlar</td>
+    <td>Kim kimi doğruluyor, kim kiminle çelişiyor; 5 mercek bağlar;
+        ÇAPRAZ-VARLIK korelasyonunu risk çarpanına çevirir</td>
     <td>Kararı bastırmak (bilgi katmanıdır)</td>
     <td class="kapi">Doğrulanmamış danışman ceza alır (fail-closed)</td></tr>
 <tr><td><strong>K5 SENTEZ</strong></td>
-    <td>Güven-ağırlıklı tek sonuç; geçmişi ölçüp ağırlığı günceller</td>
+    <td>Güven-ağırlıklı tek sonuç; sabit-kısıt (ör. dolar hedefli) sınavı;
+        geçmişi ölçüp ağırlığı günceller</td>
     <td>Çoğunluk oyu; kanıtsız "öğrendim" iddiası</td>
     <td class="kapi">Sentez üretilemezse NÖTR-BEKLE</td></tr>
 </table>
@@ -195,6 +200,42 @@ kapısı kapanmış / doğrulaması çürütülmüş kaynak muhaliftir.</dd>
 </table>
 <p>Ayrıca her çıktı <strong>gerçek / varsayım / yorum / VERİ YOK</strong> ayrımını
 taşır ve kritik ihlal varsa mühür satırı en üstte görünür.</p>
+
+<h2>5b · Çapraz-varlık ve sabit-kısıt motorları (v2.1)</h2>
+<p>İki ek motor boru hattının <em>içindedir</em> — elle koşulmaz, gözlemci
+kapsamındadır:</p>
+<table>
+<tr><th>Motor</th><th>Katman</th><th>Ne yapar</th><th>Gözlemci ne denetler</th></tr>
+<tr><td><code>korelasyon</code></td><td>K2 → K4</td>
+    <td>İki varlığın log getirilerini YALNIZ hizalı zaman damgalarında karşılaştırır:
+        ρ, beta, R², kararlılık. |ρ| ≥ 0.85 → <strong>KOPYA POZİSYON</strong>,
+        toplam risk ×2 sayılır ve K4 çelişki listesine yazılır.</td>
+    <td>Beyan edilip koşmadıysa <span class="ihlal">EKSİK_AKTARIM</span>;
+        çıktı derinliği (ρ/beta/gözlem/hüküm) eksikse SIRADAN</td></tr>
+<tr><td><code>usd_hedef</code></td><td>K5</td>
+    <td>Dolar cinsi kısıtı (kontrat, sabit stop, hedef bandı) fiyat mesafesine
+        çevirir; 5 kapıdan geçirir: R ≥ r_min, stop 0.8–2.0×ATR, hedef ≤3×ATR,
+        yapı hedefi bandın içinde, tasfiye &gt; stop. ATR ve likidite
+        <em>kurulum ölçeği</em> yapısından (üst zaman dilimi) gelir.</td>
+    <td>Beyan edilip koşmadıysa <span class="ihlal">EKSİK_AKTARIM</span>;
+        girdi kaynağı beyan edilmemişse UYARI</td></tr>
+</table>
+<p class="not"><strong>Neden içeride:</strong> v2.0'da bu iki adım elle
+koşuluyordu ve 18 denetimin hiçbiri onlara bakmıyordu — protokolün kendi
+"her adım denetlenmeli" kuralının ihlaliydi. v2.1 bunu kapatır; gözlemci
+sayısı 18 → 20'ye çıkar ve "beyan edilip koşmayan motor" ayrı bir ihlal olur.</p>
+
+<h2>5c · Ölçek seçimi — kurulum ve tetik ayrı şeydir</h2>
+<p>Sabit bir stop mesafesi hangi zaman diliminin <em>yapısına</em> aittir?
+Cevap ölçümle verilir: stop, o dilimin ATR'sinin 0.8–2.0 katı aralığına
+düşmelidir. Dışına düşen dilimin yapısı o kurulumla <strong>ilgisizdir</strong>.</p>
+<table>
+<tr><th>Rol</th><th>Neyi belirler</th><th>Nasıl seçilir</th></tr>
+<tr><td>KURULUM ölçeği</td><td>Stop ve hedefin yeri, ATR referansı, likidite</td>
+    <td>stop/ATR ∈ [0.8, 2.0] olan dilim</td></tr>
+<tr><td>TETİK ölçeği</td><td>Bölge içinde dolum hassasiyeti</td>
+    <td>ATR'si riskin küçük bir yüzdesi olan alt dilim</td></tr>
+</table>
 
 <h2>6 · Konu uyarlayıcıları</h2>
 <p>Katmanlar sabittir; <em>içini dolduran araçlar</em> konuya göre değişir.</p>
@@ -256,7 +297,7 @@ sahte otorite üretir.</p>
 <h2>9 · Sürüm ve kapsam</h2>
 <table>
 <tr><th>Alan</th><th>Değer</th></tr>
-<tr><td>Sürüm</td><td>2.0</td></tr>
+<tr><td>Sürüm</td><td>2.1</td></tr>
 <tr><td>Kapsam</td><td>Konudan bağımsız; finans bir örnektir</td></tr>
 <tr><td>Mekanik uygulama</td><td><code>.claude/skills/piramit-sistem/scripts/</code></td></tr>
 <tr><td>Gözlemciler</td><td><code>gozlemci.py</code> (8 kod, 5 katman)</td></tr>

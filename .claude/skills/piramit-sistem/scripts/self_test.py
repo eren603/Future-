@@ -529,6 +529,42 @@ def main() -> int:
                 f"aynı ρ={r24a['korelasyon']} ({r24a['HUKUM']}), "
                 f"ters ρ={r24b['korelasyon']}, az veri reddi={fail_closed}")
 
+        # ---- T25: korelasyon + usd_hedef BORU HATTINDA ve DENETLENİYOR ----
+        prof = tmp / "profil.json"
+        prof.write_text(json.dumps({"sembol": "TEST", "kontrat": 3.0,
+                                    "teminat": 400.0, "stop_usdt": 100.0,
+                                    "hedef_usdt": [135, 150],
+                                    "hedef_tipi": "brut"}), encoding="utf-8")
+        j25 = _job(tmp, {"m15": str(m15), "h4": str(h4)})
+        d25 = json.loads(j25.read_text(encoding="utf-8"))
+        d25["korelasyon"] = {"a": str(m15), "b": str(m15), "ad_a": "X", "ad_b": "Y"}
+        d25["usd_profil"] = str(prof)
+        j25.write_text(json.dumps(d25, ensure_ascii=False), encoding="utf-8")
+        r25 = _kos(j25)
+        K25 = {k["katman"]: k for k in r25["katmanlar"]}
+        kor = K25["K2-AI-AJAN"]["motor_sonuclari"].get("korelasyon")
+        usd = K25["K5-SI"].get("usd_hedef")
+        g25 = r25["DENETIM"]["gozlemciler"]
+        # gözlemci kanıtları: beyan denetimi + usd girdi kaynağı
+        k2_beyan = any("beyan edilen" in b["kanit"] for b in g25["K2-AI-AJAN"])
+        k5_usd = any("sabit-USDT" in b["kanit"] for b in g25["K5-SI"])
+        kor_celiski = any("KORELASYON" in c for c in K25["K4-AGI"]["celiskiler"])
+        # (b) BEYAN edilip koşmazsa İHLAL: motor yolunu boz
+        import copy  # noqa: PLC0415
+        sahte = copy.deepcopy(r25)
+        Ks = {k["katman"]: k for k in sahte["katmanlar"]}
+        del Ks["K2-AI-AJAN"]["motor_sonuclari"]["korelasyon"]
+        d_ihlal = GZ.denetle(sahte)
+        kontrol("T25 korelasyon+usd_hedef boru hattında ve gözlemci kapsamında",
+                isinstance(kor, dict) and kor.get("HUKUM") == "KOPYA POZİSYON"
+                and isinstance(usd, dict) and usd.get("HUKUM")
+                and k2_beyan and k5_usd and kor_celiski
+                and any("sessizce atlandı" in x for x in d_ihlal["kritik_ihlal"]),
+                f"korelasyon={kor.get('HUKUM') if kor else None}, usd={usd.get('HUKUM') if usd else None}, "
+                f"K2 beyan denetimi={k2_beyan}, K5 usd denetimi={k5_usd}, "
+                f"K4 çelişki={kor_celiski}, atlama yakalandı="
+                f"{bool(d_ihlal['kritik_ihlal'])}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
