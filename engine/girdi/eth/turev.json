@@ -1,0 +1,45 @@
+{
+  "cvd_series": [
+    -295072.496,
+    -303773.484,
+    -302322.188,
+    -300527.605,
+    -293894.783,
+    -292700.268,
+    -291610.457,
+    -289970.846,
+    -297037.622,
+    -298664.351,
+    -294143.938,
+    -294830.521,
+    -292017.647,
+    -286444.982,
+    -286722.74,
+    -285954.136,
+    -286510.56,
+    -288710.792,
+    -295887.485,
+    -294195.574,
+    -293480.002,
+    -293319.568,
+    -294937.378,
+    -295303.274
+  ],
+  "funding": 0.004139,
+  "taker_lsr": 0.6688,
+  "liq_long": 0.5486,
+  "liq_short": 0.0133,
+  "_kaynaklar": {
+    "cvd": "hesaplandı (200 bar, kaynak: kullanıcının kendi kline'ı, taker alış hacmi alan 9)",
+    "funding": "Binance vadeli genel uç [elle yapıştırıldı]",
+    "taker_lsr": "Binance vadeli genel uç [elle yapıştırıldı]",
+    "likidasyon": "elle verildi (--ek)"
+  },
+  "_eksikler": [
+    "oi: en az 2 anlık görüntü gerekli (mevcut 0) → VERİ YOK"
+  ],
+  "_not": "Eksik kanal UYDURULMAZ; turev-akis kapsamı düşükse skoru VERİ YOK'a çeker (fail-closed).",
+  "_ham_hatalari": [
+    "openInterestHist.json: sembol ETHUSDT ≠ BTCUSDT → atlandı (yanlış sembol karara giremez)"
+  ]
+}

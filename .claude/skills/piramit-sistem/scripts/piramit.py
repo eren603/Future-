@@ -958,9 +958,15 @@ def _etiketle(job: dict, taban: Path, defterler: dict, sdir) -> dict:
     m15 = _yol((job.get("veri") or {}).get("m15"), taban)
     if m15 is None:
         return {"durum": f"{YOK} — m15 yok, akıbet etiketlenmedi"}
-    arsiv = _yol(job.get("bar_arsivi"), taban) or (
-        Path(str(job.get("bar_arsivi"))) if job.get("bar_arsivi")
-        else Path(str(sdir)) / "bar_arsivi.jsonl")
+    # Henüz var olmayan dosya için _yol None döner; göreli yol CWD'ye DEĞİL
+    # depo köküne çözülür (alt-süreçler script dizininde koştuğu için aksi
+    # halde arşiv yanlış klasöre düşer — gerçek koşuda yakalandı).
+    ham_arsiv = job.get("bar_arsivi")
+    if ham_arsiv:
+        q = Path(str(ham_arsiv)).expanduser()
+        arsiv = q if q.is_absolute() else (REPO / q)
+    else:
+        arsiv = Path(str(sdir)) / "bar_arsivi.jsonl"
     raporlar = {}
     for motor, yol in defterler.items():
         p = _yol(yol, taban) or Path(str(yol))

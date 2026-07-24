@@ -351,8 +351,12 @@ def main() -> int:
         lp = tmp / "likidasyon.json"
         lp.write_text(json.dumps({"liq_long": 12.4, "liq_short": 31.8}),
                       encoding="utf-8")
-        # (a) EKSİK durumda uyarı taşınmalı
-        r19a = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4)}))
+        # (a) EKSİK durumda uyarı taşınmalı. Yollar AÇIKÇA olmayan dosyaya
+        # verilir — aksi halde test, depoda gerçek likidasyon/görsel dosyası
+        # bulunup bulunmamasına göre değişir (gerçek koşuda yakalandı).
+        r19a = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4),
+                               "likidasyon": str(tmp / "yok_likidasyon.json"),
+                               "gorsel": str(tmp / "yok_gorsel.json")}))
         eksik_var = len(r19a["ZIRVE"].get("ZORUNLU_EKSIK", [])) == 2
         # (b) görsel MEKANİKLE UYUMLU → doğrulanır
         smc_trend = None

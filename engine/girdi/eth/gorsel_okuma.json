@@ -1,0 +1,17 @@
+{
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
+  "zaman": "2026-07-25 01:03 (yerel) / veri barı 22:00 UTC",
+  "sembol": "ETHUSDT", "zaman_dilimi": "4h",
+  "trend": "bear",
+  "yapi_olayi": "BOS",
+  "seviyeler": {
+    "direnc": [1870, 1885, 1891.9, 1909.32, 1958.75],
+    "destek": [1846.17, 1845, 1802.46]
+  },
+  "gozlem": [
+    "4H MA dizilimi ayı: MA5 1872.00 > MA10 1881.11 > MA30 1904.19, fiyat 1857.71 hepsinin ALTINDA",
+    "1958.75 tepesinden düşüş; 24S menzil 1846.17-1909.32",
+    "Likidite haritası: 1870 ve 1875-1885 üstü yoğun, 1850/1845 altı bant"
+  ],
+  "guven": 0.45
+}

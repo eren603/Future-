@@ -27,7 +27,9 @@ from pathlib import Path
 # Yapısal sayılar: katman numaraları, tarih/saat parçaları, liste sıraları.
 # Bunlar piyasa iddiası değildir; kaynak aranmaz (ama listelenir).
 YAPISAL = {0, 1, 2, 3, 4, 5, 10, 100}
-SAYI = re.compile(r"[-+]?\d+(?:[.,]\d+)?")
+# Negatif işaret yalnız rakam/nokta ile ÖNCELENMEMİŞSE geçerlidir; aksi halde
+# "64515.6-64707.5" gibi ARALIKLAR negatif sayı sanılır (yanlış KAYNAKSIZ).
+SAYI = re.compile(r"(?<![\d.,])[-+]?\d+(?:[.,]\d+)?")
 
 
 def rapor_sayilari(nesne, kume=None) -> set:
