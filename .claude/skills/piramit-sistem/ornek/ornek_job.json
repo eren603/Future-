@@ -1,0 +1,24 @@
+{
+  "soru": "BTCUSDT 15M+4H — nihai yön ve işlem kalitesi?",
+  "sembol": "BTCUSDT",
+  "veri": {
+    "m15": "engine/girdi/m15.json",
+    "h4": "engine/girdi/h4.json",
+    "turev": null,
+    "video": null,
+    "veri_sozlesmesi": null
+  },
+  "risk": {
+    "op": "position_size",
+    "method": "fixed_fractional",
+    "equity": 10000,
+    "risk_pct": 1.0,
+    "seviye_kaynagi": "karar-motoru"
+  },
+  "state_dir": "engine/state",
+  "_not": [
+    "turev: CoinGlass/borsa panelinden OKUNAN değerlerle doldurulur — uydurma sayı YASAK.",
+    "Alan doldurulmazsa turev-akis kurula EKLENMEZ (fail-closed) ve K4 'KLİNE KÖRLÜĞÜ AÇIK' uyarısı verir.",
+    "state_dir gerçek hafızadır; deneme koşularında geçici bir dizin verin."
+  ]
+}
