@@ -30,6 +30,7 @@ import paket_ac as PA  # noqa: E402
 import gozlemci as GZ  # noqa: E402
 import iddia_denetle as ID  # noqa: E402
 import usd_hedef as UH  # noqa: E402
+import korelasyon as KOR  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -460,6 +461,57 @@ def main() -> int:
                 f"15m ölçek reddi={'stop ölçeği' in yanlis_tf['dusen_kapilar']}, "
                 f"yapısız hedef reddi={'yapı hedefi bandın içinde' in yapisiz['dusen_kapilar']}, "
                 f"tasfiye reddi={'tasfiye > stop' in tasfiye['dusen_kapilar']}")
+
+        # ---- T23: çift sembollü paket (v2) doğru klasörlere açılıyor mu? ---
+        gercek_m15 = json.loads(m15.read_text(encoding="utf-8"))
+        gercek_h4 = json.loads(h4.read_text(encoding="utf-8"))
+        paket2 = {"paket": "piramit-veri", "surum": 2,
+                  "semboller": ["BTCUSDT", "ETHUSDT"], "cekim_utc": "test",
+                  "veri": {"BTCUSDT": {"m15": gercek_m15, "h4": gercek_h4,
+                                       "premiumIndex": {"symbol": "BTCUSDT",
+                                                        "lastFundingRate": "0.0001"}},
+                           "ETHUSDT": {"m15": gercek_m15, "h4": gercek_h4}}}
+        kok = tmp / "coklu"
+        eski_g, eski_h = PA.GIRDI, PA.HAM
+        PA.GIRDI, PA.HAM = kok, kok / "turev_ham"
+        try:
+            r23 = PA.ac_coklu(paket2)
+        finally:
+            PA.GIRDI, PA.HAM = eski_g, eski_h
+        btc_yer = (kok / "m15.json").exists()
+        eth_yer = (kok / "eth" / "m15.json").exists()
+        ayri = btc_yer and eth_yer
+        kontrol("T23 çift sembollü paket: BTC ana dizine, ETH alt dizine",
+                ayri and set(r23["semboller"]) == {"BTCUSDT", "ETHUSDT"}
+                and r23["ana_sembol"] == "BTCUSDT"
+                and r23["sonuc"]["ETHUSDT"]["yazilan"].get("m15"),
+                f"BTC={btc_yer}, ETH={eth_yer}, ana={r23['ana_sembol']}")
+
+        # ---- T24: korelasyon motoru --------------------------------------
+        # (a) AYNI seri → ρ = 1.0 → KOPYA POZİSYON
+        r24a = KOR.olc(kok / "m15.json", kok / "eth" / "m15.json",
+                       "BTC", "ETH", KOR.KONVANSIYON)
+        # (b) zıt seri → ρ = -1.0 (mutlak değer eşiği kopya der)
+        ters = [[x[0], x[1], x[2], x[3], str(2 * 65000 - float(x[4])), *x[5:]]
+                for x in gercek_m15]
+        (kok / "ters.json").write_text(json.dumps(ters), encoding="utf-8")
+        r24b = KOR.olc(kok / "m15.json", kok / "ters.json", "BTC", "TERS",
+                       KOR.KONVANSIYON)
+        # (c) yetersiz hizalı bar → fail-closed
+        az = gercek_m15[:5]
+        (kok / "az.json").write_text(json.dumps(az), encoding="utf-8")
+        try:
+            KOR.olc(kok / "m15.json", kok / "az.json", "BTC", "AZ", KOR.KONVANSIYON)
+            fail_closed = False
+        except KOR.KorelasyonError:
+            fail_closed = True
+        kontrol("T24 korelasyon: aynı seri ρ=1, ters seri ρ<0, az veri fail-closed",
+                abs(r24a["korelasyon"] - 1.0) < 1e-6
+                and r24a["HUKUM"] == "KOPYA POZİSYON"
+                and r24a["toplam_risk_carpani"] == 2.0
+                and r24b["korelasyon"] < -0.9 and fail_closed,
+                f"aynı ρ={r24a['korelasyon']} ({r24a['HUKUM']}), "
+                f"ters ρ={r24b['korelasyon']}, az veri reddi={fail_closed}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"

@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """PİRAMİT VERİ TOPLAYICI — telefonda (Pydroid 3) ya da masaüstünde çalışır.
 
-Beş kanalı TEK seferde çeker, TEK dosyaya yazar, İndirilenler klasörüne kaydeder:
+BTCUSDT + ETHUSDT için beş kanalı TEK seferde çeker, TEK dosyaya yazar,
+İndirilenler klasörüne kaydeder (sembol başına 5 kanal = toplam 10 çekim):
 
   1. 15M kline   (fiyat yapısı + CVD'nin taker hacmi)
   2. 4H kline    (üst zaman dilimi bağlamı)
@@ -13,7 +14,8 @@ Beş kanalı TEK seferde çeker, TEK dosyaya yazar, İndirilenler klasörüne ka
 Kurulum GEREKMEZ: yalnız Python standart kütüphanesi kullanılır (urllib).
 Pydroid 3'te dosyayı açıp ▶ tuşuna basmak yeterli.
 
-Çıktı: /storage/emulated/0/Download/piramit_veri_<SEMBOL>_<zaman>.json
+Çıktı: /storage/emulated/0/Download/piramit_veri_BTC_ETH_<zaman>.json
+Başka çift isterseniz: python veri_topla.py BTCUSDT ETHUSDT SOLUSDT
 (yazılamazsa sırayla ~/Download, /sdcard/Download, betiğin bulunduğu klasör)
 
 Bu dosyayı Claude'a yükleyin; `paket_ac.py` onu depoya açar ve piramit boru
@@ -35,7 +37,8 @@ import urllib.request
 from datetime import datetime, timezone
 
 # ---------------------------------------------------------------- AYARLAR --
-SEMBOL = "BTCUSDT"      # işlem çifti (Binance USD-M vadeli)
+SEMBOLLER = ["BTCUSDT", "ETHUSDT"]   # tek koşuda çekilecek çiftler (sırayla)
+SEMBOL = "BTCUSDT"      # geriye uyumluluk (tek sembol kullanımı)
 KLINE_15M = 200         # kaç 15 dakikalık bar (motorun asgarisi ~104)
 KLINE_4H = 200          # kaç 4 saatlik bar (motorun asgarisi ~25)
 TUREV_LIMIT = 48        # OI / LSR serisi kaç nokta (48 × 15dk = 12 saat)
@@ -101,29 +104,63 @@ def indirme_klasoru() -> str:
     return os.getcwd()
 
 
-def main() -> int:
-    sembol = (sys.argv[1] if len(sys.argv) > 1 else SEMBOL).upper()
-    print("=" * 58)
-    print(f"PİRAMİT VERİ TOPLAYICI — {sembol}")
-    print("=" * 58)
-
-    baslangic = time.time()
+def sembol_cek(sembol: str) -> tuple:
+    """Bir sembolün beş kanalını çek; (veri, hatalar, sunucular)."""
     veri, hatalar, sunucular = {}, [], {}
     for ad, yol in uc_listesi(sembol).items():
-        print(f"  → {ad} çekiliyor...", end=" ", flush=True)
+        print(f"  → {sembol} {ad} çekiliyor...", end=" ", flush=True)
         d, bilgi = cek(yol)
         if d is None:
             print(f"BAŞARISIZ ({bilgi})")
-            hatalar.append(f"{ad}: {bilgi}")
+            hatalar.append(f"{sembol}/{ad}: {bilgi}")
         else:
             n = len(d) if isinstance(d, list) else 1
             print(f"tamam ({n} kayıt)")
             veri[ad] = d
             sunucular[ad] = bilgi
+    return veri, hatalar, sunucular
+
+
+def sembol_ozet(veri: dict) -> dict:
+    """Kullanıcı dosyayı vermeden önce doğrulayabilsin diye kısa özet."""
+    o = {}
+    for ad in ("m15", "h4"):
+        d = veri.get(ad)
+        if isinstance(d, list) and d:
+            o[ad] = {"bar": len(d), "alan": len(d[-1]),
+                     "son_bar_ms": d[-1][0], "son_kapanis": d[-1][4]}
+    if isinstance(veri.get("openInterestHist"), list) and veri["openInterestHist"]:
+        o["openInterestHist"] = {"nokta": len(veri["openInterestHist"]),
+                                 "son_oi": veri["openInterestHist"][-1].get("sumOpenInterest")}
+    if isinstance(veri.get("premiumIndex"), dict):
+        o["premiumIndex"] = {"lastFundingRate": veri["premiumIndex"].get("lastFundingRate"),
+                             "markPrice": veri["premiumIndex"].get("markPrice")}
+    if isinstance(veri.get("takerlongshortRatio"), list) and veri["takerlongshortRatio"]:
+        o["takerlongshortRatio"] = {"nokta": len(veri["takerlongshortRatio"]),
+                                    "son_oran": veri["takerlongshortRatio"][-1].get("buySellRatio")}
+    return o
+
+
+def main() -> int:
+    semboller = ([s.upper() for s in sys.argv[1:]] if len(sys.argv) > 1
+                 else list(SEMBOLLER))
+    print("=" * 58)
+    print(f"PİRAMİT VERİ TOPLAYICI — {', '.join(semboller)}")
+    print("=" * 58)
+
+    baslangic = time.time()
+    veri, hatalar, sunucular, ozet = {}, [], {}, {}
+    for sembol in semboller:
+        v, h, sn = sembol_cek(sembol)
+        veri[sembol] = v
+        hatalar.extend(h)
+        sunucular[sembol] = sn
+        ozet[sembol] = sembol_ozet(v)
 
     simdi = datetime.now(timezone.utc)
     paket = {
-        "paket": "piramit-veri", "surum": 1, "sembol": sembol,
+        "paket": "piramit-veri", "surum": 2, "semboller": semboller,
+        "sembol": semboller[0],
         "cekim_utc": simdi.strftime("%Y-%m-%d %H:%M:%S UTC"),
         "cekim_ms": int(simdi.timestamp() * 1000),
         "sure_sn": round(time.time() - baslangic, 2),
@@ -132,29 +169,12 @@ def main() -> int:
                 "kırpma/düzeltme yapılmadı. Çekilemeyen kanal hatalar[] içinde."),
     }
 
-    # --- özet: kullanıcı dosyayı vermeden önce doğru mu görsün ---
-    ozet = {}
-    for ad in ("m15", "h4"):
-        d = veri.get(ad)
-        if isinstance(d, list) and d:
-            ozet[ad] = {"bar": len(d), "alan": len(d[-1]),
-                        "son_bar_ms": d[-1][0], "son_kapanis": d[-1][4]}
-    if isinstance(veri.get("openInterestHist"), list) and veri["openInterestHist"]:
-        s = veri["openInterestHist"][-1]
-        ozet["openInterestHist"] = {"nokta": len(veri["openInterestHist"]),
-                                    "son_oi": s.get("sumOpenInterest")}
-    if isinstance(veri.get("premiumIndex"), dict):
-        ozet["premiumIndex"] = {"lastFundingRate": veri["premiumIndex"].get("lastFundingRate"),
-                                "markPrice": veri["premiumIndex"].get("markPrice")}
-    if isinstance(veri.get("takerlongshortRatio"), list) and veri["takerlongshortRatio"]:
-        ozet["takerlongshortRatio"] = {
-            "nokta": len(veri["takerlongshortRatio"]),
-            "son_oran": veri["takerlongshortRatio"][-1].get("buySellRatio")}
     paket["ozet"] = ozet
 
     klasor = indirme_klasoru()
+    etiket = "_".join(s.replace("USDT", "") for s in semboller)
     dosya = os.path.join(
-        klasor, f"piramit_veri_{sembol}_{simdi.strftime('%Y%m%d_%H%M')}.json")
+        klasor, f"piramit_veri_{etiket}_{simdi.strftime('%Y%m%d_%H%M')}.json")
     try:
         with open(dosya, "w", encoding="utf-8") as f:
             json.dump(paket, f, ensure_ascii=False, separators=(",", ":"))
@@ -166,8 +186,10 @@ def main() -> int:
 
     boyut = os.path.getsize(dosya) / 1024.0
     print("-" * 58)
-    for ad, o in ozet.items():
-        print(f"  {ad}: {o}")
+    for sem, o in ozet.items():
+        print(f"  [{sem}]")
+        for ad, v in o.items():
+            print(f"    {ad}: {v}")
     if hatalar:
         print("-" * 58)
         print("  ÇEKİLEMEYEN KANALLAR (uydurulmadı, VERİ YOK olarak gidecek):")

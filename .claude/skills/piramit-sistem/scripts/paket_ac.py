@@ -69,7 +69,36 @@ def _yaz(hedef: Path, icerik, yedekle: bool = True) -> None:
     hedef.write_text(json.dumps(icerik, ensure_ascii=False), encoding="utf-8")
 
 
-def ac(paket: dict, sembol_bekle: str | None) -> dict:
+def _hedefler(sembol: str, ana: str) -> tuple:
+    """Sembole göre yazım kökü: ANA sembol engine/girdi'ye, diğerleri alt klasöre."""
+    if sembol == ana:
+        return GIRDI, HAM
+    alt = GIRDI / sembol.replace("USDT", "").lower()
+    return alt, alt / "turev_ham"
+
+
+def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
+    """v2 paketi: birden çok sembol. v1 (tek sembol) da buraya düşer."""
+    surum = int(paket.get("surum", 1))
+    if surum < 2:
+        return {"semboller": [paket.get("sembol")],
+                "sonuc": {str(paket.get("sembol")): ac(paket, sembol_bekle)}}
+    semboller = paket.get("semboller") or []
+    ana = semboller[0] if semboller else None
+    veri = paket.get("veri") or {}
+    sonuc = {}
+    for sem in semboller:
+        alt = {"paket": "piramit-veri", "surum": 1, "sembol": sem,
+               "veri": veri.get(sem) or {}, "cekim_utc": paket.get("cekim_utc"),
+               "hatalar": [h for h in (paket.get("hatalar") or []) if h.startswith(sem)]}
+        sonuc[sem] = ac(alt, sem, *_hedefler(sem, ana))
+    return {"semboller": semboller, "ana_sembol": ana,
+            "cekim_utc": paket.get("cekim_utc", YOK), "sonuc": sonuc,
+            "paket_hatalari": paket.get("hatalar", [])}
+
+
+def ac(paket: dict, sembol_bekle: str | None,
+       girdi_kok: Path | None = None, ham_kok: Path | None = None) -> dict:
     if paket.get("paket") != "piramit-veri":
         raise SystemExit("HATA: bu dosya piramit-veri paketi değil "
                          "(veri_topla.py ile üretilmiş olmalı).")
@@ -78,10 +107,12 @@ def ac(paket: dict, sembol_bekle: str | None) -> dict:
         raise SystemExit(f"HATA: paket sembolü {sembol}, beklenen {sembol_bekle} — "
                          "yanlış sembol karara giremez (fail-closed).")
     veri = paket.get("veri") or {}
+    girdi_kok = girdi_kok or GIRDI
+    ham_kok = ham_kok or HAM
     yazilan, atlanan = {}, []
 
-    for ad, hedef, asgari in (("m15", GIRDI / "m15.json", MIN_M15),
-                              ("h4", GIRDI / "h4.json", MIN_H4)):
+    for ad, hedef, asgari in (("m15", girdi_kok / "m15.json", MIN_M15),
+                              ("h4", girdi_kok / "h4.json", MIN_H4)):
         d = veri.get(ad)
         if d is None:
             atlanan.append(f"{ad}: pakette yok ({YOK})")
@@ -101,9 +132,9 @@ def ac(paket: dict, sembol_bekle: str | None) -> dict:
         if isinstance(d, list) and d and str(d[0].get("symbol", sembol)) != sembol:
             atlanan.append(f"{ad}: sembol uyuşmuyor → YAZILMADI")
             continue
-        _yaz(HAM / f"{ad}.json", d)
+        _yaz(ham_kok / f"{ad}.json", d)
         n = len(d) if isinstance(d, list) else 1
-        yazilan[ad] = f"{_kisa(HAM / f'{ad}.json')} — {n} kayıt"
+        yazilan[ad] = f"{_kisa(ham_kok / f'{ad}.json')} — {n} kayıt"
 
     # tazelik: türev verisi kline'ın son barıyla aynı pencerede mi?
     uyari = []
@@ -138,9 +169,10 @@ def main(argv=None) -> int:
     except json.JSONDecodeError as e:
         raise SystemExit(f"HATA: paket JSON değil: {e}") from e
 
-    sonuc = ac(paket, a.sembol)
+    sonuc = ac_coklu(paket, a.sembol)
     print(json.dumps(sonuc, ensure_ascii=False, indent=2))
-    return 0 if sonuc["yazilan"] else 1
+    yazan = sum(1 for r in sonuc["sonuc"].values() if r.get("yazilan"))
+    return 0 if yazan else 1
 
 
 if __name__ == "__main__":
