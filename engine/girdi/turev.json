@@ -34,5 +34,10 @@
     "taker LSR: VERİ YOK",
     "likidasyon: VERİ YOK — genel REST ucu yok, panelden elle girilir"
   ],
-  "_not": "Eksik kanal UYDURULMAZ; turev-akis kapsamı düşükse skoru VERİ YOK'a çeker (fail-closed)."
+  "_not": "Eksik kanal UYDURULMAZ; turev-akis kapsamı düşükse skoru VERİ YOK'a çeker (fail-closed).",
+  "_ag_hatalari": [
+    "funding: URLError — <urlopen error Tunnel connection failed: 403 Forbidden>",
+    "taker_lsr: URLError — <urlopen error Tunnel connection failed: 403 Forbidden>",
+    "oi_hist: URLError — <urlopen error Tunnel connection failed: 403 Forbidden>"
+  ]
 }

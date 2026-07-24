@@ -26,6 +26,7 @@ sys.path.insert(0, str(_HERE))
 import piramit as P  # noqa: E402
 import akibet_etiketle as AE  # noqa: E402
 import turev_girdi as TG  # noqa: E402
+import paket_ac as PA  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -287,6 +288,45 @@ def main() -> int:
                 f"funding={j16.get('funding')} lsr={j16.get('taker_lsr')} "
                 f"oi={j16.get('oi_series')} | yanlış sembol reddi="
                 f"{'taker_lsr' not in j16b}")
+
+        # ---- T17: veri paketi açıcı (telefondan tek dosya) ----------------
+        gercek_m15 = json.loads(m15.read_text(encoding="utf-8"))
+        gercek_h4 = json.loads(h4.read_text(encoding="utf-8"))
+        paket = {"paket": "piramit-veri", "surum": 1, "sembol": "BTCUSDT",
+                 "cekim_utc": "test", "veri": {
+                     "m15": gercek_m15, "h4": gercek_h4,
+                     "openInterestHist": [
+                         {"symbol": "BTCUSDT", "sumOpenInterest": "80000.0",
+                          "sumOpenInterestValue": "5.2e9",
+                          "timestamp": gercek_m15[-1][0]}],
+                     "premiumIndex": {"symbol": "BTCUSDT",
+                                      "lastFundingRate": "0.0002"},
+                     "takerlongshortRatio": [
+                         {"symbol": "BTCUSDT", "buySellRatio": "0.85",
+                          "timestamp": gercek_m15[-1][0]}]}}
+        hedef = tmp / "acilan"
+        eski_girdi, eski_ham = PA.GIRDI, PA.HAM
+        PA.GIRDI, PA.HAM = hedef, hedef / "turev_ham"
+        try:
+            r17 = PA.ac(paket, "BTCUSDT")
+            # yanlış sembol REDDEDİLMELİ
+            red = False
+            try:
+                PA.ac({**paket, "sembol": "ETHUSDT"}, "BTCUSDT")
+            except SystemExit:
+                red = True
+            # kısa kline YAZILMAMALI
+            kisa_paket = {**paket, "veri": {**paket["veri"], "m15": gercek_m15[:10]}}
+            r17b = PA.ac(kisa_paket, "BTCUSDT")
+        finally:
+            PA.GIRDI, PA.HAM = eski_girdi, eski_ham
+        kontrol("T17 paket açıcı: 5 kanal yazıldı, yanlış sembol + kısa kline reddedildi",
+                len(r17["yazilan"]) == 5 and (hedef / "m15.json").exists()
+                and (hedef / "turev_ham" / "premiumIndex.json").exists()
+                and red and "m15" not in r17b["yazilan"]
+                and any("asgari" in a for a in r17b["atlanan"]),
+                f"yazılan={len(r17['yazilan'])}, yanlış sembol reddi={red}, "
+                f"kısa kline reddi={'m15' not in r17b['yazilan']}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
