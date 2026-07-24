@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="tr" lang="tr">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>PİRAMİT PROTOKOLÜ v2.0 — her konu için katmanlı çalışma şeması</title>
+  <meta name="surum" content="2.0" />
+  <meta name="kapsam" content="konudan bagimsiz (finans bir ornektir)" />
+  <style type="text/css">
+    body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+           line-height: 1.55; max-width: 1000px; margin: 0 auto; padding: 1.5rem;
+           color: #1b1f24; background: #fff; }
+    h1 { font-size: 1.6rem; border-bottom: 3px solid #1b1f24; padding-bottom: .4rem; }
+    h2 { font-size: 1.2rem; margin-top: 2rem; border-left: 5px solid #444;
+         padding-left: .6rem; }
+    h3 { font-size: 1rem; margin-top: 1.2rem; }
+    table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+    th, td { border: 1px solid #ccc; padding: .45rem .6rem; text-align: left;
+             vertical-align: top; }
+    th { background: #f0f2f4; }
+    code { background: #f5f5f5; padding: .1rem .3rem; font-size: .88rem; }
+    pre { background: #f7f7f8; border: 1px solid #ddd; padding: .8rem;
+          overflow-x: auto; font-size: .8rem; line-height: 1.35; }
+    .kapi { background: #fff8e1; }
+    .ihlal { background: #ffebee; }
+    .temiz { background: #e8f5e9; }
+    .not { border-left: 4px solid #888; padding: .5rem .8rem; background: #fafafa;
+           font-size: .9rem; }
+    dt { font-weight: bold; margin-top: .6rem; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #14171a; color: #e6e6e6; }
+      th { background: #23272b; } td, th { border-color: #3a3f44; }
+      code, pre { background: #1c2024; color: #e6e6e6; border-color: #3a3f44; }
+      .kapi { background: #33290d; } .ihlal { background: #3a1b1e; }
+      .temiz { background: #16301b; } .not { background: #1c2024; }
+      h1 { border-bottom-color: #e6e6e6; } h2 { border-left-color: #999; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>PİRAMİT PROTOKOLÜ v2.0</h1>
+
+<p><strong>Amaç:</strong> Bir soruyu en alttan (ham veri) en üste (karar) taşırken
+her katmanın gerçekten çalıştığını <em>kanıtla</em> göstermek. Finans bu protokolün
+bir <em>örneğidir</em>; şema konudan bağımsızdır.</p>
+
+<div class="not">
+<strong>Tek cümlelik sözleşme:</strong> Her sayı bir kaynağa bağlanır, her katman
+bir kapıdan geçer, her kapı bir gözlemciyle denetlenir; kanıt yoksa karar
+<em>uydurulmaz</em> — eksik olduğu söylenir.
+</div>
+
+<h2>0 · Değişmez kurallar</h2>
+<table>
+<tr><th>Kural</th><th>Anlamı</th><th>İhlal edilirse</th></tr>
+<tr><td>KAYNAK ZORUNLU</td><td>Her sayısal iddia bir dosyaya/araç çıktısına bağlanır</td>
+    <td class="ihlal">UYDURMA → mühür</td></tr>
+<tr><td>FAIL-CLOSED</td><td>Kanıt yoksa geçilmez; boşluk "VERİ YOK" yazılır</td>
+    <td class="ihlal">Karar üretilmez</td></tr>
+<tr><td>ÇAPRAZ DOĞRULAMA</td><td>Hiçbir kaynak kendini doğrulamaz</td>
+    <td class="ihlal">DAİRESEL → mühür</td></tr>
+<tr><td>EKSİKSİZ AKTARIM</td><td>Alt katman çıktısı ya üste girer ya gerekçeyle dışlanır</td>
+    <td class="ihlal">EKSİK_AKTARIM → mühür</td></tr>
+<tr><td>MEMNUN ETME YOK</td><td>Kullanıcının beklentisi kanıt sayılmaz</td>
+    <td class="ihlal">MEMNUN_ETME → mühür</td></tr>
+<tr><td>DETERMİNİZM</td><td>Aynı girdi = aynı çıktı; rastgelelik tohumlu</td>
+    <td class="ihlal">Tekrarlanamaz sonuç reddedilir</td></tr>
+<tr><td>SINIRI SÖYLE</td><td>Mekanikleştirilemeyen denetim "elle" diye etiketlenir</td>
+    <td class="ihlal">Sahte otorite</td></tr>
+</table>
+
+<h2>1 · Katman şeması</h2>
+
+<pre>
+  GİRDİLER (konuya göre; hepsi ZORUNLU — eksik olan bağırılır)
+        │
+        ▼
+ ┌──────────────────────────────┐      ┌────────────────────────────┐
+ │ K1 · VERİ                    │─────▶│ GÖZLEMCİ-1                 │
+ │  ölçer, ÇIKARIM YAPMAZ       │      │ kaynak? çıkarım sızmış mı? │
+ │  bütünlük + eksik beyanı     │      │ kanal sessizce düştü mü?   │
+ └──────────────┬───────────────┘      └────────────────────────────┘
+   KAPI: en az bir tam veri kanalı yoksa ÜST KATMAN KOŞMAZ
+        ▼
+ ┌──────────────────────────────┐      ┌────────────────────────────┐
+ │ K2 · TEKİL AJAN              │─────▶│ GÖZLEMCİ-2                 │
+ │  her araç AYRI, birbirini    │      │ her araç sonuç/hata verdi? │
+ │  GÖRMEDEN koşar              │      │ çıktı derinliği tam mı?    │
+ └──────────────┬───────────────┘      │ ÇARPIŞMA: aynı sayı mı?    │
+   KAPI: en az 2 bağımsız araç sonuç üretmeli    └────────────────────┘
+        ▼
+ ┌──────────────────────────────┐      ┌────────────────────────────┐
+ │ K3 · ÇOKLU-AJAN              │─────▶│ GÖZLEMCİ-3                 │
+ │  sonuçlar DANIŞMAN olur      │      │ kaynaksız danışman var mı? │
+ │  güven = aracın KENDİ çıktısı│      │ güven araçtan mı geliyor?  │
+ │  × geçmiş isabet ağırlığı    │      │ araç sessizce düştü mü?    │
+ └──────────────┬───────────────┘      └────────────────────────────┘
+   KAPI: en az 2 danışman
+        ▼
+ ┌──────────────────────────────┐      ┌────────────────────────────┐
+ │ K4 · ÇAPRAZ DENETİM          │─────▶│ GÖZLEMCİ-4                 │
+ │  A↔B teyidi · çelişki matrisi│      │ kendini mi doğruluyor?     │
+ │  5 mercek · ölçek tutarlılığı│      │ herkes onaylı mı(fail-OPEN)│
+ └──────────────┬───────────────┘      │ TÜNEL: kaç bağımsız aile?  │
+        ▼                              └────────────────────────────┘
+ ┌──────────────────────────────┐      ┌────────────────────────────┐
+ │ K5 · SENTEZ + ÖĞRENME        │─────▶│ GÖZLEMCİ-5                 │
+ │  (a) güven-ağırlıklı tek     │      │ zirvedeki sayı altta var?  │
+ │      sonuç (çoğunluk DEĞİL)  │      │ sonuç kendi skoruyla       │
+ │  (b) geçmiş kararları ölç    │      │ tutarlı mı?                │
+ │  (c) ağırlıkları güncelle    │      └────────────────────────────┘
+ └──────────────┬───────────────┘
+        ▼
+   KRİTİK İHLAL VAR MI? ──EVET──▶ ⛔ EYLEM MÜHÜRLENİR (yön yine gösterilir)
+        │HAYIR
+        ▼
+   İDDİA DENETÇİSİ: sunulacak metindeki her sayı raporda var mı?
+        ▼
+   ÇIKTI: ① SONUÇ/YÖN   ② EYLEM KALİTESİ   ③ GEÇERSİZLİK KOŞULU
+</pre>
+
+<h2>2 · Katmanların görevi ve kapıları</h2>
+<table>
+<tr><th>Katman</th><th>Yapar</th><th>YAPMAZ</th><th class="kapi">Kapı (fail-closed)</th></tr>
+<tr><td><strong>K1 VERİ</strong></td>
+    <td>Kaynakları okur, ölçer, bütünlüğü doğrular, eksiği beyan eder</td>
+    <td>Yorum, tahmin, yön, sonuç</td>
+    <td class="kapi">Tam veri kanalı yoksa üst katman koşmaz</td></tr>
+<tr><td><strong>K2 TEKİL AJAN</strong></td>
+    <td>Her aracı bağımsız koşturur, ham sayısal sonuç toplar</td>
+    <td>Araçları birbirine bağlamak (beyan edilen zincir hariç)</td>
+    <td class="kapi">&lt; 2 araç sonuç verirse dur (tek araç çoklu-ajan değildir)</td></tr>
+<tr><td><strong>K3 ÇOKLU-AJAN</strong></td>
+    <td>Sonuçları duruş + güven + kanıt üçlüsüne çevirir</td>
+    <td>Güveni elle takdir etmek</td>
+    <td class="kapi">&lt; 2 danışman varsa dur</td></tr>
+<tr><td><strong>K4 ÇAPRAZ DENETİM</strong></td>
+    <td>Kim kimi doğruluyor, kim kiminle çelişiyor; 5 mercek bağlar</td>
+    <td>Kararı bastırmak (bilgi katmanıdır)</td>
+    <td class="kapi">Doğrulanmamış danışman ceza alır (fail-closed)</td></tr>
+<tr><td><strong>K5 SENTEZ</strong></td>
+    <td>Güven-ağırlıklı tek sonuç; geçmişi ölçüp ağırlığı günceller</td>
+    <td>Çoğunluk oyu; kanıtsız "öğrendim" iddiası</td>
+    <td class="kapi">Sentez üretilemezse NÖTR-BEKLE</td></tr>
+</table>
+
+<h2>3 · Gözlemci ajanlar — 8 ihlal kodu</h2>
+<p>Gözlemci <strong>zihin okumaz, artefakt denetler</strong>: hangi dosya okundu,
+hangi araç koştu, hangi sayı nereden geldi, üst katmana ne gitti.</p>
+<table>
+<tr><th>Kod</th><th>Ne arar</th><th>Kanıt yöntemi</th><th>Sonuç</th></tr>
+<tr><td>UYDURMA</td><td>Üst katmandaki sayı/danışman altta yok</td>
+    <td>Değer eşleşmesi, kaynak izleme</td><td class="ihlal">MÜHÜR</td></tr>
+<tr><td>HAFIZA</td><td>O koşunun verisinden değil, sabitten/eski koşudan üretim</td>
+    <td>Alan denetimi, dosya yolu, zaman damgası</td><td>UYARI</td></tr>
+<tr><td>DAİRESEL</td><td>Danışman kendi çıktısıyla doğrulanıyor</td>
+    <td>Doğrulayıcı kimliği ≠ danışman</td><td class="ihlal">MÜHÜR</td></tr>
+<tr><td>EKSİK_AKTARIM</td><td>Alt katman sonucu sessizce kayboldu</td>
+    <td>Giren/çıkan sayımı</td><td class="ihlal">MÜHÜR</td></tr>
+<tr><td>TÜNEL</td><td>Karar tek kanıt ailesine dayanıyor</td>
+    <td>Onaylı bağımsız aile sayısı</td><td>UYARI</td></tr>
+<tr><td>MEMNUN_ETME</td><td>Kapılar uygulanmamış, fail-OPEN, skorla çelişen sonuç</td>
+    <td>Çürütme sayısı, işaret tutarlılığı</td><td class="ihlal">MÜHÜR</td></tr>
+<tr><td>SIRADAN</td><td>Araç çıktısı yüzeysel/yarım</td>
+    <td>Zorunlu alan denetimi</td><td>UYARI</td></tr>
+<tr><td>ÇARPIŞMA</td><td>Bağımsız araçlar aynı sayıyı vermiş (kopyalama)</td>
+    <td>Çıktı karşılaştırması</td><td>UYARI</td></tr>
+</table>
+<p class="temiz"><strong>Mühür kuralı:</strong> Kritik ihlalde SONUÇ/YÖN yine
+gösterilir (kanıtın yönü gizlenmez) ama <strong>eylem verilmez</strong>.</p>
+
+<h2>4 · Beş mercek — her biri farklı kör noktayı kapatır</h2>
+<dl>
+<dt>MUHALİF</dt><dd>Karara <em>aleyhte</em> en güçlü kanıt. Zıt görüş yoksa
+kapısı kapanmış / doğrulaması çürütülmüş kaynak muhaliftir.</dd>
+<dt>İLK-PRENSİPLER</dt><dd>Ham veriden anlatısız türetilen sonuç.</dd>
+<dt>GENİŞLETİCİ</dt><dd>Ana kaynağın <em>kör</em> olduğu kanal.</dd>
+<dt>DIŞ-GÖZ</dt><dd>Örneklem dışı / tarihsel kanıt — anlatıdan bağımsız.</dd>
+<dt>UYGULAYICI</dt><dd>Uygulanabilirlik: somut adım, seviye, maliyet.</dd>
+</dl>
+<p>Her mercek bir <strong>araç çıktısına bağlanır</strong>. Bağlanamayan mercek
+<code>BAĞLANMADI</code> işaretlenir — anlatı için sayı uydurulmaz.</p>
+
+<h2>5 · Çıktı sözleşmesi — daima üç satır</h2>
+<table>
+<tr><th>Satır</th><th>İçerik</th><th>Kural</th></tr>
+<tr><td>① SONUÇ / YÖN</td><td>Ağırlıklı kanıtın işaret ettiği cevap</td>
+    <td>Kapıdan <strong>bağımsız</strong>; "bekle" ardına saklanmaz</td></tr>
+<tr><td>② EYLEM KALİTESİ</td><td>Şimdi harekete geçilir mi?</td>
+    <td>Koşullar tek tek; düşen koşul <strong>adıyla</strong> yazılır</td></tr>
+<tr><td>③ GEÇERSİZLİK</td><td>Bu sonuç ne olursa çöker?</td>
+    <td>Ölçülebilir, gözlenebilir eşik</td></tr>
+</table>
+<p>Ayrıca her çıktı <strong>gerçek / varsayım / yorum / VERİ YOK</strong> ayrımını
+taşır ve kritik ihlal varsa mühür satırı en üstte görünür.</p>
+
+<h2>6 · Konu uyarlayıcıları</h2>
+<p>Katmanlar sabittir; <em>içini dolduran araçlar</em> konuya göre değişir.</p>
+<table>
+<tr><th>Konu</th><th>K1 girdileri</th><th>K2 bağımsız araçları</th>
+    <th>K4 çapraz teyit</th><th>K5 öğrenme sinyali</th></tr>
+<tr><td><strong>Piyasa / finans</strong></td>
+    <td>Fiyat serisi, türev kanalları, likidasyon, grafik görseli</td>
+    <td>Yapı motoru, SMC tespiti, akış motoru, tarihsel doğrulama</td>
+    <td>Göz ↔ algoritma, yapı ↔ akış, kurulum ↔ tarihsel kanıt, R ↔ oynaklık</td>
+    <td>Kararın gerçekleşen sonucu (ölçülmüş getiri)</td></tr>
+<tr><td><strong>Yazılım / kod</strong></td>
+    <td>Depo, testler, günlükler, hata kaydı</td>
+    <td>Statik analiz, test koşusu, tip denetimi, profil çıkarma</td>
+    <td>Test ↔ statik analiz, günlük ↔ yeniden üretim, ölçüm ↔ iddia</td>
+    <td>Düzeltme tuttu mu (regresyon/yeniden açılma)</td></tr>
+<tr><td><strong>Araştırma / bilgi</strong></td>
+    <td>Birincil kaynaklar, veri setleri, tarih/sürüm bilgisi</td>
+    <td>Kaynak okuma, sayısal doğrulama, karşı-kaynak arama</td>
+    <td>Kaynak ↔ karşı-kaynak, alıntı ↔ orijinal metin, tarih tutarlılığı</td>
+    <td>İddianın sonradan doğrulanması</td></tr>
+<tr><td><strong>Karar / strateji</strong></td>
+    <td>Kısıtlar, maliyetler, hedefler, taraf beyanları</td>
+    <td>Nicel model, senaryo hesabı, emsal taraması</td>
+    <td>Model ↔ emsal, hedef ↔ kısıt, maliyet ↔ fayda ölçeği</td>
+    <td>Kararın gözlenen sonucu</td></tr>
+</table>
+
+<h2>7 · Akışın tetiklenmesi</h2>
+<table>
+<tr><th>Kanal</th><th>Ne zaman</th><th>Ne yapar</th><th>Garanti</th></tr>
+<tr><td>Oturum kuralları</td><td>Her oturum açılışı</td>
+    <td>Protokolü yükler, hazırlık durumunu bildirir</td><td>Kod</td></tr>
+<tr><td>İstem kancası</td><td><strong>Her</strong> kullanıcı mesajı</td>
+    <td>Girdi değiştiyse boru hattını + gözlemcileri koşturur, özeti bağlama koyar</td>
+    <td>Kod</td></tr>
+<tr><td>Uygulama disiplini</td><td>Cevap yazılırken</td>
+    <td>Çıktıyı sadakatle kullanır, sayıları denetçiden geçirir</td>
+    <td class="kapi">Talimat (kod değil)</td></tr>
+</table>
+<p class="not"><strong>Dürüst sınır:</strong> Boru hattı, kapılar, gözlemciler ve
+mühür <em>koda</em> bağlıdır — modelin isteğinden bağımsız çalışır. Yorumun
+kanıta sadakati <em>disiplindir</em>; sayılar için mekanik korkuluk vardır,
+anlam için elle ikinci-göz gerekir. Bu ayrım gizlenirse protokolün kendisi
+sahte otorite üretir.</p>
+
+<h2>8 · Koşu öncesi kontrol listesi</h2>
+<ol>
+<li>Zorunlu girdilerin hepsi geldi mi? Gelmeyene <code>VERİ YOK</code> — asla varsayım.</li>
+<li>Her araç kendi başına koştu mu, çıktısı dosyaya yazıldı mı?</li>
+<li>Her danışmanın güveni kendi aracından mı geliyor?</li>
+<li>Hiçbir kaynak kendini doğruluyor mu? (dairesellik)</li>
+<li>Alt katmanda üretilip üste gitmeyen sonuç var mı? (sessiz kayıp)</li>
+<li>Onaylı kanıt kaç bağımsız aileden? (tünel testi)</li>
+<li>Sonuç kendi skoruyla tutarlı mı? (memnun etme testi)</li>
+<li>Sunulacak metindeki her sayı raporda var mı? (iddia denetimi)</li>
+</ol>
+
+<h2>9 · Sürüm ve kapsam</h2>
+<table>
+<tr><th>Alan</th><th>Değer</th></tr>
+<tr><td>Sürüm</td><td>2.0</td></tr>
+<tr><td>Kapsam</td><td>Konudan bağımsız; finans bir örnektir</td></tr>
+<tr><td>Mekanik uygulama</td><td><code>.claude/skills/piramit-sistem/scripts/</code></td></tr>
+<tr><td>Gözlemciler</td><td><code>gozlemci.py</code> (8 kod, 5 katman)</td></tr>
+<tr><td>İddia denetçisi</td><td><code>iddia_denetle.py</code> (yalnız sayı kaynağı)</td></tr>
+<tr><td>Sınır</td><td>Canlı/otomatik emir ve gerçek para işlemi DAHİL DEĞİL</td></tr>
+</table>
+
+</body>
+</html>
