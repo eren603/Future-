@@ -65,13 +65,39 @@ def _durum_oku() -> dict:
         return {}
 
 
+def _zaten_islendi() -> bool:
+    """Motor bu barı zaten işledi mi? (durum.json son_bar == verinin son barı)
+
+    Neden gerekli: aynı veriyle ikinci koşu, motorun takip ettiği açık kararı
+    "DEVRİLDİ" diye deftere yazar — bu SAHTE bir akıbettir (karar değişmedi,
+    yalnız koşu tekrarlandı). Böyle bir durumda boru hattı KUM HAVUZUNA yazar;
+    karar aynı çıkar (motor kararı geçmişten bağımsızdır — engine/karar_motoru:
+    "önceki YÖN yeni karara ağırlık olarak GİRMEZ"), gerçek hafıza kirlenmez.
+    """
+    try:
+        d = json.loads((REPO / "engine" / "state" / "durum.json")
+                       .read_text(encoding="utf-8"))
+        m = json.loads((GIRDI / "m15.json").read_text(encoding="utf-8"))
+        son = m[-1][0] if isinstance(m[-1], list) else (
+            m[-1].get("open_time") or m[-1].get("t"))
+        return d.get("son_bar") == son
+    except (OSError, json.JSONDecodeError, IndexError, KeyError, TypeError):
+        return False
+
+
 def _kos() -> tuple[str, int]:
     """Boru hattını koştur; (özet metni, çıkış kodu)."""
+    kum = _zaten_islendi()
+    sdir = (SKILL / "state" / "kum_havuzu") if kum else (REPO / "engine" / "state")
+    if kum:
+        sdir.mkdir(parents=True, exist_ok=True)
     job = {
         "soru": "otomatik koşu — engine/girdi verisi değişti",
         "sembol": "engine/girdi",
         "veri": {"m15": str(GIRDI / "m15.json"), "h4": str(GIRDI / "h4.json")},
-        "state_dir": str(REPO / "engine" / "state"),
+        "state_dir": str(sdir),
+        "_hafiza": ("KUM HAVUZU — motor bu barı zaten işlemişti; gerçek defter "
+                    "korunuyor" if kum else "GERÇEK — yeni bar, hafıza güncellenir"),
     }
     jp = SKILL / "state" / "_job" / "otomatik_job.json"
     jp.parent.mkdir(parents=True, exist_ok=True)
@@ -116,7 +142,9 @@ def main() -> int:
               "elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
         return 0
 
-    print(f"[PİRAMİT] Girdi verisi DEĞİŞTİ → boru hattı koştu "
+    hafiza = ("KUM HAVUZU (motor bu barı zaten işlemişti — gerçek defter "
+              "korundu)" if _zaten_islendi() else "GERÇEK hafıza (yeni bar)")
+    print(f"[PİRAMİT] Boru hattı koştu — hafıza: {hafiza} "
           f"(çıkış kodu {kod}; 0=zirve, 2=bir katman kapısında durdu):")
     print(ozet)
     try:

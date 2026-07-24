@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 state/_job/
 state/kareler/
+state/kum_havuzu/

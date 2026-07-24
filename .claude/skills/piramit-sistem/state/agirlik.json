@@ -1,0 +1,19 @@
+{
+  "agirliklar": {
+    "karar-motoru": 1.0
+  },
+  "ayrinti": {
+    "karar-motoru": {
+      "n": 0,
+      "wins": 0,
+      "kaynak": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu/defter.jsonl VERİ YOK",
+      "atlanan": 0,
+      "wilson_lo": null,
+      "agirlik": 1.0,
+      "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
+    }
+  },
+  "uretildigi_bar": "2026-07-24 10:30",
+  "kural": "agirlik = clamp(2 × wilson_lo(kazanan, n), 0.4, 1.0); n < n_taban (10) → 1.0 (değiştirilmez)",
+  "not": "Bu ağırlıklar BİR SONRAKİ koşunun K3 katmanında uygulanır. Ölçülmemiş sonuç istatistiğe girmez — 'öğrendim' iddiası kanıtsız üretilmez."
+}
