@@ -251,7 +251,18 @@ Kurallar:
   verisinden istatistikle türetilir (`grafik-calisma/scripts/kalibrasyon.py`:
   permütasyon, bootstrap, Wilson, MAE-quantile). Kalibre edilemeyen her sabit
   çıktıda `varsayimlar`/`esik_kaynagi` ile açıkça etiketlenir — etiketsiz gizli
-  eşik yasak. Serbest ayar (eşiği "en iyi sonucu verene" çekmek = aşırı-uyum)
+  eşik yasak.
+- **Karar kapıları da dinamiktir** (`piramit-sistem/scripts/esik_kalibre.py`,
+  K5'te sentezden ÖNCE koşar): `score` eşiği bu koşunun kurulundan bootstrap
+  ile ölçülür (z×SE — sinyal kendi gürültüsünü aşmalı); `min_agreement` ve
+  `min_side_weight` çoğunluk kuralına (0.5 pay / 0.5 × toplam etkin ağırlık)
+  bağlanır — yapısal olduğu ETİKETLENİR; üçü birden **rejim sertliğiyle**
+  çarpılır: sertlik = clamp(p_başabaş / p_devamlılık_Wilson_alt, 1.0, 2.0),
+  yani ölçülen yön devamlılığı başabaşın altındaysa kuruldan daha çok kanıt
+  istenir. Sertlik 1.0'ın ALTINA inmez (eşik gevşetilmez — yanlış-pozitifin
+  maliyeti asimetriktir). Türetilemezse statik korkuluğa düşer ve "STATİK
+  KORKULUK (fail-closed)" diye etiketlenir. Gözlemci, kalibre edilen eşikle
+  sentezin UYGULADIĞI eşiği karşılaştırır; ayrılırsa UYDURMA ihlali verir. Serbest ayar (eşiği "en iyi sonucu verene" çekmek = aşırı-uyum)
   da yasak: türetim yalnız istatistiksel test + korkulukla yapılır.
 
 ### Sert yasaklar (ELLE uygulanan kanıt disiplini — mekanik denetçiye devredilmez)

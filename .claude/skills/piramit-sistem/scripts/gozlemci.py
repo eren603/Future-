@@ -358,6 +358,27 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
                              if kaynak else "girdi kaynağı beyan edilmemiş") +
                             f" | hüküm={usd.get('HUKUM')}, düşen kapı="
                             f"{usd.get('dusen_kapilar')}"))
+    # 0b) EŞİK KALİBRASYONU: kalibre edilen eşik ile sentezin UYGULADIĞI eşik
+    # aynı mı? Ayrılırsa karar, raporlanandan başka bir kapıdan geçmiş olur
+    # (sessiz kayma = kullanıcıya yanlış gerekçe gösterme).
+    ek = k5.get("esik_kalibrasyonu")
+    if isinstance(ek, dict):
+        kal_e = ek.get("esikler") or {}
+        uyg_e = sentez.get("esikler") or {}
+        if not kal_e:
+            b.append(_bulgu("UYDURMA", "UYARI",
+                            f"eşik kalibrasyonu sonuç üretmedi: {ek.get('kaynak', YOK)} "
+                            "→ sentez statik korkuluk kullanıyor (etiketli)"))
+        elif uyg_e and any(abs(float(kal_e[k]) - float(uyg_e.get(k, -1))) > 1e-6
+                           for k in kal_e):
+            b.append(_bulgu("UYDURMA", "İHLAL",
+                            f"kalibre edilen eşik {kal_e} ile sentezin uyguladığı "
+                            f"{uyg_e} AYNI DEĞİL — karar raporlanandan başka kapıdan geçti"))
+        else:
+            b.append(_bulgu("UYDURMA", "TEMİZ",
+                            f"karar kapıları veriden türetildi ve aynen uygulandı: "
+                            f"{kal_e} | kaynak: {str(ek.get('kaynak', YOK))[:60]}"))
+
     # 1) EKSIK_AKTARIM: K3 danışmanlarının tamamı sentezе girdi mi?
     giren = {a.get("ad") for a in (sentez.get("danisman_ozeti") or [])}
     beklenen = {d["name"] for d in (k3.get("danismanlar") or [])}

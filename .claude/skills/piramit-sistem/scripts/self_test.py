@@ -32,6 +32,8 @@ import iddia_denetle as ID  # noqa: E402
 import usd_hedef as UH  # noqa: E402
 import korelasyon as KOR  # noqa: E402
 import kiyas as KY  # noqa: E402
+sys.path.insert(0, str(P.SKILLS / "karar-kurulu" / "scripts"))
+import sentez as SZ  # noqa: E402
 
 sys.path.insert(0, str(P.SKILLS / "grafik-calisma" / "scripts"))
 import kalibrasyon as kb  # noqa: E402
@@ -432,15 +434,25 @@ def main() -> int:
 
         # ---- T21: iddia denetçisi kaynaksız sayıyı yakalıyor mu? ----------
         kaynakli_sayi = r1["ZIRVE"]["yon_skoru"]
+        # Uydurma sayı, raporda GERÇEKTEN olmayan bir değer olmalı: sabit bir
+        # sayı seçilirse rapor büyüdükçe tesadüfen "kaynaklı" çıkabilir (bir kez
+        # oldu: eşik kalibrasyonu rapora 87 yazdı, test %87.3 kullanıyordu ve
+        # %0.5 toleransa takıldı). Bu yüzden değer rapordan UZAK seçilir.
+        _kaynak_sayilari = ID.rapor_sayilari(r1)
+        uydurma = 87.3
+        while any(abs(uydurma - k) <= 0.005 * max(1.0, abs(k))
+                  for k in _kaynak_sayilari):
+            uydurma += 0.37
         m_iyi = f"Yön skoru {kaynakli_sayi} olarak ölçüldü."
-        m_kotu = f"Yön skoru {kaynakli_sayi} ve isabet oranı %87.3 idi."
+        m_kotu = f"Yön skoru {kaynakli_sayi} ve isabet oranı %{uydurma:.2f} idi."
         i_iyi = ID.denetle(m_iyi, r1)
         i_kotu = ID.denetle(m_kotu, r1)
         kontrol("T21 iddia denetçisi: kaynaksız sayı yakalanır",
                 i_iyi["gecti"] and (not i_kotu["gecti"])
-                and any(abs(k["deger"] - 87.3) < 1e-9 for k in i_kotu["KAYNAKSIZ"]),
-                f"kaynaklı metin geçti={i_iyi['gecti']}, uydurma %87.3 yakalandı="
-                f"{not i_kotu['gecti']}")
+                and any(abs(k["deger"] - round(uydurma, 2)) < 1e-9
+                        for k in i_kotu["KAYNAKSIZ"]),
+                f"kaynaklı metin geçti={i_iyi['gecti']}, uydurma "
+                f"%{uydurma:.2f} yakalandı={not i_kotu['gecti']}")
 
         # ---- T22: sabit-USDT hedef motoru kapıları ------------------------
         TABAN = {"sembol": "ETHUSDT", "yon": "long", "kontrat": 3.0,
@@ -684,6 +696,68 @@ def main() -> int:
                 f"paket son bar={int(pms)} > eski={int(ems)}, "
                 f"ikinci sembol job: usd_profil={bool(ij and ij.get('usd_profil'))}, "
                 f"korelasyon={bool(ij and ij.get('korelasyon'))}")
+
+        # ---- T30: karar kapıları VERİDEN türetiliyor -----------------------
+        sys.path.insert(0, str(_HERE))
+        import esik_kalibre as EK                                # noqa: PLC0415
+        # (a) bölünmüş kurul daha YÜKSEK score eşiği ister (gürültü büyük)
+        birlik = [{"name": f"m{i}", "stance": "short", "confidence": 0.8}
+                  for i in range(4)]
+        bolunmus = [{"name": "m0", "stance": "short", "confidence": 0.8},
+                    {"name": "m1", "stance": "long", "confidence": 0.8},
+                    {"name": "m2", "stance": "short", "confidence": 0.8},
+                    {"name": "m3", "stance": "long", "confidence": 0.8}]
+        ver = {f"m{i}": {"confirmed": True} for i in range(4)}
+        e_bir = EK.esikler({"advisors": birlik, "verifier": ver,
+                            "m15": str(m15), "r_min": 1.35})
+        e_bol = EK.esikler({"advisors": bolunmus, "verifier": ver,
+                            "m15": str(m15), "r_min": 1.35})
+        # (b) determinizm: aynı girdi = aynı eşik
+        e_bir2 = EK.esikler({"advisors": birlik, "verifier": ver,
+                             "m15": str(m15), "r_min": 1.35})
+        # (c) veri yoksa STATİK korkuluğa düşer ve etiketler
+        e_yok = EK.esikler({"advisors": birlik, "verifier": ver, "r_min": 1.35})
+        # (d) yön ağırlığı eşiği ÖLÇEKLİ: toplam ağırlıkla büyür (0.60 sabiti değil)
+        iki = EK.esikler({"advisors": birlik[:2], "verifier": ver,
+                          "m15": str(m15), "r_min": 1.35})
+        kontrol("T30 karar kapıları veriden türetiliyor (kurul + rejim)",
+                e_bol["esikler"]["score"] > e_bir["esikler"]["score"]
+                and e_bir2["esikler"] == e_bir["esikler"]
+                and "STATİK" in e_yok["kaynak"]
+                and e_yok["esikler"] == EK.KONVANSIYON["statik"]
+                and e_bir["esikler"]["min_side_weight"] >
+                iki["esikler"]["min_side_weight"],
+                f"birlik score={e_bir['esikler']['score']} < bölünmüş "
+                f"{e_bol['esikler']['score']}; determinist=True; verisiz→statik; "
+                f"yön ağırlığı 4 danışman {e_bir['esikler']['min_side_weight']} > "
+                f"2 danışman {iki['esikler']['min_side_weight']}")
+
+        # ---- T31: rejim ölçümü + sertlik yönü -----------------------------
+        # Sentetik seriler (determinist LCG): sürüklenen rastgele yürüyüş
+        # (yön devam eder) vs Ornstein-Uhlenbeck (ortalamaya döner).
+        _r = EK._rng(11)
+        x, ou = 100.0, []
+        for _ in range(400):
+            x = x + 0.5 * (100.0 - x) + 2.0 * (_r() - 0.5)
+            ou.append(x)
+        y, rw = 100.0, []
+        for _ in range(400):
+            y = y * (1.0 + 0.002 + 0.004 * (_r() - 0.5))
+            rw.append(y)
+        r_tr, r_ou = EK.rejim_olc(rw, 1.35, 8), EK.rejim_olc(ou, 1.35, 8)
+        vr_tr, vr_ou = EK.varyans_orani(rw, 8), EK.varyans_orani(ou, 8)
+        sf = EK.signflip_tani(SZ.satirlar(birlik, ver), 0.05, 200, 7)
+        kontrol("T31 rejim ölçümü: trend gevşetmez, dönüş rejimi SIKILAŞTIRIR",
+                r_tr["sertlik"] == 1.0 and r_ou["sertlik"] > 1.0
+                and vr_tr["VR"] > 1.0 and vr_ou["VR"] < 1.0
+                and r_tr["devamlilik"]["p_wilson_lo"] >
+                r_ou["devamlilik"]["p_wilson_lo"]
+                and sf["alpha_ulasilabilir"] is False,
+                f"trend: VR={vr_tr['VR']} p_lo={r_tr['devamlilik']['p_wilson_lo']} "
+                f"sertlik={r_tr['sertlik']} | dönüş: VR={vr_ou['VR']} "
+                f"p_lo={r_ou['devamlilik']['p_wilson_lo']} sertlik={r_ou['sertlik']} "
+                f"| sign-flip α ulaşılabilir={sf['alpha_ulasilabilir']} "
+                f"(p_min={sf['p_min_ulasilabilir']})")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"

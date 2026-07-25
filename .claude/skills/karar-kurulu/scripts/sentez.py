@@ -53,25 +53,22 @@ def stance_dir(stance) -> int:
     raise KurulError(f"Bilinmeyen stance: {stance}")
 
 
-def synth(job: dict) -> dict:
-    advisors = job.get("advisors") or []
-    if not advisors:
-        raise KurulError("En az 1 danışman görüşü gerekli")
-    th = job.get("thresholds", {})
-    score_th = float(th.get("score", 0.15))
-    min_agree = float(th.get("min_agreement", 0.55))
-    refute_pen = float(th.get("refute_penalty", 0.25))
-    min_side_weight = float(th.get("min_side_weight", 0.6))
-    verifier = job.get("verifier", {}) or {}
+def satirlar(advisors: list, verifier: dict | None = None,
+             refute_pen: float = 0.25) -> list:
+    """Danışman görüşlerini etkin ağırlıklı satırlara çevir.
 
+    Modül düzeyinde durur ki eşik kalibrasyonu (esik_kalibre.py) AYNI etkin
+    ağırlıkları kullansın — iki yerde iki kopya olsaydı eşikler zamanla
+    sentezin gerçek ağırlıklarından ayrışırdı (sessiz kayma).
+    """
+    verifier = verifier or {}
     rows = []
     for a in advisors:
         name = str(a.get("name", "?"))
         d = stance_dir(a.get("stance", "flat"))
-        conf = float(a.get("confidence", 0.5))
-        conf = min(max(conf, 0.0), 1.0)
+        conf = min(max(float(a.get("confidence", 0.5)), 0.0), 1.0)
         # Fail-closed doğrulama çözümü. Öncelik:
-        #   1) açık verifier girdisi (job["verifier"][name]["confirmed"])
+        #   1) açık verifier girdisi (verifier[name]["confirmed"])
         #   2) danışmanın kendi taşıdığı _verifier_confirmed alanı (ör. turev-akis
         #      to_advisor bunu üretir — motor kendi kapsamını doğrular)
         #   3) hiçbiri yoksa DOĞRULANMAMIŞ sayılır → çürütme penaltısı (fail-OPEN değil).
@@ -93,23 +90,57 @@ def synth(job: dict) -> dict:
                      "confirmed": confirmed, "eff_weight": round(eff, 4),
                      "evidence": a.get("evidence", ""),
                      "reason_refuted": refute_reason})
+    return rows
 
+
+def olcumler(rows: list) -> dict:
+    """Satırlardan sentez ölçümleri: skor, uzlaşı, yön ağırlığı.
+
+    Eşik kalibrasyonu null dağılımı üretirken AYNI aritmetiği kullanır —
+    eşik ile karar aynı ölçekte olsun (ölçek uyuşmazlığı = sahte kapı).
+    """
+    total_w = sum(r["eff_weight"] for r in rows)
+    if total_w <= 0:
+        return {"total_w": 0.0, "score": 0.0, "agreement": 0.0,
+                "side_weight": 0.0, "side": "NÖTR-BEKLE",
+                "w_long": 0.0, "w_short": 0.0, "w_flat": 0.0}
+    score = sum(r["eff_weight"] * r["dir"] for r in rows) / total_w
+    w_long = sum(r["eff_weight"] for r in rows if r["dir"] > 0)
+    w_short = sum(r["eff_weight"] for r in rows if r["dir"] < 0)
+    w_flat = sum(r["eff_weight"] for r in rows if r["dir"] == 0)
+    agreement = max(w_long, w_short, w_flat) / total_w
+    if score > 0:
+        side, side_weight = "LONG", w_long
+    elif score < 0:
+        side, side_weight = "SHORT", w_short
+    else:
+        side, side_weight = "NÖTR-BEKLE", w_flat
+    return {"total_w": total_w, "score": score, "agreement": agreement,
+            "side_weight": side_weight, "side": side,
+            "w_long": w_long, "w_short": w_short, "w_flat": w_flat}
+
+
+def synth(job: dict) -> dict:
+    advisors = job.get("advisors") or []
+    if not advisors:
+        raise KurulError("En az 1 danışman görüşü gerekli")
+    th = job.get("thresholds", {})
+    score_th = float(th.get("score", 0.15))
+    min_agree = float(th.get("min_agreement", 0.55))
+    refute_pen = float(th.get("refute_penalty", 0.25))
+    min_side_weight = float(th.get("min_side_weight", 0.6))
+    verifier = job.get("verifier", {}) or {}
+
+    rows = satirlar(advisors, verifier, refute_pen)
     total_w = sum(r["eff_weight"] for r in rows)
     if total_w <= 0:
         return _decision("NÖTR-BEKLE", 0.0, 0.0, rows, job,
                          note="Tüm görüşler çürütüldü veya sıfır güven → işlem yok")
 
-    # Güven-ağırlıklı yön skoru [-1, +1]
-    score = sum(r["eff_weight"] * r["dir"] for r in rows) / total_w
-
-    # Yön bazında ağırlıklar
-    w_long = sum(r["eff_weight"] for r in rows if r["dir"] > 0)
-    w_short = sum(r["eff_weight"] for r in rows if r["dir"] < 0)
-    w_flat = sum(r["eff_weight"] for r in rows if r["dir"] == 0)
-
-    # Uzlaşı = baskın yönün ağırlık payı (0..1); yüksek = güçlü konsensüs
-    dominant = max(w_long, w_short, w_flat)
-    agreement = dominant / total_w
+    o = olcumler(rows)
+    score, agreement = o["score"], o["agreement"]
+    w_long, w_short, w_flat = o["w_long"], o["w_short"], o["w_flat"]
+    side, side_weight = o["side"], o["side_weight"]
 
     # Muhalefet listesi (baskın yöne karşı çıkanlar)
     if score > 0:
@@ -166,9 +197,21 @@ def _decision(decision, conf, score, rows, job, *, agreement=0.0, dissent=None,
         "muhalefet": dissent or [],
         "kapi_gerekceleri": gate_reasons or [],
         "gecersizlik_kosulu": job.get("invalidation", "BELİRTİLMEDİ"),
-        "esik_kaynagi": ("tasarım varsayımı (fail-closed karar kapıları; risk "
-                         "iştahını kodlar, piyasa verisinden türetilmez — "
-                         "thresholds ile koşu başına değiştirilebilir)"),
+        # Eşiklerin NEREDEN geldiği kararla birlikte taşınır. Çağıran koşu
+        # başına kalibre ediyorsa (esik_kalibre.py) kaynağını yazar; yazmazsa
+        # eşikler tasarım varsayımıdır ve öyle etiketlenir.
+        "esik_kaynagi": job.get("esik_kaynagi") or (
+            "tasarım varsayımı (fail-closed karar kapıları; risk iştahını "
+            "kodlar, piyasa verisinden türetilmez — thresholds ile koşu "
+            "başına değiştirilebilir)"),
+        "esikler": {
+            "score": float((job.get("thresholds") or {}).get("score", 0.15)),
+            "min_agreement": float((job.get("thresholds") or {}).get(
+                "min_agreement", 0.55)),
+            "min_side_weight": float((job.get("thresholds") or {}).get(
+                "min_side_weight", 0.6)),
+            "refute_penalty": float((job.get("thresholds") or {}).get(
+                "refute_penalty", 0.25))},
         "danisman_ozeti": [
             {"ad": r["name"], "yon": {1: "long", -1: "short", 0: "nötr"}[r["dir"]],
              "guven": r["confidence"], "dogrulandi": r["confirmed"],

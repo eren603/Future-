@@ -82,6 +82,7 @@ MOTOR = {
     "korelasyon": SKILL_DIR / "scripts" / "korelasyon.py",
     "usd_hedef": SKILL_DIR / "scripts" / "usd_hedef.py",
     "kiyas": SKILL_DIR / "scripts" / "kiyas.py",
+    "esik_kalibre": SKILL_DIR / "scripts" / "esik_kalibre.py",
 }
 
 # --------------------------------------------------------------------------
@@ -110,6 +111,9 @@ KONVANSIYON = {
     # dakikadan daha eski okuma BAYAT sayılır (yeni kline + eski panel = sahte
     # güncellik). 4H panel okuması bir 4H bar boyu geçerli kabul edilir.
     "zorunlu_damga_tolerans_dk": 240,
+    # Eşik kalibrasyonu ufku: kaç barlık yön devamlılığı ölçülecek. 15M seride
+    # 8 bar = 2 saat — kurulum tetiği ile T1 arası tipik pencere.
+    "esik_ufuk_bar": 8,
 }
 
 KATMANLAR = ["K1-LLM", "K2-AI-AJAN", "K3-COKLU-AJAN", "K4-AGI", "K5-SI"]
@@ -961,8 +965,26 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
         "verifier": {k: v for k, v in k4["verifier"].items()},
         "invalidation": job.get("gecersizlik") or _gecersizlik(k2),
     }
+    # --- KARAR KAPILARI: her koşuda VERİDEN türetilir (sabit eşik yok) ------
+    # Eşikler eskiden tasarım varsayımıydı (0.15/0.55/0.60). Artık esik_kalibre
+    # motoru bu koşunun kurulundan (bootstrap gürültü tabanı) ve bu koşunun
+    # kline'ından (rejim sertliği) türetir; türetemezse statik korkuluğa düşer
+    # ve bunu AÇIKÇA etiketler. Job elle eşik verirse o üstün gelir (elle
+    # müdahale gizlenmez, kaynağı yazılır).
+    esik = _kos(MOTOR["esik_kalibre"], [], girdi_job={
+        "advisors": sentez_job["advisors"], "verifier": sentez_job["verifier"],
+        "m15": str(_yol((job.get("veri") or {}).get("m15"), taban) or ""),
+        "r_min": KONVANSIYON["r_min"],
+        "ufuk_bar": job.get("esik_ufuk_bar") or KONVANSIYON["esik_ufuk_bar"]})
+    esik_rapor = (esik["cikti"] if esik["ok"] and isinstance(esik["cikti"], dict)
+                  else {"esikler": None, "kaynak": f"KALİBRE EDİLEMEDİ ({esik['hata']}) "
+                        "→ sentez kendi statik korkuluğunu kullanır"})
+    if esik_rapor.get("esikler"):
+        sentez_job["thresholds"] = dict(esik_rapor["esikler"])
+        sentez_job["esik_kaynagi"] = esik_rapor.get("kaynak")
     if job.get("sentez_thresholds"):
         sentez_job["thresholds"] = job["sentez_thresholds"]
+        sentez_job["esik_kaynagi"] = "job'da ELLE verildi (kalibrasyon ezildi)"
     r = _kos(MOTOR["sentez"], [], girdi_job=sentez_job)
     if not (r["ok"] and isinstance(r["cikti"], dict)):
         return {"katman": "K5-SI", "gecti": False,
@@ -1014,6 +1036,7 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     return {"katman": "K5-SI",
             "rol": "(a) güven-ağırlıklı sentez → (b) geçmiş akıbetten ağırlık türetme",
             "sentez": sentez, "sentez_girdisi": sentez_job, "usd_hedef": usd,
+            "esik_kalibrasyonu": esik_rapor,
             "islem_kalitesi": islem, "pozisyon_boyutu": boyut, "portfoy": portfoy,
             "kalibrasyon": kal, "gecti": True,
             "kapi": "K5 kapısı GEÇİLDİ: nihai karar üretildi ve geri besleme yazıldı."}

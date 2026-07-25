@@ -7,7 +7,7 @@
       "n": 3,
       "wins": 1,
       "kaynak": "/home/user/Future-/engine/state/defter.jsonl",
-      "atlanan": 1,
+      "atlanan": 21,
       "pozisyonsuz": 1,
       "wilson_lo": 0.061490315276160515,
       "agirlik": 1.0,
@@ -19,7 +19,7 @@
     "karar-motoru": {
       "etiketlenen": 0,
       "elle_korunan": 4,
-      "olculemeyen": 1,
+      "olculemeyen": 21,
       "bar_havuzu": {
         "bar": 210,
         "ilk": 1784742300000,
