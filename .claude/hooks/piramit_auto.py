@@ -49,10 +49,12 @@ PAKET_DIZINLERI = [
 PAKET_KALIP = "*piramit_veri_*.json"
 
 # İKİNCİ SEMBOL: veri varsa kendiliğinden koşar (elle koşu artık gerekmiyor).
+ANA_SEMBOL = "BTCUSDT"
 IKINCI = {
     "ad": "ETH", "girdi": GIRDI / "eth",
     "state": REPO / "engine" / "state" / "eth",
     "profil": GIRDI / "eth_profil.json",
+    "sembol": "ETHUSDT",
 }
 
 KURAL = (
@@ -412,7 +414,7 @@ def _ek_kanallar(job: dict) -> list:
 
 
 def _turev_uret(onceki: dict, girdi: Path | None = None,
-                seri: Path | None = None) -> dict:
+                seri: Path | None = None, sembol: str = ANA_SEMBOL) -> dict:
     """Türev girdisini KENDİLİĞİNDEN üret (kline körlüğü panzehiri).
 
     CVD kullanıcının kendi kline'ından çevrimdışı hesaplanır — panel
@@ -426,7 +428,14 @@ def _turev_uret(onceki: dict, girdi: Path | None = None,
     m15 = girdi / "m15.json"
     if not (uretec.exists() and m15.exists()):
         return {"durum": "üreteç ya da m15 yok — türev girdisi üretilmedi"}
+    # --sembol ZORUNLU: turev_girdi.ham_oku ham dosyanın symbol alanını bu
+    # değerle karşılaştırır. Eskiden verilmiyordu, varsayılan BTCUSDT kalıyordu
+    # ve ETH klasöründeki openInterestHist.json "sembol ETHUSDT ≠ BTCUSDT" diye
+    # SESSİZCE atılıyordu: ETH'in en ağır türev faktörü (oi_price, ağırlık 0.34)
+    # ölü kalıyor, kapsam 0.66'yı geçemiyordu. Yanlış-sembol korkuluğu doğruydu,
+    # kendisine yanlış sembol veriliyordu.
     argv = [sys.executable, str(uretec), "--m15", str(m15),
+            "--sembol", sembol,
             "--seri", str(seri),
             "--ham", str(girdi / "turev_ham"),
             "--out", str(girdi / "turev.json")]
@@ -614,7 +623,7 @@ def main() -> int:
     # İkinci sembolün türevi de KENDİ kline'ından üretilir (CVD çevrimdışı).
     if (IKINCI["girdi"] / "m15.json").exists():
         _turev_uret(onceki, IKINCI["girdi"],
-                    IKINCI["state"] / "turev_seri.jsonl")
+                    IKINCI["state"] / "turev_seri.jsonl", IKINCI["sembol"])
     fp = _fp()
     if onceki.get("fp") == fp and onceki.get("ozet"):
         print("[PİRAMİT] Girdi verisi DEĞİŞMEDİ — yeniden koşulmadı; son koşunun "

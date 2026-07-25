@@ -167,7 +167,7 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
     dönüştürme yapılmaz, uydurma alan eklenmez. Bozuk/boş dosya sessizce
     geçilmez: hata listesine yazılır.
     """
-    veri, hatalar, yas = {}, [], {}
+    veri, hatalar, yas, dogrulanmayan = {}, [], {}, []
     if not dizin or not dizin.exists():
         return {"veri": veri, "hatalar": hatalar, "yas": yas}
     for ad, dosya in HAM_DOSYA.items():
@@ -185,18 +185,34 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
             if d is None:
                 hatalar.append(f"{dosya}: {sembol} bulunamadı → atlandı")
                 continue
+        # SEMBOL KORKULUĞU — hem liste hem TEK NESNE yanıtı için.
+        # Eskiden yalnız liste dalı sınanıyordu: premiumIndex TEK NESNE olarak
+        # gelince (Binance ?symbol=... biçimi) sembol hiç kontrol edilmiyor,
+        # başka sembolün funding'i sessizce karara girebiliyordu. Ayrıca
+        # takerlongshortRatio kayıtlarında `symbol` alanı YOKTUR — eski kod
+        # eksik alanı beklenen sembole varsayıp sınavı bedava geçiriyordu;
+        # artık bu "doğrulanamadı" diye AÇIKÇA raporlanır (sessiz geçiş yok).
+        ornek = d[0] if isinstance(d, list) and d else (d if isinstance(d, dict) else None)
+        if isinstance(ornek, dict):
+            if "symbol" in ornek:
+                sym = str(ornek.get("symbol"))
+                if sym != sembol:
+                    hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
+                                   "(yanlış sembol karara giremez)")
+                    continue
+            else:
+                dogrulanmayan.append(f"{dosya}: yanıtta `symbol` alanı yok — "
+                                     f"{sembol}'e ait olduğu DOĞRULANAMADI "
+                                     "(dizin konumuna güveniliyor)")
         if isinstance(d, list) and d:
-            sym = str(d[0].get("symbol", sembol))
-            if sym != sembol:
-                hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
-                               "(yanlış sembol karara giremez)")
-                continue
             ts = d[-1].get("timestamp")
         else:
             ts = (d or {}).get("time")
         veri[ad] = d
         if isinstance(ts, (int, float)):
             yas[ad] = int(ts)
+    if dogrulanmayan:
+        hatalar.extend(dogrulanmayan)
     p = dizin / HAM_LIKIDASYON
     if p.exists():
         try:

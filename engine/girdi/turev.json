@@ -137,5 +137,8 @@
     "likidasyon": "elle verildi (--ek)"
   },
   "_eksikler": [],
-  "_not": "Eksik kanal UYDURULMAZ; turev-akis kapsamı düşükse skoru VERİ YOK'a çeker (fail-closed)."
+  "_not": "Eksik kanal UYDURULMAZ; turev-akis kapsamı düşükse skoru VERİ YOK'a çeker (fail-closed).",
+  "_ham_hatalari": [
+    "takerlongshortRatio.json: yanıtta `symbol` alanı yok — BTCUSDT'e ait olduğu DOĞRULANAMADI (dizin konumuna güveniliyor)"
+  ]
 }
