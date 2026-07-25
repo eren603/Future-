@@ -130,20 +130,53 @@ def _son_bar_ms(kline) -> float | None:
 
 
 def _paket_zamani(p: Path) -> tuple:
-    """(paketin son bar zamanı ms, paket sözlüğü) — okunamazsa (None, None)."""
+    """(paketin sembol → son bar zamanı haritası, paket sözlüğü).
+
+    v1 paket düz (`veri.m15`), v2 paket çok sembollüdür (`veri.BTCUSDT.m15`) ve
+    `semboller` bir LİSTEdir. Eski sürüm yalnız `semboller` SÖZLÜK olduğunda alt
+    bloklara iniyordu; v2'de hiçbir bar bulamayıp None dönüyordu ve geri-sarma
+    korkuluğu SESSİZCE ÖLÜYORDU. Adversarial denetimde ölçüldü (2026-07-25):
+    17 sa 45 dk eski paket depoyu geri sardı ve BTC yönü LONG → SHORT döndü.
+    """
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return None, None
-    aday = []
-    for kok in ([d] + list((d.get("semboller") or {}).values())
-                if isinstance(d.get("semboller"), dict) else [d]):
+        return {}, None
+    if not isinstance(d, dict):
+        return {}, None
+
+    def _bar_of(blok) -> float | None:
+        if not isinstance(blok, dict):
+            return None
         for anahtar in ("m15", "klines_15m", "kline_15m"):
-            v = (kok.get("veri") or kok).get(anahtar) if isinstance(kok, dict) else None
+            v = blok.get(anahtar)
             t = _son_bar_ms(v) if isinstance(v, list) else None
             if t:
-                aday.append(t)
-    return (max(aday) if aday else None), d
+                return t
+        return None
+
+    harita: dict = {}
+    veri = d.get("veri")
+    ana = str(d.get("ana_sembol") or "").upper()
+    if isinstance(veri, dict):
+        # v2: veri.<SEMBOL>.m15 ; v1: veri.m15
+        t = _bar_of(veri)
+        if t:
+            harita["_ANA"] = t
+        for ad, blok in veri.items():
+            t = _bar_of(blok)
+            if t:
+                harita[str(ad).upper()] = t
+    if isinstance(d.get("semboller"), dict):
+        for ad, blok in d["semboller"].items():
+            t = _bar_of(blok)
+            if t:
+                harita[str(ad).upper()] = t
+    if ana and ana in harita:
+        harita["_ANA"] = harita[ana]
+    elif "_ANA" not in harita and harita:
+        harita["_ANA"] = max(harita.values())
+    return harita, d
 
 
 def _girdi_son_bar() -> float | None:
@@ -179,14 +212,38 @@ def _paket_al() -> dict:
             continue
         if sha in islenen:
             continue
-        paket_ms, _ = _paket_zamani(p)
-        if mevcut is not None and paket_ms is not None and paket_ms <= mevcut:
+        harita, _ = _paket_zamani(p)
+        paket_ms = harita.get("_ANA")
+        # FAIL-CLOSED: paketin barı OKUNAMIYORSA alınmaz. Eskiden None "sorun
+        # yok, al" diye yorumlanıyordu; biçim değişince korkuluk sessizce
+        # ölüyordu (v2 paketinde tam olarak bu oldu).
+        if paket_ms is None:
+            islenen.add(sha)
+            _defter_yaz(islenen, p, sha)
+            return {"paket": p.name, "atlandi": (
+                "paketin son barı OKUNAMADI (tanınmayan şema) → ALINMADI "
+                "(fail-closed: tazeliği kanıtlanamayan paket depoya girmez)")}
+        # SEMBOL BAZINDA kıyas: BTC'si eski / ETH'si yeni bir paket, BTC'yi
+        # geri sardırmamalı. Herhangi bir sembol geri gidiyorsa paket alınmaz.
+        geri = []
+        for ad, yol in (("_ANA", GIRDI / "m15.json"),
+                        ("ETHUSDT", IKINCI["girdi"] / "m15.json")):
+            p_ms = harita.get(ad)
+            if p_ms is None:
+                continue
+            try:
+                d_ms = _son_bar_ms(json.loads(yol.read_text(encoding="utf-8")))
+            except (OSError, json.JSONDecodeError):
+                d_ms = None
+            if d_ms is not None and p_ms <= d_ms:
+                geri.append(f"{'ana' if ad == '_ANA' else ad}: paket {int(p_ms)} "
+                            f"≤ depo {int(d_ms)}")
+        if geri:
             islenen.add(sha)                    # bir daha bakma
             _defter_yaz(islenen, p, sha)
             return {"paket": p.name, "atlandi": (
-                "paketin verisi depodakinden yeni DEĞİL "
-                f"(paket son bar {int(paket_ms)} ≤ depo {int(mevcut)}) → "
-                "veri geri sarılmadı")}
+                "paketin verisi depodakinden yeni DEĞİL → veri GERİ SARILMADI "
+                f"({'; '.join(geri)})")}
         try:
             pr = subprocess.run([sys.executable, str(acici), "--paket", str(p)],
                                 capture_output=True, text=True, timeout=120,
@@ -243,21 +300,65 @@ def _okunmamis_gorseller() -> list:
 
 
 def _gorev_bas() -> None:
-    """Duran görevi bağlama bas — yeni pencere görevi/hedefi tekrar sormaz."""
+    """Duran görevi bağlama bas — yeni pencere görevi/hedefi tekrar sormaz.
+
+    FAIL-VISIBLE: görev okunamazsa boru hattı YİNE koşar, ama kaybın kendisi
+    açıkça yazılır. İlk sürüm yalnız (OSError, JSONDecodeError) yakalıyordu;
+    şema dışı bir gorev.json (ör. kök liste) AttributeError fırlatıp main()'i
+    komple düşürüyordu → K1→K5 hiç koşmuyor, kullanıcıya yalnız "kanca hatası"
+    gidiyordu (adversarial denetimde ölçüldü: 76 satır → 2 satır).
+    """
     try:
         g = json.loads(GOREV.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        if not isinstance(g, dict):
+            raise TypeError(f"kök tip {type(g).__name__}, sözlük bekleniyordu")
+        prof = g.get("eth_profili")
+        prof = prof if isinstance(prof, dict) else {}
+        sira = g.get("sira")
+        sira = sira if isinstance(sira, list) else []
+        print("[PİRAMİT — DURAN GÖREV] " + str(g.get("gorev", "")))
+        if sira:
+            print("   sıra: " + " ".join(str(x) for x in sira))
+        if prof:
+            print(f"   ETH profili: {prof.get('kontrat_eth')} ETH kontrat, "
+                  f"sermaye {prof.get('sermaye_usd')} USD, kaldıraç "
+                  f"{prof.get('kaldirac')}x, stop {prof.get('stop_usdt')} USDT "
+                  f"(sabit), hedef {prof.get('hedef_usdt_brut')} USDT brüt, "
+                  f"R_min {prof.get('r_min')}, kurulum ölçeği "
+                  f"{prof.get('kurulum_olcegi')}")
+        _hafiza_bas(g)
+    except Exception as e:  # noqa: BLE001 — görev bloğu boru hattını DÜŞÜREMEZ
+        print(f"[PİRAMİT] ⚠ DURAN GÖREV OKUNAMADI ({type(e).__name__}: {e}) — "
+              f"{GOREV} yok ya da şema dışı. Görev/hedef/ETH profili bağlama "
+              "GİRMEDİ; kullanıcıya sorulmalı (uydurulmaz). Boru hattı koşar.")
+
+
+def _hafiza_bas(g: dict) -> None:
+    """Hafıza YOLUNU değil İÇERİĞİNİ bas: yeni pencere son durumu görsün."""
+    hafiza = g.get("hafiza")
+    if not isinstance(hafiza, dict):
         return
-    prof = g.get("eth_profili", {})
-    print("[PİRAMİT — DURAN GÖREV] " + g.get("gorev", ""))
-    print("   sıra: " + " ".join(g.get("sira", [])))
-    if prof:
-        print(f"   ETH profili: {prof.get('kontrat_eth')} ETH kontrat, "
-              f"sermaye {prof.get('sermaye_usd')} USD, kaldıraç {prof.get('kaldirac')}x, "
-              f"stop {prof.get('stop_usdt')} USDT (sabit), hedef "
-              f"{prof.get('hedef_usdt_brut')} USDT brüt, R_min {prof.get('r_min')}, "
-              f"kurulum ölçeği {prof.get('kurulum_olcegi')}")
-    print(f"   hafıza: {', '.join(f'{k}={v}' for k, v in (g.get('hafiza') or {}).items())}")
+    for ad, yol in hafiza.items():
+        p = Path(str(yol).split(" —")[0].strip())
+        if not p.is_absolute():
+            p = REPO / p
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, ValueError):
+            print(f"   hafıza[{ad}]: OKUNAMADI ({p}) — geçmiş UYDURULMAZ")
+            continue
+        if not isinstance(d, dict):
+            print(f"   hafıza[{ad}]: şema dışı ({p})")
+            continue
+        ozet = {k: d.get(k) for k in
+                ("sembol", "son_bar_utc", "YON_BIAS", "yon_skoru",
+                 "islem_kalitesi") if d.get(k) is not None}
+        sev = d.get("islem_seviyeleri") or {}
+        if sev:
+            ozet["seviyeler"] = {k: sev.get(k) for k in
+                                 ("giris", "stop", "hedef") if sev.get(k) is not None}
+        print(f"   hafıza[{ad}]: "
+              + (json.dumps(ozet, ensure_ascii=False) if ozet else "kayıt boş"))
 
 
 def _ek_kanallar(job: dict) -> list:
@@ -418,9 +519,19 @@ def _ikinci_job() -> dict | None:
                        "ad_a": "BTC", "ad_b": IKINCI["ad"]},
         "_hafiza": ("KUM HAVUZU — bu bar zaten işlenmişti" if kum
                     else "GERÇEK — yeni bar"),
+        # Gözlemci "ikinci sembol" kuralını buradan tanır (ana sembolde YOK).
+        "_ikinci_sembol": IKINCI["ad"],
     }
-    if IKINCI["profil"].exists():
-        job["usd_profil"] = str(IKINCI["profil"])
+    # PROFİL KOŞULSUZ BEYAN EDİLİR. Eskiden `if exists()` idi: dosya yoksa
+    # beyan düşüyor, gözlemci "beyan edilmedi"yi denetlemediği için ihlal
+    # üretilmiyor ve sistem SESSİZCE daha agresif emir yayınlıyordu (sabit
+    # -100 USDT stop yerine 5.55 puanlık stop, R 1.35 yerine 2.55).
+    # Koşulsuz beyanla dosya yoksa akış "beyan edildi ama koşmadı" dalına
+    # düşer → EKSIK_AKTARIM ihlali → işlem MÜHÜRLENİR (fail-closed).
+    job["usd_profil"] = str(IKINCI["profil"])
+    if not IKINCI["profil"].exists():
+        job["_profil_uyarisi"] = (f"sabit-USDT profili DOSYASI YOK "
+                                  f"({IKINCI['profil']}) — kısıt uygulanamaz")
     return job
 
 

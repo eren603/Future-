@@ -688,16 +688,33 @@ def main() -> int:
         eski_pk = tmp / "piramit_veri_TEST_0.json"
         eski_pk.write_text(json.dumps(
             {"veri": {"m15": m15v[:-4]}}), encoding="utf-8")     # 4 bar geride
-        pms, _ = HOOK._paket_zamani(pk)
-        ems, _ = HOOK._paket_zamani(eski_pk)
+        # _paket_zamani artık SEMBOL→bar haritası döner (v2 paket desteği)
+        pms = (HOOK._paket_zamani(pk)[0] or {}).get("_ANA")
+        ems = (HOOK._paket_zamani(eski_pk)[0] or {}).get("_ANA")
+        # v2 çok-sembollü paket de okunabilmeli (adversarial denetimde kırıldı)
+        v2 = tmp / "piramit_veri_BTC_ETH_2.json"
+        v2.write_text(json.dumps({
+            "semboller": ["BTCUSDT", "ETHUSDT"], "ana_sembol": "BTCUSDT",
+            "veri": {"BTCUSDT": {"m15": m15v}, "ETHUSDT": {"m15": m15v[:-8]}}}),
+            encoding="utf-8")
+        v2h = HOOK._paket_zamani(v2)[0] or {}
+        v2_ok = (v2h.get("_ANA") == son_ms and v2h.get("ETHUSDT") is not None
+                 and v2h["ETHUSDT"] < son_ms)
+        # şema tanınmazsa fail-closed: bar okunamaz → harita boş
+        bos = tmp / "piramit_veri_BOZUK.json"
+        bos.write_text(json.dumps({"veri": {"beklenmeyen": 1}}), encoding="utf-8")
+        fc_ok = not (HOOK._paket_zamani(bos)[0] or {})
         ij = HOOK._ikinci_job()
         kontrol("T29 kanca: paket zamanı okunur, ikinci sembol job'u kurulur",
                 pms == son_ms and ems is not None and ems < pms
                 and ij is not None and ij.get("usd_profil")
-                and ij.get("korelasyon") and "eth" in ij["defter_dizini"],
+                and ij.get("korelasyon") and "eth" in ij["defter_dizini"]
+                and v2_ok and fc_ok,
                 f"paket son bar={int(pms)} > eski={int(ems)}, "
                 f"ikinci sembol job: usd_profil={bool(ij and ij.get('usd_profil'))}, "
-                f"korelasyon={bool(ij and ij.get('korelasyon'))}")
+                f"korelasyon={bool(ij and ij.get('korelasyon'))} | "
+                f"v2 çok-sembollü paket okundu={v2_ok}, tanınmayan şema "
+                f"fail-closed={fc_ok}")
 
         # ---- T30: karar kapıları VERİDEN türetiliyor -----------------------
         sys.path.insert(0, str(_HERE))

@@ -522,6 +522,20 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
     # short-ağırlıklı iken motor hâlâ "long kaskad" diyordu). Damgası
     # doğrulanmış zorunlu girdi, önbelleği EZER.
     z_lik = ((k1.get("zorunlu_girdiler") or {}).get("likidasyon") or {})
+    lik_bayat = any(str(x).startswith("likidasyon")
+                    for x in (k1.get("zorunlu_eksik") or []))
+    if isinstance(turev, dict) and turev and not z_lik and lik_bayat:
+        # BAYAT/damgasız likidasyon türev motoruna VERİLMEZ. turev.json'u kanca
+        # üretir ve damgaya BAKMAZ; K1 bayat deyip dışlarken K2 aynı bayat
+        # değeri kullanıyordu (adversarial denetim: bayat likidasyon kararı
+        # çeviriyordu). Kanal düşünce turev-akis ağırlıkları normalize eder ve
+        # `kapsam` 1.0'ın altına iner — "kapsam tam" yalanı da biter.
+        atilan = (turev.get("liq_long"), turev.get("liq_short"))
+        turev = {k: v for k, v in turev.items()
+                 if k not in ("liq_long", "liq_short")}
+        turev["_likidasyon_kaynagi"] = (
+            f"BAYAT/damgasız zorunlu girdi → türev motoruna VERİLMEDİ "
+            f"(atılan bayat kopya {atilan}; fail-closed)")
     if isinstance(turev, dict) and turev and z_lik:
         eski = (turev.get("liq_long"), turev.get("liq_short"))
         yeni = (z_lik.get("liq_long"), z_lik.get("liq_short"))
@@ -1014,7 +1028,12 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     # değişiyorsa kanıt dayanıksızdır → fail-closed NÖTR.
     celiski_turu = _celiski_turu(sentez_job, sentez)
     if celiski_turu.get("yon_dayaniksiz"):
-        sentez = {**sentez, "YON_BIAS": "NÖTR", "KARAR": "NÖTR-BEKLE",
+        # YÖN GİZLENMEZ (duran kural): YON_BIAS ham skorun işareti olarak KALIR.
+        # Kapanan şey KARAR ve İŞLEMDİR. İlk sürüm YON_BIAS'ı NÖTR yapıyordu;
+        # bu hem "yön asla saklanmaz" sözleşmesini çiğniyor hem de skor≠0 iken
+        # yön=NÖTR olduğu için gözlemcide MEMNUN_ETME ihlali doğuruyordu —
+        # yani doğru çalışan fail-closed her koşuda mühür yiyordu.
+        sentez = {**sentez, "KARAR": "NÖTR-BEKLE",
                   "kapi_gerekceleri": (sentez.get("kapi_gerekceleri") or [])
                   + [celiski_turu["hukum"]]}
 
@@ -1025,7 +1044,11 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     usd = _usd_hedef(job, taban, k2, k3, sentez)
 
     # ---------- EMİR PLANI: karar → MARKET/LIMIT seviyeleri ----------------
-    emir = _emir_plani(job, taban, k1, sentez)
+    if celiski_turu.get("yon_dayaniksiz"):
+        emir = {"EMIR": "EMİR YOK", "gerekce": celiski_turu["hukum"],
+                "red_nedenleri": [celiski_turu["hukum"]]}
+    else:
+        emir = _emir_plani(job, taban, k1, sentez)
 
     # ---------- pozisyon boyutu (risk-yonetimi) ----------------------------
     boyut = None
@@ -1559,6 +1582,7 @@ def kos(job: dict, taban: Path) -> dict:
         "ZORUNLU_EKSIK": k1.get("zorunlu_eksik") or [],
         "zorunlu_girdiler": list((k1.get("zorunlu_girdiler") or {}).keys()),
         "EMIR": (k5.get("emir_plani") or {}).get("EMIR", YOK),
+        "EMIR_GEREKCE": (k5.get("emir_plani") or {}).get("gerekce", ""),
         "emir_adaylari": (k5.get("emir_plani") or {}).get("adaylar") or [],
         "emir_red_nedenleri": (k5.get("emir_plani") or {}).get("red_nedenleri") or [],
         "CELISKI_TURU": (k5.get("celiski_turu") or {}).get("hukum", YOK),
@@ -1606,6 +1630,13 @@ def kos(job: dict, taban: Path) -> dict:
     if denetim["muhurlendi"]:
         # Kritik ihlal: YÖN gösterilir (kanıt yönü gizlenmez) ama işlem MÜHÜRLÜ.
         rapor["ZIRVE"]["ISLEM_KALITESI"] = "DENETİM İHLALİ — İŞLEM YOK (mühürlendi)"
+        # Mühür varken EMİR de kapanır: kullanıcı mühürlü koşuda uygulanabilir
+        # seviye görmemeli (adversarial denetim: mühürlü ETH koşusunda R 2.55'lik
+        # emir hâlâ basılıyordu).
+        rapor["ZIRVE"]["EMIR"] = "EMİR YOK — DENETİM MÜHÜRÜ"
+        rapor["ZIRVE"]["EMIR_GEREKCE"] = ("gözlemci kritik ihlali: "
+                                          + " | ".join(denetim["kritik_ihlal"])[:200])
+        rapor["ZIRVE"]["emir_adaylari"] = []
         rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
             "İŞLEM KALİTESİ: DENETİM İHLALİ — işlem yok. Gözlemci bulguları: "
             + " | ".join(denetim["kritik_ihlal"]))
@@ -1689,7 +1720,13 @@ def ozet_metin(rapor: dict) -> str:
             L.append(f"   ↳ alternatif: {a['emir_tipi']} {a['yon']} @{a['giris']} | "
                      f"stop {a['stop']} | T1 {a['hedef']} | R {a['R']}")
         if str(z.get("EMIR", "")).startswith("EMİR YOK"):
-            for x in (z.get("emir_red_nedenleri") or [])[:3]:
+            # Gerekçe HER KOLDA basılır: "yön nötr", "yapı okunamadı", "yol
+            # çözülemedi", "motor çalışmadı" kollarında red_nedenleri boştur ve
+            # kullanıcıya çıplak "EMİR YOK" gidiyordu (adversarial denetim).
+            nedenler = (z.get("emir_red_nedenleri")
+                        or ([z["EMIR_GEREKCE"]] if z.get("EMIR_GEREKCE")
+                            else [f"{YOK} — gerekçe motordan taşınmadı (korkuluk)"]))
+            for x in nedenler[:3]:
                 L.append(f"   ✖ {x[:104]}")
         L.append(f"GEÇERSİZLİK: {z.get('gecersizlik', YOK)}")
         L.append(z.get("CELISKI_TURU", YOK))

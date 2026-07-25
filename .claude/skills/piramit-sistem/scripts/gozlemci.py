@@ -343,6 +343,15 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
     sentez = k5.get("sentez") or {}
     # 0) usd_hedef: beyan edildiyse koşmalı ve sayıları izlenebilir olmalı
     usd = k5.get("usd_hedef")
+    # İKİNCİ SEMBOL KORKULUĞU (çift yönlü): profil BEYAN EDİLMEMİŞSE de ihlal.
+    # Eskiden yalnız "beyan edildi ama koşmadı" denetleniyordu; profil dosyası
+    # silinince beyan hiç düşmüyor, kapı hiç açılmıyor ve sistem sabit -100 USDT
+    # kısıtı olmadan DAHA AGRESİF emir yayınlıyordu (R 1.35 → 2.55).
+    if job and job.get("_ikinci_sembol") and not job.get("usd_profil"):
+        b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
+                        "ikinci sembol koşusu (korelasyon beyanlı) ama sabit-USDT "
+                        "profili BEYAN EDİLMEDİ — kullanıcının stop/hedef kısıtı "
+                        "uygulanmadan emir üretilemez"))
     if job and job.get("usd_profil"):
         kostu = isinstance(usd, dict) and usd.get("HUKUM")
         # Yön NÖTR ise sabit-USDT motoru MEŞRU olarak sonuç üretemez (giriş/stop
@@ -402,9 +411,15 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
                             f"emir planında rr_denetim'den geçmemiş aday var: "
                             f"{[a.get('giris') for a in supheli]}"))
         elif emir.startswith("EMİR YOK"):
-            b.append(_bulgu("MEMNUN_ETME", "TEMİZ",
-                            f"emir üretilmedi ve gerekçesi mekanik: "
-                            f"{(ep.get('red_nedenleri') or [ep.get('gerekce', YOK)])[0]}"))
+            gerekce = (ep.get("red_nedenleri") or [])[:1] or (
+                [ep["gerekce"]] if ep.get("gerekce") else [])
+            if not gerekce:
+                b.append(_bulgu("MEMNUN_ETME", "İHLAL",
+                                "EMİR YOK denildi ama GEREKÇE YOK — kullanıcıya "
+                                "çıplak red gidiyor (hangi kapı düştü belirsiz)"))
+            else:
+                b.append(_bulgu("MEMNUN_ETME", "TEMİZ",
+                                f"emir üretilmedi ve gerekçesi mekanik: {gerekce[0]}"))
         else:
             yanlis_yon = [a for a in adaylar
                           if str(a.get("yon", "")).upper() != yon_s]
