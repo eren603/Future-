@@ -1,18 +1,26 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual",
-  "zaman": "2026-07-25 01:03 (yerel) / veri barı 22:00 UTC",
-  "sembol": "BTCUSDT", "zaman_dilimi": "4h",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual: 2 ekran kaydı (15dak+4S türev paneli) + 2 Liquidity Heatmap ekran görüntüsü",
+  "zaman": "2026-07-25 15:08 TR (12:08 UTC); veri paketi çekimi 12:10:55 UTC",
+  "sembol": "BTCUSDT",
+  "zaman_dilimi": "4h",
   "trend": "bear",
   "yapi_olayi": "BOS",
   "seviyeler": {
-    "direnc": [64600, 65000, 65425.5, 65780, 66924.1],
-    "destek": [63666, 63600]
+    "direnc": [64200, 64443.86, 64600, 65000, 65324.29, 65780, 66924.1],
+    "destek": [63993.91, 63850, 63760.5, 63666, 63500]
   },
   "gozlem": [
-    "4H MA dizilimi ayı: MA5 64579.92 > MA10 64867.02 > MA30 65441.50, fiyat 64112.1 hepsinin ALTINDA",
-    "66924.10 tepesinden sert düşüş, alçalan tepeler",
-    "15M'de 63666 dip sonrası 64100 çevresinde sıkışma (MA5/10/30 iç içe)",
-    "Likidite haritası: 64600 ve 64400 üstünde yoğun bant, 63600-63666 altında bant"
+    "4H MA dizilimi AYI: MA5 64045.18 < MA10 64443.86 < MA30 65324.29; fiyat 64050 MA10 ve MA30'un ALTINDA (yalnız MA5'in hemen üstünde)",
+    "66924.10 tepesinden 63666.00 dibine sert düşüş; 07/24 15:00 civarı yüksek hacimli kırılım barı",
+    "15M MA dizilimi sıkışmadan yukarı: MA5 64039.52 > MA10 64021.61 > MA30 63993.91, fiyat hepsinin üstünde — düşüş içinde kısa vadeli tepki",
+    "24S: yüksek 65110, düşük 63666, son 64050 (-1.47%), hacim 7.31 milyar USD",
+    "Açık Faiz paneli 108.2K BTC; 15M panelinde 07/25 sabahı ~103.2K'dan ~108K'ya SIÇRAMA sonrası yatay — düşüşte biriken TAZE pozisyon",
+    "Funding 0.001% (4H) — pozitif ama yok denecek kadar küçük; aşırı long ısınması YOK",
+    "Aggregated Taker LSR: 4S 1.5042, 15M 1.2459 — taker alış baskın (kalabalık long tarafta)",
+    "15M CVD 3.5K ve düşen; panelin son barında sert aşağı kırılma — yatay fiyatı taker alışı DESTEKLEMİYOR",
+    "Likidite haritası 15M: 64020-64110 bandında yoğun (koyu) likidite ve 64000 hemen altında blok; 63760.50 dibinin altında geniş kırmızı bant",
+    "Likidite haritası 4S: 65000 ve 64500-64600 üstünde mıknatıs bantlar, 63500 altında ayrı bant — fiyat iki bandın ortasında",
+    "Sembol Likidasyonları paneli açık ama Longs/Shorts değerleri '--' (imleç barda değil) — BTC likidasyon SAYISI OKUNAMADI (VERİ YOK)"
   ],
   "guven": 0.45
 }

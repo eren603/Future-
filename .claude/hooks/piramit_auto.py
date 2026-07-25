@@ -148,8 +148,14 @@ def _zaten_islendi() -> bool:
         return False
 
 
-def _kos() -> tuple[str, int]:
-    """Boru hattını koştur; (özet metni, çıkış kodu)."""
+def _kos() -> tuple[str, int, bool]:
+    """Boru hattını koştur; (özet metni, çıkış kodu, kum_havuzu_mu).
+
+    `kum` KOŞUDAN ÖNCE ölçülür ve çağırana geri döner: koşu bittikten sonra
+    `_zaten_islendi()` GERÇEK koşuda da True olur (motor durum.json'a yeni barı
+    yazmıştır), yani sonradan sorulursa her koşu "kum havuzu" görünür ve
+    kullanıcıya "gerçek defter korundu" diye YANLIŞ rapor edilirdi.
+    """
     kum = _zaten_islendi()
     sdir = (SKILL / "state" / "kum_havuzu") if kum else (REPO / "engine" / "state")
     if kum:
@@ -186,7 +192,7 @@ def _kos() -> tuple[str, int]:
          "--out", str(SKILL / "state" / "son_rapor.json"), "--ozet"],
         capture_output=True, text=True, timeout=ZAMAN_ASIMI, cwd=str(REPO))
     metin = (pr.stdout or "").strip() or (pr.stderr or "").strip()[-600:]
-    return metin[:MAX_OZET], pr.returncode
+    return metin[:MAX_OZET], pr.returncode, kum
 
 
 def main() -> int:
@@ -221,7 +227,7 @@ def main() -> int:
         return 0
 
     try:
-        ozet, kod = _kos()
+        ozet, kod, kum = _kos()
     except subprocess.TimeoutExpired:
         print(f"[PİRAMİT] Boru hattı {ZAMAN_ASIMI}s içinde bitmedi — elle koşuya "
               "düşülür (bu AÇIKÇA söylenmeli).")
@@ -232,7 +238,7 @@ def main() -> int:
         return 0
 
     hafiza = ("KUM HAVUZU (motor bu barı zaten işlemişti — gerçek defter "
-              "korundu)" if _zaten_islendi() else "GERÇEK hafıza (yeni bar)")
+              "korundu)" if kum else "GERÇEK hafıza (yeni bar)")
     print(f"[PİRAMİT] Boru hattı koştu — hafıza: {hafiza} "
           f"(çıkış kodu {kod}; 0=zirve, 2=bir katman kapısında durdu):")
     print(ozet)

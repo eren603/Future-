@@ -1,18 +1,14 @@
 {
   "sembol": "engine/girdi",
-  "son_bar": 1784930400000,
-  "son_bar_utc": "2026-07-24 22:00",
-  "son_kapanis": 64611.55,
+  "son_bar": 1784980800000,
+  "son_bar_utc": "2026-07-25 12:00",
+  "son_kapanis": 64118.25,
   "YON_BIAS": "SHORT",
-  "yon_skoru": -0.8792,
-  "guven_skoru": 0.5798,
-  "uzlasi": 0.8792,
-  "islem_kalitesi": "TEMİZ GİRİŞ VAR",
-  "islem_seviyeleri": {
-    "giris": 64611.55,
-    "stop": 64877.6,
-    "hedef": 64104.1
-  },
+  "yon_skoru": -0.7266,
+  "guven_skoru": 0.264,
+  "uzlasi": 0.7266,
+  "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
+  "islem_seviyeleri": {},
   "danismanlar": {
     "karar-motoru": "short",
     "grafik-calisma": "flat",
@@ -20,16 +16,16 @@
     "gorsel-teyit": "short"
   },
   "surucu": {
-    "trend": "bear",
-    "adx": 19.22,
-    "atr": 102.55944987,
-    "rejim": "range",
-    "turev_skor": -0.661,
-    "turev_kapsam": 1.0,
+    "trend": "bull",
+    "adx": 21.34,
+    "atr": 52.4410149,
+    "rejim": "gecis",
+    "turev_skor": -0.6365,
+    "turev_kapsam": 0.85,
     "funding": 0.0,
     "lsr": -0.5,
     "cvd_delta": -0.7,
     "oi_delta": -1.0,
-    "liq_long": -0.8
+    "liq_long": null
   }
 }

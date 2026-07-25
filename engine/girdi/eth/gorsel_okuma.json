@@ -1,17 +1,25 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
-  "zaman": "2026-07-25 01:03 (yerel) / veri barı 22:00 UTC",
-  "sembol": "ETHUSDT", "zaman_dilimi": "4h",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual: 1 ekran kaydı (15dak+4S türev paneli) + 2 Liquidity Heatmap ekran görüntüsü",
+  "zaman": "2026-07-25 15:09 TR (12:09 UTC); veri paketi çekimi 12:10:55 UTC",
+  "sembol": "ETHUSDT",
+  "zaman_dilimi": "4h",
   "trend": "bear",
   "yapi_olayi": "BOS",
+  "rol": "ÇAPRAZ-VARLIK teyidi — karar sembolü BTCUSDT'dir; ETH burada korelasyon/ayrışma kanıtı olarak okunur, karara danışman olarak GİRMEZ",
   "seviyeler": {
-    "direnc": [1870, 1885, 1891.9, 1909.32, 1958.75],
-    "destek": [1846.17, 1845, 1802.46]
+    "direnc": [1863.86, 1868, 1882, 1896, 1940, 1958.75],
+    "destek": [1857.4, 1850.26, 1846.17, 1840, 1820, 1802.46]
   },
   "gozlem": [
-    "4H MA dizilimi ayı: MA5 1872.00 > MA10 1881.11 > MA30 1904.19, fiyat 1857.71 hepsinin ALTINDA",
-    "1958.75 tepesinden düşüş; 24S menzil 1846.17-1909.32",
-    "Likidite haritası: 1870 ve 1875-1885 üstü yoğun, 1850/1845 altı bant"
+    "Panel fiyatı 1857.4; 4H swing tepesi 1958.75, 4H swing dibi 1802.46",
+    "15M penceresi dar: tepe 1863.86, dip 1850.26 — sıkışma",
+    "Funding 0.0032% — pozitif ama küçük",
+    "Açık Faiz 2.3M ETH; 15M panelinde 2.4M'den 2.3M'ye DÜŞÜŞ (BTC'nin tersine pozisyon boşalıyor)",
+    "Aggregated Taker LSR: 15M 0.9391, 4S 0.9394 — 1'in ALTINDA, taker satış baskın (BTC'de 1.2459/1.5042 ile taker alış baskındı → AYRIŞMA)",
+    "CVD 15M -55.4K (kırmızı, düşen); günlük CVD -1.9M — süreklilik arz eden net satıcı",
+    "Sembol Likidasyonları: Longs 48.4K okundu, Shorts '--' okunamadı — tek taraflı, kaskad hükmü kurulamaz",
+    "Likidite haritası 4S: 1940 ve 1880 üstünde yoğun bant, 1800 civarında geniş bant",
+    "Likidite haritası 15M: 1860-1864 üstü koyu (yoğun) bant, 1850 altı seyrek"
   ],
   "guven": 0.45
 }
