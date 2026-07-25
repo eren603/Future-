@@ -127,8 +127,8 @@
   ],
   "funding": 0.001753,
   "taker_lsr": 1.9669,
-  "liq_long": 0.4844,
-  "liq_short": 0.0141,
+  "liq_long": 0.006,
+  "liq_short": 0.588,
   "_kaynaklar": {
     "cvd": "hesaplandı (200 bar, kaynak: kullanıcının kendi kline'ı, taker alış hacmi alan 9)",
     "oi": "Binance vadeli openInterestHist (15m) — kline ile AYNI borsa [elle yapıştırıldı]",

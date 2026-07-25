@@ -27,8 +27,8 @@
   ],
   "funding": 0.005152,
   "taker_lsr": 1.4705,
-  "liq_long": 0.5486,
-  "liq_short": 0.0133,
+  "liq_long": 0.0518,
+  "liq_short": 0.6234,
   "_kaynaklar": {
     "cvd": "hesaplandı (200 bar, kaynak: kullanıcının kendi kline'ı, taker alış hacmi alan 9)",
     "funding": "Binance vadeli genel uç [elle yapıştırıldı]",
