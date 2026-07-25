@@ -388,6 +388,44 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
                             f"karar kapıları veriden türetildi ve aynen uygulandı: "
                             f"{kal_e} | kaynak: {str(ek.get('kaynak', YOK))[:60]}"))
 
+    # 0c) EMİR PLANI: karar emre çevrildi mi, seviyeler denetlendi mi?
+    # Kullanıcı sözleşmesi: çıktı hikâye değil, MARKET/LIMIT emridir. Emir
+    # verildiyse HER seviyesi rr_denetim'den TUTARLI geçmiş olmalı.
+    ep = k5.get("emir_plani")
+    if isinstance(ep, dict):
+        emir = str(ep.get("EMIR", YOK))
+        adaylar = ep.get("adaylar") or []
+        supheli = [a for a in adaylar if a.get("rr_denetim") != "TUTARLI"]
+        yon_s = str(sentez.get("YON_BIAS", "")).upper()
+        if supheli:
+            b.append(_bulgu("UYDURMA", "İHLAL",
+                            f"emir planında rr_denetim'den geçmemiş aday var: "
+                            f"{[a.get('giris') for a in supheli]}"))
+        elif emir.startswith("EMİR YOK"):
+            b.append(_bulgu("MEMNUN_ETME", "TEMİZ",
+                            f"emir üretilmedi ve gerekçesi mekanik: "
+                            f"{(ep.get('red_nedenleri') or [ep.get('gerekce', YOK)])[0]}"))
+        else:
+            yanlis_yon = [a for a in adaylar
+                          if str(a.get("yon", "")).upper() != yon_s]
+            if yanlis_yon:
+                b.append(_bulgu("MEMNUN_ETME", "İHLAL",
+                                f"emir yönü {[a.get('yon') for a in yanlis_yon]} "
+                                f"kararın yönüyle ({yon_s}) çelişiyor"))
+            else:
+                b.append(_bulgu("UYDURMA", "TEMİZ",
+                                f"emir seviyeleri ölçümden ve rr_denetim'den geçti: "
+                                f"{emir[:80]}"))
+    # 0d) ÇELİŞKİ TURU: koştu mu, sonucu karara yansıdı mı?
+    ct = k5.get("celiski_turu")
+    if isinstance(ct, dict):
+        if ct.get("yon_dayaniksiz") and str(sentez.get("YON_BIAS")) != "NÖTR":
+            b.append(_bulgu("MEMNUN_ETME", "İHLAL",
+                            "çelişki turu yönü DAYANIKSIZ buldu ama karar hâlâ "
+                            f"{sentez.get('YON_BIAS')} — fail-closed uygulanmamış"))
+        else:
+            b.append(_bulgu("MEMNUN_ETME", "TEMİZ", str(ct.get("hukum", YOK))[:110]))
+
     # 1) EKSIK_AKTARIM: K3 danışmanlarının tamamı sentezе girdi mi?
     giren = {a.get("ad") for a in (sentez.get("danisman_ozeti") or [])}
     beklenen = {d["name"] for d in (k3.get("danismanlar") or [])}

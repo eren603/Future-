@@ -2,18 +2,23 @@
   "_ne": "DURAN GÖREV — her yeni pencerede kanca tarafından bağlama basılır. Kullanıcı tekrar anlatmak zorunda kalmaz; görev/hedef/yöntem burada DURUR.",
   "gorev": "Yeni veri geldiğinde BTCUSDT ve BTC-korelasyonlu ETHUSDT için tam piramit koşusu yapılır (K1→K5). Kullanıcı hiçbir komut yazmaz.",
   "sira": [
-    "1) HESAP VERME: önceki koşunun verdiği giriş/stop/hedef yeni barlarda ne oldu (kiyas.py, gerçek R).",
-    "2) KIYAS: eski veri → yeni veri; yön DEVAM/DÖNÜŞ/NÖTRE ÇEKİLDİ + hangi sürücü değişti.",
-    "3) BTCUSDT piramit koşusu (ana sembol).",
-    "4) ETHUSDT piramit koşusu (korelasyonlu, sabit-USDT profiliyle).",
-    "5) Çıktı: YÖN (bias) + İŞLEM KALİTESİ + gerçek/varsayım/yorum ayrımı."
+    "1) HESAP VERME: önceki koşunun verdiği giriş/stop/hedef yeni barlarda ne oldu (kiyas.py). Tetiklenmediyse İPTAL denir, R YAZILMAZ.",
+    "2) KIYAS: eski veri → yeni veri; yön DEVAM/DÖNÜŞ/NÖTRE ÇEKİLDİ + hangi sürücü değişti (11 kanal).",
+    "3) BTCUSDT piramit koşusu (ana sembol, K1→K5).",
+    "4) ETHUSDT piramit koşusu — DAİMA BTC korelasyonlu (korelasyon.py job'da beyan edilir) + sabit-USDT profili.",
+    "5) ÇELİŞKİ TURU: sentez yalnız DOĞRULANMIŞ danışmanlarla tekrarlanır; yön değişiyorsa fail-closed NÖTR.",
+    "6) EMİR PLANI: karar MARKET/LIMIT emrine çevrilir (emir_plani.py) — giriş/stop/hedef/R, hepsi rr_denetim'den geçmiş.",
+    "7) Çıktı: YÖN + İŞLEM KALİTESİ + EMİR + geçersizlik + gerçek/varsayım/yorum ayrımı."
   ],
   "eth_profili": {
     "sermaye_usd": 400.0,
     "kaldirac": 100,
     "kontrat_eth": 3.0,
     "stop_usdt": -100.0,
-    "hedef_usdt_brut": [135.0, 150.0],
+    "hedef_usdt_brut": [
+      135.0,
+      150.0
+    ],
     "r_min": 1.35,
     "secim": "1-A — yalnız R ≥ 1.35 kurulum işleme uygun sayılır",
     "kurulum_olcegi": "4H (stop/ATR ∈ [0.8, 2.0]); 15M yalnız TETİK içindir",
@@ -29,5 +34,15 @@
     "btc_anlik": "engine/state/onceki_kosu.json",
     "eth_anlik": "engine/state/eth/onceki_kosu.json"
   },
-  "sinir": "Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL. Uydurma sayı yasak — eksik = VERİ YOK."
+  "sinir": "Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL. Uydurma sayı yasak — eksik = VERİ YOK.",
+  "cikti_sozlesmesi": {
+    "bicim": "Hikâye YOK. Emir satırı: '<MARKET|LIMIT> <LONG|SHORT> @<giriş> | stop <stop> | T1 <hedef> | R <R>'",
+    "emir_yoksa": "'EMİR YOK' + hangi kapının düştüğü (mekanik gerekçe) yazılır — boş bırakılmaz",
+    "market_kurali": "MARKET yalnız fiyat giriş bölgesindeyse (|giriş−fiyat| ≤ 0.1×ATR15); aksi halde LIMIT",
+    "seviye_kaynagi": "yalnız ölçülen yapı: açık 15M FVG kenarları + teyitli swingler; yuvarlak/uydurma seviye YASAK",
+    "denetim": "her aday rr_denetim (ATR ölçeği) + profil varsa usd_hedef 5 kapısından geçer"
+  },
+  "korelasyon_kurali": "ETHUSDT DAİMA BTCUSDT korelasyonlu hesaplanır; |ρ| ≥ 0.85 → KOPYA POZİSYON, iki sembolde aynı yön = tek bahis, toplam risk ×2 → yalnız BİRİ seçilir",
+  "celiski_kurali": "Çelişki çıkarsa piramit YENİDEN analiz eder: sentez ikinci kez yalnız doğrulanmış danışmanlarla koşulur (_celiski_turu). Yön değişirse karar NÖTR'e çekilir ve gerekçesi yazılır (fail-closed).",
+  "gecmis_kurali": "Önceki kararlar her koşuda SORGULANIR ve yeni kararın altyapısıdır: akıbet ölçümü (tetiklendi mi/stop mu/hedef mi), kıyas (yön devam/dönüş), sicilden Wilson ağırlık kalibrasyonu. Ölçülmemiş sonuç istatistiğe girmez."
 }

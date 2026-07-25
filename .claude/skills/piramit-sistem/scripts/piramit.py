@@ -83,6 +83,7 @@ MOTOR = {
     "usd_hedef": SKILL_DIR / "scripts" / "usd_hedef.py",
     "kiyas": SKILL_DIR / "scripts" / "kiyas.py",
     "esik_kalibre": SKILL_DIR / "scripts" / "esik_kalibre.py",
+    "emir_plani": SKILL_DIR / "scripts" / "emir_plani.py",
 }
 
 # --------------------------------------------------------------------------
@@ -1007,11 +1008,24 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
                 "sentez": None, "kalibrasyon": None}
     sentez = r["cikti"]
 
+    # ---------- ÇELİŞKİ TURU (adversarial ikinci koşu) ----------------------
+    # Soru: kararın YÖNÜ, doğrulanmamış/çürütülmüş danışmanlara mı dayanıyor?
+    # Sentez ikinci kez, YALNIZ doğrulanmış danışmanlarla koşulur. Yön
+    # değişiyorsa kanıt dayanıksızdır → fail-closed NÖTR.
+    celiski_turu = _celiski_turu(sentez_job, sentez)
+    if celiski_turu.get("yon_dayaniksiz"):
+        sentez = {**sentez, "YON_BIAS": "NÖTR", "KARAR": "NÖTR-BEKLE",
+                  "kapi_gerekceleri": (sentez.get("kapi_gerekceleri") or [])
+                  + [celiski_turu["hukum"]]}
+
     # ---------- işlem kalitesi: seviyeler MOTORDAN, R denetlenmiş -----------
     islem = _islem_kalitesi(k3, k4, sentez)
 
     # ---------- sabit-USDT hedef motoru (kullanıcı profili) ----------------
     usd = _usd_hedef(job, taban, k2, k3, sentez)
+
+    # ---------- EMİR PLANI: karar → MARKET/LIMIT seviyeleri ----------------
+    emir = _emir_plani(job, taban, k1, sentez)
 
     # ---------- pozisyon boyutu (risk-yonetimi) ----------------------------
     boyut = None
@@ -1051,10 +1065,70 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     return {"katman": "K5-SI",
             "rol": "(a) güven-ağırlıklı sentez → (b) geçmiş akıbetten ağırlık türetme",
             "sentez": sentez, "sentez_girdisi": sentez_job, "usd_hedef": usd,
-            "esik_kalibrasyonu": esik_rapor,
+            "esik_kalibrasyonu": esik_rapor, "celiski_turu": celiski_turu,
+            "emir_plani": emir,
             "islem_kalitesi": islem, "pozisyon_boyutu": boyut, "portfoy": portfoy,
             "kalibrasyon": kal, "gecti": True,
             "kapi": "K5 kapısı GEÇİLDİ: nihai karar üretildi ve geri besleme yazıldı."}
+
+
+def _celiski_turu(sentez_job: dict, sentez: dict) -> dict:
+    """Adversarial ikinci sentez: yön yalnız DOĞRULANMIŞ danışmanlarla da aynı mı?
+
+    Kullanıcı sözleşmesi: "çelişki olursa piramit yeniden analiz edecek."
+    Mekanik karşılığı: aynı kurulu, çürütülmüş görüşler DIŞARIDA bırakılarak
+    yeniden sentezle. Yön değişiyorsa karar doğrulanmamış kanıta yaslanmıştır
+    → fail-closed NÖTR (yön gizlenmez, ama işleme çevrilmez).
+    """
+    ver = sentez_job.get("verifier") or {}
+    tumu = sentez_job.get("advisors") or []
+    dogrulanan = [a for a in tumu
+                  if (ver.get(str(a.get("name")), {}) or {}).get("confirmed") is True
+                  or a.get("_verifier_confirmed") is True]
+    if not dogrulanan or len(dogrulanan) == len(tumu):
+        return {"kostu": False,
+                "hukum": ("ÇELİŞKİ TURU: gerekmedi — "
+                          + ("doğrulanmış danışman yok" if not dogrulanan
+                             else "tüm danışmanlar doğrulanmış")),
+                "yon_dayaniksiz": False}
+    r = _kos(MOTOR["sentez"], [], girdi_job={**sentez_job, "advisors": dogrulanan})
+    if not (r["ok"] and isinstance(r["cikti"], dict)):
+        return {"kostu": False, "hukum": f"ÇELİŞKİ TURU koşamadı ({r['hata']})",
+                "yon_dayaniksiz": False}
+    ikinci = r["cikti"]
+    ilk_yon, ik_yon = sentez.get("YON_BIAS"), ikinci.get("YON_BIAS")
+    dayaniksiz = (ilk_yon in ("LONG", "SHORT") and ik_yon != ilk_yon)
+    return {
+        "kostu": True, "yon_ilk": ilk_yon, "yon_dogrulanmis_kurul": ik_yon,
+        "skor_ilk": sentez.get("yon_skoru"), "skor_ikinci": ikinci.get("yon_skoru"),
+        "danisman_ilk": len(tumu), "danisman_dogrulanmis": len(dogrulanan),
+        "yon_dayaniksiz": bool(dayaniksiz),
+        "hukum": (f"ÇELİŞKİ TURU: yön DAYANIKSIZ — tüm kurul {ilk_yon}, yalnız "
+                  f"doğrulanmış {len(dogrulanan)} danışmanla {ik_yon} "
+                  "→ fail-closed NÖTR" if dayaniksiz else
+                  f"ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış {len(dogrulanan)} "
+                  f"danışmanla da {ik_yon}"),
+    }
+
+
+def _emir_plani(job: dict, taban: Path, k1: dict, sentez: dict) -> dict:
+    """Kararı MARKET/LIMIT emrine çevir (seviyeler ölçümden, R denetlenmiş)."""
+    veri = job.get("veri") or {}
+    p15, ph4 = _yol(veri.get("m15"), taban), _yol(veri.get("h4"), taban)
+    if not (p15 and ph4):
+        return {"EMIR": "EMİR YOK", "gerekce": f"{YOK} — m15/h4 yolu çözülemedi"}
+    ej = {"sembol": job.get("sembol", YOK), "yon": sentez.get("YON_BIAS"),
+          "m15": str(p15), "h4": str(ph4), "r_min": KONVANSIYON["r_min"]}
+    prof = _yol(job.get("usd_profil"), taban)
+    if prof:
+        try:
+            ej["profil"] = json.loads(prof.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            pass
+    r = _kos(MOTOR["emir_plani"], [], girdi_job=ej)
+    if r["ok"] and isinstance(r["cikti"], dict):
+        return r["cikti"]
+    return {"EMIR": "EMİR YOK", "gerekce": f"emir planı motoru çalışmadı ({r['hata']})"}
 
 
 def _onceki_kosu(job: dict, taban: Path) -> dict:
@@ -1484,6 +1558,10 @@ def kos(job: dict, taban: Path) -> dict:
         "ulasilan_katman": "K5-SI (zirve)",
         "ZORUNLU_EKSIK": k1.get("zorunlu_eksik") or [],
         "zorunlu_girdiler": list((k1.get("zorunlu_girdiler") or {}).keys()),
+        "EMIR": (k5.get("emir_plani") or {}).get("EMIR", YOK),
+        "emir_adaylari": (k5.get("emir_plani") or {}).get("adaylar") or [],
+        "emir_red_nedenleri": (k5.get("emir_plani") or {}).get("red_nedenleri") or [],
+        "CELISKI_TURU": (k5.get("celiski_turu") or {}).get("hukum", YOK),
         "iki_satir": {
             "1_YON": f"YÖN (bias): {s.get('YON_BIAS')} — ağırlıklı yön skoru "
                      f"{s.get('yon_skoru')}, uzlaşı {s.get('uzlasi')} "
@@ -1606,7 +1684,15 @@ def ozet_metin(rapor: dict) -> str:
     if "iki_satir" in z:
         L.append(z["iki_satir"]["1_YON"])
         L.append(z["iki_satir"]["2_ISLEM_KALITESI"])
+        L.append(f"EMİR: {z.get('EMIR', YOK)}")
+        for a in (z.get("emir_adaylari") or [])[1:4]:
+            L.append(f"   ↳ alternatif: {a['emir_tipi']} {a['yon']} @{a['giris']} | "
+                     f"stop {a['stop']} | T1 {a['hedef']} | R {a['R']}")
+        if str(z.get("EMIR", "")).startswith("EMİR YOK"):
+            for x in (z.get("emir_red_nedenleri") or [])[:3]:
+                L.append(f"   ✖ {x[:104]}")
         L.append(f"GEÇERSİZLİK: {z.get('gecersizlik', YOK)}")
+        L.append(z.get("CELISKI_TURU", YOK))
     else:
         L.append(f"ULAŞILAN KATMAN: {z.get('ulasilan_katman', YOK)}")
         L.append(f"NEDEN: {z.get('neden', YOK)}")

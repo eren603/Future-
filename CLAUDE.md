@@ -177,6 +177,27 @@ Yani BEKLE bir **işlem-kalitesi** hükmüdür, **yön reddi değildir** — iki
 karıştırılıp kullanıcı "BEKLE" ile oyalanmaz. Doğruluk sözleşmesi korunur:
 yön ağırlıklı kanıttan türetilir (uydurma değil), canlı/otomatik emir yine YOK.
 
+Ek kural (EMİR ÇIKTISI — hikâye değil, emir; tetikleyicisiz): Her karar
+analizinin sonunda `emir_plani.py` koşar ve kararı UYGULANABİLİR emre çevirir:
+`<MARKET|LIMIT> <LONG|SHORT> @giriş | stop | T1 | R`. Seviyeler YALNIZ ölçülen
+yapıdan gelir (açık 15M FVG kenarları + teyitli swingler); yuvarlak/uydurma
+seviye yasak. Stop: sabit-USDT profili varsa mesafe profilden (usdt/kontrat),
+yoksa girişin ötesindeki EN YAKIN teyitli swing. Hedef: profil varsa profilin
+kazanç bandı, yoksa yön tarafındaki İLK teyitli likidite — yoksa aday DÜŞER
+("R katı" uydurma hedef üretilmez). Her aday `rr_denetim` (ATR ölçeği) ve
+profil varsa `usd_hedef` 5 kapısından geçer; ŞİŞİRİLMİŞ ya da R < 1.35 olan
+reddedilir. MARKET yalnız fiyat giriş bölgesindeyse (|giriş−fiyat| ≤
+0.1×ATR15) verilir, aksi halde LIMIT. Hiçbir aday geçemezse "EMİR YOK" +
+düşen kapı yazılır — boş bırakılmaz. Gözlemci: emir seviyeleri denetimden
+geçmemişse UYDURMA, emir yönü kararla çelişiyorsa MEMNUN_ETME ihlali verir.
+
+Ek kural (ÇELİŞKİ TURU — adversarial ikinci koşu, tetikleyicisiz): Sentez
+bittikten sonra `_celiski_turu` aynı kurulu YALNIZ doğrulanmış danışmanlarla
+yeniden sentezler. Yön değişiyorsa karar doğrulanmamış kanıta yaslanıyordur →
+**fail-closed NÖTR** (yön yine gösterilir, işleme çevrilmez). Değişmiyorsa
+"yön DAYANIKLI" diye raporlanır. Gözlemci, dayanıksız bulguya rağmen kararın
+yönlü kalmasını MEMNUN_ETME ihlali sayar.
+
 Ek kural (BİRLEŞİK SENTEZ ÇIKTISI — her karar analizinde standart): Nihai analiz
 DAİMA tek-temiz yapıda verilir: **(1) Motorlar (kanıt)** — karar-motoru/turev/
 sentez'in dosyadan okunan gerçek sayıları; **(2) 5 danışman merceği (çerçeve)** —

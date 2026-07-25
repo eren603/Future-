@@ -788,6 +788,50 @@ def main() -> int:
                 f"edilince ölçüldü={s_market.get('sonuc')} r={s_market.get('r')} | "
                 f"anlık görüntüde bölge alanları={bolge_var}")
 
+        # ---- T33: EMİR PLANI — karar MARKET/LIMIT emrine çevriliyor -------
+        import emir_plani as EP                                  # noqa: PLC0415
+        # (a) sabit-USDT profiliyle: seviyeler üretilmeli, hepsi TUTARLI
+        e_eth = EP.plan({"sembol": "ETHTEST", "yon": "LONG",
+                         "m15": str(P.ENGINE / "girdi" / "eth" / "m15.json"),
+                         "h4": str(P.ENGINE / "girdi" / "eth" / "h4.json"),
+                         "profil": {"kontrat": 3.0, "teminat": 400.0,
+                                    "stop_usdt": 100.0, "hedef_usdt": [135.0, 150.0],
+                                    "hedef_tipi": "brut",
+                                    "esikler": {"r_min": 1.35}}})
+        ad = e_eth.get("adaylar") or []
+        # stop mesafesi profilden gelmeli: 100/3 = 33.3333 puan
+        mesafe_ok = all(abs(abs(a["giris"] - a["stop"]) - 100 / 3.0) < 0.01 for a in ad)
+        tip_ok = all(a["emir_tipi"] in ("MARKET", "LIMIT") for a in ad)
+        rr_ok = all(a["rr_denetim"] == "TUTARLI" and a["R"] >= 1.35 for a in ad)
+        usd_ok = all((a.get("usd_hedef") or {}).get("HUKUM") == "UYGUN" for a in ad)
+        # (b) yön NÖTR ise emir üretilmez (fail-closed)
+        e_notr = EP.plan({"yon": "NÖTR", "m15": str(m15), "h4": str(h4)})
+        # (c) uydurma seviye yok: her giriş ölçülen yapıdan gelmeli
+        gerekce_ok = all(("FVG" in a["giris_gerekcesi"] or "swing" in a["giris_gerekcesi"]
+                          or "fiyat" in a["giris_gerekcesi"]) for a in ad)
+        kontrol("T33 emir planı: MARKET/LIMIT + ölçülmüş seviye + denetim",
+                bool(ad) and mesafe_ok and tip_ok and rr_ok and usd_ok and gerekce_ok
+                and e_notr["EMIR"] == "EMİR YOK",
+                f"{len(ad)} aday, hepsi TUTARLI+UYGUN={rr_ok and usd_ok}, "
+                f"stop mesafesi profilden={mesafe_ok}, emir tipi={tip_ok}, "
+                f"yönsüzde emir yok={e_notr['EMIR'] == 'EMİR YOK'}")
+
+        # ---- T34: ÇELİŞKİ TURU — yön doğrulanmamışa dayanıyorsa NÖTR ------
+        sj = {"question": "çelişki testi",
+              # a: DOĞRULANMAMIŞ long (ceza sonrası 1.0×0.25=0.25)
+              # b: DOĞRULANMIŞ short (0.2) → tüm kurul LONG, doğrulanmış kurul SHORT
+              "advisors": [{"name": "a", "stance": "long", "confidence": 1.0},
+                           {"name": "b", "stance": "short", "confidence": 0.2}],
+              "verifier": {"b": {"confirmed": True}}}   # LONG doğrulanmamış
+        s_ilk = SZ.synth(sj)          # ilk sentez (tüm kurul)
+        ct = P._celiski_turu(sj, s_ilk)
+        # doğrulanmamış (a) dışlanınca yön SHORT'a döner → DAYANIKSIZ
+        kontrol("T34 çelişki turu: doğrulanmamışa dayanan yön fail-closed",
+                ct["kostu"] and ct["yon_dayaniksiz"]
+                and "DAYANIKSIZ" in ct["hukum"],
+                f"ilk yön={ct.get('yon_ilk')} → doğrulanmış kurul="
+                f"{ct.get('yon_dogrulanmis_kurul')} | dayanıksız={ct['yon_dayaniksiz']}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
