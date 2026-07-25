@@ -1,3 +1,9 @@
-{"liq_long": 0.5486, "liq_short": 0.0133,
- "birim": "milyon USD (CoinGlass 4H bar)",
- "kaynak": "CoinGlass Binance ETHUSDT Perpetual 4S — Sembol Likidasyonları, 2026-07-25 01:03 ekran görüntüsü"}
+{
+  "liq_long": 0.5486,
+  "liq_short": 0.0133,
+  "birim": "milyon USD (CoinGlass 4H bar)",
+  "kaynak": "CoinGlass Binance ETHUSDT Perpetual 4S — Sembol Likidasyonları, 2026-07-25 01:03 ekran görüntüsü",
+  "zaman_utc": "2026-07-24 22:03",
+  "zaman_yerel": "2026-07-25 01:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati; paket çekimi 2026-07-24 22:04:53 UTC ile aynı dakikalar → UTC'ye çevrildi"
+}

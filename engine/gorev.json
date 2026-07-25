@@ -1,0 +1,33 @@
+{
+  "_ne": "DURAN GÖREV — her yeni pencerede kanca tarafından bağlama basılır. Kullanıcı tekrar anlatmak zorunda kalmaz; görev/hedef/yöntem burada DURUR.",
+  "gorev": "Yeni veri geldiğinde BTCUSDT ve BTC-korelasyonlu ETHUSDT için tam piramit koşusu yapılır (K1→K5). Kullanıcı hiçbir komut yazmaz.",
+  "sira": [
+    "1) HESAP VERME: önceki koşunun verdiği giriş/stop/hedef yeni barlarda ne oldu (kiyas.py, gerçek R).",
+    "2) KIYAS: eski veri → yeni veri; yön DEVAM/DÖNÜŞ/NÖTRE ÇEKİLDİ + hangi sürücü değişti.",
+    "3) BTCUSDT piramit koşusu (ana sembol).",
+    "4) ETHUSDT piramit koşusu (korelasyonlu, sabit-USDT profiliyle).",
+    "5) Çıktı: YÖN (bias) + İŞLEM KALİTESİ + gerçek/varsayım/yorum ayrımı."
+  ],
+  "eth_profili": {
+    "sermaye_usd": 400.0,
+    "kaldirac": 100,
+    "kontrat_eth": 3.0,
+    "stop_usdt": -100.0,
+    "hedef_usdt_brut": [135.0, 150.0],
+    "r_min": 1.35,
+    "secim": "1-A — yalnız R ≥ 1.35 kurulum işleme uygun sayılır",
+    "kurulum_olcegi": "4H (stop/ATR ∈ [0.8, 2.0]); 15M yalnız TETİK içindir",
+    "kaynak": "engine/girdi/eth_profil.json (usd_hedef.py bu dosyadan okur)"
+  },
+  "zorunlu_girdiler": [
+    "piramit_veri_*.json paketi (15M + 4H kline + OI + funding + taker-LSR) — veri_topla.py çıktısı",
+    "CoinGlass likidasyon long/short → engine/girdi/turev_ham/likidasyon.json",
+    "grafik ekran görüntüsü ya da video → okunup engine/girdi/gorsel_okuma.json'a yazılır (güven tavanı 0.50)"
+  ],
+  "hafiza": {
+    "devir_teslim": "engine/state/devir_teslim.json — önceki pencerenin sonucu",
+    "btc_anlik": "engine/state/onceki_kosu.json",
+    "eth_anlik": "engine/state/eth/onceki_kosu.json"
+  },
+  "sinir": "Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL. Uydurma sayı yasak — eksik = VERİ YOK."
+}

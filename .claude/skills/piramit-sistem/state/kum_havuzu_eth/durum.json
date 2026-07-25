@@ -1,0 +1,124 @@
+{
+  "son_bar": 1784930400000,
+  "son_bar_utc": "2026-07-24 22:00",
+  "karar": {
+    "karar": "BEKLE",
+    "yon": null,
+    "zincir": 3,
+    "neden": "BEKLE: SHORT sinyali var (zincir 3) ama kenar zayıf — R=1.28 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+  },
+  "takip": null,
+  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-24 22:00).",
+  "acik_bolgeler": [
+    {
+      "tip": "bear",
+      "ust": 1889.0,
+      "alt": 1887.89,
+      "ce": 1888.4450000000002,
+      "bar": 147,
+      "zaman": 1784882700000
+    },
+    {
+      "tip": "bear",
+      "ust": 1881.45,
+      "alt": 1878.52,
+      "ce": 1879.9850000000001,
+      "bar": 162,
+      "zaman": 1784896200000
+    },
+    {
+      "tip": "bear",
+      "ust": 1876.88,
+      "alt": 1874.62,
+      "ce": 1875.75,
+      "bar": 163,
+      "zaman": 1784897100000
+    },
+    {
+      "tip": "bear",
+      "ust": 1871.0,
+      "alt": 1869.58,
+      "ce": 1870.29,
+      "bar": 164,
+      "zaman": 1784898000000
+    },
+    {
+      "tip": "bear",
+      "ust": 1862.09,
+      "alt": 1861.22,
+      "ce": 1861.655,
+      "bar": 194,
+      "zaman": 1784925000000
+    }
+  ],
+  "swing_15m_son": [
+    [
+      1847.0,
+      "L"
+    ],
+    [
+      1846.17,
+      "L"
+    ],
+    [
+      1868.71,
+      "H"
+    ],
+    [
+      1852.56,
+      "L"
+    ],
+    [
+      1865.81,
+      "H"
+    ],
+    [
+      1856.97,
+      "L"
+    ],
+    [
+      1864.51,
+      "H"
+    ],
+    [
+      1857.3,
+      "L"
+    ]
+  ],
+  "swing_4h_son": [
+    [
+      1943.98,
+      "H"
+    ],
+    [
+      1909.32,
+      "L"
+    ],
+    [
+      1958.75,
+      "H"
+    ],
+    [
+      1858.0,
+      "L"
+    ],
+    [
+      1909.32,
+      "H"
+    ],
+    [
+      1846.17,
+      "L"
+    ]
+  ],
+  "rejim_4h": {
+    "rejim": "DOWN",
+    "fark": -31.223500000000286,
+    "esik": 26.27229999999986
+  },
+  "donus_dizisi": {
+    "yon": "LONG",
+    "adim": 2,
+    "supurme_ucu": 1855.75
+  }
+}

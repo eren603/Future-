@@ -36,7 +36,9 @@ Kullanım:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -103,6 +105,11 @@ KONVANSIYON = {
     "min_danisman_k3": 2,        # K3: en az bu kadar YÖNLÜ danışman
     # backtest doğrulama kapısı (yalnız job'da `dogrular` beyan edilirse kullanılır)
     "bt_min_pf": 1.0, "bt_min_prob_profit": 0.60,
+    # ZORUNLU GİRDİ TAZELİĞİ: elle gelen likidasyon/görsel okuma HANGİ veriye
+    # ait olduğunu damgasıyla kanıtlamalı. Damgasız ya da son bardan bu kadar
+    # dakikadan daha eski okuma BAYAT sayılır (yeni kline + eski panel = sahte
+    # güncellik). 4H panel okuması bir 4H bar boyu geçerli kabul edilir.
+    "zorunlu_damga_tolerans_dk": 240,
 }
 
 KATMANLAR = ["K1-LLM", "K2-AI-AJAN", "K3-COKLU-AJAN", "K4-AGI", "K5-SI"]
@@ -125,6 +132,41 @@ def _num(x):
         return v if v == v and abs(v) != float("inf") else None
     except (TypeError, ValueError):
         return None
+
+
+_DAMGA_ALAN = ("bar_ms", "bar_utc", "zaman_utc", "okuma_utc", "zaman_ms",
+               "timestamp", "ts", "zaman", "bar")
+_DAMGA_BICIM = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%dT%H:%M")
+
+
+def _damga_ms(d: dict):
+    """Elle gelen zorunlu girdinin zaman damgası (ms, UTC) — yoksa None.
+
+    Sayı (s ya da ms epoch) ya da 'YYYY-MM-DD HH:MM' metni kabul edilir.
+    Metinde damgadan sonra açıklama olabilir (ör. '… (yerel) / veri barı …');
+    yalnız baştaki damga okunur. Çözülemeyen damga = damga YOK (fail-closed).
+    """
+    if not isinstance(d, dict):
+        return None
+    for ad in _DAMGA_ALAN:
+        if ad not in d:
+            continue
+        v = d[ad]
+        n = _num(v)
+        if n is not None and n > 1e8:
+            return n * 1000.0 if n < 1e11 else n      # saniye → ms
+        if isinstance(v, str):
+            m = re.match(r"\s*(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?)", v)
+            if not m:
+                continue
+            for b in _DAMGA_BICIM:
+                try:
+                    t = datetime.datetime.strptime(m.group(1), b)
+                    return t.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000.0
+                except ValueError:
+                    continue
+    return None
 
 
 def _clamp(v, lo, hi):
@@ -260,14 +302,42 @@ def k1_llm(job: dict, taban: Path) -> dict:
     # Bunlar "opsiyonel kanal" DEĞİLDİR. Eksikse koşu durmaz ama eksiklik
     # çıktının EN ÜSTÜNDE taşınır — sessizce atlanamaz.
     zorunlu, zorunlu_eksik = {}, []
+    son_ms = _num(olcumler.get("m15_son_bar"))
+    tol_dk = KONVANSIYON["zorunlu_damga_tolerans_dk"]
+
+    def _taze(d: dict, ad: str) -> tuple:
+        """Bu okuma BU verinin barına mı ait? Damgasız/eski = BAYAT (fail-closed).
+
+        Neden: eski panel okuması yeni kline'la birlikte sessizce 'güncel'
+        sayılıyordu — zorunlu girdi var görünüp aslında dünün ölçümüydü.
+        """
+        ms = _damga_ms(d)
+        if ms is None:
+            return False, (f"{ad}: zaman damgası YOK (`bar_utc`/`zaman_utc`) → hangi "
+                           "veriye ait olduğu kanıtlanamıyor, BAYAT sayıldı")
+        if son_ms is None:
+            return True, f"{ad}: damga var, kline son barı ölçülemedi — kıyaslanmadı"
+        yas = (son_ms - ms) / 60000.0
+        if yas > tol_dk:
+            return False, (f"{ad}: BAYAT — okuma son bardan {yas:.0f} dk eski "
+                           f"(tolerans {tol_dk:.0f} dk); yeni kline eski panel "
+                           "okumasıyla birleştirilmez")
+        return True, f"{ad}: taze (son bara göre {yas:.0f} dk)"
+
+    tazelik = []
     lik = _yol((veri.get("likidasyon") or "engine/girdi/turev_ham/likidasyon.json"), taban)
     if lik:
         try:
             d = json.loads(lik.read_text(encoding="utf-8"))
-            if _num(d.get("liq_long")) is not None and _num(d.get("liq_short")) is not None:
+            taze, gerekce = _taze(d, "likidasyon")
+            tazelik.append(gerekce)
+            if not taze:
+                zorunlu_eksik.append(gerekce)
+            elif _num(d.get("liq_long")) is not None and _num(d.get("liq_short")) is not None:
                 zorunlu["likidasyon"] = {"liq_long": _num(d["liq_long"]),
                                          "liq_short": _num(d["liq_short"]),
-                                         "kaynak": str(d.get("kaynak", "elle/CoinGlass"))}
+                                         "kaynak": str(d.get("kaynak", "elle/CoinGlass")),
+                                         "tazelik": gerekce}
             else:
                 zorunlu_eksik.append("likidasyon: dosya var ama liq_long/liq_short sayısal değil")
         except (OSError, json.JSONDecodeError) as e:
@@ -279,8 +349,12 @@ def k1_llm(job: dict, taban: Path) -> dict:
     if gor:
         try:
             g = json.loads(gor.read_text(encoding="utf-8"))
-            if str(g.get("trend", "")).lower() in ("bull", "bear", "yatay"):
-                zorunlu["gorsel"] = g
+            taze, gerekce = _taze(g, "görsel okuma")
+            tazelik.append(gerekce)
+            if not taze:
+                zorunlu_eksik.append(gerekce)
+            elif str(g.get("trend", "")).lower() in ("bull", "bear", "yatay"):
+                zorunlu["gorsel"] = {**g, "tazelik": gerekce}
             else:
                 zorunlu_eksik.append("görsel okuma: `trend` alanı bull|bear|yatay değil")
         except (OSError, json.JSONDecodeError) as e:
@@ -319,6 +393,7 @@ def k1_llm(job: dict, taban: Path) -> dict:
             "kanallar": kanal, "olcumler": olcumler, "profil": profil,
             "veri_sozlesmesi": sozlesme, "video": video, "eksikler": eksik,
             "zorunlu_girdiler": zorunlu, "zorunlu_eksik": zorunlu_eksik,
+            "zorunlu_tazelik": tazelik or [f"{YOK} — zorunlu girdi dosyası yok"],
             "onceki_karar_akibeti": akibet, "onceki_kayit_var": bool(onceki_kayit),
             "gecti": gecti, "kapi": kapi}
 

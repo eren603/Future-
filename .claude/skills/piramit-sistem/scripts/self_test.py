@@ -350,8 +350,13 @@ def main() -> int:
         # ---- T19: zorunlu girdiler + görsel/mekanik karşılıklı teyit ------
         gp = tmp / "gorsel.json"
         lp = tmp / "likidasyon.json"
-        lp.write_text(json.dumps({"liq_long": 12.4, "liq_short": 31.8}),
-                      encoding="utf-8")
+        # Damga zorunlu (T28 tazelik kuralı): fixture'lar veri barıyla damgalanır.
+        import datetime as _dt19  # noqa: PLC0415
+        _son19 = json.loads(m15.read_text(encoding="utf-8"))[-1][0]
+        DAMGA19 = _dt19.datetime.fromtimestamp(
+            _son19 / 1000, _dt19.timezone.utc).strftime("%Y-%m-%d %H:%M")
+        lp.write_text(json.dumps({"liq_long": 12.4, "liq_short": 31.8,
+                                  "zaman_utc": DAMGA19}), encoding="utf-8")
         # (a) EKSİK durumda uyarı taşınmalı. Yollar AÇIKÇA olmayan dosyaya
         # verilir — aksi halde test, depoda gerçek likidasyon/görsel dosyası
         # bulunup bulunmamasına göre değişir (gerçek koşuda yakalandı).
@@ -365,7 +370,8 @@ def main() -> int:
             if k["katman"] == "K2-AI-AJAN":
                 smc_trend = (k["motor_sonuclari"].get("smc_tespit") or {}).get("trend")
         gp.write_text(json.dumps({"trend": smc_trend, "guven": 0.9,
-                                  "zaman_dilimi": "15m"}), encoding="utf-8")
+                                  "zaman_dilimi": "15m",
+                                  "zaman_utc": DAMGA19}), encoding="utf-8")
         r19b = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4),
                                "gorsel": str(gp), "likidasyon": str(lp)}))
         K19 = {k["katman"]: k for k in r19b["katmanlar"]}
@@ -374,7 +380,8 @@ def main() -> int:
         onay = K19["K4-AGI"]["verifier"].get("gorsel-teyit", {}).get("confirmed")
         # (c) görsel TERS → çürütülür + çelişki bayrağı
         ters = "bull" if smc_trend == "bear" else "bear"
-        gp.write_text(json.dumps({"trend": ters, "guven": 0.9}), encoding="utf-8")
+        gp.write_text(json.dumps({"trend": ters, "guven": 0.9,
+                                  "zaman_utc": DAMGA19}), encoding="utf-8")
         r19c = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4),
                                "gorsel": str(gp), "likidasyon": str(lp)}))
         K19c = {k["katman"]: k for k in r19c["katmanlar"]}
@@ -618,6 +625,65 @@ def main() -> int:
                 f"ana={y_ana.name}, ikinci={y_ikinci.name}, "
                 f"kum_havuzu→{y_kum.name} (gerçek sicil), "
                 f"geçici sicil→kendi dizini ({y_test.parent.name}/)")
+
+        # ---- T28: zorunlu girdi TAZELİĞİ ----------------------------------
+        # Eski panel okuması yeni kline'la birlikte "güncel" sayılamaz; damgasız
+        # okuma da kanıtsızdır (fail-closed). Kusur 2026-07-25'te bulundu.
+        z_dir = tmp / "zorunlu"
+        (z_dir / "turev_ham").mkdir(parents=True, exist_ok=True)
+        m15v = json.loads(m15.read_text(encoding="utf-8"))
+        son_ms = m15v[-1][0]
+        eski = son_ms - (P.KONVANSIYON["zorunlu_damga_tolerans_dk"] + 60) * 60_000
+        import datetime as _dt
+
+        def _utc(ms):
+            return _dt.datetime.fromtimestamp(ms / 1000, _dt.timezone.utc
+                                              ).strftime("%Y-%m-%d %H:%M")
+        senaryo = {}
+        for ad, lik in (("taze", {"liq_long": 1.0, "liq_short": 2.0,
+                                  "zaman_utc": _utc(son_ms)}),
+                        ("bayat", {"liq_long": 1.0, "liq_short": 2.0,
+                                   "zaman_utc": _utc(eski)}),
+                        ("damgasiz", {"liq_long": 1.0, "liq_short": 2.0})):
+            (z_dir / "turev_ham" / "likidasyon.json").write_text(
+                json.dumps(lik), encoding="utf-8")
+            (z_dir / "gorsel.json").write_text(json.dumps(
+                {"trend": "bear", "zaman_utc": _utc(son_ms)}), encoding="utf-8")
+            jz = _job(tmp, {"m15": str(m15), "h4": str(h4),
+                            "likidasyon": str(z_dir / "turev_ham" / "likidasyon.json"),
+                            "gorsel": str(z_dir / "gorsel.json")})
+            j = json.loads(jz.read_text(encoding="utf-8"))
+            j["state_dir"] = str(tmp / f"z_{ad}")
+            jz.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+            k1z = [k for k in _kos(jz)["katmanlar"] if k["katman"] == "K1-LLM"][0]
+            senaryo[ad] = (k1z.get("zorunlu_girdiler", {}).get("likidasyon") is not None,
+                           " ".join(k1z.get("zorunlu_eksik") or []))
+        kontrol("T28 zorunlu girdi tazeliği (bayat/damgasız kabul edilmez)",
+                senaryo["taze"][0] and not senaryo["bayat"][0]
+                and "BAYAT" in senaryo["bayat"][1]
+                and not senaryo["damgasiz"][0]
+                and "damgası YOK" in senaryo["damgasiz"][1],
+                f"taze kabul={senaryo['taze'][0]}, bayat red={not senaryo['bayat'][0]}, "
+                f"damgasız red={not senaryo['damgasiz'][0]}")
+
+        # ---- T29: kanca — paket alımı geri sarmaz, ikinci sembol koşar -----
+        sys.path.insert(0, str(P.REPO / ".claude" / "hooks"))
+        import piramit_auto as HOOK                                # noqa: PLC0415
+        pk = tmp / "piramit_veri_TEST_1.json"
+        pk.write_text(json.dumps({"veri": {"m15": m15v}}), encoding="utf-8")
+        eski_pk = tmp / "piramit_veri_TEST_0.json"
+        eski_pk.write_text(json.dumps(
+            {"veri": {"m15": m15v[:-4]}}), encoding="utf-8")     # 4 bar geride
+        pms, _ = HOOK._paket_zamani(pk)
+        ems, _ = HOOK._paket_zamani(eski_pk)
+        ij = HOOK._ikinci_job()
+        kontrol("T29 kanca: paket zamanı okunur, ikinci sembol job'u kurulur",
+                pms == son_ms and ems is not None and ems < pms
+                and ij is not None and ij.get("usd_profil")
+                and ij.get("korelasyon") and "eth" in ij["defter_dizini"],
+                f"paket son bar={int(pms)} > eski={int(ems)}, "
+                f"ikinci sembol job: usd_profil={bool(ij and ij.get('usd_profil'))}, "
+                f"korelasyon={bool(ij and ij.get('korelasyon'))}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"

@@ -1,12 +1,21 @@
 {
   "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual",
-  "zaman": "2026-07-25 01:03 (yerel) / veri barı 22:00 UTC",
-  "sembol": "BTCUSDT", "zaman_dilimi": "4h",
+  "sembol": "BTCUSDT",
+  "zaman_dilimi": "4h",
   "trend": "bear",
   "yapi_olayi": "BOS",
   "seviyeler": {
-    "direnc": [64600, 65000, 65425.5, 65780, 66924.1],
-    "destek": [63666, 63600]
+    "direnc": [
+      64600,
+      65000,
+      65425.5,
+      65780,
+      66924.1
+    ],
+    "destek": [
+      63666,
+      63600
+    ]
   },
   "gozlem": [
     "4H MA dizilimi ayı: MA5 64579.92 > MA10 64867.02 > MA30 65441.50, fiyat 64112.1 hepsinin ALTINDA",
@@ -14,5 +23,8 @@
     "15M'de 63666 dip sonrası 64100 çevresinde sıkışma (MA5/10/30 iç içe)",
     "Likidite haritası: 64600 ve 64400 üstünde yoğun bant, 63600-63666 altında bant"
   ],
-  "guven": 0.45
+  "guven": 0.45,
+  "zaman_utc": "2026-07-24 22:03",
+  "zaman_yerel": "2026-07-25 01:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati; paket çekimi 2026-07-24 22:04:53 UTC ile aynı dakikalar → UTC'ye çevrildi"
 }

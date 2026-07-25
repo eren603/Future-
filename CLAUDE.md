@@ -141,6 +141,24 @@ bağlıdır — uyuşmazsa çürütülür ve "GÖRSEL-MEKANİK ÇELİŞKİSİ" b
 (göz ile algoritma birbirini teyit eder). Eksik olan zorunlu girdi K1'de
 tespit edilir, K4'te çelişki olarak taşınır ve çıktının EN ÜSTÜNDE
 "⚠ ZORUNLU GİRDİ EKSİK" satırıyla gösterilir; eksikle karar UYDURULMAZ.
+TAZELİK ZORUNLU: elle gelen likidasyon/görsel okuma hangi veriye ait olduğunu
+`zaman_utc` damgasıyla KANITLAR. Damgasız ya da son bardan `zorunlu_damga_
+tolerans_dk` (240) dakikadan eski okuma **BAYAT** sayılır ve kullanılmaz —
+yeni kline eski panel okumasıyla birleştirilmez (sahte güncellik yasak).
+
+Ek kural (VERİ ALIMI + İKİNCİ SEMBOL — kancada, elle komut yok): Kullanıcı bir
+`piramit_veri_*.json` paketi gönderdiğinde `paket_ac` ELLE çağrılmaz;
+`.claude/hooks/piramit_auto.py` yükleme dizinlerini tarar, **en yeni işlenmemiş**
+paketi doğrulamadan geçirip depoya alır ve boru hattını koşturur. İki korkuluk:
+(1) aynı içerik iki kez alınmaz (SHA defteri), (2) paketin verisi depodakinden
+YENİ DEĞİLSE alınmaz — eski paket yeni veriyi GERİ SARAMAZ (aksi halde BTC eski
+bara döner, ETH yeni barda kalır = ayrışmış sahte kıyas). Ana sembol koştuktan
+sonra ikinci sembol (`engine/girdi/eth/`) AYNI istemde kendiliğinden koşar:
+korelasyon + sabit-USDT profili (`engine/girdi/eth_profil.json`) job'da beyan
+edilir, kendi sicilinde (`engine/state/eth`) ve kendi hafızasında
+(`hafiza/agirlik_eth.json`) tutulur — ana sembolün öğrenilmiş ağırlığı EZİLMEZ.
+Duran görev/hedef/yöntem `engine/gorev.json`'dadır ve her istemde bağlama
+basılır: yeni pencere görevi tekrar sormaz, kullanıcı tekrar anlatmaz.
 
 Ek kural (YÖN ZORUNLU — her analizde otomatik, tetikleyicisiz): Bir piyasa
 analizi/karar çıktısı **DAİMA iki ayrı satırla** verilir; yön asla "BEKLE"
