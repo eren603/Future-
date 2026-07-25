@@ -77,16 +77,27 @@ EK_KANAL = {
     "veri_sozlesmesi.json": ("veri", "veri_sozlesmesi"),  # verify_data
 }
 
+# ZORUNLU GİRDİLER — kanca bunları ÜRETEMEZ (görüntü okumak gerekir), yalnız
+# parmak izine katar ki elle yazılan taze okuma koşuyu kendiliğinden tetiklesin.
+ZORUNLU_GIRDI = ("gorsel_okuma.json", "turev_ham/likidasyon.json")
+
 
 def _fp() -> str | None:
     """Girdi verisinin parmak izi (ek kanallar + ikinci sembol dahil).
 
     İkinci sembolün verisi de parmak izine girer: yalnız ETH tazelenmişse de
     boru hattı yeniden koşmalı (yoksa ETH sessizce eski barla kalırdı).
+
+    ZORUNLU GİRDİLER DE PARMAK İZİNE GİRER. Eskiden girmiyordu: kanca görüntü
+    okuyamadığı için likidasyon/görsel okumayı ELLE yazıyoruz, ama parmak izi
+    bunları görmediğinden bir sonraki istem "veri DEĞİŞMEDİ" deyip taze okumayı
+    YOK SAYIYOR ve BAYAT girdiyle üretilmiş eski özeti tekrar basıyordu — yani
+    zorunlu girdi sözleşmesi sessizce fail-OPEN'a düşüyordu. Artık taze bir
+    panel/görsel okuma tek başına boru hattını yeniden koşturur.
     """
     h = hashlib.sha256()
     var = False
-    for ad in ("m15.json", "h4.json", *EK_KANAL):
+    for ad in ("m15.json", "h4.json", *EK_KANAL, *ZORUNLU_GIRDI):
         p = GIRDI / ad
         if p.exists():
             h.update(ad.encode())
@@ -94,7 +105,7 @@ def _fp() -> str | None:
             var = var or ad in ("m15.json", "h4.json")
         else:
             h.update(b"YOK")
-    for ad in ("m15.json", "h4.json", "turev.json"):
+    for ad in ("m15.json", "h4.json", "turev.json", *ZORUNLU_GIRDI):
         p = IKINCI["girdi"] / ad
         h.update(p.read_bytes() if p.exists() else b"YOK")
     return h.hexdigest() if var else None

@@ -1,33 +1,38 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "CHoCH",
+  "yapi_olayi": "BOS",
   "seviyeler": {
     "direnc": [
-      1871.73,
-      1882,
+      1876.42,
+      1899.14,
       1909.32,
       1958.75
     ],
     "destek": [
-      1857.6,
+      1870,
+      1860,
       1850.26,
       1846.17
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa: fiyat 1869.43 > MA5 1864.52 > MA10 1860.93 > MA30 1857.60",
-    "1846.17 dibinden dik toparlanma, son barda sert boğa mumu",
-    "4S'te fiyat 1869.84 > MA5 1860.06 ama MA30 1901.07 ALTINDA — orta vade hâlâ ayı",
-    "Likidite haritası: 1870 üstü ve 1880-1890 bandı yoğun, 1850/1846 altı bant",
-    "24S menzil 1846.17-1871.73, funding +0.0051%"
+    "15M MA'lar TAM SIKIŞMA: fiyat 1872.15, MA5 1870.79, MA10 1871.36, MA30 1870.83 — üçü 0.6 puan içinde; yön var ama momentum bitmiş (MA5 < MA10 = hafif negatif kesişme)",
+    "15M yapı: 1850.26 dibinden 1876.42 tepesine impuls (BOS yukarı), ardından ~1866'ya iğne ve 1872'ye dönüş — HH/HL teknik olarak korunuyor ama tepe bölgesinde sıkışıyor",
+    "4S'te YAPI AYI: fiyat 1872.12 < MA30 1899.14; MA5 1865.01 ≈ MA10 1865.07 (yatay); 1958.75 tepesinden düşüş",
+    "FUNDING NEGATİF: -0.0023% — 15M funding histogramının SON barlarında taze sarı (negatif) seri; shortlar longlara ödüyor. Önceki koşuda funding +0.0051% idi = İŞARET DEĞİŞTİ",
+    "Sembol Likidasyonları (açık 4S bar): Longs 341.9K vs Shorts 786.8 — long tarafı ~434x daha çok tasfiye; ETH'de long flush BTC'den çok daha sert",
+    "Açık Faiz 2.3M ETH, panelde KIRMIZI (azalış/düz) — fiyat yükselirken OI genişlemiyor",
+    "15M ısı haritası: 1875-1876 ve 1870-1871 bantlarında yoğun mor likidite (fiyatın hem üstü hem altı sıkışık); 1850 altında ayrı bant",
+    "4S ısı haritası: 1880 üstü ve 1840/1820 altı yoğun; genel ısı BTC'den çok daha kalabalık (ölçek 4277 vs 840)",
+    "24S menzil 1850.26-1876.42 (yalnız 26.16 puan = %1.4 — dar), 24S hacim 2,050,905,918 USD"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-25 13:46",
-  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
+  "celiski_notu": "15M yapı boğa / 4S ayı. Ek çelişki: negatif funding + baskın long tasfiyesi + düz OI = pozisyonlanma boşalıyor, taze alıcı yok; 15M MA sıkışması yönü zayıflatıyor",
+  "guven": 0.35,
+  "zaman_utc": "2026-07-25 22:03",
+  "zaman_yerel": "2026-07-26 01:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 01:03 (UTC+3) → UTC 22:03; son kline barı 2026-07-25 22:00 UTC, paket çekimi 22:04:04 UTC — aynı bar"
 }
