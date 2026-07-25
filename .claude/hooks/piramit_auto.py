@@ -350,15 +350,33 @@ def _hafiza_bas(g: dict) -> None:
         if not isinstance(d, dict):
             print(f"   hafıza[{ad}]: şema dışı ({p})")
             continue
-        ozet = {k: d.get(k) for k in
-                ("sembol", "son_bar_utc", "YON_BIAS", "yon_skoru",
-                 "islem_kalitesi") if d.get(k) is not None}
-        sev = d.get("islem_seviyeleri") or {}
-        if sev:
-            ozet["seviyeler"] = {k: sev.get(k) for k in
-                                 ("giris", "stop", "hedef") if sev.get(k) is not None}
+        ozet = _kayit_ozeti(d)
+        if not ozet:
+            # Devir-teslim gibi SEMBOL BLOKLU dosyalar bir kat derindedir;
+            # düz okuyunca "kayıt boş" deyip önceki pencerenin sonucunu
+            # yutuyordu. Bir kat in, her sembolü ayrı özetle.
+            alt = {k: _kayit_ozeti(v) for k, v in d.items()
+                   if isinstance(v, dict) and _kayit_ozeti(v)}
+            ozet = alt or None
         print(f"   hafıza[{ad}]: "
               + (json.dumps(ozet, ensure_ascii=False) if ozet else "kayıt boş"))
+
+
+def _kayit_ozeti(d) -> dict:
+    """Bir anlık görüntü/karar bloğundan taşınabilir özet çıkar."""
+    if not isinstance(d, dict):
+        return {}
+    ozet = {k: d.get(k) for k in
+            ("sembol", "son_bar_utc", "YON_BIAS", "yon_skoru", "KARAR",
+             "islem_kalitesi", "EMIR") if d.get(k) is not None}
+    for alan in ("islem_seviyeleri", "seviyeler", "emir"):
+        sev = d.get(alan)
+        if isinstance(sev, dict) and sev:
+            ozet["seviyeler"] = {k: sev.get(k) for k in
+                                 ("giris", "stop", "hedef", "T1", "R")
+                                 if sev.get(k) is not None}
+            break
+    return ozet
 
 
 def _ek_kanallar(job: dict) -> list:

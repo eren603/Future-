@@ -1,159 +1,95 @@
 {
-  "_aciklama": "DEVİR-TESLİM: bu koşunun sonucu. Yeni pencere yeni veri aldığında İLK İŞ bu kararların akıbetini ölçmek olacak (kiyas.py). Buradaki her sayı koşu raporlarından okundu; elle girilmedi.",
-  "kaynak_bar_utc": "2026-07-24 22:00",
-  "paket_cekim_utc": "2026-07-24 22:04:53 UTC",
+  "_aciklama": "DEVİR TESLİM — bir sonraki pencere bunu okur. Kanca her istemde içeriğini bağlama basar. Sayılar koşu raporlarından okundu.",
+  "kaynak_bar_utc": "2026-07-25 13:45",
+  "paket_cekim_utc": "2026-07-25 13:47:23 UTC",
   "BTCUSDT": {
-    "YON_BIAS": "SHORT",
-    "yon_skoru": -0.8792,
-    "guven_skoru": 0.5798,
-    "uzlasi": 0.8792,
-    "islem_kalitesi": "TEMİZ GİRİŞ VAR",
-    "seviyeler": {
-      "karar-motoru": {
-        "yon": "short",
-        "entry": 64611.55,
-        "stop": 64877.6,
-        "target": 64104.1,
-        "kaynak": "karar-motoru (tek-kaynak çıktı)"
-      }
+    "sembol": "engine/girdi",
+    "son_bar_utc": "2026-07-25 13:45",
+    "YON_BIAS": "LONG",
+    "yon_skoru": 0.65,
+    "KARAR": "LONG",
+    "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
+    "EMIR": "EMİR YOK",
+    "emir_adaylari": [],
+    "esikler": {
+      "score": 0.5271,
+      "min_agreement": 0.5,
+      "min_side_weight": 0.4464
     },
-    "gecersizlik": "Giriş tetiklenmeden 15M gövde kapanışı 64707.5 ötesine geçerse (FVG dolup taşarsa) bölge geçersiz.",
-    "danismanlar": {
-      "karar-motoru": {
-        "stance": "short",
-        "guven": 0.7
-      },
-      "grafik-calisma": {
-        "stance": "flat",
-        "guven": 0.75
-      },
-      "turev-akis": {
-        "stance": "short",
-        "guven": 0.861
-      },
-      "gorsel-teyit": {
-        "stance": "short",
-        "guven": 0.45
-      }
-    },
-    "verifier": {
-      "karar-motoru": {
-        "confirmed": true
-      },
-      "grafik-calisma": {
-        "confirmed": false,
-        "reason": "işlem 4 < taban 10 — istatistik kurulamaz"
-      },
-      "gorsel-teyit": {
-        "confirmed": true,
-        "reason": "mekanik smc_tespit trend=bear vs görsel okuma trend=bear — UYUMLU"
-      }
-    },
-    "gozlemci": "22 denetim, 0 ihlal, 0 uyarı",
-    "pozisyon_100usdt_risk": {
-      "units": 0.3758692,
-      "notional": 24285.4914,
-      "r_per_unit": 266.05
-    }
+    "celiski_turu": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG"
   },
   "ETHUSDT": {
-    "YON_BIAS": "SHORT",
-    "yon_skoru": -0.6621,
+    "sembol": "engine/girdi/eth",
+    "son_bar_utc": "2026-07-25 13:45",
+    "YON_BIAS": "LONG",
+    "yon_skoru": 0.6926,
+    "KARAR": "LONG",
     "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
-    "danismanlar": {
-      "karar-motoru": {
-        "stance": "flat",
-        "guven": 0.4
+    "EMIR": "LIMIT LONG @1863.68 | stop 1830.346667 | T1 1908.68 | R 1.35",
+    "emir_adaylari": [
+      {
+        "emir_tipi": "LIMIT",
+        "giris": 1863.68,
+        "stop": 1830.346667,
+        "hedef": 1908.68,
+        "R": 1.35
       },
-      "grafik-calisma": {
-        "stance": "flat",
-        "guven": 0.75
+      {
+        "emir_tipi": "LIMIT",
+        "giris": 1861.48,
+        "stop": 1828.146667,
+        "hedef": 1906.48,
+        "R": 1.35
       },
-      "turev-akis": {
-        "stance": "short",
-        "guven": 0.453
+      {
+        "emir_tipi": "LIMIT",
+        "giris": 1859.11,
+        "stop": 1825.776667,
+        "hedef": 1904.11,
+        "R": 1.35
       },
-      "gorsel-teyit": {
-        "stance": "short",
-        "guven": 0.45
+      {
+        "emir_tipi": "LIMIT",
+        "giris": 1858.13,
+        "stop": 1824.796667,
+        "hedef": 1903.13,
+        "R": 1.35
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "giris": 1858.0,
+        "stop": 1824.666667,
+        "hedef": 1903.0,
+        "R": 1.35
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "giris": 1850.95,
+        "stop": 1817.616667,
+        "hedef": 1895.95,
+        "R": 1.35
       }
-    },
-    "gozlemci": "22 denetim, 0 ihlal, 1 uyarı",
-    "gozlemci_uyari": [
-      "K4-AGI/TUNEL: doğrulanmış kanıt yalnız {'gorsel'} ailesinden — tek pencereden bakılıyor"
     ],
-    "sabit_usdt_profili": {
-      "hukum": "UYGUN",
-      "dusen_kapilar": [],
-      "cevrim": {
-        "stop_mesafe_puan": 33.3333,
-        "hedef_mesafe_puan": [
-          45.0,
-          50.0
-        ],
-        "R_band": [
-          1.35,
-          1.5
-        ],
-        "stop_atr_kat": 1.3789,
-        "net_kazanc_band_usdt": [
-          130.54,
-          145.54
-        ],
-        "gercek_kaldirac": 13.93,
-        "tasfiye_mesafe_puan": 133.3333
-      },
-      "adaylar": [
-        {
-          "giris": 1857.62,
-          "stop": 1890.9533,
-          "hedef_min": 1812.62,
-          "hedef_max": 1807.62,
-          "band_ici_likidite": [
-            1809.9625
-          ],
-          "yapi_hedefi_var": true,
-          "en_yakin_karsi_yapi": 1910.88,
-          "stop_yapinin_otesinde": false
-        },
-        {
-          "giris": 1861.655,
-          "stop": 1894.9883,
-          "hedef_min": 1816.655,
-          "hedef_max": 1811.655,
-          "band_ici_likidite": [],
-          "yapi_hedefi_var": false,
-          "en_yakin_karsi_yapi": 1910.88,
-          "stop_yapinin_otesinde": false
-        }
-      ]
-    }
+    "esikler": {
+      "score": 0.5277,
+      "min_agreement": 0.5,
+      "min_side_weight": 0.4067
+    },
+    "celiski_turu": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG"
   },
   "KORELASYON": {
-    "cift": "BTC ↔ ETH",
-    "ro_15m": 0.8534,
-    "beta": 1.2491,
-    "r2": 0.7283,
-    "gozlem": 199,
-    "hukum": "KOPYA POZİSYON",
+    "korelasyon": 0.8521,
+    "beta": 1.2607,
+    "aciklanan_varyans_r2": 0.726,
+    "HUKUM": "KOPYA POZİSYON",
     "toplam_risk_carpani": 2.0,
-    "kararlilik": {
-      "ilk_yari": 0.8667,
-      "son_yari": 0.8436,
-      "kayma": 0.0231
-    },
-    "not": "aynı yönde iki pozisyon = tek bahsin iki katı riski"
-  },
-  "PORTFOY_HRP": {
-    "BTC": 0.682053,
-    "ETH": 0.317947,
     "gozlem": 199
   },
   "SONRAKI_PENCERE_ICIN": [
-    "1) Yeni paket geldiğinde paket_ac.py ile açılır (BTC ana dizin, ETH eth/ alt dizini)",
-    "2) Kanca koşar; K0'da BU kararların akıbeti ÖLÇÜLÜR (tetik/stop/hedef, gerçek R)",
-    "3) Kıyas: bu koşunun yönü/sürücüleri ile yeni koşu karşılaştırılır",
-    "4) Likidasyon (4 sayı) + 4H grafik görselleri zorunlu girdidir",
-    "5) ETH profili engine/girdi/eth_profil.json'da kayıtlı (3 ETH / -100 / 135-150 brüt)"
+    "1) Paket + CoinGlass likidasyon + grafik görüntüsü gelsin; kanca paketi kendi alır.",
+    "2) Görselleri OKU → engine/girdi/gorsel_okuma.json + turev_ham/likidasyon.json, `zaman_utc` damgasıyla (damgasız/240 dk+ = BAYAT, kullanılmaz).",
+    "3) Boru hattı kendiliğinden koşar: akıbet → kıyas → BTC → ETH(korelasyonlu) → çelişki turu → emir planı.",
+    "4) Çıktı EMİR satırıdır; EMİR YOK ise düşen kapı yazılır.",
+    "5) Korelasyon 0.85 üstündeyse BTC ve ETH'den YALNIZ BİRİ alınır (risk ×2)."
   ]
 }
