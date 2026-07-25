@@ -210,6 +210,38 @@ def _defter_yaz(islenen: set, p: Path, sha: str) -> None:
         pass
 
 
+GORSEL_UZANTI = (".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".webm")
+
+
+def _okunmamis_gorseller() -> list:
+    """Gönderilmiş ama HENÜZ OKUNMAMIŞ görsel/video dosyaları.
+
+    Kanca görüntü OKUYAMAZ (bu elle yapılır). Yapabileceği: yeni gelen
+    görseli görünür kılmak. Ölçüt tazelik damgasıdır — `gorsel_okuma.json`
+    damgasından SONRA gelen dosya henüz okunmamış sayılır. Böylece "görsel
+    gönderdim ama kimse bakmadı" sessizliği kalkar.
+    """
+    damga = 0.0
+    gp = GIRDI / "gorsel_okuma.json"
+    if gp.exists():
+        try:
+            damga = gp.stat().st_mtime
+        except OSError:
+            damga = 0.0
+    yeni = []
+    for d in PAKET_DIZINLERI:
+        try:
+            if not d.is_dir():
+                continue
+            for p in list(d.glob("*")) + list(d.glob("*/*")):
+                if (p.is_file() and p.suffix.lower() in GORSEL_UZANTI
+                        and p.stat().st_mtime > damga):
+                    yeni.append(p)
+        except OSError:
+            continue
+    return sorted(set(yeni), key=lambda p: -p.stat().st_mtime)[:12]
+
+
 def _gorev_bas() -> None:
     """Duran görevi bağlama bas — yeni pencere görevi/hedefi tekrar sormaz."""
     try:
@@ -413,6 +445,14 @@ def main() -> int:
             yaz = s.get("yazilan") or s.get("yazildi") or s
             print(f"[PİRAMİT] Gönderilen paket depoya alındı: {alinan['paket']} → "
                   f"{json.dumps(yaz, ensure_ascii=False)[:600]}")
+
+    gorseller = _okunmamis_gorseller()
+    if gorseller:
+        print("[PİRAMİT] OKUNMAMIŞ GÖRSEL/VİDEO (zorunlu girdi — kanca görüntü "
+              "okuyamaz, ELLE okunacak → engine/girdi/gorsel_okuma.json + "
+              "turev_ham/likidasyon.json, `zaman_utc` damgasıyla):")
+        for p in gorseller:
+            print(f"   · {p}")
 
     fp = _fp()
     if fp is None:
