@@ -1,30 +1,33 @@
 {
   "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
   "sembol": "ETHUSDT",
-  "zaman_dilimi": "4h",
-  "trend": "bear",
-  "yapi_olayi": "BOS",
+  "zaman_dilimi": "15m",
+  "trend": "bull",
+  "yapi_olayi": "CHoCH",
   "seviyeler": {
     "direnc": [
-      1870,
-      1885,
-      1891.9,
+      1871.73,
+      1882,
       1909.32,
       1958.75
     ],
     "destek": [
-      1846.17,
-      1845,
-      1802.46
+      1857.6,
+      1850.26,
+      1846.17
     ]
   },
   "gozlem": [
-    "4H MA dizilimi ayı: MA5 1872.00 > MA10 1881.11 > MA30 1904.19, fiyat 1857.71 hepsinin ALTINDA",
-    "1958.75 tepesinden düşüş; 24S menzil 1846.17-1909.32",
-    "Likidite haritası: 1870 ve 1875-1885 üstü yoğun, 1850/1845 altı bant"
+    "15M MA dizilimi boğa: fiyat 1869.43 > MA5 1864.52 > MA10 1860.93 > MA30 1857.60",
+    "1846.17 dibinden dik toparlanma, son barda sert boğa mumu",
+    "4S'te fiyat 1869.84 > MA5 1860.06 ama MA30 1901.07 ALTINDA — orta vade hâlâ ayı",
+    "Likidite haritası: 1870 üstü ve 1880-1890 bandı yoğun, 1850/1846 altı bant",
+    "24S menzil 1846.17-1871.73, funding +0.0051%"
   ],
+  "h4_trend": "bear",
+  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK",
   "guven": 0.45,
-  "zaman_utc": "2026-07-24 22:03",
-  "zaman_yerel": "2026-07-25 01:03 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati; paket çekimi 2026-07-24 22:04:53 UTC ile aynı dakikalar → UTC'ye çevrildi"
+  "zaman_utc": "2026-07-25 13:46",
+  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
 }

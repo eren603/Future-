@@ -1,30 +1,33 @@
 {
   "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual",
   "sembol": "BTCUSDT",
-  "zaman_dilimi": "4h",
-  "trend": "bear",
-  "yapi_olayi": "BOS",
+  "zaman_dilimi": "15m",
+  "trend": "bull",
+  "yapi_olayi": "CHoCH",
   "seviyeler": {
     "direnc": [
+      64236.8,
+      64403,
       64600,
-      65000,
-      65425.5,
-      65780,
-      66924.1
+      65780
     ],
     "destek": [
-      63666,
-      63600
+      64005,
+      63760.5,
+      63666
     ]
   },
   "gozlem": [
-    "4H MA dizilimi ayı: MA5 64579.92 > MA10 64867.02 > MA30 65441.50, fiyat 64112.1 hepsinin ALTINDA",
-    "66924.10 tepesinden sert düşüş, alçalan tepeler",
-    "15M'de 63666 dip sonrası 64100 çevresinde sıkışma (MA5/10/30 iç içe)",
-    "Likidite haritası: 64600 ve 64400 üstünde yoğun bant, 63600-63666 altında bant"
+    "15M MA dizilimi boğa: fiyat 64200 > MA5 64129.19 > MA10 64082.39 > MA30 64005.04",
+    "63666 dibinden yükselen dipler; 64236.80 gün içi tepe",
+    "4S'te YAPI HÂLÂ AYI: fiyat 64205 < MA10 64458.62 < MA30 65329.20 (66924.10 tepesinden düşüş sürüyor)",
+    "Likidite haritası: 64000-64050 bandında yoğun küme (mıknatıs), 63760 altı boşluk",
+    "24S menzil 63666-64403, funding +0.0018% (hafif pozitif)"
   ],
+  "h4_trend": "bear",
+  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK, gizlenmiyor",
   "guven": 0.45,
-  "zaman_utc": "2026-07-24 22:03",
-  "zaman_yerel": "2026-07-25 01:03 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati; paket çekimi 2026-07-24 22:04:53 UTC ile aynı dakikalar → UTC'ye çevrildi"
+  "zaman_utc": "2026-07-25 13:46",
+  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
 }

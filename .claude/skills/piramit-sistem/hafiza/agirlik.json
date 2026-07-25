@@ -4,31 +4,31 @@
   },
   "ayrinti": {
     "karar-motoru": {
-      "n": 3,
+      "n": 1,
       "wins": 1,
       "kaynak": "/home/user/Future-/engine/state/defter.jsonl",
-      "atlanan": 21,
-      "pozisyonsuz": 1,
-      "wilson_lo": 0.061490315276160515,
+      "atlanan": 4,
+      "pozisyonsuz": 0,
+      "wilson_lo": 0.20654329147389294,
       "agirlik": 1.0,
-      "durum": "VERİ YOK — ölçülmüş sonuç 3 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
+      "durum": "VERİ YOK — ölçülmüş sonuç 1 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
     }
   },
-  "uretildigi_bar": "2026-07-24 22:00",
+  "uretildigi_bar": "2026-07-25 13:45",
   "etiketleme": {
     "karar-motoru": {
       "etiketlenen": 0,
-      "elle_korunan": 4,
-      "olculemeyen": 21,
+      "elle_korunan": 1,
+      "olculemeyen": 4,
       "bar_havuzu": {
-        "bar": 210,
+        "bar": 273,
         "ilk": 1784742300000,
-        "son": 1784930400000
+        "son": 1784987100000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 210
+        "toplam_bar": 273
       }
     }
   },

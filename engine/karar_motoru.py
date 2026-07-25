@@ -610,7 +610,30 @@ def save_state(state):
 
 
 def append_ledger(entry):
+    """Deftere yaz — AYNI kararın AYNI sonucu iki kez yazılmaz.
+
+    Neden: aynı bar üzerinde boru hattı birden çok kez koşarsa (kanca + elle
+    koşu + test) aynı kapanış tekrar tekrar deftere düşüyordu; 2026-07-25'te
+    tek bir karar 21 satır olmuştu. Bu satırlar etiketlenirse tek bir sonuç
+    Wilson kalibrasyonunda 21 kez sayılır — sicil şişer, öğrenme bozulur.
+    """
     os.makedirs(STATE_DIR, exist_ok=True)
+    anahtar = (entry.get("karar_zamani"), entry.get("sonuc"))
+    if os.path.exists(LEDGER_FILE):
+        try:
+            with open(LEDGER_FILE, encoding="utf-8") as f:
+                for satir in f:
+                    satir = satir.strip()
+                    if not satir:
+                        continue
+                    try:
+                        v = json.loads(satir)
+                    except ValueError:
+                        continue
+                    if (v.get("karar_zamani"), v.get("sonuc")) == anahtar:
+                        return          # zaten kayıtlı — tekrar yazma
+        except OSError:
+            pass
     with open(LEDGER_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 

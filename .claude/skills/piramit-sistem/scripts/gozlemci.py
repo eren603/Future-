@@ -345,7 +345,16 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
     usd = k5.get("usd_hedef")
     if job and job.get("usd_profil"):
         kostu = isinstance(usd, dict) and usd.get("HUKUM")
-        if not kostu:
+        # Yön NÖTR ise sabit-USDT motoru MEŞRU olarak sonuç üretemez (giriş/stop
+        # yönü yok). Bunu ihlal saymak yanlış mühürdü: zaten "işlem yok" olan bir
+        # koşuyu "denetim ihlali" diye etiketliyor, gerçek ihlalleri gölgeliyordu.
+        yon = str(zirve.get("YON_BIAS", "")).upper()
+        if not kostu and yon not in ("LONG", "SHORT"):
+            b.append(_bulgu("EKSIK_AKTARIM", "TEMİZ",
+                            f"usd_profil beyan edildi; YÖN {yon or YOK} olduğu için "
+                            "sabit-USDT motoru meşru olarak sonuç üretmedi "
+                            "(yönsüz kurulumda giriş/stop tanımsız)"))
+        elif not kostu:
             b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
                             f"usd_profil BEYAN EDİLDİ ama sabit-USDT motoru sonuç "
                             f"üretmedi: {(usd or {}).get('durum', YOK)}"))

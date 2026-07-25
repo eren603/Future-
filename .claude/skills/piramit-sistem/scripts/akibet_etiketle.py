@@ -137,7 +137,15 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
     giris_alt = float(karar["giris_alt"]); giris_ust = float(karar["giris_ust"])
     stop = float(karar["stop"]); t1 = float(karar["t1"])
     iptal = float(karar.get("iptal", giris_ust if s < 0 else giris_alt))
-    market = abs(giris_ust - giris_alt) < 1e-9
+    # MARKET DOLUM AÇIKÇA BEYAN EDİLMELİDİR (fail-closed).
+    # Eski kural `market = (giris_alt == giris_ust)` idi ve TEK FİYATLI LİMİT
+    # girişi market sanıyordu: fiyat o seviyeye HİÇ GİTMESE bile pozisyon
+    # dolmuş sayılıp R yazılıyordu. 2026-07-25'te yakalandı — sistem hiç
+    # tetiklenmemiş bir SHORT'a kendini "+1.9073 R, T1" diye ödüllendirdi
+    # (karar sonrası en yüksek 64236.8 iken giriş 64611.55'ti). Kanıtsız
+    # dolum = kendini memnun etme; artık dolum ancak fiyat DOKUNURSA sayılır.
+    market = bool(karar.get("market")
+                  or str(karar.get("giris_tipi", "")).strip().lower() == "market")
 
     def iptal_asildi(c):     # gövde kapanışı iptalin ötesinde mi?
         return c > iptal if s < 0 else c < iptal

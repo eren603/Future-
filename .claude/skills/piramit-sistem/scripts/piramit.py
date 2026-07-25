@@ -514,6 +514,21 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
 
     # --- turev-akis: kline-körlüğü panzehiri --------------------------------
     turev = veri.get("turev")
+    # TAZE LİKİDASYON ÜSTÜN GELİR: turev.json kancada, elle girilen
+    # likidasyon.json'dan ÖNCE üretilmiş olabilir. O zaman aynı raporda iki
+    # farklı likidasyon dolaşır: zorunlu-girdi denetimi taze dosyayı okur,
+    # türev motoru bayat kopyayı kullanır (2026-07-25'te yakalandı: panel
+    # short-ağırlıklı iken motor hâlâ "long kaskad" diyordu). Damgası
+    # doğrulanmış zorunlu girdi, önbelleği EZER.
+    z_lik = ((k1.get("zorunlu_girdiler") or {}).get("likidasyon") or {})
+    if isinstance(turev, dict) and turev and z_lik:
+        eski = (turev.get("liq_long"), turev.get("liq_short"))
+        yeni = (z_lik.get("liq_long"), z_lik.get("liq_short"))
+        if None not in yeni and eski != yeni:
+            turev = {**turev, "liq_long": yeni[0], "liq_short": yeni[1],
+                     "_likidasyon_kaynagi": (
+                         f"zorunlu girdi (damgalı) {yeni} — turev.json'daki "
+                         f"bayat kopya {eski} EZİLDİ")}
     if isinstance(turev, dict) and turev:
         r_full = _kos(MOTOR["turev_akis"], [], girdi_job=turev)
         r_adv = _kos(MOTOR["turev_akis"], ["--emit-advisor"], girdi_job=turev)
@@ -1065,6 +1080,7 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
     fak = {f.get("faktor"): f.get("skor") for f in (tv.get("faktorler") or [])}
     ik = k5.get("islem_kalitesi") or {}
     aday = (ik.get("adaylar") or [{}])[0] if ik.get("adaylar") else {}
+    kmk = m.get("karar-motoru") or {}      # bölge alanları motorun kararından
     return {
         "sembol": zirve.get("sembol"),
         "son_bar": (k1.get("olcumler") or {}).get("m15_son_bar"),
@@ -1073,8 +1089,17 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
         "YON_BIAS": zirve.get("YON_BIAS"), "yon_skoru": zirve.get("yon_skoru"),
         "guven_skoru": zirve.get("guven_skoru"), "uzlasi": zirve.get("uzlasi"),
         "islem_kalitesi": zirve.get("ISLEM_KALITESI"),
-        "islem_seviyeleri": ({"giris": aday.get("entry"), "stop": aday.get("stop"),
-                              "hedef": aday.get("target")} if aday else {}),
+        # GİRİŞ BÖLGESİ tam kaydedilir: yalnız tek `giris` yazılırsa bir sonraki
+        # koşu bölgeyi kaybeder ve akıbet ölçümü "market dolum" sanıp
+        # TETİKLENMEMİŞ bir işleme R yazar (2026-07-25'te yakalandı).
+        "islem_seviyeleri": ({
+            "giris": aday.get("entry"), "stop": aday.get("stop"),
+            "hedef": aday.get("target"),
+            "giris_alt": aday.get("giris_alt", (kmk.get("karar") or {}).get("giris_alt")),
+            "giris_ust": aday.get("giris_ust", (kmk.get("karar") or {}).get("giris_ust")),
+            "iptal": aday.get("iptal", (kmk.get("karar") or {}).get("iptal")),
+            "giris_tipi": aday.get("giris_tipi", "limit"),
+        } if aday else {}),
         "danismanlar": {d["name"]: d["stance"] for d in (k3.get("danismanlar") or [])},
         "surucu": {
             "trend": smc.get("trend"), "adx": _num(rej.get("adx")),

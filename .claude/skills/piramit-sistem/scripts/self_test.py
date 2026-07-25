@@ -163,9 +163,11 @@ def main() -> int:
 
         # ================= AKIBET ETİKETLEYİCİ (SI döngüsünün yakıtı) =======
         P_ET = {**AE.KONVANSIYON, "azami_bekleme": 3, "azami_tutma": 5}
+        # `giris_tipi: market` ARTIK ZORUNLU: eşit sınırlar tek başına market
+        # sayılmıyor (tetiklenmemiş işleme R yazma kusuru, T32).
         MARKET_SHORT = {"karar": "SHORT", "yon": "SHORT", "giris_alt": 100.0,
                         "giris_ust": 100.0, "giris": 100.0, "stop": 102.0,
-                        "t1": 96.0, "iptal": 101.0}
+                        "t1": 96.0, "iptal": 101.0, "giris_tipi": "market"}
 
         def _bar(t, o, h, l, c):
             return (t, o, h, l, c, 1.0)
@@ -186,7 +188,7 @@ def main() -> int:
 
         # T10: LIMIT bölgeye dokunulmadı → pozisyon yok, R YAZILMAZ
         limit = {**MARKET_SHORT, "giris_alt": 105.0, "giris_ust": 106.0,
-                 "iptal": 107.0}
+                 "iptal": 107.0, "giris_tipi": "limit"}   # market bayrağı DÜŞER
         b10 = [_bar(i, 100, 100.5, 99.0, 100) for i in range(1, 7)]
         s10 = AE.simule_et(limit, 1, b10, P_ET)
         kontrol("T10 etiketleyici: dolmayan limit → R yazılmaz",
@@ -758,6 +760,33 @@ def main() -> int:
                 f"p_lo={r_ou['devamlilik']['p_wilson_lo']} sertlik={r_ou['sertlik']} "
                 f"| sign-flip α ulaşılabilir={sf['alpha_ulasilabilir']} "
                 f"(p_min={sf['p_min_ulasilabilir']})")
+
+        # ---- T32: TETİKLENMEMİŞ işleme R YAZILMAZ (market-dolum kusuru) ----
+        # Gerçek olayda yakalandı (2026-07-25): anlık görüntü yalnız tek `giris`
+        # taşıyordu, akıbet ölçer bunu "market dolum" sanıp fiyat oraya HİÇ
+        # gitmediği halde +1.9073 R / T1 yazdı. Artık dolum ancak fiyat
+        # DOKUNURSA sayılır; market yalnız AÇIKÇA beyan edilirse.
+        b32 = [_bar(i, 100 - i, 101 - i, 99 - i, 100 - i) for i in range(12)]
+        # SHORT, giriş fiyatın ÜSTÜNDE: fiyat yukarı hiç gitmiyor → dolmamalı
+        k32 = {"karar": "SHORT", "yon": "SHORT", "giris": 130.0,
+               "giris_alt": 130.0, "giris_ust": 130.0,
+               "stop": 140.0, "t1": 95.0, "iptal": 140.0}
+        s_limit = AE.simule_et(k32, 0, b32, P_ET)
+        s_market = AE.simule_et({**k32, "giris_tipi": "market"}, 0, b32, P_ET)
+        # anlık görüntü bölgeyi taşıyor mu?
+        ag = P._anlik_goruntu(
+            *[[k for k in r1["katmanlar"] if k["katman"] == x][0]
+              for x in ("K1-LLM", "K2-AI-AJAN", "K3-COKLU-AJAN", "K5-SI")],
+            r1["ZIRVE"])
+        sev = ag.get("islem_seviyeleri") or {}
+        bolge_var = (not sev) or all(a in sev for a in
+                                     ("giris_alt", "giris_ust", "iptal", "giris_tipi"))
+        kontrol("T32 tetiklenmemiş işleme R yazılmaz + bölge kaydediliyor",
+                (not s_limit["olculebilir"]) and "R yazılmaz" in s_limit["sonuc"]
+                and s_market["olculebilir"] and bolge_var,
+                f"limit (dokunulmadı)={s_limit['sonuc'][:38]}… | market beyan "
+                f"edilince ölçüldü={s_market.get('sonuc')} r={s_market.get('r')} | "
+                f"anlık görüntüde bölge alanları={bolge_var}")
 
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
