@@ -1,6 +1,7 @@
 {
   "agirliklar": {
-    "karar-motoru": 1.0
+    "karar-motoru": 1.0,
+    "grafik-calisma": 1.0
   },
   "ayrinti": {
     "karar-motoru": {
@@ -12,23 +13,48 @@
       "wilson_lo": 0.20654329147389294,
       "agirlik": 1.0,
       "durum": "VERİ YOK — ölçülmüş sonuç 1 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
+    },
+    "grafik-calisma": {
+      "n": 0,
+      "wins": 0,
+      "kaynak": "/home/user/Future-/engine/state/defter_grafik-calisma.jsonl",
+      "atlanan": 1,
+      "pozisyonsuz": 0,
+      "wilson_lo": null,
+      "agirlik": 1.0,
+      "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
     }
   },
-  "uretildigi_bar": "2026-07-25 22:00",
+  "uretildigi_bar": "2026-07-26 05:30",
   "etiketleme": {
     "karar-motoru": {
       "etiketlenen": 0,
       "elle_korunan": 1,
       "olculemeyen": 4,
       "bar_havuzu": {
-        "bar": 306,
+        "bar": 336,
         "ilk": 1784742300000,
-        "son": 1785016800000
+        "son": 1785043800000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 306
+        "toplam_bar": 336
+      }
+    },
+    "grafik-calisma": {
+      "etiketlenen": 0,
+      "elle_korunan": 0,
+      "olculemeyen": 1,
+      "bar_havuzu": {
+        "bar": 336,
+        "ilk": 1784742300000,
+        "son": 1785043800000
+      },
+      "arsiv": {
+        "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
+        "eklenen_bar": 0,
+        "toplam_bar": 336
       }
     }
   },

@@ -1,39 +1,41 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (8 ekran görüntüsü: 15M/4S Liquidity Heatmap + 15M/4S gösterge paneli)",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli, 8 ekran görüntüsü)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bull",
-  "yapi_olayi": "BOS",
+  "_etiketleme_olcutu": "trend = son BELİRLEYİCİ 15M hareketin yönü (iki sembolde de aynı ölçüt uygulandı; yapı yönü ayrıca gozlem'de belirtildi)",
+  "trend": "bear",
+  "yapi_olayi": "REDDEDİLİŞ — 64500 likidite duvarında iri kırmızı dönüş mumu",
   "seviyeler": {
     "direnc": [
-      64417.1,
+      64500,
+      64566.0,
       64600,
-      64850,
-      65272.9
+      65179.85
     ],
     "destek": [
-      64280,
-      64200,
-      64000,
-      63760.5,
-      63666
+      64375,
+      64290,
+      64092.2,
+      63760.5
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa AMA SIKIŞIK: fiyat 64349 > MA30 64275.11, MA5 64301.65, MA10 64315.39 — üç MA 40 puanlık bantta, momentum düzleşti",
-    "15M yapı: 63760.50 dibinden 64417.10 tepesine impuls (BOS yukarı), ardından ~64230'a geri çekilme ve 64336-64349'a toparlanma — HH/HL korunuyor",
-    "4S'te YAPI HÂLÂ AYI: fiyat 64345 < MA30 65272.90; MA5 64171.77 < MA10 64234.55; 66924.10 tepesinden alçalan tepeler (07/23 ~65500 lower high, sonra sert kırmızı 4S mumu)",
-    "15M ısı haritası: fiyatın HEMEN ALTINDA ~64280'de geniş mor likidite rafı (mıknatıs, 07/25 12:00-21:45 boyunca duruyor); ikincil raflar ~64200 ve ~64000; 63800'de kırmızı yatay bant (eksenden ölçüm — YAKLAŞIK)",
-    "4S ısı haritası: üstte ~64550 / ~64850 / ~65000 / ~65150 mor hatlar (short tarafı yakıt); altta ~63900 ve ~63500",
-    "Funding +0.0037% (pozitif ama düşük — aşırı ısınma YOK)",
-    "Açık Faiz 107.5K BTC; 4S OI OHLC 107.4K/107.6K/107.4K/107.5K = DÜZ; 15M panelinde son güne doğru kırmızı (hafif azalış) sonra yatay — fiyat yükselirken OI genişlemiyor",
-    "Sembol Likidasyonları (açık 4S bar 20:00-00:00 UTC): Longs 86.7K vs Shorts 257.5 — long tarafı ~337x daha çok tasfiye oldu (yükselişe rağmen long flush)",
-    "24S menzil 63760-64417, 24S hacim 2,972,243,937 USD (15M paneli)"
+    "15M MA dizilimi AYI'ya döndü: fiyat 64440.4 < MA30 64445.96 < MA5 64479.37 < MA10 64495.00 — fiyat ÜÇ MA'nın da altında",
+    "Son bar iri KIRMIZI dönüş mumu: 64566.00 tepesinden ~64440'a sert geri dönüş; pencerenin en belirleyici hareketi bu",
+    "YAPI NOTU (momentumdan ayrı): 63760.50 → 64566.00 yükselen bacak henüz KIRILMADI; alttaki 15M salınım dibi test edilmedi. Yani yapı hâlâ boğa, momentum ayı — ikisi ayrıştı",
+    "15M ısı haritası: 64500-64515'te KALIN KIRMIZI likidite duvarı, uzun süredir duruyor ve fiyat tam orada reddedildi (satış tarafı emir yığını)",
+    "15M ısı haritası destek: ~64375 ve ~64290'da mor bantlar; 64092.20 pencere dibi",
+    "4S'te fiyat 64440.8 > MA5 64354.39 > MA10 64214.48 ama MA30 65179.85 ALTINDA — orta vade hâlâ ayı, 66924.10 tepesinden düşüş",
+    "Funding +0.0046% (pozitif, düşük — aşırı ısınma yok; önceki koşuda +0.0037% idi, hafif arttı)",
+    "Açık Faiz 107.1K BTC ve panelde KIRMIZI/AZALAN (4S OHLC 107.3K/107.4K/107.1K/107.1K). Not: yön çıkarımı ölçüme bırakıldı — geçen koşuda bar rengini eğilim sanma hatası yapmıştım",
+    "Sembol Likidasyonları (açık 4S bar 04:00-08:00 UTC): Longs 38.9K vs Shorts 5.1K — long tarafı ~7.6x daha çok tasfiye",
+    "Aggregated Long/Short Ratio (Taker Buy/Sell): 15M 0.268, 4S 0.757 — İKİSİ DE 1'in ALTINDA, takerlar net SATICI",
+    "15M pencere menzili 63760.50-64566.00"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK. Ek çelişki: fiyat yükselirken OI düz + long tasfiyeleri baskın = taze long birikimi DEĞİL, düşük kanaatli toparlanma",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-25 22:03",
-  "zaman_yerel": "2026-07-26 01:02-01:03 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 01:02-01:03 (UTC+3) → UTC 22:02-22:03; son kline barı 2026-07-25 22:00 UTC, paket çekimi 22:04:04 UTC — aynı bar"
+  "celiski_notu": "15M momentum ayı / 15M yapı hâlâ boğa (bacak kırılmadı) / 4S ayı. Taker satış baskısı (LSR 0.268) + azalan OI + baskın long tasfiyesi = yükselişi taşıyan taze alıcı YOK; 64500 duvarı reddi bunu doğruluyor",
+  "guven": 0.4,
+  "zaman_utc": "2026-07-26 05:33",
+  "zaman_yerel": "2026-07-26 08:31-08:33 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 08:31-08:33 (UTC+3) → UTC 05:31-05:33; son kline barı 2026-07-26 05:30 UTC, paket çekimi 05:34:16 UTC — aynı bar"
 }

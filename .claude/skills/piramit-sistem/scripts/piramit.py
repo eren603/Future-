@@ -682,7 +682,20 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
     # --- grafik-calisma (confluence) ---------------------------------------
     gc = m.get("grafik-calisma")
     if isinstance(gc, dict):
+        # yon_bias METİNDİR ("bull"/"bear") — confluence.py öyle üretir.
+        # Eskiden yalnız _num() ile okunuyordu; metin sayıya çevrilemediği için
+        # yb DAİMA None oluyor ve stance HER KOŞUDA "flat" kalıyordu. Sonucu:
+        # deponun en yüksek güvenli motoru (confluence 0.70-0.85) hiçbir karara
+        # YÖN katmıyor, üstelik `stance != "flat"` koşulu yüzünden giriş/stop/
+        # hedef seviyeleri K5'e HİÇ aktarılmıyordu — her koşudaki "motorlardan
+        # giriş/stop/hedef seti gelmedi (VERİ YOK)" satırının sebebi buydu
+        # (protokolün kendi tanımıyla EKSİK_AKTARIM / sessiz kayıp).
+        # "BEKLE" kuralı korunuyor: motor kapısını geçemediyse yön vermez.
         yb = _num(gc.get("yon_bias"))
+        if yb is None:
+            _yb = str(gc.get("yon_bias") or "").strip().lower()
+            yb = 1.0 if _yb in ("bull", "long", "al", "yukarı") else (
+                -1.0 if _yb in ("bear", "short", "sat", "aşağı") else None)
         karar = str(gc.get("KARAR", "")).upper()
         stance = "flat" if "BEKLE" in karar or yb is None else ("long" if yb > 0 else "short")
         conf = _num(gc.get("confluence_skoru"))

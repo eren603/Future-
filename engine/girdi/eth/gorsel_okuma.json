@@ -2,37 +2,37 @@
   "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
+  "_etiketleme_olcutu": "trend = son BELİRLEYİCİ 15M hareketin yönü (BTC ile AYNI ölçüt)",
   "trend": "bull",
-  "yapi_olayi": "BOS",
+  "yapi_olayi": "BOS — 1850.26 dibinden 1888.67'ye kesintisiz yükselen bacak",
   "seviyeler": {
     "direnc": [
-      1876.42,
-      1899.14,
-      1909.32,
+      1888.67,
+      1896.04,
       1958.75
     ],
     "destek": [
-      1870,
-      1860,
-      1850.26,
-      1846.17
+      1880,
+      1879.15,
+      1863.54,
+      1850.26
     ]
   },
   "gozlem": [
-    "15M MA'lar TAM SIKIŞMA: fiyat 1872.15, MA5 1870.79, MA10 1871.36, MA30 1870.83 — üçü 0.6 puan içinde; yön var ama momentum bitmiş (MA5 < MA10 = hafif negatif kesişme)",
-    "15M yapı: 1850.26 dibinden 1876.42 tepesine impuls (BOS yukarı), ardından ~1866'ya iğne ve 1872'ye dönüş — HH/HL teknik olarak korunuyor ama tepe bölgesinde sıkışıyor",
-    "4S'te YAPI AYI: fiyat 1872.12 < MA30 1899.14; MA5 1865.01 ≈ MA10 1865.07 (yatay); 1958.75 tepesinden düşüş",
-    "FUNDING NEGATİF: -0.0023% — 15M funding histogramının SON barlarında taze sarı (negatif) seri; shortlar longlara ödüyor. Önceki koşuda funding +0.0051% idi = İŞARET DEĞİŞTİ",
-    "Sembol Likidasyonları (açık 4S bar): Longs 341.9K vs Shorts 786.8 — long tarafı ~434x daha çok tasfiye; ETH'de long flush BTC'den çok daha sert",
-    "Açık Faiz seviyesi 2.3M ETH (panelden okundu — DOĞRU). DÜZELTME: önce 'panelde kırmızı → OI azalıyor' diye okumuştum; bar RENGİ o barın kapanışıdır, 12 saatlik EĞİLİM değildir. Mekanik OI serisi (48 nokta) +%0.527 ARTIŞ ölçtü — görsel eğilim okumam ÇÜRÜTÜLDÜ, ölçüm esas alınır",
-    "15M ısı haritası: 1875-1876 ve 1870-1871 bantlarında yoğun mor likidite (fiyatın hem üstü hem altı sıkışık); 1850 altında ayrı bant",
-    "4S ısı haritası: 1880 üstü ve 1840/1820 altı yoğun; genel ısı BTC'den çok daha kalabalık (ölçek 4277 vs 840)",
-    "24S menzil 1850.26-1876.42 (yalnız 26.16 puan = %1.4 — dar), 24S hacim 2,050,905,918 USD"
+    "15M MA dizilimi boğa: fiyat 1883.02, MA30 1879.15 ÜSTÜNDE; MA10 1883.32 ≈ fiyat, MA5 1885.17 hemen üstte — tepeden ufak geri çekilme, dizilim bozulmadı",
+    "15M yapı: 1850.26 dibinden 1888.67 tepesine DİK ve kesintisiz yükseliş; yükselen dipler korunuyor (BTC'nin aksine geri dönüş mumu YOK)",
+    "SHORT SQUEEZE KANITI: Sembol Likidasyonları 4S — Longs 16.2K vs Shorts 1.4M. Short tarafı ~86x daha çok tasfiye oldu; yükselişi taşıyan şey bu",
+    "FUNDING İŞARET DEĞİŞTİRDİ: -0.0023% → +0.002%. 15M funding histogramındaki sarı (negatif) seri BİTTİ, yeşile döndü — shortlar temizlendi",
+    "4S'te fiyat 1883.03 > MA5 1875.84 > MA10 1867.27 ama MA30 1896.04 ALTINDA — orta vade hâlâ ayı, 1958.75 tepesinden düşüş sürüyor",
+    "Açık Faiz 2.3M ETH; 4S OHLC 2.3M/2.4M/2.3M/2.3M. Yön çıkarımı ölçüme bırakıldı (panel rengi eğilim değildir)",
+    "Aggregated Long/Short Ratio (Taker Buy/Sell): 15M 0.7042 (1 altı, satıcı) ama 4S 1.0546 (1 üstü, alıcı) — iki ölçek ÇELİŞİYOR",
+    "15M ısı haritası: 1884-1886 ve 1880-1881 bantlarında yoğun mor likidite; fiyat tam iki yığının arasında sıkışmış",
+    "15M pencere menzili 1863.54-1888.67; 24S dibi 1850.26"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M yapı boğa / 4S ayı. OI iddiası ölçümle DÜZELTİLDİ: OI artıyor (+%0.527) → BTC'den AYRIŞIYOR (BTC -%0.657 = short kapama, ETH = taze long). Kalan ayı kanıtı: negatif funding + baskın long tasfiyesi + CVD düşüşü; 15M MA sıkışması yönü zayıflatıyor",
-  "guven": 0.35,
-  "zaman_utc": "2026-07-25 22:03",
-  "zaman_yerel": "2026-07-26 01:03 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 01:03 (UTC+3) → UTC 22:03; son kline barı 2026-07-25 22:00 UTC, paket çekimi 22:04:04 UTC — aynı bar"
+  "celiski_notu": "15M boğa / 4S ayı. BTC'DEN AYRIŞMA: BTC'de long tasfiyesi baskın (38.9K vs 5.1K) ve taker satıcı, ETH'te short tasfiyesi baskın (1.4M vs 16.2K) ve 4S taker alıcı. Ama squeeze ile gelen yükseliş taze talep değildir — short yakıtı bitince destek kalmaz; 15M taker oranı 0.7042 zaten satıcı",
+  "guven": 0.45,
+  "zaman_utc": "2026-07-26 05:33",
+  "zaman_yerel": "2026-07-26 08:33 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 08:33 (UTC+3) → UTC 05:33; son kline barı 2026-07-26 05:30 UTC, paket çekimi 05:34:16 UTC — aynı bar"
 }
