@@ -706,6 +706,10 @@
           "confirmed": false,
           "reason": "işlem 4 < taban 10 — istatistik kurulamaz"
         },
+        "turev-akis": {
+          "confirmed": true,
+          "reason": "motorun kendi kapsam doğrulaması: kapsam=1.0 (eşik 0.5)"
+        },
         "gorsel-teyit": {
           "confirmed": true,
           "reason": "mekanik smc_tespit trend=bull vs görsel okuma trend=bull — UYUMLU"
@@ -714,6 +718,7 @@
       "dogrulama_gerekceleri": {
         "karar-motoru": "R=None vs R_MIN=1.35; karar=BEKLE",
         "grafik-calisma": "setup_dogrulama: VERİ YETERSİZ — işlem 4 < taban 10 — istatistik kurulamaz",
+        "turev-akis": "turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI",
         "gorsel-teyit": "mekanik smc_tespit trend=bull vs görsel okuma trend=bull — UYUMLU"
       },
       "rr_denetimi": {},
@@ -750,7 +755,7 @@
       },
       "baglanmayan_mercekler": [],
       "gecti": true,
-      "kapi": "K4 kapısı GEÇİLDİ: 3 danışman doğrulamadan geçti, 0 R denetlendi, 0 mercek kanıta bağlanamadı."
+      "kapi": "K4 kapısı GEÇİLDİ: 4 danışman doğrulamadan geçti, 0 R denetlendi, 0 mercek kanıta bağlanamadı."
     },
     {
       "katman": "K5-SI",
@@ -759,9 +764,9 @@
         "question": "otomatik koşu — ETH (ana sembolle korelasyonlu)",
         "YON_BIAS": "LONG",
         "KARAR": "LONG",
-        "guven_skoru": 0.3022,
-        "yon_skoru": 0.6954,
-        "uzlasi": 0.6954,
+        "guven_skoru": 0.4902,
+        "yon_skoru": 0.8085,
+        "uzlasi": 0.8085,
         "muhalefet": [
           "karar-motoru",
           "grafik-calisma"
@@ -770,9 +775,9 @@
         "gecersizlik_kosulu": "VERİ YOK",
         "esik_kaynagi": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)",
         "esikler": {
-          "score": 0.499,
+          "score": 0.4502,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4514,
+          "min_side_weight": 0.718,
           "refute_penalty": 0.25
         },
         "danisman_ozeti": [
@@ -798,10 +803,10 @@
             "ad": "turev-akis",
             "yon": "long",
             "guven": 0.711,
-            "dogrulandi": false,
-            "etkin_agirlik": 0.1777,
+            "dogrulandi": true,
+            "etkin_agirlik": 0.711,
             "kanit": "Türev motoru: BOĞA baskısı (güçlü) (skor 0.511, kapsam 1.0). Faktörler: oi_price=1.0, funding=0.0, cvd=0.7, taker_lsr=-0.5, liquidation=0.8. Kritik erken-uyarı yok.",
-            "curutme": "doğrulama YOK → fail-closed varsayılan (çürütme penaltısı)"
+            "curutme": null
           },
           {
             "ad": "gorsel-teyit",
@@ -851,6 +856,10 @@
             "confirmed": false,
             "reason": "işlem 4 < taban 10 — istatistik kurulamaz"
           },
+          "turev-akis": {
+            "confirmed": true,
+            "reason": "motorun kendi kapsam doğrulaması: kapsam=1.0 (eşik 0.5)"
+          },
           "gorsel-teyit": {
             "confirmed": true,
             "reason": "mekanik smc_tespit trend=bull vs görsel okuma trend=bull — UYUMLU"
@@ -858,9 +867,9 @@
         },
         "invalidation": "VERİ YOK",
         "thresholds": {
-          "score": 0.499,
+          "score": 0.4502,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4514
+          "min_side_weight": 0.718
         },
         "esik_kaynagi": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)"
       },
@@ -967,9 +976,9 @@
       },
       "esik_kalibrasyonu": {
         "esikler": {
-          "score": 0.499,
+          "score": 0.4502,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4514
+          "min_side_weight": 0.718
         },
         "kaynak": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)",
         "taban": {
@@ -977,13 +986,13 @@
           "n_boot": 2000,
           "alpha": 0.05,
           "z": 1.96,
-          "se_skor": 0.2546,
-          "bootstrap_ort_skor": 0.6398,
+          "se_skor": 0.2297,
+          "bootstrap_ort_skor": 0.746,
           "isaret_kararliligi": 0.9445,
-          "toplam_etkin_agirlik": 0.9027,
-          "score": 0.499,
+          "toplam_etkin_agirlik": 1.436,
+          "score": 0.4502,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4514,
+          "min_side_weight": 0.718,
           "yorum": "score = z×SE_bootstrap (sinyal kendi gürültüsünü aşmalı); uzlaşı/yön ağırlığı = çoğunluk kuralı (yapısal, veriden türetilmedi — ölçek TOPLAM AĞIRLIKTAN gelir)"
         },
         "rejim": {
@@ -1014,7 +1023,7 @@
         "signflip_tanisi": {
           "durum": "ÖLÇÜLDÜ",
           "yonlu_danisman": 2,
-          "gozlenen_skor": 0.6954,
+          "gozlenen_skor": 0.8085,
           "randomizasyon_p": 0.4763,
           "p_min_ulasilabilir": 0.5,
           "alpha_ulasilabilir": false,
@@ -1023,17 +1032,17 @@
         },
         "ayrinti": {
           "score": {
-            "null_taban": 0.499,
+            "null_taban": 0.4502,
             "sertlik": 1.0,
-            "ham": 0.499,
-            "son": 0.499,
+            "ham": 0.4502,
+            "son": 0.4502,
             "korkuluk": [
               0.05,
               0.6
             ],
             "kirpildi": false,
             "statik_karsiligi": 0.15,
-            "degisim_statige_gore": 0.349
+            "degisim_statige_gore": 0.3002
           },
           "min_agreement": {
             "null_taban": 0.5,
@@ -1049,17 +1058,17 @@
             "degisim_statige_gore": -0.05
           },
           "min_side_weight": {
-            "null_taban": 0.4514,
+            "null_taban": 0.718,
             "sertlik": 1.0,
-            "ham": 0.4514,
-            "son": 0.4514,
+            "ham": 0.718,
+            "son": 0.718,
             "korkuluk": [
               0.3,
               3.0
             ],
             "kirpildi": false,
             "statik_karsiligi": 0.6,
-            "degisim_statige_gore": -0.1486
+            "degisim_statige_gore": 0.118
           }
         },
         "bar": 200,
@@ -1078,12 +1087,12 @@
         "kostu": true,
         "yon_ilk": "LONG",
         "yon_dogrulanmis_kurul": "LONG",
-        "skor_ilk": 0.6954,
+        "skor_ilk": 0.8085,
         "skor_ikinci": 1.0,
         "danisman_ilk": 4,
-        "danisman_dogrulanmis": 1,
+        "danisman_dogrulanmis": 2,
         "yon_dayaniksiz": false,
-        "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG"
+        "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 2 danışmanla da LONG"
       },
       "emir_plani": {
         "EMIR": "EMİR YOK",
@@ -1122,9 +1131,11 @@
       },
       "islem_kalitesi": {
         "hukum": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
-        "ozet": "Yön LONG ama temiz giriş yok — motorlardan giriş/stop/hedef seti gelmedi (VERİ YOK)",
+        "ozet": "Yön LONG ama temiz giriş yok — danışman seviyesi yok; emir planı da aday üretemedi — hiçbir aday kapıları geçemedi",
         "adaylar": [],
         "engeller": [],
+        "emir_plani_adayi": null,
+        "emir_plani_satiri": "EMİR YOK",
         "seviyeler": {},
         "rr_denetimi": {},
         "kapi_kurali": "hizalı seviye + rr_denetim TUTARLI + R_gercekci ≥ 1.35 + doğrulama çürütülmemiş",
@@ -1202,9 +1213,9 @@
     "YON_BIAS": "LONG",
     "ISLEM_KALITESI": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
     "sentez_karari": "LONG",
-    "guven_skoru": 0.3022,
-    "yon_skoru": 0.6954,
-    "uzlasi": 0.6954,
+    "guven_skoru": 0.4902,
+    "yon_skoru": 0.8085,
+    "uzlasi": 0.8085,
     "muhalefet": [
       "karar-motoru",
       "grafik-calisma"
@@ -1236,10 +1247,10 @@
       "giriş 1858.0: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
       "giriş 1855.57: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']"
     ],
-    "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG",
+    "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 2 danışmanla da LONG",
     "iki_satir": {
-      "1_YON": "YÖN (bias): LONG — ağırlıklı yön skoru 0.6954, uzlaşı 0.6954 (kapıdan bağımsız; BEKLE yön reddi değildir)",
-      "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: Yön LONG ama temiz giriş yok — motorlardan giriş/stop/hedef seti gelmedi (VERİ YOK)"
+      "1_YON": "YÖN (bias): LONG — ağırlıklı yön skoru 0.8085, uzlaşı 0.8085 (kapıdan bağımsız; BEKLE yön reddi değildir)",
+      "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: Yön LONG ama temiz giriş yok — danışman seviyesi yok; emir planı da aday üretemedi — hiçbir aday kapıları geçemedi"
     },
     "ONCEKI_AKIBET": {
       "durum": "VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE)",
@@ -1253,8 +1264,8 @@
         "etiket": "DEVAM",
         "aciklama": "LONG yönü korundu",
         "skor_onceki": 0.3378,
-        "skor_yeni": 0.6954,
-        "skor_delta": 0.3576
+        "skor_yeni": 0.8085,
+        "skor_delta": 0.4707
       },
       "fiyat": "VERİ YOK",
       "onemli_degisimler": [
@@ -1271,7 +1282,7 @@
       "ihlal": [],
       "uyari": [
         "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY",
-        "K4-AGI/TUNEL: doğrulanmış kanıt yalnız {'gorsel'} ailesinden — tek pencereden bakılıyor"
+        "K4-AGI/DAIRESEL: kendi çıktısıyla doğrulanan danışman: turev-akis ← turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI"
       ],
       "muhurlendi": false
     }
@@ -1286,8 +1297,8 @@
       "etiket": "DEVAM",
       "aciklama": "LONG yönü korundu",
       "skor_onceki": 0.3378,
-      "skor_yeni": 0.6954,
-      "skor_delta": 0.3576
+      "skor_yeni": 0.8085,
+      "skor_delta": 0.4707
     },
     "fiyat": "VERİ YOK",
     "surucu_tablosu": [
@@ -1457,21 +1468,21 @@
       "K4-AGI": [
         {
           "kod": "DAIRESEL",
-          "durum": "TEMİZ",
-          "kanit": "her doğrulama BAŞKA bir motordan: karar-motoru←R=None vs R_MIN=1.35; karar=BEKLE; grafik-calisma←setup_dogrulama: VERİ YETERSİZ — işlem 4 < ta; gorsel-teyit←mekanik smc_tespit trend=bull vs görsel okuma",
-          "oneri": ""
+          "durum": "UYARI",
+          "kanit": "kendi çıktısıyla doğrulanan danışman: turev-akis ← turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI",
+          "oneri": "çapraz doğrulayıcı ekle (başka motor onaylasın)"
         },
         {
           "kod": "MEMNUN_ETME",
           "durum": "TEMİZ",
-          "kanit": "doğrulama seçici: 1 onay, 2 çürütme (['karar-motoru', 'grafik-calisma']), 1 kapsanmayan (fail-closed ile cezalı)",
+          "kanit": "doğrulama seçici: 2 onay, 2 çürütme (['karar-motoru', 'grafik-calisma']), 0 kapsanmayan (fail-closed ile cezalı)",
           "oneri": ""
         },
         {
           "kod": "TUNEL",
-          "durum": "UYARI",
-          "kanit": "doğrulanmış kanıt yalnız {'gorsel'} ailesinden — tek pencereden bakılıyor",
-          "oneri": "diğer aileleri besle (likidasyon, görsel, tarihsel kanıt)"
+          "durum": "TEMİZ",
+          "kanit": "2 bağımsız kanıt ailesi doğrulandı: {'turev-akis', 'gorsel'}",
+          "oneri": ""
         },
         {
           "kod": "EKSIK_AKTARIM",
@@ -1490,7 +1501,7 @@
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "karar kapıları veriden türetildi ve aynen uygulandı: {'score': 0.499, 'min_agreement': 0.5, 'min_side_weight': 0.4514} | kaynak: VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunl",
+          "kanit": "karar kapıları veriden türetildi ve aynen uygulandı: {'score': 0.4502, 'min_agreement': 0.5, 'min_side_weight': 0.718} | kaynak: VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunl",
           "oneri": ""
         },
         {
@@ -1502,13 +1513,13 @@
         {
           "kod": "MEMNUN_ETME",
           "durum": "TEMİZ",
-          "kanit": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG",
+          "kanit": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 2 danışmanla da LONG",
           "oneri": ""
         },
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'grafik-calisma', 'gorsel-teyit', 'turev-akis'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'gorsel-teyit', 'karar-motoru', 'grafik-calisma'}",
           "oneri": ""
         },
         {
@@ -1520,7 +1531,7 @@
         {
           "kod": "MEMNUN_ETME",
           "durum": "TEMİZ",
-          "kanit": "YÖN_BIAS=LONG ağırlıklı skorun (0.6954) işaretinden mekanik türedi — beklentiye göre ayarlanmadı",
+          "kanit": "YÖN_BIAS=LONG ağırlıklı skorun (0.8085) işaretinden mekanik türedi — beklentiye göre ayarlanmadı",
           "oneri": ""
         },
         {
@@ -1546,7 +1557,7 @@
     "ihlal": [],
     "uyari": [
       "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY",
-      "K4-AGI/TUNEL: doğrulanmış kanıt yalnız {'gorsel'} ailesinden — tek pencereden bakılıyor"
+      "K4-AGI/DAIRESEL: kendi çıktısıyla doğrulanan danışman: turev-akis ← turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI"
     ],
     "kritik_ihlal": [],
     "muhurlendi": false,

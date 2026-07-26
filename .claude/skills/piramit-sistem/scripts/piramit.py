@@ -812,6 +812,33 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
                                           "reason": f"tarihsel edge kanıtı {YOK}"}
             gerekce["grafik-calisma"] = f"setup_dogrulama koşmadı → {YOK} (fail-closed)"
 
+    # turev-akis: motorun KENDİ kapsam doğrulaması (karar-kurulu/SKILL.md şartı)
+    # "çıktının `_verifier_confirmed` alanını verifier['turev-akis'].confirmed'e
+    #  taşı (kapsam < 0.5 ise false → çürütme penaltısı otomatik uygulanır)"
+    # Bu taşıma EKSİKTİ: K4 turev-akis için verifier girdisi hiç üretmiyordu ve
+    # danışmanın kendi taşıdığı `_verifier_confirmed` alanı da K5'te sentez_job
+    # kurulurken `_` ön ekiyle SİLİNİYORDU (bkz. sentez_job advisors kurulumu).
+    # Sonuç: turev-akis kapsamı 1.0 olsa bile DAİMA doğrulanmamış sayılıp ×0.25
+    # çürütme cezası alıyordu — fiyat-dışı TEK kanal sistematik olarak eziliyordu.
+    tv_d = next((d for d in k3["danismanlar"] if d["name"] == "turev-akis"), None)
+    if isinstance(tv_d, dict):
+        tv_onay = tv_d.get("_verifier_confirmed")
+        tv_kapsam = _num(((m.get("turev-akis") or {}).get("rapor") or {}).get("kapsam"))
+        if tv_onay is None and tv_kapsam is not None:
+            tv_onay = tv_kapsam >= 0.5          # SKILL.md eşiği (fail-closed)
+        if tv_onay is None:
+            verifier["turev-akis"] = {"confirmed": False,
+                                      "reason": f"kapsam okunamadı → {YOK} (fail-closed)"}
+            gerekce["turev-akis"] = f"turev-akis kapsamı {YOK} → doğrulanmadı (fail-closed)"
+        else:
+            verifier["turev-akis"] = {
+                "confirmed": bool(tv_onay),
+                "reason": (f"motorun kendi kapsam doğrulaması: kapsam="
+                           f"{tv_kapsam if tv_kapsam is not None else YOK} "
+                           f"(eşik 0.5)")}
+            gerekce["turev-akis"] = (f"turev-akis kapsam={tv_kapsam} vs eşik 0.5 → "
+                                     f"{'DOĞRULANDI' if tv_onay else 'ÇÜRÜTÜLDÜ'}")
+
     # backtest yalnız job'da hangi danışmanı doğruladığı BEYAN edilirse geçer
     bt = m.get("backtest-motoru")
     if isinstance(bt, dict) and bt.get("dogrular"):
@@ -1050,9 +1077,6 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
                   "kapi_gerekceleri": (sentez.get("kapi_gerekceleri") or [])
                   + [celiski_turu["hukum"]]}
 
-    # ---------- işlem kalitesi: seviyeler MOTORDAN, R denetlenmiş -----------
-    islem = _islem_kalitesi(k3, k4, sentez)
-
     # ---------- EMİR PLANI: karar → MARKET/LIMIT seviyeleri ----------------
     # `usd_hedef`ten ÖNCE koşar: kurulum ölçeği ATR'si artık TEK KAYNAKTAN,
     # emir_plani'nin kendi ölçümünden gelir (kullanıcı kararı). Yön dayanıksızsa
@@ -1065,6 +1089,11 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
 
     # ---------- sabit-USDT hedef motoru (kullanıcı profili) ----------------
     usd = _usd_hedef(job, taban, k2, k3, sentez, emir)
+
+    # ---------- işlem kalitesi: seviyeler MOTORDAN, R denetlenmiş -----------
+    # emir_plani'nden SONRA koşar (eskiden ÖNCE koşuyordu ve emir adaylarını
+    # göremediği için "seviye gelmedi (VERİ YOK)" diye yanlış gerekçe basıyordu).
+    islem = _islem_kalitesi(k3, k4, sentez, emir)
 
     # ---------- pozisyon boyutu (risk-yonetimi) ----------------------------
     boyut = None
@@ -1226,7 +1255,8 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
     }
 
 
-def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
+def _islem_kalitesi(k3: dict, k4: dict, sentez: dict,
+                    emir: dict | None = None) -> dict:
     """İŞLEM KALİTESİ hükmü — YÖN'den AYRI (CLAUDE.md iki-satır kuralı).
 
     "BEKLE" bir işlem-kalitesi hükmüdür, yön reddi DEĞİLDİR. Temiz giriş için
@@ -1237,6 +1267,14 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
       4) o danışmanın doğrulaması çürütülmemiş (verifier confirmed ≠ False)
     Eksik koşul(lar) gerekçe olarak AÇIKÇA yazılır — "kapı gerekçesi yok" gibi
     bilgisiz satır üretilmez.
+
+    EMİR PLANI GÖRÜNÜRLÜĞÜ: bu fonksiyon eskiden `_emir_plani`'den ÖNCE koşuyor
+    ve emir adaylarını HİÇ görmüyordu; emir planı geçerli bir kurulum üretmişken
+    bile "motorlardan giriş/stop/hedef seti gelmedi (VERİ YOK)" diye YANLIŞ
+    gerekçe basıyordu. Artık emir sonucu buraya geçirilir. Kapılar GEVŞEMEZ:
+    emir adayları 4. koşulu (danışman doğrulaması) sağlayamaz — ölçülen yapıdan
+    türetilirler, bir danışmana bağlı değildirler — bu yüzden hükmü "VAR"a
+    çeviremezler; yalnız gerekçe DOĞRU yazılır ve aday raporlanır.
     """
     bias = str(sentez.get("YON_BIAS", "")).lower()
     hedef_yon = {"long": "long", "short": "short"}.get(bias)
@@ -1275,10 +1313,25 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
                 f"R_gerçekçi {a['R_gercekci']} (rr_denetim {a['rr_verdict']})")
     else:
         hukum = "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE"
-        ozet = (f"Yön {sentez.get('YON_BIAS')} ama temiz giriş yok — "
-                + ("; ".join(engeller) if engeller
-                   else f"motorlardan giriş/stop/hedef seti gelmedi ({YOK})"))
+        # Emir planı bir aday üretmişse gerekçe ARTIK yalan söylemez.
+        e_birincil = (emir or {}).get("birincil") or {}
+        e_satir = str((emir or {}).get("EMIR") or "")
+        if engeller:
+            neden = "; ".join(engeller)
+        elif e_birincil:
+            neden = (f"danışman seviyesi yok; emir planı bir aday üretti "
+                     f"({e_satir}) ama bu aday ölçülen yapıdan türetilmiştir, "
+                     f"bir danışmana bağlı DEĞİLDİR → 4. koşul (doğrulama) "
+                     f"sağlanamaz (fail-closed)")
+        elif e_satir:
+            neden = (f"danışman seviyesi yok; emir planı da aday üretemedi — "
+                     f"{(emir or {}).get('gerekce', YOK)}")
+        else:
+            neden = f"motorlardan giriş/stop/hedef seti gelmedi ({YOK})"
+        ozet = f"Yön {sentez.get('YON_BIAS')} ama temiz giriş yok — {neden}"
     return {"hukum": hukum, "ozet": ozet, "adaylar": adaylar, "engeller": engeller,
+            "emir_plani_adayi": ((emir or {}).get("birincil") or None),
+            "emir_plani_satiri": ((emir or {}).get("EMIR") or YOK),
             "seviyeler": sevs, "rr_denetimi": rrs,
             "kapi_kurali": ("hizalı seviye + rr_denetim TUTARLI + "
                             f"R_gercekci ≥ {KONVANSIYON['r_min']} + doğrulama çürütülmemiş"),
