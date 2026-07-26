@@ -116,7 +116,7 @@
             "esik": 26.27229999999986
           },
           "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-26 11:00 UTC\nVeri: 15M 200 bar (2026-07-24 09:15→2026-07-26 11:00), 4H 200 bar (2026-06-23 04:00→2026-07-26 08:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 11:00).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=2.733 | son bar hacim sırası=0.03125 | 4H |MA5-MA20| eşiği=26.2723 (fark=1.245, rejim=FLAT)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, 4H rejim FLAT (|MA5-MA20| eşik altında).\n----------------------------------------------------------------\nUYARI : dönüş dizisi 2/4 (SHORT yönünde) — süpürülen seviye 1885.52, süpürme ucu 1886.86. Dizi tamamlanırsa yön değişebilir.\n================================================================",
-          "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth"
+          "state_dir": "/home/user/Future-/engine/state/eth"
         },
         "smc_tespit": {
           "trend": "bull",
@@ -653,7 +653,7 @@
               "liquidation": 0.15
             },
             "kaynak": "turev-akis GİRDİSİ (turev.json — üreteci turev_girdi.py) üzerinden ölçüldü; motorun kendi `kapsam` beyanı KULLANILMADI",
-            "likidasyon_kaynagi": "zorunlu girdi (damgalı) (0.1022, 0.089) — turev.json'daki bayat kopya (0.0162, 1.4) EZİLDİ"
+            "likidasyon_kaynagi": "turev.json (kanca)"
           }
         }
       },
@@ -1298,7 +1298,7 @@
         "gorsel-teyit: VERİ YOK → long"
       ]
     },
-    "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
+    "_anlik_goruntu": "/home/user/Future-/engine/state/eth/onceki_kosu.json",
     "DENETIM": {
       "ozet": "26 denetim, 0 ihlal, 1 uyarı",
       "ihlal": [],
@@ -1540,7 +1540,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'gorsel-teyit', 'grafik-calisma', 'karar-motoru'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'grafik-calisma', 'gorsel-teyit', 'karar-motoru'}",
           "oneri": ""
         },
         {

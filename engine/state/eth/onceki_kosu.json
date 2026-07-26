@@ -3,28 +3,29 @@
   "son_bar": 1785063600000,
   "son_bar_utc": "2026-07-26 11:00",
   "son_kapanis": null,
-  "YON_BIAS": "NÖTR",
-  "yon_skoru": 0.0,
-  "guven_skoru": 0.0,
-  "uzlasi": 1.0,
+  "YON_BIAS": "LONG",
+  "yon_skoru": 0.4229,
+  "guven_skoru": 0.183,
+  "uzlasi": 0.5771,
   "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
   "islem_seviyeleri": {},
   "danismanlar": {
     "karar-motoru": "flat",
     "grafik-calisma": "flat",
-    "turev-akis": "flat"
+    "turev-akis": "flat",
+    "gorsel-teyit": "long"
   },
   "surucu": {
     "trend": "bull",
     "adx": 19.41,
     "atr": 2.68078728,
     "rejim": "range",
-    "turev_skor": 0.1635,
-    "turev_kapsam": 0.85,
+    "turev_skor": 0.139,
+    "turev_kapsam": 1.0,
     "funding": 0.0,
     "lsr": -0.5,
     "cvd_delta": -0.7,
     "oi_delta": 1.0,
-    "liq_long": null
+    "liq_long": 0.0
   }
 }

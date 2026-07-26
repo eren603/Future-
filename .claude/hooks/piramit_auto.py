@@ -104,9 +104,16 @@ def _fp() -> str | None:
     """
     h = hashlib.sha256()
     var = False
-    for p in sorted((SKILL / "scripts").glob("*.py")):
-        h.update(p.name.encode())
-        h.update(hashlib.sha256(p.read_bytes()).digest())
+    # Motor kodu + KANCANIN KENDİSİ. Kanca dışarıda bırakılınca kancadaki
+    # düzeltme (ör. kum-havuzu kararı) parmak izini değiştirmiyor, main() da
+    # "veri DEĞİŞMEDİ" deyip DÜZELTME ÖNCESİ özeti basıyordu — düzeltmenin
+    # kendisi görünmez kalıyordu.
+    for p in sorted((SKILL / "scripts").glob("*.py")) + [Path(__file__).resolve()]:
+        try:
+            h.update(p.name.encode())
+            h.update(hashlib.sha256(p.read_bytes()).digest())
+        except OSError:
+            h.update(b"YOK")
     for ad in ("m15.json", "h4.json", *EK_KANAL, *ZORUNLU_GIRDI):
         p = GIRDI / ad
         if p.exists():
@@ -487,9 +494,43 @@ def _zaten_islendi(girdi: Path | None = None, state: Path | None = None) -> bool
         return False
 
 
+def _kum_havuzu_mu(girdi: Path | None = None, state: Path | None = None,
+                   anahtar: str = "gercek_fp") -> tuple[bool, str]:
+    """Bu koşu GERÇEK deftere mi yazsın, kum havuzuna mı? (fail-closed)
+
+    ÜÇ KURAL:
+    1) OKUNMAMIŞ görsel/video varsa → KUM HAVUZU. Zorunlu girdiler (görsel
+       okuma + likidasyon) henüz ELLE okunmadığı için bu koşu BAYAT girdiyle
+       karar üretir; sözleşme böyle bir kararı geçersiz sayar ("eksikle karar
+       UYDURULMAZ"), dolayısıyla gerçek deftere GİRMEMELİDİR.
+       2026-07-26'da yakalandı: 11:00 barı gerçek deftere SHORT/-0.5428 diye
+       yazıldı; görseller okunup TAZE girdiyle koşulunca sonuç LONG/0.4312
+       çıktı ama düzeltme yalnız kum havuzuna gitti. Böylece bir sonraki
+       KIYAS'ın tabanı ve öğrenme sinyali GEÇERSİZ koşu oluyordu — üstelik
+       "DÖNÜŞ SHORT→LONG" diye raporlanan şey piyasa dönüşü değil, kendi
+       girdimizin düzelmesiydi.
+    2) Bar zaten işlendi VE girdi parmak izi son GERÇEK koşununkiyle AYNI ise
+       → KUM HAVUZU (hakiki tekrar; sahte akıbet yazılmasın).
+    3) Aksi halde GERÇEK: ya yeni bar, ya da AYNI barda girdi DEĞİŞTİ (taze
+       görsel okuma geldi) — bu bir tekrar değil, DÜZELTMEdir.
+    """
+    if _okunmamis_gorseller():
+        return True, ("KUM HAVUZU — okunmamış görsel/video var; zorunlu girdi "
+                      "ELLE okunmadan üretilen karar gerçek deftere YAZILMAZ")
+    if not _zaten_islendi(girdi, state):
+        return False, "GERÇEK — yeni bar, hafıza güncellenir"
+    onceki_fp = (_durum_oku() or {}).get(anahtar)
+    simdi_fp = _fp()
+    if onceki_fp and simdi_fp and onceki_fp != simdi_fp:
+        return False, ("GERÇEK — bar aynı ama GİRDİ DEĞİŞTİ (taze zorunlu "
+                       "girdi); bu tekrar değil DÜZELTMEdir, defter düzeltilir")
+    return True, ("KUM HAVUZU — motor bu barı aynı girdiyle zaten işlemişti; "
+                  "gerçek defter korunuyor")
+
+
 def _kos() -> tuple[str, int]:
     """Boru hattını koştur; (özet metni, çıkış kodu)."""
-    kum = _zaten_islendi()
+    kum, kum_neden = _kum_havuzu_mu()
     sdir = (SKILL / "state" / "kum_havuzu") if kum else (REPO / "engine" / "state")
     if kum:
         sdir.mkdir(parents=True, exist_ok=True)
@@ -505,8 +546,7 @@ def _kos() -> tuple[str, int]:
         # kararı sahte akıbetle yazmaz ama geçmiş sicili okur ve etiketler —
         # yoksa öğrenilmiş ağırlıklar her kum havuzu koşusunda silinirdi.
         "defter_dizini": str(REPO / "engine" / "state"),
-        "_hafiza": ("KUM HAVUZU — motor bu barı zaten işlemişti; gerçek defter "
-                    "korunuyor" if kum else "GERÇEK — yeni bar, hafıza güncellenir"),
+        "_hafiza": kum_neden,
     }
     # Karşılaştırma sembolü varsa korelasyon boru hattına girer (gözlemci
     # kapsamında koşar — elle koşu artık gerekmiyor).
@@ -543,7 +583,7 @@ def _ikinci_job() -> dict | None:
     g, st = IKINCI["girdi"], IKINCI["state"]
     if not ((g / "m15.json").exists() and (g / "h4.json").exists()):
         return None
-    kum = _zaten_islendi(g, st)
+    kum, kum_neden = _kum_havuzu_mu(g, st, "gercek_fp_eth")
     sdir = (SKILL / "state" / "kum_havuzu_eth") if kum else st
     sdir.mkdir(parents=True, exist_ok=True)
     st.mkdir(parents=True, exist_ok=True)
@@ -563,8 +603,7 @@ def _ikinci_job() -> dict | None:
         "bar_arsivi": str(st / "bar_arsivi.jsonl"),
         "korelasyon": {"a": str(GIRDI / "m15.json"), "b": str(g / "m15.json"),
                        "ad_a": "BTC", "ad_b": IKINCI["ad"]},
-        "_hafiza": ("KUM HAVUZU — bu bar zaten işlenmişti" if kum
-                    else "GERÇEK — yeni bar"),
+        "_hafiza": kum_neden,
         # Gözlemci "ikinci sembol" kuralını buradan tanır (ana sembolde YOK).
         "_ikinci_sembol": IKINCI["ad"],
     }
@@ -650,8 +689,8 @@ def main() -> int:
               "elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
         return 0
 
-    hafiza = ("KUM HAVUZU (motor bu barı zaten işlemişti — gerçek defter "
-              "korundu)" if _zaten_islendi() else "GERÇEK hafıza (yeni bar)")
+    kum_ana, hafiza = _kum_havuzu_mu()
+    kum_eth, _ = _kum_havuzu_mu(IKINCI["girdi"], IKINCI["state"], "gercek_fp_eth")
     print(f"[PİRAMİT] Boru hattı koştu — hafıza: {hafiza} "
           f"(çıkış kodu {kod}; 0=zirve, 2=bir katman kapısında durdu):")
     print(ozet)
@@ -675,9 +714,14 @@ def main() -> int:
                   "— elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
     try:
         DURUM.parent.mkdir(parents=True, exist_ok=True)
-        DURUM.write_text(json.dumps({"fp": fp, "ozet": ozet, "kod": kod,
-                                     "http_engelli": bool(onceki.get("http_engelli"))},
-                                    ensure_ascii=False, indent=2), encoding="utf-8")
+        # GERÇEK koşunun parmak izi saklanır: aynı barda girdi DEĞİŞİRSE
+        # (taze görsel okuma) bunun tekrar değil DÜZELTME olduğu buradan bilinir.
+        kayit = {"fp": fp, "ozet": ozet, "kod": kod,
+                 "http_engelli": bool(onceki.get("http_engelli"))}
+        kayit["gercek_fp"] = fp if not kum_ana else onceki.get("gercek_fp")
+        kayit["gercek_fp_eth"] = fp if not kum_eth else onceki.get("gercek_fp_eth")
+        DURUM.write_text(json.dumps(kayit, ensure_ascii=False, indent=2),
+                         encoding="utf-8")
     except OSError:
         pass
     return 0
