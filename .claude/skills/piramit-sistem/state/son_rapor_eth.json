@@ -22,9 +22,9 @@
       },
       "olcumler": {
         "m15_bar": 200,
-        "m15_son_bar": 1784987100000,
+        "m15_son_bar": 1785069900000,
         "h4_bar": 200,
-        "h4_son_bar": 1784980800000
+        "h4_son_bar": 1785067200000
       },
       "profil": null,
       "veri_sozlesmesi": null,
@@ -36,55 +36,58 @@
       ],
       "zorunlu_girdiler": {
         "likidasyon": {
-          "liq_long": 0.0518,
-          "liq_short": 0.6234,
-          "kaynak": "CoinGlass Binance ETHUSDT Perpetual 4S — Longs 51.8K / Shorts 623.4K",
-          "tazelik": "likidasyon: taze (son bara göre -1 dk)"
+          "liq_long": 0.0012,
+          "liq_short": 0.4723,
+          "kaynak": "CoinGlass Binance ETHUSDT Perpetual 4S — Longs 1.2K / Shorts 472.3K",
+          "tazelik": "likidasyon: taze (son bara göre -2 dk)"
         },
         "gorsel": {
-          "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
+          "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (4 panel: 15dak grafik, 4S grafik, 15dak Liquidity Heatmap, 4S Liquidity Heatmap)",
           "sembol": "ETHUSDT",
           "zaman_dilimi": "15m",
           "trend": "bull",
-          "yapi_olayi": "CHoCH",
+          "yapi_olayi": "yükselen dipler + tepede red (1893.00 alındı, fiyat MA5/MA10 altına sarktı ama MA30 üstünde tutundu)",
           "seviyeler": {
             "direnc": [
-              1871.73,
-              1882,
-              1909.32,
+              1889.5,
+              1893,
+              1892.79,
               1958.75
             ],
             "destek": [
-              1857.6,
-              1850.26,
-              1846.17
+              1883.42,
+              1880,
+              1872.63,
+              1857.52
             ]
           },
           "gozlem": [
-            "15M MA dizilimi boğa: fiyat 1869.43 > MA5 1864.52 > MA10 1860.93 > MA30 1857.60",
-            "1846.17 dibinden dik toparlanma, son barda sert boğa mumu",
-            "4S'te fiyat 1869.84 > MA5 1860.06 ama MA30 1901.07 ALTINDA — orta vade hâlâ ayı",
-            "Likidite haritası: 1870 üstü ve 1880-1890 bandı yoğun, 1850/1846 altı bant",
-            "24S menzil 1846.17-1871.73, funding +0.0051%"
+            "15M MA dizilimi boğa sırası (MA5 1887.12 > MA10 1886.45 > MA30 1883.42); fiyat 1885.09 MA5/MA10 altında ama MA30 ÜSTÜNDE — pullback, bozulma değil",
+            "15M yapı: 1850.26 (07/25 15:45) dibinden kesintisiz yükselen dipler, tepe 1893.00 → HH/HL sağlam",
+            "4S'te fiyat 1885.62 > MA5 1881.30 > MA10 1871.73 ama MA30 1892.79 ALTINDA — orta vade hâlâ ayı (1958.75 tepesinden)",
+            "15M likidite haritası: 1889-1890 bandında kalın duvar (hemen üstte), altta 1872-1874 bandı; 15M menzil 1872.63-1893.00",
+            "4S likidite haritası: 1940-1960 üstünde çok yoğun küme, altta 1800 bandında kalın taban — ETH BTC'ye göre çok daha yoğun likidite ortamında",
+            "Panel türevi: funding +0.0018% (BTC'nin 0.009%'undan düşük — ETH'de long baskısı daha ılımlı), Açık Faiz 2.4M ETH (yükselen), 4S likidasyon Longs 1.2K / Shorts 472.3K → yükseliş short temizlemesiyle beslendi",
+            "24S menzil 1857.52-1893.00, 24S hacim 2.49B USD, +1.5%"
           ],
           "h4_trend": "bear",
-          "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK",
+          "celiski_notu": "15M boğa / 4S ayı (MA30 1892.79 altında) — zaman dilimi çatışması AÇIK. Fiyat tam 4S MA30'un dibinde: bu seviye kırılırsa 4S de boğaya döner, reddedilirse 15M boğası biter.",
           "guven": 0.45,
-          "zaman_utc": "2026-07-25 13:46",
-          "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
-          "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar",
-          "tazelik": "görsel okuma: taze (son bara göre -1 dk)"
+          "zaman_utc": "2026-07-26 12:47",
+          "zaman_yerel": "2026-07-26 15:46-15:47 (cihaz, UTC+3)",
+          "damga_kaynagi": "ekran görüntüsü cihaz saati 15:46-15:47 (UTC+3) → UTC 12:46-12:47; panelin 4S geri sayımı 03:12:12 → sonraki 4S kapanışı 16:00 UTC ile tutarlı; son kline barı 12:45 UTC (2 dk fark), paket çekimi 12:48:40 UTC",
+          "tazelik": "görsel okuma: taze (son bara göre -2 dk)"
         }
       },
       "zorunlu_eksik": [],
       "zorunlu_tazelik": [
-        "likidasyon: taze (son bara göre -1 dk)",
-        "görsel okuma: taze (son bara göre -1 dk)"
+        "likidasyon: taze (son bara göre -2 dk)",
+        "görsel okuma: taze (son bara göre -2 dk)"
       ],
       "onceki_karar_akibeti": {
         "durum": "VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE)",
         "onceki_yon": "LONG",
-        "onceki_bar_utc": "2026-07-25 13:45"
+        "onceki_bar_utc": "2026-07-26 12:45"
       },
       "onceki_kayit_var": true,
       "gecti": true,
@@ -98,159 +101,158 @@
           "karar": {
             "karar": "BEKLE",
             "yon": null,
-            "zincir": 1,
-            "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.83 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+            "zincir": 4,
+            "neden": "BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, 4H rejim FLAT (|MA5-MA20| eşik altında)."
           },
-          "son_bar_utc": "2026-07-25 13:45",
+          "son_bar_utc": "2026-07-26 12:45",
           "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-25 13:45).",
           "rejim_4h": {
-            "rejim": "DOWN",
-            "fark": -30.7829999999999,
+            "rejim": "FLAT",
+            "fark": 4.860500000000457,
             "esik": 26.27229999999986
           },
-          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-25 13:45 UTC\nVeri: 15M 200 bar (2026-07-23 12:00→2026-07-25 13:45), 4H 200 bar (2026-06-22 08:00→2026-07-25 12:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-25 13:45).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=2.237 | son bar hacim sırası=0.90625 | 4H |MA5-MA20| eşiği=26.2723 (fark=-30.783, rejim=DOWN)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.83 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.\n================================================================",
+          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-26 12:45 UTC\nVeri: 15M 200 bar (2026-07-24 11:00→2026-07-26 12:45), 4H 200 bar (2026-06-23 08:00→2026-07-26 12:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-25 13:45).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=2.873 | son bar hacim sırası=0.25 | 4H |MA5-MA20| eşiği=26.2723 (fark=4.8605, rejim=FLAT)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, 4H rejim FLAT (|MA5-MA20| eşik altında).\n----------------------------------------------------------------\nUYARI : dönüş dizisi 2/4 (SHORT yönünde) — süpürülen seviye 1888.67, süpürme ucu 1889.64. Dizi tamamlanırsa yön değişebilir.\n================================================================",
           "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth"
         },
         "smc_tespit": {
           "trend": "bull",
           "rejim": {
-            "adx": 27.24,
-            "durum": "trend",
+            "adx": 23.59,
+            "durum": "gecis",
             "yuksek_vol": false,
-            "atr_pct": 0.00146,
-            "vol_esik": 0.00414,
-            "vol_esik_kaynagi": "veri-türevi: ATR% tarihinin q0.9 = 0.00414"
+            "atr_pct": 0.00158,
+            "vol_esik": 0.00323,
+            "vol_esik_kaynagi": "veri-türevi: ATR% tarihinin q0.9 = 0.00323"
           },
-          "atr": 2.7253375,
+          "atr": 2.98530604,
           "olaylar": [
             {
-              "i": 61,
-              "type": "CHoCH",
-              "direction": "bull",
-              "kirilan_seviye": 1877.86,
-              "impulse_start": 1863.68,
-              "impulse_start_i": 59
-            },
-            {
-              "i": 73,
-              "type": "BOS",
-              "direction": "bull",
-              "kirilan_seviye": 1881.17,
-              "impulse_start": 1872.47,
-              "impulse_start_i": 68
-            },
-            {
-              "i": 84,
-              "type": "CHoCH",
-              "direction": "bear",
-              "kirilan_seviye": 1885.18,
-              "impulse_start": 1909.32,
-              "impulse_start_i": 76
-            },
-            {
-              "i": 99,
-              "type": "BOS",
-              "direction": "bear",
-              "kirilan_seviye": 1875.22,
-              "impulse_start": 1885.2,
-              "impulse_start_i": 97
-            },
-            {
-              "i": 135,
-              "type": "BOS",
-              "direction": "bear",
-              "kirilan_seviye": 1857.3,
-              "impulse_start": 1864.51,
-              "impulse_start_i": 128
-            },
-            {
-              "i": 144,
-              "type": "CHoCH",
-              "direction": "bull",
-              "kirilan_seviye": 1860.82,
-              "impulse_start": 1858.13,
-              "impulse_start_i": 140
-            },
-            {
-              "i": 166,
+              "i": 74,
               "type": "CHoCH",
               "direction": "bear",
               "kirilan_seviye": 1857.65,
               "impulse_start": 1862.2,
-              "impulse_start_i": 164
+              "impulse_start_i": 72
             },
             {
-              "i": 184,
+              "i": 92,
               "type": "CHoCH",
               "direction": "bull",
               "kirilan_seviye": 1857.91,
               "impulse_start": 1850.26,
-              "impulse_start_i": 179
+              "impulse_start_i": 87
             },
             {
-              "i": 188,
+              "i": 96,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1858.5,
               "impulse_start": 1855.71,
-              "impulse_start_i": 186
+              "impulse_start_i": 94
             },
             {
-              "i": 195,
+              "i": 103,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1859.38,
               "impulse_start": 1856.05,
-              "impulse_start_i": 192
+              "impulse_start_i": 100
+            },
+            {
+              "i": 121,
+              "type": "BOS",
+              "direction": "bull",
+              "kirilan_seviye": 1870.68,
+              "impulse_start": 1863.54,
+              "impulse_start_i": 117
+            },
+            {
+              "i": 148,
+              "type": "BOS",
+              "direction": "bull",
+              "kirilan_seviye": 1876.25,
+              "impulse_start": 1872.63,
+              "impulse_start_i": 145
+            },
+            {
+              "i": 160,
+              "type": "BOS",
+              "direction": "bull",
+              "kirilan_seviye": 1880.95,
+              "impulse_start": 1876.01,
+              "impulse_start_i": 156
+            },
+            {
+              "i": 165,
+              "type": "BOS",
+              "direction": "bull",
+              "kirilan_seviye": 1883.17,
+              "impulse_start": 1876.01,
+              "impulse_start_i": 156
+            },
+            {
+              "i": 173,
+              "type": "CHoCH",
+              "direction": "bear",
+              "kirilan_seviye": 1878.97,
+              "impulse_start": 1888.67,
+              "impulse_start_i": 167
+            },
+            {
+              "i": 190,
+              "type": "CHoCH",
+              "direction": "bull",
+              "kirilan_seviye": 1884.91,
+              "impulse_start": 1881.07,
+              "impulse_start_i": 188
             }
           ],
           "htf": {
             "trend": "bear",
-            "olay_sayisi": 16
+            "olay_sayisi": 15
           },
           "swing_sayisi": {
             "high": 25,
-            "low": 33
+            "low": 29
           },
           "varsayimlar": [
             "swing pencere left/right=2/2 (fraktal granülarite; varsayım)",
             "ATR/ADX periyodu=14/14 (Wilder konvansiyonu)",
             "ADX trend/range eşiği=25.0/20.0 (Wilder konvansiyonu; params ile ezilebilir)",
             "eşit tepe/dip toleransı=0.25×ATR (varsayım)",
-            "yüksek-vol eşiği: veri-türevi: ATR% tarihinin q0.9 = 0.00414"
+            "yüksek-vol eşiği: veri-türevi: ATR% tarihinin q0.9 = 0.00323"
           ]
         },
         "grafik-calisma": {
           "KARAR": "NÖTR-BEKLE",
           "yon_bias": "bull",
-          "confluence_skoru": 0.6,
+          "confluence_skoru": 0.45,
           "confluence_faktorleri": [
-            "yapı(SMC): BOS/bull",
-            "rejim: trend",
-            "FVG çakışması",
+            "yapı(SMC): CHOCH/bull",
             "likidite hedefi var"
           ],
           "golden_zone": [
-            1859.40552,
-            1862.03976
+            1883.62302,
+            1885.62726
           ],
           "giris_bolgesi": [
-            1859.78,
-            1861.48
+            1883.62302,
+            1885.62726
           ],
-          "giris_orta": 1860.63,
-          "gecersizlik_sl": 1853.324662,
+          "giris_orta": 1884.62514,
+          "gecersizlik_sl": 1878.084694,
           "hedefler": [
-            1864.185,
-            1881.12
+            1893.0
           ],
-          "rr": 0.487,
-          "atr_kullanildi": 2.7253375,
-          "rejim": "trend",
+          "rr": 1.28,
+          "atr_kullanildi": 2.98530604,
+          "rejim": "gecis",
           "esik_kaynagi": "varsayılan eşikler (varsayım — kalibre edilmemiş)",
           "kapi_gerekceleri": [
             "HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık",
-            "R:R 0.49 < 2.0"
+            "confluence eksik: golden zone hiçbir OB/FVG ile çakışmıyor (yalnız fib)",
+            "confluence skoru 0.45 < 0.5",
+            "R:R 1.28 < 2.0"
           ],
           "katman_sirasi": "bağlam→yapı→arz-talep→likidite→fib→onay→risk",
           "not": "Karar-destek; olasılık senaryosu, sinyal/garanti değil. Onay (alt-TF tetik) girişten önce beklenir. Canlı emir DAHİL DEĞİL."
@@ -262,22 +264,23 @@
           "esik_kaynagi": "veri-türevi (her koşuda bu veriyle yeniden kalibre)",
           "kalibrasyon": {
             "atr_mult_kalibre": {
-              "atr_mult": 1.0,
-              "kaynak": "MAE verisi yok → varsayılan 1.0 (varsayım)"
+              "atr_mult": 0.665,
+              "mae_q": 0.6651,
+              "kaynak": "veri-türevi: kazanan MAE q0.9"
             },
             "permutasyon": {
-              "p": 0.2985,
-              "null_ortalama": -0.3187,
+              "p": 0.0249,
+              "null_ortalama": -0.2344,
               "null_q95": 0.875,
               "n_perm": 200
             },
             "bootstrap_ci_R": [
-              -1.1578,
-              0.941
+              0.7186,
+              1.1194
             ],
             "onerilen_min_rr": {
-              "min_rr": 5.0,
-              "wr_wilson_lo": 0.15,
+              "min_rr": 1.0,
+              "wr_wilson_lo": 0.5101,
               "kaynak": "veri-türevi: (1-wr_lo)/wr_lo, Wilson %95 alt sınırından"
             }
           },
@@ -296,14 +299,14 @@
         "smc_tespit_h4": {
           "trend": "bear",
           "rejim": {
-            "adx": 19.44,
+            "adx": 15.01,
             "durum": "range",
             "yuksek_vol": false,
-            "atr_pct": 0.01112,
-            "vol_esik": 0.02124,
-            "vol_esik_kaynagi": "veri-türevi: ATR% tarihinin q0.9 = 0.02124"
+            "atr_pct": 0.00898,
+            "vol_esik": 0.02035,
+            "vol_esik_kaynagi": "veri-türevi: ATR% tarihinin q0.9 = 0.02035"
           },
-          "atr": 20.78524718,
+          "atr": 16.9292682,
           "likidite": [
             {
               "price": 1588.595,
@@ -330,16 +333,16 @@
               "count": 2
             },
             {
-              "price": 1956.1950000000002,
-              "type": "buyside",
-              "kind": "esit-tepe",
-              "count": 2
-            },
-            {
-              "price": 1554.4985714285715,
+              "price": 1549.7975,
               "type": "sellside",
               "kind": "esit-dip",
-              "count": 7
+              "count": 4
+            },
+            {
+              "price": 1562.88,
+              "type": "sellside",
+              "kind": "esit-dip",
+              "count": 2
             },
             {
               "price": 1729.6999999999998,
@@ -354,7 +357,7 @@
               "count": 2
             },
             {
-              "price": 1846.32,
+              "price": 1849.1266666666668,
               "type": "sellside",
               "kind": "esit-dip",
               "count": 3
@@ -364,6 +367,12 @@
               "type": "sellside",
               "kind": "esit-dip",
               "count": 2
+            },
+            {
+              "price": 1958.75,
+              "type": "buyside",
+              "kind": "swing-ekstrem",
+              "count": 1
             },
             {
               "price": 1510.87,
@@ -377,64 +386,64 @@
               "low": 1778.4,
               "high": 1792.77,
               "type": "demand",
-              "i": 131
+              "i": 125
             },
             {
               "low": 1863.57,
               "high": 1891.54,
               "type": "demand",
-              "i": 137
+              "i": 131
             },
             {
               "low": 1836.36,
               "high": 1849.71,
               "type": "demand",
-              "i": 157
+              "i": 151
             },
             {
               "low": 1850.95,
               "high": 1873.15,
               "type": "demand",
-              "i": 164
+              "i": 158
             },
             {
               "low": 1913.39,
               "high": 1930.74,
               "type": "supply",
-              "i": 186
+              "i": 180
             }
           ],
           "acik_fvgler": [
             {
-              "i": 56,
+              "i": 50,
               "type": "bull",
               "low": 1584.49,
               "high": 1606.14,
               "dolu": false
             },
             {
-              "i": 61,
+              "i": 55,
               "type": "bull",
               "low": 1639.4,
               "high": 1646.89,
               "dolu": false
             },
             {
-              "i": 62,
+              "i": 56,
               "type": "bull",
               "low": 1654.36,
               "high": 1685.04,
               "dolu": false
             },
             {
-              "i": 133,
+              "i": 127,
               "type": "bull",
               "low": 1792.77,
               "high": 1793.34,
               "dolu": false
             },
             {
-              "i": 188,
+              "i": 182,
               "type": "bear",
               "low": 1894.7,
               "high": 1913.39,
@@ -442,110 +451,117 @@
             },
             {
               "i": 194,
-              "type": "bear",
-              "low": 1865.81,
-              "high": 1875.22,
+              "type": "bull",
+              "low": 1859.38,
+              "high": 1863.54,
+              "dolu": false
+            },
+            {
+              "i": 197,
+              "type": "bull",
+              "low": 1876.25,
+              "high": 1877.24,
               "dolu": false
             }
           ],
           "olaylar": [
             {
-              "i": 73,
+              "i": 67,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1775.5,
               "impulse_start": 1596.14,
-              "impulse_start_i": 58
+              "impulse_start_i": 52
             },
             {
-              "i": 94,
+              "i": 88,
               "type": "CHoCH",
               "direction": "bear",
               "kirilan_seviye": 1756.62,
               "impulse_start": 1812.85,
-              "impulse_start_i": 92
+              "impulse_start_i": 86
             },
             {
-              "i": 106,
+              "i": 100,
               "type": "CHoCH",
               "direction": "bull",
               "kirilan_seviye": 1762.52,
               "impulse_start": 1731.1,
-              "impulse_start_i": 104
+              "impulse_start_i": 98
             },
             {
-              "i": 115,
+              "i": 109,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1811.23,
               "impulse_start": 1731.1,
-              "impulse_start_i": 104
+              "impulse_start_i": 98
             },
             {
-              "i": 127,
+              "i": 121,
               "type": "CHoCH",
               "direction": "bear",
               "kirilan_seviye": 1778.26,
               "impulse_start": 1848.0,
-              "impulse_start_i": 124
+              "impulse_start_i": 118
             },
             {
-              "i": 133,
+              "i": 127,
               "type": "CHoCH",
               "direction": "bull",
               "kirilan_seviye": 1848.0,
               "impulse_start": 1748.0,
-              "impulse_start_i": 128
+              "impulse_start_i": 122
             },
             {
-              "i": 139,
+              "i": 133,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1896.86,
               "impulse_start": 1748.0,
-              "impulse_start_i": 128
+              "impulse_start_i": 122
             },
             {
-              "i": 158,
+              "i": 152,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1855.9,
               "impulse_start": 1802.46,
-              "impulse_start_i": 151
+              "impulse_start_i": 145
             },
             {
-              "i": 166,
+              "i": 160,
               "type": "BOS",
               "direction": "bull",
               "kirilan_seviye": 1878.76,
               "impulse_start": 1850.95,
-              "impulse_start_i": 164
+              "impulse_start_i": 158
             },
             {
-              "i": 187,
+              "i": 181,
               "type": "CHoCH",
               "direction": "bear",
               "kirilan_seviye": 1909.32,
               "impulse_start": 1958.75,
-              "impulse_start_i": 181
+              "impulse_start_i": 175
             }
           ]
         },
         "korelasyon": {
           "cift": "BTC ↔ ETH",
           "gozlem": 199,
-          "korelasyon": 0.8521,
-          "beta": 1.2607,
-          "aciklanan_varyans_r2": 0.726,
-          "artik_oynaklik_orani": 0.5234,
+          "korelasyon": 0.8374,
+          "beta": 1.0418,
+          "aciklanan_varyans_r2": 0.7013,
+          "artik_oynaklik_orani": 0.5465,
           "kararlilik": {
-            "ilk_yari": 0.8759,
-            "son_yari": 0.8243,
-            "kayma": 0.0517
+            "ilk_yari": 0.8448,
+            "son_yari": 0.8215,
+            "kayma": 0.0233
           },
-          "HUKUM": "KOPYA POZİSYON",
-          "toplam_risk_carpani": 2.0,
-          "aciklama": "ETH, BTC ile neredeyse aynı hareket ediyor (ρ=0.852). Aynı yönde iki pozisyon = tek bahsin iki katı riski.",
+          "HUKUM": "GÜÇLÜ BAĞLI",
+          "toplam_risk_carpani": 1.5,
+          "aciklama": "Hareketin %70'i BTC ile açıklanıyor (ρ=0.837); çeşitlendirme kısmi.",
           "varsayimlar": [
             "eşikler: kopya ≥0.85, güçlü ≥0.6 (konvansiyon)",
             "log getiri, YALNIZ hizalı zaman damgaları (eşleşmeyen bar atıldı)",
@@ -556,9 +572,9 @@
         "turev-akis": {
           "rapor": {
             "KARAR_TUREV": "BOĞA eğilimli",
-            "yon_skoru": 0.4864,
+            "yon_skoru": 0.3727,
             "kapsam": 0.66,
-            "guven": 0.453,
+            "guven": 0.378,
             "faktorler": [
               {
                 "faktor": "oi_price",
@@ -570,25 +586,25 @@
                 "faktor": "funding",
                 "agirlik": 0.18,
                 "skor": 0.0,
-                "aciklama": "funding %0.005152 soğuk/nötr (|f| ≤ %0.01) → kaldıraç iştahı düşük"
+                "aciklama": "funding %0.001792 soğuk/nötr (|f| ≤ %0.01) → kaldıraç iştahı düşük"
               },
               {
                 "faktor": "cvd",
                 "agirlik": 0.18,
                 "skor": 0.7,
-                "aciklama": "CVD↑ (Δ%12.5) → net alıcı emici (boğa)"
+                "aciklama": "CVD↑ (Δ%4.9) → net alıcı emici (boğa)"
               },
               {
                 "faktor": "taker_lsr",
                 "agirlik": 0.15,
-                "skor": 0.5,
-                "aciklama": "taker LSR 1.4705 > 1.05 → takerlar net alıcı (momentum boğa)"
+                "skor": 0.0,
+                "aciklama": "taker LSR 1.0438 nötr bandda"
               },
               {
                 "faktor": "liquidation",
                 "agirlik": 0.15,
                 "skor": 0.8,
-                "aciklama": "short likidasyon 0.6234 >> long 0.0518 → yukarı squeeze (boğa)"
+                "aciklama": "short likidasyon 0.4723 >> long 0.0012 → yukarı squeeze (boğa)"
               }
             ],
             "erken_uyari": [
@@ -611,8 +627,8 @@
           "danisman": {
             "name": "turev-akis",
             "stance": "long",
-            "confidence": 0.453,
-            "evidence": "Türev motoru: BOĞA eğilimli (skor 0.4864, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.5, liquidation=0.8. Kritik erken-uyarı yok.",
+            "confidence": 0.378,
+            "evidence": "Türev motoru: BOĞA eğilimli (skor 0.3727, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.0, liquidation=0.8. Kritik erken-uyarı yok.",
             "_verifier_confirmed": true
           }
         }
@@ -630,32 +646,32 @@
           "name": "karar-motoru",
           "stance": "flat",
           "confidence": 0.4,
-          "evidence": "BEKLE (zincir 1, R=None): BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.83 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.",
+          "evidence": "BEKLE (zincir 4, R=None): BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, 4H rejim FLAT (|MA5-MA20| eşik altında).",
           "_ham_confidence": 0.4,
           "_agirlik": 1.0
         },
         {
           "name": "grafik-calisma",
           "stance": "flat",
-          "confidence": 0.6,
-          "evidence": "NÖTR-BEKLE | confluence=0.6 faktörler=['yapı(SMC): BOS/bull', 'rejim: trend', 'FVG çakışması', 'likidite hedefi var'] | rejim=trend | kapılar=['HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık', 'R:R 0.49 < 2.0']",
-          "_ham_confidence": 0.6,
+          "confidence": 0.45,
+          "evidence": "NÖTR-BEKLE | confluence=0.45 faktörler=['yapı(SMC): CHOCH/bull', 'likidite hedefi var'] | rejim=gecis | kapılar=['HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık', 'confluence eksik: golden zone hiçbir OB/FVG ile çakışmıyor (yalnız fib)', 'confluence skoru 0.45 < 0.5', 'R:R 1.28 < 2.0']",
+          "_ham_confidence": 0.45,
           "_agirlik": 1.0
         },
         {
           "name": "turev-akis",
           "stance": "long",
-          "confidence": 0.453,
-          "evidence": "Türev motoru: BOĞA eğilimli (skor 0.4864, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.5, liquidation=0.8. Kritik erken-uyarı yok.",
+          "confidence": 0.378,
+          "evidence": "Türev motoru: BOĞA eğilimli (skor 0.3727, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.0, liquidation=0.8. Kritik erken-uyarı yok.",
           "_verifier_confirmed": true,
-          "_ham_confidence": 0.453,
+          "_ham_confidence": 0.378,
           "_agirlik": 1.0
         },
         {
           "name": "gorsel-teyit",
           "stance": "long",
           "confidence": 0.45,
-          "evidence": "Görsel okuma (15m): trend=bull, yapı=CHoCH, seviyeler={'direnc': [1871.73, 1882, 1909.32, 1958.75], 'destek': [1857.6, 1850.26, 1846.17]}.",
+          "evidence": "Görsel okuma (15m): trend=bull, yapı=yükselen dipler + tepede red (1893.00 alındı, fiyat MA5/MA10 altına sarktı ama MA30 üstünde tutundu), seviyeler={'direnc': [1889.5, 1893, 1892.79, 1958.75], 'destek': [1883.42, 1880, 1872.63, 1857.52]}.",
           "_kaynak": "ELLE GÖRSEL OKUMA (ölçüm değil)",
           "_ham_confidence": 0.45,
           "_agirlik": 1.0
@@ -667,7 +683,7 @@
           "karar-motoru": 1.0
         },
         "kaynak": "/home/user/Future-/.claude/skills/piramit-sistem/hafiza/agirlik_eth.json",
-        "uretildigi_bar": "2026-07-25 13:45",
+        "uretildigi_bar": "2026-07-26 12:45",
         "not": "Bu ağırlıklar BİR SONRAKİ koşunun K3 katmanında uygulanır. Ölçülmemiş sonuç istatistiğe girmez — 'öğrendim' iddiası kanıtsız üretilmez."
       },
       "notlar": [
@@ -699,8 +715,8 @@
       },
       "rr_denetimi": {},
       "celiskiler": [
-        "KORELASYON RİSKİ: BTC ↔ ETH ρ=0.8521 → KOPYA POZİSYON; aynı yönde ikinci pozisyon bağımsız bahis DEĞİL, toplam risk ×2.0 sayılmalı.",
-        "MTF bağlam: karar-motoru rejim=DOWN | smc HTF={'trend': 'bear', 'olay_sayisi': 16}"
+        "KORELASYON RİSKİ: BTC ↔ ETH ρ=0.8374 → GÜÇLÜ BAĞLI; aynı yönde ikinci pozisyon bağımsız bahis DEĞİL, toplam risk ×1.5 sayılmalı.",
+        "MTF bağlam: karar-motoru rejim=FLAT | smc HTF={'trend': 'bear', 'olay_sayisi': 15}"
       ],
       "mercekler": {
         "muhalif": {
@@ -740,9 +756,9 @@
         "question": "otomatik koşu — ETH (ana sembolle korelasyonlu)",
         "YON_BIAS": "LONG",
         "KARAR": "LONG",
-        "guven_skoru": 0.2998,
-        "yon_skoru": 0.6926,
-        "uzlasi": 0.6926,
+        "guven_skoru": 0.3234,
+        "yon_skoru": 0.7193,
+        "uzlasi": 0.7193,
         "muhalefet": [
           "karar-motoru",
           "grafik-calisma"
@@ -751,9 +767,9 @@
         "gecersizlik_kosulu": "VERİ YOK",
         "esik_kaynagi": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)",
         "esikler": {
-          "score": 0.5277,
+          "score": 0.5371,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4067,
+          "min_side_weight": 0.3785,
           "refute_penalty": 0.25
         },
         "danisman_ozeti": [
@@ -763,25 +779,25 @@
             "guven": 0.4,
             "dogrulandi": false,
             "etkin_agirlik": 0.1,
-            "kanit": "BEKLE (zincir 1, R=None): BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.83 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.",
+            "kanit": "BEKLE (zincir 4, R=None): BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, 4H rejim FLAT (|MA5-MA20| eşik altında).",
             "curutme": null
           },
           {
             "ad": "grafik-calisma",
             "yon": "nötr",
-            "guven": 0.6,
+            "guven": 0.45,
             "dogrulandi": false,
-            "etkin_agirlik": 0.15,
-            "kanit": "NÖTR-BEKLE | confluence=0.6 faktörler=['yapı(SMC): BOS/bull', 'rejim: trend', 'FVG çakışması', 'likidite hedefi var'] | rejim=trend | kapılar=['HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık', 'R:R 0.49 < 2.0']",
+            "etkin_agirlik": 0.1125,
+            "kanit": "NÖTR-BEKLE | confluence=0.45 faktörler=['yapı(SMC): CHOCH/bull', 'likidite hedefi var'] | rejim=gecis | kapılar=['HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık', 'confluence eksik: golden zone hiçbir OB/FVG ile çakışmıyor (yalnız fib)', 'confluence skoru 0.45 < 0.5', 'R:R 1.28 < 2.0']",
             "curutme": "işlem 4 < taban 10 — istatistik kurulamaz"
           },
           {
             "ad": "turev-akis",
             "yon": "long",
-            "guven": 0.453,
+            "guven": 0.378,
             "dogrulandi": false,
-            "etkin_agirlik": 0.1133,
-            "kanit": "Türev motoru: BOĞA eğilimli (skor 0.4864, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.5, liquidation=0.8. Kritik erken-uyarı yok.",
+            "etkin_agirlik": 0.0945,
+            "kanit": "Türev motoru: BOĞA eğilimli (skor 0.3727, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.0, liquidation=0.8. Kritik erken-uyarı yok.",
             "curutme": "doğrulama YOK → fail-closed varsayılan (çürütme penaltısı)"
           },
           {
@@ -790,7 +806,7 @@
             "guven": 0.45,
             "dogrulandi": true,
             "etkin_agirlik": 0.45,
-            "kanit": "Görsel okuma (15m): trend=bull, yapı=CHoCH, seviyeler={'direnc': [1871.73, 1882, 1909.32, 1958.75], 'destek': [1857.6, 1850.26, 1846.17]}.",
+            "kanit": "Görsel okuma (15m): trend=bull, yapı=yükselen dipler + tepede red (1893.00 alındı, fiyat MA5/MA10 altına sarktı ama MA30 üstünde tutundu), seviyeler={'direnc': [1889.5, 1893, 1892.79, 1958.75], 'destek': [1883.42, 1880, 1872.63, 1857.52]}.",
             "curutme": null
           }
         ],
@@ -803,25 +819,25 @@
             "name": "karar-motoru",
             "stance": "flat",
             "confidence": 0.4,
-            "evidence": "BEKLE (zincir 1, R=None): BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.83 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+            "evidence": "BEKLE (zincir 4, R=None): BEKLE: dönüş dizisi tamamlanmadı, teyitli 15M kırılımı yok, 4H rejim FLAT (|MA5-MA20| eşik altında)."
           },
           {
             "name": "grafik-calisma",
             "stance": "flat",
-            "confidence": 0.6,
-            "evidence": "NÖTR-BEKLE | confluence=0.6 faktörler=['yapı(SMC): BOS/bull', 'rejim: trend', 'FVG çakışması', 'likidite hedefi var'] | rejim=trend | kapılar=['HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık', 'R:R 0.49 < 2.0']"
+            "confidence": 0.45,
+            "evidence": "NÖTR-BEKLE | confluence=0.45 faktörler=['yapı(SMC): CHOCH/bull', 'likidite hedefi var'] | rejim=gecis | kapılar=['HTF bias (bear) işlem yönüyle (bull) çelişiyor — MTF hizasızlık', 'confluence eksik: golden zone hiçbir OB/FVG ile çakışmıyor (yalnız fib)', 'confluence skoru 0.45 < 0.5', 'R:R 1.28 < 2.0']"
           },
           {
             "name": "turev-akis",
             "stance": "long",
-            "confidence": 0.453,
-            "evidence": "Türev motoru: BOĞA eğilimli (skor 0.4864, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.5, liquidation=0.8. Kritik erken-uyarı yok."
+            "confidence": 0.378,
+            "evidence": "Türev motoru: BOĞA eğilimli (skor 0.3727, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=0.0, liquidation=0.8. Kritik erken-uyarı yok."
           },
           {
             "name": "gorsel-teyit",
             "stance": "long",
             "confidence": 0.45,
-            "evidence": "Görsel okuma (15m): trend=bull, yapı=CHoCH, seviyeler={'direnc': [1871.73, 1882, 1909.32, 1958.75], 'destek': [1857.6, 1850.26, 1846.17]}."
+            "evidence": "Görsel okuma (15m): trend=bull, yapı=yükselen dipler + tepede red (1893.00 alındı, fiyat MA5/MA10 altına sarktı ama MA30 üstünde tutundu), seviyeler={'direnc': [1889.5, 1893, 1892.79, 1958.75], 'destek': [1883.42, 1880, 1872.63, 1857.52]}."
           }
         ],
         "verifier": {
@@ -839,9 +855,9 @@
         },
         "invalidation": "VERİ YOK",
         "thresholds": {
-          "score": 0.5277,
+          "score": 0.5371,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4067
+          "min_side_weight": 0.3785
         },
         "esik_kaynagi": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)"
       },
@@ -855,7 +871,7 @@
             135.0,
             150.0
           ],
-          "nominal_usdt": 5606.37,
+          "nominal_usdt": 5658.21,
           "stop_mesafe_puan": 33.3333,
           "hedef_mesafe_puan": [
             45.0,
@@ -865,17 +881,17 @@
             1.35,
             1.5
           ],
-          "stop_atr_kat": 1.6037,
+          "stop_atr_kat": 1.969,
           "hedef_atr_kat": [
-            2.165,
-            2.4056
+            2.6581,
+            2.9535
           ],
-          "komisyon_gidis_donus_usdt": 4.49,
+          "komisyon_gidis_donus_usdt": 4.53,
           "net_kazanc_band_usdt": [
-            130.51,
-            145.51
+            130.47,
+            145.47
           ],
-          "gercek_kaldirac": 14.02,
+          "gercek_kaldirac": 14.15,
           "tasfiye_mesafe_puan": 133.3333
         },
         "kapilar": [
@@ -887,12 +903,12 @@
           {
             "kapi": "stop ölçeği",
             "gecti": true,
-            "kanit": "stop 1.6037×ATR, kabul [0.8, 2.0]"
+            "kanit": "stop 1.969×ATR, kabul [0.8, 2.0]"
           },
           {
             "kapi": "hedef ölçeği",
             "gecti": true,
-            "kanit": "hedef üst 2.4056×ATR vs uzak eşiği 3.0"
+            "kanit": "hedef üst 2.9535×ATR vs uzak eşiği 3.0"
           },
           {
             "kapi": "tasfiye > stop",
@@ -907,24 +923,24 @@
         ],
         "adaylar": [
           {
-            "giris": 1860.63,
-            "stop": 1827.2967,
-            "hedef_min": 1905.63,
-            "hedef_max": 1910.63,
+            "giris": 1884.6251,
+            "stop": 1851.2918,
+            "hedef_min": 1929.6251,
+            "hedef_max": 1934.6251,
             "band_ici_likidite": [],
             "yapi_hedefi_var": false,
-            "en_yakin_karsi_yapi": 1846.32,
-            "stop_yapinin_otesinde": true
+            "en_yakin_karsi_yapi": 1849.1267,
+            "stop_yapinin_otesinde": false
           },
           {
-            "giris": 1868.79,
-            "stop": 1835.4567,
-            "hedef_min": 1913.79,
-            "hedef_max": 1918.79,
+            "giris": 1886.07,
+            "stop": 1852.7367,
+            "hedef_min": 1931.07,
+            "hedef_max": 1936.07,
             "band_ici_likidite": [],
             "yapi_hedefi_var": false,
-            "en_yakin_karsi_yapi": 1846.32,
-            "stop_yapinin_otesinde": true
+            "en_yakin_karsi_yapi": 1849.1267,
+            "stop_yapinin_otesinde": false
           }
         ],
         "dusen_kapilar": [
@@ -941,14 +957,14 @@
         "_girdi_kaynagi": {
           "atr_kurulum": "smc_tespit_h4.atr (4H — kurulum ölçeği)",
           "fiyat": "karar-motoru.giris / confluence / son kapanış",
-          "likidite": "smc_tespit_h4.likidite (11 seviye)"
+          "likidite": "smc_tespit_h4.likidite (12 seviye)"
         }
       },
       "esik_kalibrasyonu": {
         "esikler": {
-          "score": 0.5277,
+          "score": 0.5371,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4067
+          "min_side_weight": 0.3785
         },
         "kaynak": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)",
         "taban": {
@@ -956,20 +972,20 @@
           "n_boot": 2000,
           "alpha": 0.05,
           "z": 1.96,
-          "se_skor": 0.2692,
-          "bootstrap_ort_skor": 0.6233,
+          "se_skor": 0.274,
+          "bootstrap_ort_skor": 0.637,
           "isaret_kararliligi": 0.9445,
-          "toplam_etkin_agirlik": 0.8133,
-          "score": 0.5277,
+          "toplam_etkin_agirlik": 0.757,
+          "score": 0.5371,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4067,
+          "min_side_weight": 0.3785,
           "yorum": "score = z×SE_bootstrap (sinyal kendi gürültüsünü aşmalı); uzlaşı/yön ağırlığı = çoğunluk kuralı (yapısal, veriden türetilmedi — ölçek TOPLAM AĞIRLIKTAN gelir)"
         },
         "rejim": {
           "varyans_orani": {
             "durum": "ÖLÇÜLDÜ",
-            "VR": 0.5622,
-            "z": -1.576,
+            "VR": 0.8691,
+            "z": -0.407,
             "q": 8,
             "n_getiri": 199,
             "etiket": "ORTALAMAYA DÖNÜŞ (çalkantı)",
@@ -979,21 +995,21 @@
             "durum": "ÖLÇÜLDÜ",
             "h_bar": 8,
             "ornek": 184,
-            "ayni_yon": 97,
-            "p_ham": 0.5272,
-            "p_wilson_lo": 0.4552,
+            "ayni_yon": 96,
+            "p_ham": 0.5217,
+            "p_wilson_lo": 0.4499,
             "yorum": "p_wilson_lo = devamlılığın kötümser alt sınırı"
           },
           "basabas_oran": 0.4255,
           "basabas_kaynagi": "1/(1+R_MIN), R_MIN=1.35 (motor kuralı)",
           "sertlik": 1.0,
-          "sertlik_gerekce": "p_be 0.4255 / p_lo 0.4552 = 0.935 → clamp[1.0, 2.0] = 1.000; devamlılık başabaşın ÜSTÜNDE, taban korunur"
+          "sertlik_gerekce": "p_be 0.4255 / p_lo 0.4499 = 0.946 → clamp[1.0, 2.0] = 1.000; devamlılık başabaşın ÜSTÜNDE, taban korunur"
         },
         "sertlik": 1.0,
         "signflip_tanisi": {
           "durum": "ÖLÇÜLDÜ",
           "yonlu_danisman": 2,
-          "gozlenen_skor": 0.6926,
+          "gozlenen_skor": 0.7193,
           "randomizasyon_p": 0.4763,
           "p_min_ulasilabilir": 0.5,
           "alpha_ulasilabilir": false,
@@ -1002,17 +1018,17 @@
         },
         "ayrinti": {
           "score": {
-            "null_taban": 0.5277,
+            "null_taban": 0.5371,
             "sertlik": 1.0,
-            "ham": 0.5277,
-            "son": 0.5277,
+            "ham": 0.5371,
+            "son": 0.5371,
             "korkuluk": [
               0.05,
               0.6
             ],
             "kirpildi": false,
             "statik_karsiligi": 0.15,
-            "degisim_statige_gore": 0.3777
+            "degisim_statige_gore": 0.3871
           },
           "min_agreement": {
             "null_taban": 0.5,
@@ -1028,17 +1044,17 @@
             "degisim_statige_gore": -0.05
           },
           "min_side_weight": {
-            "null_taban": 0.4067,
+            "null_taban": 0.3785,
             "sertlik": 1.0,
-            "ham": 0.4067,
-            "son": 0.4067,
+            "ham": 0.3785,
+            "son": 0.3785,
             "korkuluk": [
               0.3,
               3.0
             ],
             "kirpildi": false,
             "statik_karsiligi": 0.6,
-            "degisim_statige_gore": -0.1933
+            "degisim_statige_gore": -0.2215
           }
         },
         "bar": 200,
@@ -1057,7 +1073,7 @@
         "kostu": true,
         "yon_ilk": "LONG",
         "yon_dogrulanmis_kurul": "LONG",
-        "skor_ilk": 0.6926,
+        "skor_ilk": 0.7193,
         "skor_ikinci": 1.0,
         "danisman_ilk": 4,
         "danisman_dogrulanmis": 1,
@@ -1065,176 +1081,29 @@
         "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG"
       },
       "emir_plani": {
-        "EMIR": "LIMIT LONG @1863.68 | stop 1830.346667 | T1 1908.68 | R 1.35",
-        "birincil": {
-          "emir_tipi": "LIMIT",
-          "yon": "LONG",
-          "giris": 1863.68,
-          "stop": 1830.346667,
-          "hedef": 1908.68,
-          "R": 1.35,
-          "rr_denetim": "TUTARLI",
-          "risk_puan": 33.333333,
-          "giris_gerekcesi": "15M teyitli swing desteği",
-          "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-          "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-          "gecersizlik": "1830.346667 ötesinde 15M gövde kapanışı → kurulum iptal",
-          "usd_hedef": {
-            "HUKUM": "UYGUN",
-            "dusen_kapilar": [],
-            "kazanc_usdt": [
-              130.51,
-              145.51
-            ]
-          }
-        },
-        "adaylar": [
-          {
-            "emir_tipi": "LIMIT",
-            "yon": "LONG",
-            "giris": 1863.68,
-            "stop": 1830.346667,
-            "hedef": 1908.68,
-            "R": 1.35,
-            "rr_denetim": "TUTARLI",
-            "risk_puan": 33.333333,
-            "giris_gerekcesi": "15M teyitli swing desteği",
-            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-            "gecersizlik": "1830.346667 ötesinde 15M gövde kapanışı → kurulum iptal",
-            "usd_hedef": {
-              "HUKUM": "UYGUN",
-              "dusen_kapilar": [],
-              "kazanc_usdt": [
-                130.51,
-                145.51
-              ]
-            }
-          },
-          {
-            "emir_tipi": "LIMIT",
-            "yon": "LONG",
-            "giris": 1861.48,
-            "stop": 1828.146667,
-            "hedef": 1906.48,
-            "R": 1.35,
-            "rr_denetim": "TUTARLI",
-            "risk_puan": 33.333333,
-            "giris_gerekcesi": "15M FVG üst kenarı 1859.78-1861.48",
-            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-            "gecersizlik": "1828.146667 ötesinde 15M gövde kapanışı → kurulum iptal",
-            "usd_hedef": {
-              "HUKUM": "UYGUN",
-              "dusen_kapilar": [],
-              "kazanc_usdt": [
-                130.51,
-                145.51
-              ]
-            }
-          },
-          {
-            "emir_tipi": "LIMIT",
-            "yon": "LONG",
-            "giris": 1859.11,
-            "stop": 1825.776667,
-            "hedef": 1904.11,
-            "R": 1.35,
-            "rr_denetim": "TUTARLI",
-            "risk_puan": 33.333333,
-            "giris_gerekcesi": "15M FVG üst kenarı 1857.69-1859.11",
-            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-            "gecersizlik": "1825.776667 ötesinde 15M gövde kapanışı → kurulum iptal",
-            "usd_hedef": {
-              "HUKUM": "UYGUN",
-              "dusen_kapilar": [],
-              "kazanc_usdt": [
-                130.51,
-                145.51
-              ]
-            }
-          },
-          {
-            "emir_tipi": "LIMIT",
-            "yon": "LONG",
-            "giris": 1858.13,
-            "stop": 1824.796667,
-            "hedef": 1903.13,
-            "R": 1.35,
-            "rr_denetim": "TUTARLI",
-            "risk_puan": 33.333333,
-            "giris_gerekcesi": "15M teyitli swing desteği",
-            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-            "gecersizlik": "1824.796667 ötesinde 15M gövde kapanışı → kurulum iptal",
-            "usd_hedef": {
-              "HUKUM": "UYGUN",
-              "dusen_kapilar": [],
-              "kazanc_usdt": [
-                130.51,
-                145.51
-              ]
-            }
-          },
-          {
-            "emir_tipi": "LIMIT",
-            "yon": "LONG",
-            "giris": 1858.0,
-            "stop": 1824.666667,
-            "hedef": 1903.0,
-            "R": 1.35,
-            "rr_denetim": "TUTARLI",
-            "risk_puan": 33.333333,
-            "giris_gerekcesi": "15M teyitli swing desteği",
-            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-            "gecersizlik": "1824.666667 ötesinde 15M gövde kapanışı → kurulum iptal",
-            "usd_hedef": {
-              "HUKUM": "UYGUN",
-              "dusen_kapilar": [],
-              "kazanc_usdt": [
-                130.51,
-                145.51
-              ]
-            }
-          },
-          {
-            "emir_tipi": "LIMIT",
-            "yon": "LONG",
-            "giris": 1850.95,
-            "stop": 1817.616667,
-            "hedef": 1895.95,
-            "R": 1.35,
-            "rr_denetim": "TUTARLI",
-            "risk_puan": 33.333333,
-            "giris_gerekcesi": "4H teyitli swing desteği",
-            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-            "gecersizlik": "1817.616667 ötesinde 15M gövde kapanışı → kurulum iptal",
-            "usd_hedef": {
-              "HUKUM": "UYGUN",
-              "dusen_kapilar": [],
-              "kazanc_usdt": [
-                130.51,
-                145.51
-              ]
-            }
-          }
-        ],
+        "EMIR": "EMİR YOK",
         "yon": "LONG",
-        "fiyat": 1868.79,
+        "fiyat": 1886.07,
+        "gerekce": "hiçbir aday kapıları geçemedi",
         "red_nedenleri": [
-          "giriş 1868.79: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-          "giriş 1868.18: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-          "giriş 1866.7: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-          "giriş 1855.57: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-          "giriş 1854.62: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']"
+          "giriş 1886.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1883.76: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1881.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1878.97: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1878.27: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1876.11: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1870.57: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1861.48: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
+          "giriş 1859.11: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1858.0: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "giriş 1850.95: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
+          "giriş 1850.26: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']"
         ],
+        "adaylar": [],
         "yapi_ozeti": {
-          "son_kapanis": 1868.79,
-          "atr15": 2.581428571428595,
-          "atr4h": 20.547857142857133,
+          "son_kapanis": 1886.07,
+          "atr15": 2.9649999999999994,
+          "atr4h": 13.223571428571452,
           "bar15": 200,
           "bar4h": 200
         },
@@ -1274,21 +1143,21 @@
             "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
           }
         },
-        "uretildigi_bar": "2026-07-25 13:45",
+        "uretildigi_bar": "2026-07-26 12:45",
         "etiketleme": {
           "karar-motoru": {
             "etiketlenen": 0,
             "elle_korunan": 0,
             "olculemeyen": 0,
             "bar_havuzu": {
-              "bar": 263,
+              "bar": 355,
               "ilk": 1784751300000,
-              "son": 1784987100000
+              "son": 1785069900000
             },
             "arsiv": {
               "arsiv": "/home/user/Future-/engine/state/eth/bar_arsivi.jsonl",
               "eklenen_bar": 0,
-              "toplam_bar": 263
+              "toplam_bar": 355
             }
           }
         },
@@ -1299,7 +1168,7 @@
         "danisman_defterleri": {
           "yazilan": {},
           "atlanan": [],
-          "karar_zamani": 1784987100000
+          "karar_zamani": 1785069900000
         }
       },
       "gecti": true,
@@ -1328,9 +1197,9 @@
     "YON_BIAS": "LONG",
     "ISLEM_KALITESI": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
     "sentez_karari": "LONG",
-    "guven_skoru": 0.2998,
-    "yon_skoru": 0.6926,
-    "uzlasi": 0.6926,
+    "guven_skoru": 0.3234,
+    "yon_skoru": 0.7193,
+    "uzlasi": 0.7193,
     "muhalefet": [
       "karar-motoru",
       "grafik-calisma"
@@ -1345,157 +1214,32 @@
       "likidasyon",
       "gorsel"
     ],
-    "EMIR": "LIMIT LONG @1863.68 | stop 1830.346667 | T1 1908.68 | R 1.35",
-    "emir_adaylari": [
-      {
-        "emir_tipi": "LIMIT",
-        "yon": "LONG",
-        "giris": 1863.68,
-        "stop": 1830.346667,
-        "hedef": 1908.68,
-        "R": 1.35,
-        "rr_denetim": "TUTARLI",
-        "risk_puan": 33.333333,
-        "giris_gerekcesi": "15M teyitli swing desteği",
-        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-        "gecersizlik": "1830.346667 ötesinde 15M gövde kapanışı → kurulum iptal",
-        "usd_hedef": {
-          "HUKUM": "UYGUN",
-          "dusen_kapilar": [],
-          "kazanc_usdt": [
-            130.51,
-            145.51
-          ]
-        }
-      },
-      {
-        "emir_tipi": "LIMIT",
-        "yon": "LONG",
-        "giris": 1861.48,
-        "stop": 1828.146667,
-        "hedef": 1906.48,
-        "R": 1.35,
-        "rr_denetim": "TUTARLI",
-        "risk_puan": 33.333333,
-        "giris_gerekcesi": "15M FVG üst kenarı 1859.78-1861.48",
-        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-        "gecersizlik": "1828.146667 ötesinde 15M gövde kapanışı → kurulum iptal",
-        "usd_hedef": {
-          "HUKUM": "UYGUN",
-          "dusen_kapilar": [],
-          "kazanc_usdt": [
-            130.51,
-            145.51
-          ]
-        }
-      },
-      {
-        "emir_tipi": "LIMIT",
-        "yon": "LONG",
-        "giris": 1859.11,
-        "stop": 1825.776667,
-        "hedef": 1904.11,
-        "R": 1.35,
-        "rr_denetim": "TUTARLI",
-        "risk_puan": 33.333333,
-        "giris_gerekcesi": "15M FVG üst kenarı 1857.69-1859.11",
-        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-        "gecersizlik": "1825.776667 ötesinde 15M gövde kapanışı → kurulum iptal",
-        "usd_hedef": {
-          "HUKUM": "UYGUN",
-          "dusen_kapilar": [],
-          "kazanc_usdt": [
-            130.51,
-            145.51
-          ]
-        }
-      },
-      {
-        "emir_tipi": "LIMIT",
-        "yon": "LONG",
-        "giris": 1858.13,
-        "stop": 1824.796667,
-        "hedef": 1903.13,
-        "R": 1.35,
-        "rr_denetim": "TUTARLI",
-        "risk_puan": 33.333333,
-        "giris_gerekcesi": "15M teyitli swing desteği",
-        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-        "gecersizlik": "1824.796667 ötesinde 15M gövde kapanışı → kurulum iptal",
-        "usd_hedef": {
-          "HUKUM": "UYGUN",
-          "dusen_kapilar": [],
-          "kazanc_usdt": [
-            130.51,
-            145.51
-          ]
-        }
-      },
-      {
-        "emir_tipi": "LIMIT",
-        "yon": "LONG",
-        "giris": 1858.0,
-        "stop": 1824.666667,
-        "hedef": 1903.0,
-        "R": 1.35,
-        "rr_denetim": "TUTARLI",
-        "risk_puan": 33.333333,
-        "giris_gerekcesi": "15M teyitli swing desteği",
-        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-        "gecersizlik": "1824.666667 ötesinde 15M gövde kapanışı → kurulum iptal",
-        "usd_hedef": {
-          "HUKUM": "UYGUN",
-          "dusen_kapilar": [],
-          "kazanc_usdt": [
-            130.51,
-            145.51
-          ]
-        }
-      },
-      {
-        "emir_tipi": "LIMIT",
-        "yon": "LONG",
-        "giris": 1850.95,
-        "stop": 1817.616667,
-        "hedef": 1895.95,
-        "R": 1.35,
-        "rr_denetim": "TUTARLI",
-        "risk_puan": 33.333333,
-        "giris_gerekcesi": "4H teyitli swing desteği",
-        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
-        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
-        "gecersizlik": "1817.616667 ötesinde 15M gövde kapanışı → kurulum iptal",
-        "usd_hedef": {
-          "HUKUM": "UYGUN",
-          "dusen_kapilar": [],
-          "kazanc_usdt": [
-            130.51,
-            145.51
-          ]
-        }
-      }
-    ],
+    "EMIR": "EMİR YOK",
+    "EMIR_GEREKCE": "hiçbir aday kapıları geçemedi",
+    "emir_adaylari": [],
     "emir_red_nedenleri": [
-      "giriş 1868.79: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-      "giriş 1868.18: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-      "giriş 1866.7: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-      "giriş 1855.57: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
-      "giriş 1854.62: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']"
+      "giriş 1886.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1883.76: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1881.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1878.97: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1878.27: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1876.11: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1870.57: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1861.48: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
+      "giriş 1859.11: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1858.0: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+      "giriş 1850.95: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
+      "giriş 1850.26: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']"
     ],
     "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG",
     "iki_satir": {
-      "1_YON": "YÖN (bias): LONG — ağırlıklı yön skoru 0.6926, uzlaşı 0.6926 (kapıdan bağımsız; BEKLE yön reddi değildir)",
+      "1_YON": "YÖN (bias): LONG — ağırlıklı yön skoru 0.7193, uzlaşı 0.7193 (kapıdan bağımsız; BEKLE yön reddi değildir)",
       "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: Yön LONG ama temiz giriş yok — motorlardan giriş/stop/hedef seti gelmedi (VERİ YOK)"
     },
     "ONCEKI_AKIBET": {
       "durum": "VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE)",
       "onceki_yon": "LONG",
-      "onceki_bar_utc": "2026-07-25 13:45"
+      "onceki_bar_utc": "2026-07-26 12:45"
     },
     "KIYAS": {
       "yon": {
@@ -1503,21 +1247,22 @@
         "yeni": "LONG",
         "etiket": "DEVAM",
         "aciklama": "LONG yönü korundu",
-        "skor_onceki": 0.6926,
-        "skor_yeni": 0.6926,
-        "skor_delta": 0.0
+        "skor_onceki": 0.2115,
+        "skor_yeni": 0.7193,
+        "skor_delta": 0.5078
       },
       "fiyat": "VERİ YOK",
       "onemli_degisimler": [
-        "kayda değer sürücü değişimi yok"
+        "türev veri kapsamı: 0.51 → 0.66 (+0.15)",
+        "long likidasyon: None → 0.8"
       ],
       "danisman_donusleri": [
-        "danışman duruşları aynı"
+        "gorsel-teyit: VERİ YOK → long"
       ]
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
     "DENETIM": {
-      "ozet": "24 denetim, 0 ihlal, 2 uyarı",
+      "ozet": "26 denetim, 0 ihlal, 2 uyarı",
       "ihlal": [],
       "uyari": [
         "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY",
@@ -1528,16 +1273,16 @@
   },
   "KIYAS": {
     "durum": "KIYASLANDI",
-    "onceki_bar_utc": "2026-07-25 13:45",
-    "yeni_bar_utc": "2026-07-25 13:45",
+    "onceki_bar_utc": "2026-07-26 12:45",
+    "yeni_bar_utc": "2026-07-26 12:45",
     "YON_DEGISIMI": {
       "onceki": "LONG",
       "yeni": "LONG",
       "etiket": "DEVAM",
       "aciklama": "LONG yönü korundu",
-      "skor_onceki": 0.6926,
-      "skor_yeni": 0.6926,
-      "skor_delta": 0.0
+      "skor_onceki": 0.2115,
+      "skor_yeni": 0.7193,
+      "skor_delta": 0.5078
     },
     "fiyat": "VERİ YOK",
     "surucu_tablosu": [
@@ -1550,31 +1295,31 @@
       },
       {
         "kanal": "trend gücü",
-        "onceki": 27.24,
-        "yeni": 27.24,
+        "onceki": 23.59,
+        "yeni": 23.59,
         "delta": 0.0,
         "onemli": false
       },
       {
         "kanal": "oynaklık",
-        "onceki": 2.7253375,
-        "yeni": 2.7253375,
+        "onceki": 2.98530604,
+        "yeni": 2.98530604,
         "delta": 0.0,
         "onemli": false
       },
       {
         "kanal": "türev yön skoru",
-        "onceki": 0.4864,
-        "yeni": 0.4864,
-        "delta": 0.0,
+        "onceki": 0.2471,
+        "yeni": 0.3727,
+        "delta": 0.1256,
         "onemli": false
       },
       {
         "kanal": "türev veri kapsamı",
-        "onceki": 0.66,
+        "onceki": 0.51,
         "yeni": 0.66,
-        "delta": 0.0,
-        "onemli": false
+        "delta": 0.15,
+        "onemli": true
       },
       {
         "kanal": "fonlama",
@@ -1585,8 +1330,8 @@
       },
       {
         "kanal": "taker long/short",
-        "onceki": 0.5,
-        "yeni": 0.5,
+        "onceki": 0.0,
+        "yeni": 0.0,
         "delta": 0.0,
         "onemli": false
       },
@@ -1599,17 +1344,18 @@
       },
       {
         "kanal": "long likidasyon",
-        "onceki": 0.8,
+        "onceki": "VERİ YOK",
         "yeni": 0.8,
-        "delta": 0.0,
-        "onemli": false
+        "delta": "—",
+        "onemli": true
       }
     ],
     "onemli_degisimler": [
-      "kayda değer sürücü değişimi yok"
+      "türev veri kapsamı: 0.51 → 0.66 (+0.15)",
+      "long likidasyon: None → 0.8"
     ],
     "danisman_donusleri": [
-      "danışman duruşları aynı"
+      "gorsel-teyit: VERİ YOK → long"
     ],
     "varsayimlar": [
       "anlamlı değişim eşikleri: skor 0.15, oransal %10, ADX 3.0 (konvansiyon)",
@@ -1680,7 +1426,7 @@
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "güven değerleri motor çıktısından: grafik-calisma ham güven 0.6 == confluence_skoru 0.6: EVET; turev-akis ham güven 0.453 == motor çıktısı 0.453: EVET",
+          "kanit": "güven değerleri motor çıktısından: grafik-calisma ham güven 0.45 == confluence_skoru 0.45: EVET; turev-akis ham güven 0.378 == motor çıktısı 0.378: EVET",
           "oneri": ""
         },
         {
@@ -1726,19 +1472,31 @@
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "sabit-USDT girdileri kaynaklı: {'atr_kurulum': 'smc_tespit_h4.atr (4H — kurulum ölçeği)', 'fiyat': 'karar-motoru.giris / confluence / son kapanış', 'likidite': 'smc_tespit_h4.likidite (11 seviye)'} | hüküm=UYGUN DEĞİL, düşen kapı=['yapı hedefi bandın içinde']",
+          "kanit": "sabit-USDT girdileri kaynaklı: {'atr_kurulum': 'smc_tespit_h4.atr (4H — kurulum ölçeği)', 'fiyat': 'karar-motoru.giris / confluence / son kapanış', 'likidite': 'smc_tespit_h4.likidite (12 seviye)'} | hüküm=UYGUN DEĞİL, düşen kapı=['yapı hedefi bandın içinde']",
           "oneri": ""
         },
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "karar kapıları veriden türetildi ve aynen uygulandı: {'score': 0.5277, 'min_agreement': 0.5, 'min_side_weight': 0.4067} | kaynak: VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunl",
+          "kanit": "karar kapıları veriden türetildi ve aynen uygulandı: {'score': 0.5371, 'min_agreement': 0.5, 'min_side_weight': 0.3785} | kaynak: VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunl",
+          "oneri": ""
+        },
+        {
+          "kod": "MEMNUN_ETME",
+          "durum": "TEMİZ",
+          "kanit": "emir üretilmedi ve gerekçesi mekanik: giriş 1886.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
+          "oneri": ""
+        },
+        {
+          "kod": "MEMNUN_ETME",
+          "durum": "TEMİZ",
+          "kanit": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG",
           "oneri": ""
         },
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'gorsel-teyit', 'turev-akis', 'grafik-calisma'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'gorsel-teyit', 'grafik-calisma', 'turev-akis'}",
           "oneri": ""
         },
         {
@@ -1750,7 +1508,7 @@
         {
           "kod": "MEMNUN_ETME",
           "durum": "TEMİZ",
-          "kanit": "YÖN_BIAS=LONG ağırlıklı skorun (0.6926) işaretinden mekanik türedi — beklentiye göre ayarlanmadı",
+          "kanit": "YÖN_BIAS=LONG ağırlıklı skorun (0.7193) işaretinden mekanik türedi — beklentiye göre ayarlanmadı",
           "oneri": ""
         },
         {
@@ -1762,7 +1520,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "kıyas koştu: LONG → LONG (DEVAM), 1 sürücü değişimi raporlandı",
+          "kanit": "kıyas koştu: LONG → LONG (DEVAM), 2 sürücü değişimi raporlandı",
           "oneri": ""
         },
         {
@@ -1780,7 +1538,7 @@
     ],
     "kritik_ihlal": [],
     "muhurlendi": false,
-    "ozet": "24 denetim, 0 ihlal, 2 uyarı",
+    "ozet": "26 denetim, 0 ihlal, 2 uyarı",
     "not": "Gözlemci ZİHİN okumaz, ARTEFAKT denetler: dosya yolu, motor çıktısı, danışman kaydı, sayı eşleşmesi. Kritik ihlalde işlem kalitesi mühürlenir; YÖN yine gösterilir."
   },
   "durum": "TAMAM — piramidin tepesine ulaşıldı"

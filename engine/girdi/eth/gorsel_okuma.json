@@ -1,33 +1,36 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (4 panel: 15dak grafik, 4S grafik, 15dak Liquidity Heatmap, 4S Liquidity Heatmap)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "CHoCH",
+  "yapi_olayi": "yükselen dipler + tepede red (1893.00 alındı, fiyat MA5/MA10 altına sarktı ama MA30 üstünde tutundu)",
   "seviyeler": {
     "direnc": [
-      1871.73,
-      1882,
-      1909.32,
+      1889.5,
+      1893,
+      1892.79,
       1958.75
     ],
     "destek": [
-      1857.6,
-      1850.26,
-      1846.17
+      1883.42,
+      1880,
+      1872.63,
+      1857.52
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa: fiyat 1869.43 > MA5 1864.52 > MA10 1860.93 > MA30 1857.60",
-    "1846.17 dibinden dik toparlanma, son barda sert boğa mumu",
-    "4S'te fiyat 1869.84 > MA5 1860.06 ama MA30 1901.07 ALTINDA — orta vade hâlâ ayı",
-    "Likidite haritası: 1870 üstü ve 1880-1890 bandı yoğun, 1850/1846 altı bant",
-    "24S menzil 1846.17-1871.73, funding +0.0051%"
+    "15M MA dizilimi boğa sırası (MA5 1887.12 > MA10 1886.45 > MA30 1883.42); fiyat 1885.09 MA5/MA10 altında ama MA30 ÜSTÜNDE — pullback, bozulma değil",
+    "15M yapı: 1850.26 (07/25 15:45) dibinden kesintisiz yükselen dipler, tepe 1893.00 → HH/HL sağlam",
+    "4S'te fiyat 1885.62 > MA5 1881.30 > MA10 1871.73 ama MA30 1892.79 ALTINDA — orta vade hâlâ ayı (1958.75 tepesinden)",
+    "15M likidite haritası: 1889-1890 bandında kalın duvar (hemen üstte), altta 1872-1874 bandı; 15M menzil 1872.63-1893.00",
+    "4S likidite haritası: 1940-1960 üstünde çok yoğun küme, altta 1800 bandında kalın taban — ETH BTC'ye göre çok daha yoğun likidite ortamında",
+    "Panel türevi: funding +0.0018% (BTC'nin 0.009%'undan düşük — ETH'de long baskısı daha ılımlı), Açık Faiz 2.4M ETH (yükselen), 4S likidasyon Longs 1.2K / Shorts 472.3K → yükseliş short temizlemesiyle beslendi",
+    "24S menzil 1857.52-1893.00, 24S hacim 2.49B USD, +1.5%"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK",
+  "celiski_notu": "15M boğa / 4S ayı (MA30 1892.79 altında) — zaman dilimi çatışması AÇIK. Fiyat tam 4S MA30'un dibinde: bu seviye kırılırsa 4S de boğaya döner, reddedilirse 15M boğası biter.",
   "guven": 0.45,
-  "zaman_utc": "2026-07-25 13:46",
-  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-26 12:47",
+  "zaman_yerel": "2026-07-26 15:46-15:47 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 15:46-15:47 (UTC+3) → UTC 12:46-12:47; panelin 4S geri sayımı 03:12:12 → sonraki 4S kapanışı 16:00 UTC ile tutarlı; son kline barı 12:45 UTC (2 dk fark), paket çekimi 12:48:40 UTC"
 }

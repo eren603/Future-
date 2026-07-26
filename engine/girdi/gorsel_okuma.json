@@ -1,33 +1,36 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (4 panel: 15dak grafik, 4S grafik, 15dak Liquidity Heatmap, 4S Liquidity Heatmap)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "CHoCH",
+  "yapi_olayi": "likidite süpürme + reddediliş (64639.00 tepesi alındı, son 15M barı MA kümesinin ALTINA kapandı)",
   "seviyeler": {
     "direnc": [
-      64236.8,
-      64403,
+      64485,
       64600,
-      65780
+      64639,
+      65042.41
     ],
     "destek": [
-      64005,
-      63760.5,
-      63666
+      64398,
+      64332,
+      64256.4,
+      64070
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa: fiyat 64200 > MA5 64129.19 > MA10 64082.39 > MA30 64005.04",
-    "63666 dibinden yükselen dipler; 64236.80 gün içi tepe",
-    "4S'te YAPI HÂLÂ AYI: fiyat 64205 < MA10 64458.62 < MA30 65329.20 (66924.10 tepesinden düşüş sürüyor)",
-    "Likidite haritası: 64000-64050 bandında yoğun küme (mıknatıs), 63760 altı boşluk",
-    "24S menzil 63666-64403, funding +0.0018% (hafif pozitif)"
+    "15M MA dizilimi hâlâ boğa sırası (MA5 64499.85 > MA10 64494.77 > MA30 64437.24) AMA fiyat 64413 üçünün de ALTINDA — momentum kaybı",
+    "15M yapı: 63760.50 (07/25 12:15) dibinden yükselen dipler; son yerel dip ~64240, tepe 64639.00 → HH/HL bozulmadı, ama tepede sert red mumu",
+    "4S'te yapı AYI: fiyat 64416 < MA30 65042.41 (66924.10 tepesinden düşüş), MA5 64421.11 ancak yeni geri alındı",
+    "15M likidite haritası: fiyatın hemen ÜSTÜNDE ~64470-64490 yoğun duvar (mıknatıs), ALTINDA ~64398 ve ~64332 iki kalın bant; 15M menzil 64256.40-64639.00",
+    "4S likidite haritası: 65000-65100 üstünde küme, altta 64050'ye kadar seyrek — aşağı boşluk daha geniş",
+    "Panel türevi: funding +0.009% (pozitif, long ödüyor), Açık Faiz 107.5K BTC (yatay), 4S likidasyon Longs 5.3K / Shorts 395.3K → yükselişte SHORT'lar temizlendi (yakıt harcandı)",
+    "24S menzil 64070-64639, 24S hacim 2.74B USD"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK, gizlenmiyor",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-25 13:46",
-  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
+  "celiski_notu": "15M boğa yapısı / 4S ayı yapısı — zaman dilimi çatışması AÇIK. Ayrıca 15M'in kendi içinde çelişki: yapı boğa ama son bar MA'ların altına kapandı ve short likidasyonu (395.3K) yükselişin yakıtının harcandığını gösteriyor.",
+  "guven": 0.4,
+  "zaman_utc": "2026-07-26 12:47",
+  "zaman_yerel": "2026-07-26 15:46-15:47 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 15:46-15:47 (UTC+3) → UTC 12:46-12:47; panelin 4S geri sayımı 03:12:33 → sonraki 4S kapanışı 16:00 UTC ile tutarlı; son kline barı 12:45 UTC (2 dk fark), paket çekimi 12:48:40 UTC"
 }
