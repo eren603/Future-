@@ -884,10 +884,10 @@
             1.35,
             1.5
           ],
-          "stop_atr_kat": 1.8363,
+          "stop_atr_kat": 2.0622,
           "hedef_atr_kat": [
-            2.4791,
-            2.7545
+            2.7839,
+            3.0932
           ],
           "komisyon_gidis_donus_usdt": 4.52,
           "net_kazanc_band_usdt": [
@@ -905,13 +905,13 @@
           },
           {
             "kapi": "stop ölçeği",
-            "gecti": true,
-            "kanit": "stop 1.8363×ATR, kabul [0.8, 2.0]"
+            "gecti": false,
+            "kanit": "stop 2.0622×ATR, kabul [0.8, 2.0]"
           },
           {
             "kapi": "hedef ölçeği",
-            "gecti": true,
-            "kanit": "hedef üst 2.7545×ATR vs uzak eşiği 3.0"
+            "gecti": false,
+            "kanit": "hedef üst 3.0932×ATR vs uzak eşiği 3.0"
           },
           {
             "kapi": "tasfiye > stop",
@@ -947,6 +947,8 @@
           }
         ],
         "dusen_kapilar": [
+          "stop ölçeği",
+          "hedef ölçeği",
           "yapı hedefi bandın içinde"
         ],
         "varsayimlar": [
@@ -958,7 +960,7 @@
         ],
         "not": "Kısıt DOLAR cinsindendir; fiyata çevrimi kontrat büyüklüğüne bağlıdır. Bandı tutturmak için seviye uydurulmaz — yapı hedefi banda düşmüyorsa kapı kapanır. Canlı/otomatik emir DAHİL DEĞİL.",
         "_girdi_kaynagi": {
-          "atr_kurulum": "smc_tespit_h4.atr (4H — kurulum ölçeği)",
+          "atr_kurulum": "emir_plani.yapi_ozeti.atr4h = 16.16428571428573 (TEK KAYNAK — emir_plani aday başına aynı kapıyı bu ATR ile sınar; smc_tespit_h4.atr KULLANILMAZ)",
           "fiyat": "karar-motoru.giris / confluence / son kapanış",
           "likidite": "smc_tespit_h4.likidite (12 seviye)"
         }
@@ -1482,7 +1484,7 @@
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "sabit-USDT girdileri kaynaklı: {'atr_kurulum': 'smc_tespit_h4.atr (4H — kurulum ölçeği)', 'fiyat': 'karar-motoru.giris / confluence / son kapanış', 'likidite': 'smc_tespit_h4.likidite (12 seviye)'} | hüküm=UYGUN DEĞİL, düşen kapı=['yapı hedefi bandın içinde']",
+          "kanit": "sabit-USDT girdileri kaynaklı: {'atr_kurulum': 'emir_plani.yapi_ozeti.atr4h = 16.16428571428573 (TEK KAYNAK — emir_plani aday başına aynı kapıyı bu ATR ile sınar; smc_tespit_h4.atr KULLANILMAZ)', 'fiyat': 'karar-motoru.giris / confluence / son kapanış', 'likidite': 'smc_tespit_h4.likidite (12 seviye)'} | hüküm=UYGUN DEĞİL, düşen kapı=['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
           "oneri": ""
         },
         {
@@ -1506,7 +1508,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'grafik-calisma', 'gorsel-teyit', 'karar-motoru'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'grafik-calisma', 'gorsel-teyit', 'turev-akis'}",
           "oneri": ""
         },
         {

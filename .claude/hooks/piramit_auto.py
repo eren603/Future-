@@ -96,9 +96,17 @@ def _fp() -> str | None:
     YOK SAYIYOR ve BAYAT girdiyle üretilmiş eski özeti tekrar basıyordu — yani
     zorunlu girdi sözleşmesi sessizce fail-OPEN'a düşüyordu. Artık taze bir
     panel/görsel okuma tek başına boru hattını yeniden koşturur.
+
+    MOTOR KODU DA PARMAK İZİNE GİRER. Parmak izi yalnız VERİyi hashliyordu:
+    boru hattı düzeltildiğinde veri aynı kaldığı için kanca "veri DEĞİŞMEDİ"
+    deyip DÜZELTME ÖNCESİ özeti tekrar basıyor, kullanıcıya bayat karar
+    gösteriliyordu (fail-OPEN). Kod değişikliği de koşuyu tetiklemeli.
     """
     h = hashlib.sha256()
     var = False
+    for p in sorted((SKILL / "scripts").glob("*.py")):
+        h.update(p.name.encode())
+        h.update(hashlib.sha256(p.read_bytes()).digest())
     for ad in ("m15.json", "h4.json", *EK_KANAL, *ZORUNLU_GIRDI):
         p = GIRDI / ad
         if p.exists():

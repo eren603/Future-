@@ -155,7 +155,7 @@ Her koşu sonunda `onceki_kosu.json` anlık görüntüsü yazılır. Kayıt yoks
 | Motor | Katman | İşi |
 |---|---|---|
 | `korelasyon.py` | K2 → K4 | İki varlığın hizalı log getirileri → ρ, beta, R², kararlılık. \|ρ\|≥0.85 → **KOPYA POZİSYON**, K4'te "toplam risk ×2" çelişkisi |
-| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; ATR ve likidite **4H yapı motorundan** (`smc_tespit_h4`) gelir |
+| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; kurulum ölçeği ATR'si **TEK KAYNAKTAN** `emir_plani.yapi_ozeti.atr4h`'tir (likidite `smc_tespit_h4`'ten). `emir_plani` aynı kapıyı aday başına bu ATR ile sınadığı için ikinci kaynak zıt hüküm üretiyordu; okunamazsa fail-closed VERİ YOK |
 
 İkisi de **beyan edilip koşmazsa** gözlemci `EKSİK_AKTARIM` ihlali verir —
 elle koşu artık gerekmez ve sessiz atlama mümkün değildir.

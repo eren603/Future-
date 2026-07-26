@@ -1053,15 +1053,18 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     # ---------- işlem kalitesi: seviyeler MOTORDAN, R denetlenmiş -----------
     islem = _islem_kalitesi(k3, k4, sentez)
 
-    # ---------- sabit-USDT hedef motoru (kullanıcı profili) ----------------
-    usd = _usd_hedef(job, taban, k2, k3, sentez)
-
     # ---------- EMİR PLANI: karar → MARKET/LIMIT seviyeleri ----------------
+    # `usd_hedef`ten ÖNCE koşar: kurulum ölçeği ATR'si artık TEK KAYNAKTAN,
+    # emir_plani'nin kendi ölçümünden gelir (kullanıcı kararı). Yön dayanıksızsa
+    # emir bastırılır ama YAPI ÖLÇÜMÜ korunur ki kısıt motoru yine denetlenebilsin.
+    emir = _emir_plani(job, taban, k1, sentez)
     if celiski_turu.get("yon_dayaniksiz"):
-        emir = {"EMIR": "EMİR YOK", "gerekce": celiski_turu["hukum"],
-                "red_nedenleri": [celiski_turu["hukum"]]}
-    else:
-        emir = _emir_plani(job, taban, k1, sentez)
+        emir = {**emir, "EMIR": "EMİR YOK", "gerekce": celiski_turu["hukum"],
+                "red_nedenleri": [celiski_turu["hukum"]], "adaylar": []}
+        emir.pop("birincil", None)
+
+    # ---------- sabit-USDT hedef motoru (kullanıcı profili) ----------------
+    usd = _usd_hedef(job, taban, k2, k3, sentez, emir)
 
     # ---------- pozisyon boyutu (risk-yonetimi) ----------------------------
     boyut = None
@@ -1284,9 +1287,18 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
                    "yön reddi değil."}
 
 
-def _usd_hedef(job: dict, taban: Path, k2: dict, k3: dict, sentez: dict) -> dict:
+def _usd_hedef(job: dict, taban: Path, k2: dict, k3: dict, sentez: dict,
+               emir: dict | None = None) -> dict:
     """Sabit-USDT profilini (ör. 3 ETH / stop -100 / hedef 135-150) boru hattına
-    bağlar: seviye adayları K3'ten, ATR ve likidite 4H yapı motorundan gelir.
+    bağlar: seviye adayları K3'ten, KURULUM ÖLÇEĞİ ATR'si emir_plani'nin kendi
+    ölçümünden, likidite 4H yapı motorundan gelir.
+
+    ATR TEK KAYNAK (kullanıcı kararı). Eskiden burada `smc_tespit_h4.atr`
+    kullanılıyordu; ama `emir_plani` aday başına AYNI usd_hedef kapılarını KENDİ
+    ATR'siyle sınıyordu. İki ölçüm ayrıştığında aynı kapı iki zıt hüküm veriyordu
+    (ör. sabit 33.3333 puanlık stop bir ölçümle 1.8363×ATR = bandın içinde/geçer,
+    diğeriyle bandın üstünde/düşer). Artık yalnız emir_plani ölçümü geçerlidir;
+    okunamazsa smc'ye DÜŞÜLMEZ, fail-closed VERİ YOK denir.
 
     Profil job'da yoksa çalışmaz — ama BEYAN edilip çalışmazsa gözlemci bunu
     EKSİK_AKTARIM olarak yakalar (sessiz atlama yok).
@@ -1305,9 +1317,11 @@ def _usd_hedef(job: dict, taban: Path, k2: dict, k3: dict, sentez: dict) -> dict
 
     m = k2["motor_sonuclari"]
     h4 = m.get("smc_tespit_h4") or {}
-    atr = _num(h4.get("atr"))
+    atr = _num(((emir or {}).get("yapi_ozeti") or {}).get("atr4h"))
     if atr is None:
-        return {"durum": f"{YOK} — 4H ATR yok (kurulum ölçeği belirlenemedi)"}
+        return {"durum": f"{YOK} — kurulum ölçeği ATR'si emir_plani ölçümünden "
+                         "okunamadı (TEK KAYNAK kuralı; smc_tespit_h4'e "
+                         "düşülmez, fail-closed)"}
     # Referans fiyat = GÜNCEL kapanış (nominal/kaldıraç bunun üzerinden).
     # Giriş adayları ayrıca motorlardan gelir; market girişi de daima adaydır.
     p15 = _yol((job.get("veri") or {}).get("m15"), taban)
@@ -1344,7 +1358,9 @@ def _usd_hedef(job: dict, taban: Path, k2: dict, k3: dict, sentez: dict) -> dict
     r = _kos(MOTOR["usd_hedef"], [], girdi_job=ujob)
     if r["ok"] and isinstance(r["cikti"], dict):
         return {**r["cikti"], "_girdi_kaynagi": {
-            "atr_kurulum": "smc_tespit_h4.atr (4H — kurulum ölçeği)",
+            "atr_kurulum": f"emir_plani.yapi_ozeti.atr4h = {atr} "
+                           "(TEK KAYNAK — emir_plani aday başına aynı kapıyı "
+                           "bu ATR ile sınar; smc_tespit_h4.atr KULLANILMAZ)",
             "fiyat": "karar-motoru.giris / confluence / son kapanış",
             "likidite": f"smc_tespit_h4.likidite ({len(lik)} seviye)"}}
     return {"durum": "usd_hedef motoru ÇALIŞMADI", "hata": r["hata"]}

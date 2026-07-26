@@ -247,8 +247,11 @@ kapsamındadır:</p>
 <tr><td><code>usd_hedef</code></td><td>K5</td>
     <td>Dolar cinsi kısıtı (kontrat, sabit stop, hedef bandı) fiyat mesafesine
         çevirir; 5 kapıdan geçirir: R ≥ r_min, stop 0.8–2.0×ATR, hedef ≤3×ATR,
-        yapı hedefi bandın içinde, tasfiye &gt; stop. ATR ve likidite
-        <em>kurulum ölçeği</em> yapısından (üst zaman dilimi) gelir.</td>
+        yapı hedefi bandın içinde, tasfiye &gt; stop. Kurulum ölçeği ATR'si
+        <strong>TEK KAYNAKTAN</strong> emir planlayıcının kendi ölçümünden
+        gelir (likidite üst zaman dilimi yapı motorundan). Gerekçe: emir
+        planlayıcı aynı kapıları aday başına kendi ATR'siyle sınar; ikinci bir
+        ATR kaynağı aynı kapıda zıt hüküm üretir. Okunamazsa fail-closed.</td>
     <td>Beyan edilip koşmadıysa <span class="ihlal">EKSİK_AKTARIM</span>;
         girdi kaynağı beyan edilmemişse UYARI</td></tr>
 </table>
