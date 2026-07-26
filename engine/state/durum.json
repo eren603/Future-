@@ -8,7 +8,7 @@
     "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.5 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
   },
   "takip": null,
-  "akibet_onceki": "Önceki SHORT: giriş tetiklendi, STOP oldu (2026-07-26 16:30).",
+  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 17:00).",
   "acik_bolgeler": [
     {
       "tip": "bull",
