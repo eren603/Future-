@@ -83,6 +83,29 @@ EK_KANAL = {
 # parmak izine katar ki elle yazılan taze okuma koşuyu kendiliğinden tetiklesin.
 ZORUNLU_GIRDI = ("gorsel_okuma.json", "turev_ham/likidasyon.json")
 
+# KARARI ÜRETEN TÜM KOD. Parmak izi yalnız piramit-sistem/scripts'i kapsıyordu;
+# alt motorlardaki (sentez, rr_denetim, smc_tespit, turev_akis, karar_motoru)
+# bir düzeltme parmak izini değiştirmediği için kanca "veri DEĞİŞMEDİ" deyip
+# DÜZELTME ÖNCESİ özeti basabiliyordu. Kapsam kararı üreten zincirin tamamı.
+KOD_DIZINLERI = (
+    (".claude", "skills", "piramit-sistem", "scripts"),
+    (".claude", "skills", "karar-kurulu", "scripts"),
+    (".claude", "skills", "grafik-calisma", "scripts"),
+    (".claude", "skills", "turev-akis", "scripts"),
+    (".claude", "skills", "karar-motoru", "scripts"),
+    ("engine",),
+)
+
+
+def _kod_dosyalari() -> list:
+    """Parmak izine giren kod dosyaları: karar zinciri + kancanın kendisi."""
+    yollar: list = []
+    for parcalar in KOD_DIZINLERI:
+        d = REPO.joinpath(*parcalar)
+        if d.is_dir():
+            yollar += sorted(d.glob("*.py"))
+    return yollar + [Path(__file__).resolve()]
+
 
 def _fp() -> str | None:
     """Girdi verisinin parmak izi (ek kanallar + ikinci sembol dahil).
@@ -108,9 +131,18 @@ def _fp() -> str | None:
     # düzeltme (ör. kum-havuzu kararı) parmak izini değiştirmiyor, main() da
     # "veri DEĞİŞMEDİ" deyip DÜZELTME ÖNCESİ özeti basıyordu — düzeltmenin
     # kendisi görünmez kalıyordu.
-    for p in sorted((SKILL / "scripts").glob("*.py")) + [Path(__file__).resolve()]:
+    #
+    # ALT MOTORLAR DA GİRER. Kapsam yalnız piramit-sistem/scripts idi; oysa
+    # kararı üreten zincir sentez.py / rr_denetim.py / smc_tespit.py /
+    # turev_akis.py / engine/karar_motoru.py'yi de çağırıyor. Bunlardan biri
+    # düzeltildiğinde parmak izi DEĞİŞMİYOR, kanca "veri DEĞİŞMEDİ" deyip
+    # düzeltme öncesi özeti basıyordu — aynı fail-OPEN'ın alt-motor sürümü.
+    for p in _kod_dosyalari():
         try:
-            h.update(p.name.encode())
+            # Ad DEĞİL yol: aynı ada sahip iki motor (ör. iki smc_tespit.py)
+            # birbirini maskelemesin.
+            h.update(str(p.relative_to(REPO) if REPO in p.parents
+                         else p.name).encode())
             h.update(hashlib.sha256(p.read_bytes()).digest())
         except OSError:
             h.update(b"YOK")

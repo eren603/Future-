@@ -807,10 +807,15 @@ def main() -> int:
 
         # ---- T33: EMİR PLANI — karar MARKET/LIMIT emrine çevriliyor -------
         import emir_plani as EP                                  # noqa: PLC0415
-        # (a) sabit-USDT profiliyle: seviyeler üretilmeli, hepsi TUTARLI
+        # (a) sabit-USDT profiliyle: seviyeler üretilmeli, hepsi TUTARLI.
+        # SABİT FIXTURE — canlı `engine/girdi/eth` DEĞİL. Test canlı piyasa
+        # verisine bağlıyken, o günün yapısı aday üretmeyince ("0 aday") test
+        # kırmızıya düşüyor ve KOD sağlamken REGRESYON gibi görünüyordu. Bir
+        # öz-test kodu sınar, piyasayı değil; girdi bu yüzden dondurulmuştur.
+        SABIT = P.SKILL_DIR / "tests" / "sabit"
         e_eth = EP.plan({"sembol": "ETHTEST", "yon": "LONG",
-                         "m15": str(P.ENGINE / "girdi" / "eth" / "m15.json"),
-                         "h4": str(P.ENGINE / "girdi" / "eth" / "h4.json"),
+                         "m15": str(SABIT / "eth_m15.json"),
+                         "h4": str(SABIT / "eth_h4.json"),
                          "profil": {"kontrat": 3.0, "teminat": 400.0,
                                     "stop_usdt": 100.0, "hedef_usdt": [135.0, 150.0],
                                     "hedef_tipi": "brut",

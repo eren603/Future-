@@ -44,7 +44,7 @@ python .claude/skills/piramit-sistem/scripts/piramit.py \
     --job ornek/ornek_job.json --out rapor.json --ozet
 ```
 
-Öz-test (7 iddia, 7 kanıt):
+Öz-test (T1…T36 — her iddia için ayrı kanıt satırı):
 
 ```bash
 python .claude/skills/piramit-sistem/scripts/self_test.py

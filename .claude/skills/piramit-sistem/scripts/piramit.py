@@ -935,9 +935,12 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
     # şişirilmiş R bulunursa ilgili danışman doğrulanmamış sayılır (fail-closed)
     for ad, rap in rr.items():
         if isinstance(rap, dict) and str(rap.get("verdict", "")).startswith("ŞİŞİ"):
+            # Anahtarlar rr_denetim.py'nin ÜRETTİĞİ adlardır (R_rapor/R_gercekci).
+            # Küçük harfli adlar okunduğu sürece gerekçe "rapor=None → gerçekçi=
+            # None" basıyordu: ihlal doğru yakalanıyor ama SEBEBİ görünmüyordu.
             verifier[ad] = {"confirmed": False,
-                            "reason": f"şişirilmiş R: rapor={rap.get('rapor_r', rap.get('r'))} "
-                                      f"→ gerçekçi={rap.get('r_gercekci')}"}
+                            "reason": f"şişirilmiş R: rapor={rap.get('R_rapor')} "
+                                      f"→ gerçekçi={rap.get('R_gercekci')}"}
             gerekce[ad] = f"rr_denetim: {rap.get('verdict')} — {rap.get('gerekce')}"
 
     celiskiler = []          # tek liste: görsel teyit + zorunlu eksik + matris
