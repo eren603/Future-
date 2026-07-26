@@ -46,6 +46,10 @@ HOOK = REPO / ".claude" / "hooks" / "piramit_auto.py"
 YOK = "VERİ YOK"
 
 AYAR = {
+    # 127.0.0.1 = yalnız bu makine. Telefondan/ağdan erişmek için:
+    #   KIMI_KONSOL_HOST=0.0.0.0 python3 kimi_konsol.py
+    # ve telefonda http://<bilgisayarın-yerel-IP'si>:8787 açılır.
+    "host": os.environ.get("KIMI_KONSOL_HOST", "127.0.0.1"),
     "port": int(os.environ.get("KIMI_KONSOL_PORT", "8787")),
     "taban_uc": os.environ.get("KIMI_BASE_URL",
                                "https://api.moonshot.ai/anthropic"),
@@ -437,10 +441,14 @@ class Istekci(BaseHTTPRequestHandler):
 
 
 def main() -> int:
-    adres = ("127.0.0.1", AYAR["port"])
+    adres = (AYAR["host"], AYAR["port"])
     print(f"KİMİ KONSOL → http://{adres[0]}:{adres[1]}")
     print(f"  uç: {AYAR['taban_uc']} | tez: {AYAR['model_tez']}"
           f" | antitez: {AYAR['model_antitez']}")
+    if adres[0] == "127.0.0.1":
+        print("  Not: yalnız BU makineden erişilir. Telefondan girmek için "
+              "KIMI_KONSOL_HOST=0.0.0.0 ile başlat ve telefonda "
+              "http://<bu-makinenin-yerel-IP'si>:8787 aç (aynı Wi-Fi).")
     print("  Anahtar tarayıcıda girilir; sunucu diske yazmaz. Ctrl+C ile kapat.")
     ThreadingHTTPServer(adres, Istekci).serve_forever()
     return 0
