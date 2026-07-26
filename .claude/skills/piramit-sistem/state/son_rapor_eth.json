@@ -633,6 +633,26 @@
             "confidence": 0.711,
             "evidence": "Türev motoru: BOĞA baskısı (güçlü) (skor 0.511, kapsam 1.0). Faktörler: oi_price=1.0, funding=0.0, cvd=0.7, taker_lsr=-0.5, liquidation=0.8. Kritik erken-uyarı yok.",
             "_verifier_confirmed": true
+          },
+          "_bagimsiz_kapsam": {
+            "kapsam": 1.0,
+            "dolu_kanallar": [
+              "cvd",
+              "funding",
+              "liquidation",
+              "oi_price",
+              "taker_lsr"
+            ],
+            "eksik_kanallar": [],
+            "agirliklar": {
+              "oi_price": 0.34,
+              "funding": 0.18,
+              "cvd": 0.18,
+              "taker_lsr": 0.15,
+              "liquidation": 0.15
+            },
+            "kaynak": "turev-akis GİRDİSİ (turev.json — üreteci turev_girdi.py) üzerinden ölçüldü; motorun kendi `kapsam` beyanı KULLANILMADI",
+            "likidasyon_kaynagi": "turev.json (kanca)"
           }
         }
       },
@@ -708,7 +728,7 @@
         },
         "turev-akis": {
           "confirmed": true,
-          "reason": "motorun kendi kapsam doğrulaması: kapsam=1.0 (eşik 0.5)"
+          "reason": "bağımsız kanal ölçümü: turev.json kanalları (üreteç turev_girdi.py) — dolu: cvd, funding, liquidation, oi_price, taker_lsr; eksik: yok; kapsam 1.0 vs eşik 0.5"
         },
         "gorsel-teyit": {
           "confirmed": true,
@@ -718,7 +738,7 @@
       "dogrulama_gerekceleri": {
         "karar-motoru": "R=None vs R_MIN=1.35; karar=BEKLE",
         "grafik-calisma": "setup_dogrulama: VERİ YETERSİZ — işlem 4 < taban 10 — istatistik kurulamaz",
-        "turev-akis": "turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI",
+        "turev-akis": "turev.json kanalları (üreteç turev_girdi.py) — dolu: cvd, funding, liquidation, oi_price, taker_lsr; eksik: yok → bağımsız kapsam 1.0 vs eşik 0.5 → DOĞRULANDI",
         "gorsel-teyit": "mekanik smc_tespit trend=bull vs görsel okuma trend=bull — UYUMLU"
       },
       "rr_denetimi": {},
@@ -858,7 +878,7 @@
           },
           "turev-akis": {
             "confirmed": true,
-            "reason": "motorun kendi kapsam doğrulaması: kapsam=1.0 (eşik 0.5)"
+            "reason": "bağımsız kanal ölçümü: turev.json kanalları (üreteç turev_girdi.py) — dolu: cvd, funding, liquidation, oi_price, taker_lsr; eksik: yok; kapsam 1.0 vs eşik 0.5"
           },
           "gorsel-teyit": {
             "confirmed": true,
@@ -1278,11 +1298,10 @@
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
     "DENETIM": {
-      "ozet": "26 denetim, 0 ihlal, 2 uyarı",
+      "ozet": "26 denetim, 0 ihlal, 1 uyarı",
       "ihlal": [],
       "uyari": [
-        "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY",
-        "K4-AGI/DAIRESEL: kendi çıktısıyla doğrulanan danışman: turev-akis ← turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI"
+        "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY"
       ],
       "muhurlendi": false
     }
@@ -1468,9 +1487,9 @@
       "K4-AGI": [
         {
           "kod": "DAIRESEL",
-          "durum": "UYARI",
-          "kanit": "kendi çıktısıyla doğrulanan danışman: turev-akis ← turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI",
-          "oneri": "çapraz doğrulayıcı ekle (başka motor onaylasın)"
+          "durum": "TEMİZ",
+          "kanit": "her doğrulama BAŞKA bir motordan: karar-motoru←R=None vs R_MIN=1.35; karar=BEKLE; grafik-calisma←setup_dogrulama: VERİ YETERSİZ — işlem 4 < ta; turev-akis←turev.json kanalları (üreteç turev_girdi.py) ; gorsel-teyit←mekanik smc_tespit trend=bull vs görsel okuma",
+          "oneri": ""
         },
         {
           "kod": "MEMNUN_ETME",
@@ -1519,7 +1538,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'gorsel-teyit', 'karar-motoru', 'grafik-calisma'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'turev-akis', 'gorsel-teyit', 'grafik-calisma'}",
           "oneri": ""
         },
         {
@@ -1556,12 +1575,11 @@
     },
     "ihlal": [],
     "uyari": [
-      "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY",
-      "K4-AGI/DAIRESEL: kendi çıktısıyla doğrulanan danışman: turev-akis ← turev-akis kapsam=1.0 vs eşik 0.5 → DOĞRULANDI"
+      "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY"
     ],
     "kritik_ihlal": [],
     "muhurlendi": false,
-    "ozet": "26 denetim, 0 ihlal, 2 uyarı",
+    "ozet": "26 denetim, 0 ihlal, 1 uyarı",
     "not": "Gözlemci ZİHİN okumaz, ARTEFAKT denetler: dosya yolu, motor çıktısı, danışman kaydı, sayı eşleşmesi. Kritik ihlalde işlem kalitesi mühürlenir; YÖN yine gösterilir."
   },
   "durum": "TAMAM — piramidin tepesine ulaşıldı"

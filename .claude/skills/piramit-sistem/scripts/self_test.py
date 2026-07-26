@@ -849,6 +849,56 @@ def main() -> int:
                 f"ilk yön={ct.get('yon_ilk')} → doğrulanmış kurul="
                 f"{ct.get('yon_dogrulanmis_kurul')} | dayanıksız={ct['yon_dayaniksiz']}")
 
+        # ---- T35: turev-akis BAĞIMSIZ doğrulanır (kendi beyanıyla DEĞİL) ---
+        # Protokol: "hiçbir kaynak kendini doğrulamaz". Kapsam, motorun
+        # GİRDİSİNDEN (turev.json) ölçülür; motorun `rapor.kapsam` beyanı yalnız
+        # ÇAPRAZ KONTROL içindir — ayrışırsa motor kendi kapsamını yanlış
+        # raporluyordur ve danışman ÇÜRÜTÜLÜR (fail-closed).
+        def _tv_k4(bagimsiz, beyan):
+            k2f = {"motor_sonuclari": {"turev-akis": {
+                       "rapor": {"kapsam": beyan},
+                       "danisman": {"name": "turev-akis", "stance": "long",
+                                    "confidence": 0.7},
+                       "_bagimsiz_kapsam": {"kapsam": bagimsiz,
+                                            "dolu_kanallar": ["cvd"],
+                                            "eksik_kanallar": []}}},
+                   "hatalar": []}
+            k3f = {"danismanlar": [
+                       {"name": "turev-akis", "stance": "long", "confidence": 0.7},
+                       {"name": "gorsel-teyit", "stance": "long", "confidence": 0.4}],
+                   "seviyeler": {}}
+            r = P.k4_agi({}, {"zorunlu_girdiler": {}, "zorunlu_eksik": []}, k2f, k3f)
+            return r["verifier"].get("turev-akis", {}), r["dogrulama_gerekceleri"]
+
+        # (a) kanal ölçümü: ağırlıklar turev_akis'in aynası
+        tam = {"oi_series": [1, 2], "price_series": [1, 2], "funding": 0.01,
+               "cvd_series": [1, 2], "taker_lsr": 1.1, "liq_long": 1.0,
+               "liq_short": 2.0}
+        olc_tam = P._turev_kanal_olc(tam)["kapsam"]
+        olc_oisiz = P._turev_kanal_olc(
+            {k: v for k, v in tam.items()
+             if k not in ("oi_series", "price_series")})["kapsam"]
+        olc_tek = P._turev_kanal_olc({**tam, "cvd_series": [1]})["kapsam"]
+        # (b) üç doğrulama senaryosu
+        v_ok, g_ok = _tv_k4(1.0, 1.0)          # tam kapsam, beyan uyuşuyor
+        v_dus, _ = _tv_k4(0.18, 0.18)          # eşik altı → çürütülür
+        v_carp, _ = _tv_k4(0.34, 1.0)          # motor kapsamı ŞİŞİRMİŞ → çürütülür
+        v_yok, _ = _tv_k4(None, 1.0)           # ölçüm yok → fail-closed
+        # (c) DAİRESELLİK: gerekçe motorun KENDİ adına değil GİRDİ dosyasına dayanmalı
+        dairesel_degil = "turev_girdi.py" in g_ok.get("turev-akis", "")
+        kontrol("T35 turev-akis bağımsız doğrulanır (dairesel değil)",
+                olc_tam == 1.0 and abs(olc_oisiz - 0.66) < 1e-9 and abs(olc_tek - 0.82) < 1e-9
+                and v_ok.get("confirmed") is True
+                and v_dus.get("confirmed") is False
+                and v_carp.get("confirmed") is False
+                and "ÇARPIŞMA" in v_carp.get("reason", "")
+                and v_yok.get("confirmed") is False
+                and dairesel_degil,
+                f"ölçüm tam={olc_tam} OI'siz={olc_oisiz} tek-nokta={olc_tek} | "
+                f"onay={v_ok.get('confirmed')} eşik-altı={v_dus.get('confirmed')} "
+                f"çarpışma={v_carp.get('confirmed')} ölçümsüz={v_yok.get('confirmed')} | "
+                f"gerekçe girdiye dayanıyor={dairesel_degil}")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi

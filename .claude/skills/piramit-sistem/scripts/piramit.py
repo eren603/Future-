@@ -115,6 +115,19 @@ KONVANSIYON = {
     # Eşik kalibrasyonu ufku: kaç barlık yön devamlılığı ölçülecek. 15M seride
     # 8 bar = 2 saat — kurulum tetiği ile T1 arası tipik pencere.
     "esik_ufuk_bar": 8,
+    # TÜREV KAPSAMININ BAĞIMSIZ ÖLÇÜMÜ (K4 doğrulayıcısı).
+    # turev-akis'i KENDİ `kapsam` beyanıyla doğrulamak DAİRESELDİR (protokol:
+    # "hiçbir kaynak kendini doğrulamaz"). Bu yüzden kapsam motorun ÇIKTISINDAN
+    # değil GİRDİSİNDEN ölçülür: turev.json'u BAŞKA bir program (turev_girdi.py)
+    # üretir, kanalların varlığı turev_akis'ten bağımsız bir olgudur.
+    # Ağırlıklar turev_akis KONVANSIYON'undaki w_oi/w_funding/w_cvd/w_lsr/w_liq
+    # aynasıdır ve ikinci kopya KASITLIDIR: motorun beyan ettiği kapsam ile
+    # buradan ölçülen kapsam KARŞILAŞTIRILIR — ayrışma, motorun kendi kapsamını
+    # yanlış raporladığını (ya da ağırlıkların kaydığını) kanıtlar → fail-closed.
+    "turev_kanal_agirlik": {"oi_price": 0.34, "funding": 0.18, "cvd": 0.18,
+                            "taker_lsr": 0.15, "liquidation": 0.15},
+    "turev_kapsam_esigi": 0.5,       # turev_akis KONVANSIYON['kapsam_esigi'] aynası
+    "turev_kapsam_tolerans": 0.02,   # beyan ↔ bağımsız ölçüm ayrışma toleransı
 }
 
 KATMANLAR = ["K1-LLM", "K2-AI-AJAN", "K3-COKLU-AJAN", "K4-AGI", "K5-SI"]
@@ -406,6 +419,43 @@ def k1_llm(job: dict, taban: Path) -> dict:
 # ==========================================================================
 # K2 — AI AJAN: tek ajan + araç. Motorlar birbirini GÖRMEDEN koşar.
 # ==========================================================================
+def _turev_kanal_olc(turev: dict) -> dict:
+    """turev-akis'in GİRDİSİNDEN bağımsız kapsam ölçümü (K4 doğrulayıcısı).
+
+    Motorun `kapsam` beyanını OKUMAZ; girdi sözlüğündeki kanalların gerçekten
+    okunabilir olup olmadığına bakar. Varlık kuralları turev_akis'in kendi
+    "None döndürme" mantığının aynası (bkz. _oi_price_signal / _funding_signal /
+    _cvd_signal / _lsr_signal / _liq_signal): bir kanal, motorun o kanaldan
+    sayısal skor üretebileceği durumda "dolu" sayılır.
+
+    Bu ölçüm K2'de yapılır (girdiyi K2 kurar) ve K4'te doğrulayıcı olarak
+    kullanılır — böylece danışman kendi çıktısıyla değil, KENDİSİNE VERİLEN
+    veriyle doğrulanır.
+    """
+    def _seri_ok(s):
+        return isinstance(s, (list, tuple)) and len([x for x in s if _num(x) is not None]) >= 2
+
+    dolu = {
+        "oi_price": _seri_ok(turev.get("oi_series")) and _seri_ok(turev.get("price_series")),
+        "funding": _num(turev.get("funding")) is not None,
+        "cvd": _seri_ok(turev.get("cvd_series")),
+        "taker_lsr": _num(turev.get("taker_lsr")) is not None,
+        "liquidation": (_num(turev.get("liq_long")) is not None
+                        and _num(turev.get("liq_short")) is not None),
+    }
+    w = KONVANSIYON["turev_kanal_agirlik"]
+    kapsam = round(sum(w[k] for k, v in dolu.items() if v), 4)
+    return {
+        "kapsam": kapsam,
+        "dolu_kanallar": sorted([k for k, v in dolu.items() if v]),
+        "eksik_kanallar": sorted([k for k, v in dolu.items() if not v]),
+        "agirliklar": dict(w),
+        "kaynak": ("turev-akis GİRDİSİ (turev.json — üreteci turev_girdi.py) "
+                   "üzerinden ölçüldü; motorun kendi `kapsam` beyanı KULLANILMADI"),
+        "likidasyon_kaynagi": turev.get("_likidasyon_kaynagi", "turev.json (kanca)"),
+    }
+
+
 def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
     veri = job.get("veri") or {}
     sonuc, hatalar = {}, []
@@ -549,7 +599,10 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
         r_adv = _kos(MOTOR["turev_akis"], ["--emit-advisor"], girdi_job=turev)
         if r_full["ok"] and isinstance(r_full["cikti"], dict):
             sonuc["turev-akis"] = {"rapor": r_full["cikti"],
-                                   "danisman": (r_adv["cikti"] if r_adv["ok"] else None)}
+                                   "danisman": (r_adv["cikti"] if r_adv["ok"] else None),
+                                   # K4 doğrulayıcısı: motorun GİRDİSİNDEN
+                                   # ölçülen kapsam (çıktısından DEĞİL).
+                                   "_bagimsiz_kapsam": _turev_kanal_olc(turev)}
         else:
             hatalar.append({"motor": "turev-akis",
                             "hata": r_full["hata"] or r_full["metin"][:300]})
@@ -812,32 +865,48 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
                                           "reason": f"tarihsel edge kanıtı {YOK}"}
             gerekce["grafik-calisma"] = f"setup_dogrulama koşmadı → {YOK} (fail-closed)"
 
-    # turev-akis: motorun KENDİ kapsam doğrulaması (karar-kurulu/SKILL.md şartı)
-    # "çıktının `_verifier_confirmed` alanını verifier['turev-akis'].confirmed'e
-    #  taşı (kapsam < 0.5 ise false → çürütme penaltısı otomatik uygulanır)"
-    # Bu taşıma EKSİKTİ: K4 turev-akis için verifier girdisi hiç üretmiyordu ve
-    # danışmanın kendi taşıdığı `_verifier_confirmed` alanı da K5'te sentez_job
-    # kurulurken `_` ön ekiyle SİLİNİYORDU (bkz. sentez_job advisors kurulumu).
-    # Sonuç: turev-akis kapsamı 1.0 olsa bile DAİMA doğrulanmamış sayılıp ×0.25
-    # çürütme cezası alıyordu — fiyat-dışı TEK kanal sistematik olarak eziliyordu.
+    # turev-akis: BAĞIMSIZ KANAL DOĞRULAMASI (kendi beyanı KULLANILMAZ).
+    # karar-kurulu/SKILL.md "kapsam < 0.5 ise false" şartını uygular AMA kapsamı
+    # motorun `rapor.kapsam` beyanından okumaz — bu dairesel olurdu (protokol:
+    # "hiçbir kaynak kendini doğrulamaz"; gözlemci DAIRESEL kodu bunu yakalar).
+    # Kapsam, motorun GİRDİSİNDEN (turev.json — üreteci turev_girdi.py, ayrı bir
+    # program) K2'de ölçülür. Ayrıca motorun BEYAN ettiği kapsam bu bağımsız
+    # ölçümle KARŞILAŞTIRILIR: ayrışma, motorun kendi kapsamını yanlış
+    # raporladığını gösterir → fail-closed çürütme (ÇARPIŞMA sinyali).
     tv_d = next((d for d in k3["danismanlar"] if d["name"] == "turev-akis"), None)
+    tv_m = m.get("turev-akis") or {}
     if isinstance(tv_d, dict):
-        tv_onay = tv_d.get("_verifier_confirmed")
-        tv_kapsam = _num(((m.get("turev-akis") or {}).get("rapor") or {}).get("kapsam"))
-        if tv_onay is None and tv_kapsam is not None:
-            tv_onay = tv_kapsam >= 0.5          # SKILL.md eşiği (fail-closed)
-        if tv_onay is None:
-            verifier["turev-akis"] = {"confirmed": False,
-                                      "reason": f"kapsam okunamadı → {YOK} (fail-closed)"}
-            gerekce["turev-akis"] = f"turev-akis kapsamı {YOK} → doğrulanmadı (fail-closed)"
-        else:
+        olcum = tv_m.get("_bagimsiz_kapsam") or {}
+        bagimsiz = _num(olcum.get("kapsam"))
+        beyan = _num((tv_m.get("rapor") or {}).get("kapsam"))
+        esik = KONVANSIYON["turev_kapsam_esigi"]
+        tol = KONVANSIYON["turev_kapsam_tolerans"]
+        kanit_kaynak = (f"turev.json kanalları (üreteç turev_girdi.py) — dolu: "
+                        f"{', '.join(olcum.get('dolu_kanallar') or []) or YOK}; eksik: "
+                        f"{', '.join(olcum.get('eksik_kanallar') or []) or 'yok'}")
+        if bagimsiz is None:
             verifier["turev-akis"] = {
-                "confirmed": bool(tv_onay),
-                "reason": (f"motorun kendi kapsam doğrulaması: kapsam="
-                           f"{tv_kapsam if tv_kapsam is not None else YOK} "
-                           f"(eşik 0.5)")}
-            gerekce["turev-akis"] = (f"turev-akis kapsam={tv_kapsam} vs eşik 0.5 → "
-                                     f"{'DOĞRULANDI' if tv_onay else 'ÇÜRÜTÜLDÜ'}")
+                "confirmed": False,
+                "reason": f"bağımsız kanal ölçümü yapılamadı → {YOK} (fail-closed)"}
+            gerekce["turev-akis"] = (f"bağımsız kanal ölçümü {YOK} → doğrulanmadı "
+                                     f"(fail-closed; motorun kendi beyanına GÜVENİLMEZ)")
+        elif beyan is not None and abs(beyan - bagimsiz) > tol:
+            verifier["turev-akis"] = {
+                "confirmed": False,
+                "reason": (f"KAPSAM ÇARPIŞMASI: motor {beyan} beyan etti, girdiden "
+                           f"ölçülen {bagimsiz} (tolerans {tol}) — motor kendi "
+                           f"kapsamını yanlış raporluyor (fail-closed)")}
+            gerekce["turev-akis"] = (f"{kanit_kaynak} → bağımsız kapsam {bagimsiz}, "
+                                     f"motor beyanı {beyan} ile ÇELİŞİYOR → ÇÜRÜTÜLDÜ")
+        else:
+            onay = bagimsiz >= esik
+            verifier["turev-akis"] = {
+                "confirmed": bool(onay),
+                "reason": (f"bağımsız kanal ölçümü: {kanit_kaynak}; kapsam "
+                           f"{bagimsiz} vs eşik {esik}")}
+            gerekce["turev-akis"] = (f"{kanit_kaynak} → bağımsız kapsam {bagimsiz} "
+                                     f"vs eşik {esik} → "
+                                     f"{'DOĞRULANDI' if onay else 'ÇÜRÜTÜLDÜ'}")
 
     # backtest yalnız job'da hangi danışmanı doğruladığı BEYAN edilirse geçer
     bt = m.get("backtest-motoru")
