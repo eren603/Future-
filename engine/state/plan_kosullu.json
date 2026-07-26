@@ -7,8 +7,10 @@
   "aktif_emir": {
     "tip": "LIMIT",
     "yon": "LONG",
+    "durum": "ASKIYA ALINDI — backtest-motoru + risk-yonetimi ölçümü kenar bulamadı (bkz. edge_olcumu)",
     "giris_band": [1895.5, 1898.5],
-    "stop": 1862.1667,
+    "stop_band": [1862.1667, 1865.1667],
+    "stop_kurali": "profil stopu girişe bağlıdır: stop = giriş - 33.3333",
     "hedef": 1945.365,
     "gerekce": "profil-geçerli pencere B (usd_hedef 5/5) ∩ dolmamış 4H boğa FVG 1887.0-1907.99 ∩ golden zone 1890.76936-1898.70568",
     "zayif_nokta": "stop yapının ötesinde DEĞİL — en yakın karşı yapı 1847.305 stopun altında",
@@ -38,6 +40,19 @@
       "islem": "YOK — iki pencere arasındaki ölü bölge, bant içi likidite yok"
     }
   },
-  "degismeyen_kisit": "setup_dogrulama işlem 5 < taban 10 — hiçbir seviyede tarihsel edge kanıtı kurulamıyor; motorun bağlayıcı çıktısı bu bar için EMİR YOK, bu plan koşullu bekleyen emirdir",
+  "edge_olcumu": {
+    "_not": "backtest-motoru ve risk-yonetimi ilk kez koşuldu; setup_dogrulama'nın 'örneklem yetersiz' hükmü sayıyla dolduruldu",
+    "backtest_4h_sma5_30": {"profit_factor": 0.3442, "win_rate": 0.1818, "sharpe": -5.337, "total_return": -0.183519, "max_drawdown": -0.192509},
+    "monte_carlo_4h": {"runs": 2000, "prob_profit": 0.0, "final_return_p50": -0.131965, "max_dd_p50": -0.140847},
+    "backtest_15m_sma5_30": {"profit_factor": 1.5271, "win_rate": 0.3, "total_return": 0.006118},
+    "backtest_rsi_4h": {"profit_factor": 0.0, "total_return": -0.111983},
+    "backtest_rsi_15m": {"profit_factor": 0.0, "total_return": -0.024842},
+    "walk_forward": "dört koşunun dördünde consistent=false",
+    "kelly_4h_kurulum_olcegi": {"full_kelly": -0.3465, "applied_fraction": 0.0, "hukum": "Negatif Kelly: kenar yok, pozisyon açma"},
+    "kelly_15m_tetik_olcegi": {"full_kelly": 0.1035, "applied_fraction": 0.0518},
+    "sabit_kesir": {"risk_amount": 100.0, "units": 2.87081614, "notional": 5445.9382},
+    "sinir": "backtest MA-kesişimi ve RSI vekillerini test etti, SMC+FVG kurulumunun kendisini DEĞİL (motorda SMC strateji tipi yok)"
+  },
+  "degismeyen_kisit": "setup_dogrulama işlem 5 < taban 10 + backtest/Kelly ölçümü negatif — kurulum ölçeğinde ölçülebilir kenar YOK; motorun bağlayıcı çıktısı bu bar için EMİR YOK",
   "uyari": "Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL."
 }
