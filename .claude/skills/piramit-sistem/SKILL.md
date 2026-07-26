@@ -179,6 +179,36 @@ Kritik ihlalde (UYDURMA/DAİRESEL/EKSİK_AKTARIM/MEMNUN_ETME) **işlem kalitesi
 mühürlenir**: YÖN gösterilir, işlem verilmez. `scripts/iddia_denetle.py` ise
 sunulacak metindeki her sayının raporda karşılığı var mı diye bakar.
 
+## Kontrol ajanları (gözlemcinin üstünde, HER konu için)
+
+`scripts/kontrol_ajanlari.py` — mimari: `.claude/kontrol/kontrol_mimari.xml`.
+Gözlemci piramit KATMANLARINI denetler; kontrol ajanları **konudan bağımsız
+ZİNCİRİ** denetler (Z1 GÖREV → Z2 KANIT → Z3 ÜRETİM → Z4 ÇAPRAZ DOĞRULAMA →
+Z5 SENTEZ → Z6 TESLİM) ve gözlemcinin görmediği 6 soruyu ekler:
+
+| Kod | Soru | Ölçüm |
+|---|---|---|
+| **ARASTIRMASIZ** (P1) | araştırmadan mı üretti | iddia var, okunmuş artefakt yok |
+| **TAKLIT** (P1) | diğer ajanı taklit mi etti | bağımsız iki ajanın sayı kümesi ≥%90 örtüşüyor |
+| **BULASMA** (P0) | birbirinden etkilendi mi | beslenmediği akranın çıktısına bakmış |
+| **GOREV_SAPMASI** (P0) | görevi tam mı yaptı | kapsanmayan + gerekçesiz görev maddesi |
+| **GIZLI_GUNDEM** (P1) | beyan dışı gerekçe var mı | teslimde hiçbir adımın üretmediği sayı/sürücü |
+| **TIYATRO** (P0) | gerçekten yaptı mı | "geçti" diyen ama çıktı üretmeyen adım/katman |
+
+Kullanım — piyasa yolunda **kendiliğinden** koşar (`rapor["KONTROL"]`, özetin
+altında panel). Diğer konularda:
+
+```bash
+python3 scripts/kontrol_ajanlari.py --zincir defter.json --ozet   # ya da --xml
+python3 scripts/kontrol_ajanlari.py --rapor rapor.json --xml
+python3 scripts/kontrol_ajanlari.py --oz-test                     # 15 bozma senaryosu
+```
+
+Tek bir **P0** bulgu teslimi MÜHÜRLER (sonuç gösterilir, "bu haliyle
+kullanılamaz" denir + düzeltme planı). Defter şablonu:
+`.claude/kontrol/zincir_sablon.json`. Kontrol ajanı ANLAM denetlemez — yorumun
+doğruluğu elle ikinci-göz işidir.
+
 ## Zorunlu girdiler (her koşuda — atlanamaz)
 
 | # | Girdi | Nereye | Ne açar |

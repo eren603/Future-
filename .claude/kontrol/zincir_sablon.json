@@ -1,0 +1,80 @@
+{
+  "_aciklama": "ZİNCİR DEFTERİ ŞABLONU — piyasa dışı HER konu için. Çalışan ajan doldurur, kontrol ajanı denetler: python3 .claude/skills/piramit-sistem/scripts/kontrol_ajanlari.py --zincir <bu dosya> --ozet",
+  "_kural": "artefakt tur='dosya' ise ref DİSKTE olmalı ve iddiadaki sayı o dosyada GEÇMELİ — beyanla geçilemez.",
+  "gorev": "kullanıcı isteğinin BİREBİR metni",
+  "gorev_maddeleri": [
+    {"id": "M1", "metin": "isteğin birinci cümlesi/talebi"},
+    {"id": "M2", "metin": "isteğin ikinci talebi"}
+  ],
+  "dislanan_maddeler": [
+    {"id": "M3", "gerekce": "neden yapılmadı — boş bırakılırsa GOREV_SAPMASI (P0)"}
+  ],
+  "adimlar": [
+    {
+      "id": "Z1", "ad": "GÖREV ÇÖZÜMLEME", "ajan": "cozumleyici",
+      "bagimsiz": false, "girdi_id": [], "gordugu_adimlar": [],
+      "kapsanan_maddeler": ["M1", "M2"],
+      "artefaktlar": [{"tur": "girdi", "ref": "kullanıcı istemi", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "istek N maddeye ayrıldı", "sayilar": [], "kaynak": "kullanıcı istemi"}],
+      "kapi": "her madde bir adıma atandı ya da gerekçeyle dışlandı", "gecti": true
+    },
+    {
+      "id": "Z2", "ad": "KANIT TOPLAMA", "ajan": "kanitci",
+      "bagimsiz": false, "girdi_id": ["Z1"], "gordugu_adimlar": ["Z1"],
+      "kapsanan_maddeler": ["M1"],
+      "artefaktlar": [{"tur": "dosya", "ref": "/mutlak/yol/kaynak.json", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "ölçüm/olgu", "sayilar": [0], "kaynak": "/mutlak/yol/kaynak.json"}],
+      "kapi": "iddia üreten her adımın okunmuş artefaktı var", "gecti": true
+    },
+    {
+      "id": "Z3a", "ad": "ÜRETİM — mercek A", "ajan": "uretici-a",
+      "bagimsiz": true, "girdi_id": ["Z2"], "gordugu_adimlar": ["Z2"],
+      "kapsanan_maddeler": ["M1"],
+      "artefaktlar": [{"tur": "arac", "ref": "hangi araç/motor koştu", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "bulgu A", "sayilar": [0], "kaynak": "arac"}],
+      "kapi": "izole koşu — diğer bağımsız ajanın çıktısı GÖRÜLMEDİ", "gecti": true
+    },
+    {
+      "id": "Z3b", "ad": "ÜRETİM — mercek B", "ajan": "uretici-b",
+      "bagimsiz": true, "girdi_id": ["Z2"], "gordugu_adimlar": ["Z2"],
+      "kapsanan_maddeler": ["M2"],
+      "artefaktlar": [{"tur": "arac", "ref": "farklı kanıt ailesi", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "bulgu B", "sayilar": [0], "kaynak": "arac"}],
+      "kapi": "izole koşu", "gecti": true
+    },
+    {
+      "id": "Z4", "ad": "ÇAPRAZ DOĞRULAMA", "ajan": "curutucu",
+      "bagimsiz": true, "girdi_id": ["Z3a", "Z3b"], "gordugu_adimlar": ["Z3a", "Z3b"],
+      "kapsanan_maddeler": ["M1", "M2"],
+      "artefaktlar": [{"tur": "arac", "ref": "çürütme denemesi", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "A ayakta / B çürüdü", "sayilar": [], "kaynak": "arac"}],
+      "kapi": "her iddiaya en az bir ÇÜRÜTME denemesi", "gecti": true
+    },
+    {
+      "id": "Z5", "ad": "SENTEZ", "ajan": "sentezci",
+      "bagimsiz": false, "girdi_id": ["Z4"], "gordugu_adimlar": ["Z4"],
+      "kapsanan_maddeler": ["M1", "M2"],
+      "artefaktlar": [{"tur": "arac", "ref": "sentez", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "severity sıralı sonuç", "sayilar": [], "kaynak": "arac"}],
+      "kapi": "üretilen her sonuç ya sentezde ya gerekçeli dışlamada", "gecti": true
+    }
+  ],
+  "dogrulamalar": [
+    {"iddia": "bulgu A", "dogrulayan_ajan": "curutucu", "aile": "kaynak-ailesi-1", "sonuc": "ONAY", "gerekce": "…"},
+    {"iddia": "bulgu B", "dogrulayan_ajan": "curutucu", "aile": "kaynak-ailesi-2", "sonuc": "ÇÜRÜTÜLDÜ", "gerekce": "…"}
+  ],
+  "dislanan_ciktilar": [
+    {"id": "Z3b", "gerekce": "çürütüldü — sentezе girmedi"}
+  ],
+  "kullanici_itirazi": {
+    "_aciklama": "kullanıcı itiraz ettiyse doldur; fikir_degisti=true ve yeni_kanit boşsa MEMNUN_ETME (P0)",
+    "fikir_degisti": false, "yeni_kanit": [], "eski": "", "yeni": "", "adim": "Z5"
+  },
+  "teslim": {
+    "metin": "kullanıcıya gidecek cevabın özeti",
+    "sayilar": [0],
+    "suruculer": [{"ad": "kararı sürükleyen etken", "kaynak_adim": "Z3a"}],
+    "girdi_id": ["Z5"],
+    "gercek": ["ölçülen"], "varsayim": ["varsayılan"], "yorum": ["yorum"]
+  }
+}

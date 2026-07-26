@@ -849,6 +849,31 @@ def main() -> int:
                 f"ilk yön={ct.get('yon_ilk')} → doğrulanmış kurul="
                 f"{ct.get('yon_dogrulanmis_kurul')} | dayanıksız={ct['yon_dayaniksiz']}")
 
+        # ---- T35: KONTROL AJANLARI boru hatta bağlı mı, mühür işliyor mu ----
+        import kontrol_ajanlari as KA  # noqa: PLC0415
+        pr_kirli = {
+            "sembol": "T35", "_job": {"korelasyon": True},
+            "katmanlar": [
+                {"katman": "K1-LLM", "gecti": True, "kanallar": {"15m": "x"}},
+                {"katman": "K2-AI-AJAN", "gecti": True,
+                 "motor_sonuclari": {"m1": {"skor": 0.3}}},
+                {"katman": "K3-COKLU-AJAN", "gecti": True, "danismanlar": [
+                    {"name": "m1", "stance": "long", "_ham_confidence": 0.5},
+                    {"name": "m2", "stance": "long", "_ham_confidence": 0.5}]},
+                {"katman": "K4-AGI", "gecti": True, "kapi": "geçti", "verifier": {}}],
+            "ZIRVE": {"YON_BIAS": "LONG", "EMIR": "LIMIT LONG @1"},
+            "DENETIM": {"muhurlendi": False, "ihlal": []}}
+        k_kirli = KA.denetle_piramit(pr_kirli)
+        kodlar = {x["kod"] for x in k_kirli["bulgular"]}
+        # gerçek koşu (yukarıdaki tam rapor) yanlış-pozitif üretmemeli
+        k_temiz = KA.denetle_piramit(json.loads(json.dumps(r25)))
+        kontrol("T35 kontrol ajanları: kirli koşu mühürlenir, temiz koşu geçer",
+                k_kirli["muhurlendi"] and {"TIYATRO", "TAKLIT", "GOREV_SAPMASI",
+                                           "GIZLI_GUNDEM"} <= kodlar
+                and "KONTROL" in r25 and not k_temiz["muhurlendi"],
+                f"kirli bulgular={sorted(kodlar)} | gerçek koşu mühür="
+                f"{k_temiz['muhurlendi']} ({k_temiz['ozet']})")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
