@@ -3,34 +3,33 @@
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "likidite süpürme + reddediliş (64639.00 tepesi alındı, son 15M barı MA kümesinin ALTINA kapandı)",
+  "yapi_olayi": "BOS yukarı — 12:45'teki 64639.00 tepesi kırıldı, yeni tepe 64748.30; fiyat 15M MA kümesinin ÜSTÜNDE",
   "seviyeler": {
     "direnc": [
-      64485,
-      64600,
-      64639,
-      65042.41
+      64748.3,
+      65051.27
     ],
     "destek": [
-      64398,
-      64332,
-      64256.4,
-      64070
+      64502.03,
+      64470,
+      64395,
+      64320,
+      64256.4
     ]
   },
   "gozlem": [
-    "15M MA dizilimi hâlâ boğa sırası (MA5 64499.85 > MA10 64494.77 > MA30 64437.24) AMA fiyat 64413 üçünün de ALTINDA — momentum kaybı",
-    "15M yapı: 63760.50 (07/25 12:15) dibinden yükselen dipler; son yerel dip ~64240, tepe 64639.00 → HH/HL bozulmadı, ama tepede sert red mumu",
-    "4S'te yapı AYI: fiyat 64416 < MA30 65042.41 (66924.10 tepesinden düşüş), MA5 64421.11 ancak yeni geri alındı",
-    "15M likidite haritası: fiyatın hemen ÜSTÜNDE ~64470-64490 yoğun duvar (mıknatıs), ALTINDA ~64398 ve ~64332 iki kalın bant; 15M menzil 64256.40-64639.00",
-    "4S likidite haritası: 65000-65100 üstünde küme, altta 64050'ye kadar seyrek — aşağı boşluk daha geniş",
-    "Panel türevi: funding +0.009% (pozitif, long ödüyor), Açık Faiz 107.5K BTC (yatay), 4S likidasyon Longs 5.3K / Shorts 395.3K → yükselişte SHORT'lar temizlendi (yakıt harcandı)",
-    "24S menzil 64070-64639, 24S hacim 2.74B USD"
+    "15M MA dizilimi boğa ve fiyat ÜÇÜNÜN DE ÜSTÜNDE: 64670 > MA5 64661.54 > MA10 64560.02 > MA30 64502.03 — 12:45'teki 'MA altına sarkma' tersine döndü",
+    "15M yapı: 63760.50 dibinden gelen yükseliş 64639.00 tepesini kırdı, yeni tepe 64748.30 → BOS teyitli, HH/HL sağlam",
+    "4S'te fiyat 64678 hâlâ MA30 65051.27'nin ALTINDA (66924.10 tepesinden düşüş yapısı bozulmadı); MA5 64474.27 > MA10 64293.79 yukarı kıvrıldı",
+    "15M likidite haritası: fiyatın tam üstünde ~64700 bandında geniş yatay küme (mıknatıs/direnç); ALTTA sırayla 64470, 64395, 64320 kalın duvarlar — düşüşte basamaklı destek",
+    "4S likidite haritası: 65000-65150 üstünde küme (yukarı ilk büyük hedef), altta 64050'ye kadar seyrek",
+    "Panel türevi: funding +0.0074% (pozitif ama önceki okumadan düşük), Açık Faiz 107.5K BTC (yatay), 4S likidasyon Longs 20.0K / Shorts 1.1M → yükseliş büyük ölçüde SHORT tasfiyesiyle beslendi",
+    "24S menzil 64092-64748.30, 24S hacim 2.95B USD, +0.79%"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M boğa yapısı / 4S ayı yapısı — zaman dilimi çatışması AÇIK. Ayrıca 15M'in kendi içinde çelişki: yapı boğa ama son bar MA'ların altına kapandı ve short likidasyonu (395.3K) yükselişin yakıtının harcandığını gösteriyor.",
-  "guven": 0.4,
-  "zaman_utc": "2026-07-26 12:47",
-  "zaman_yerel": "2026-07-26 15:46-15:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 15:46-15:47 (UTC+3) → UTC 12:46-12:47; panelin 4S geri sayımı 03:12:33 → sonraki 4S kapanışı 16:00 UTC ile tutarlı; son kline barı 12:45 UTC (2 dk fark), paket çekimi 12:48:40 UTC"
+  "celiski_notu": "15M boğa (BOS teyitli) / 4S hâlâ ayı (MA30 65051.27 altında) — zaman dilimi çatışması SÜRÜYOR. Ayrıca yükselişin yakıtı short tasfiyesi (Shorts 1.1M vs Longs 20.0K): squeeze bitince alıcı devam ettirmezse geri çekilme riski.",
+  "guven": 0.45,
+  "zaman_utc": "2026-07-26 15:02",
+  "zaman_yerel": "2026-07-26 18:02 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 18:02 (UTC+3) → UTC 15:02; son kline barı 15:00 UTC (2 dk fark), paket çekimi 15:03:56 UTC"
 }

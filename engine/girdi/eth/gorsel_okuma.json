@@ -3,34 +3,34 @@
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "yükselen dipler + tepede red (1893.00 alındı, fiyat MA5/MA10 altına sarktı ama MA30 üstünde tutundu)",
+  "yapi_olayi": "BOS yukarı — 1893.00 tepesi kırıldı, yeni tepe 1903.00; fiyat 15M MA kümesinin ÜSTÜNDE, 4S MA30 geri alındı",
   "seviyeler": {
     "direnc": [
-      1889.5,
-      1893,
-      1892.79,
+      1903,
       1958.75
     ],
     "destek": [
-      1883.42,
-      1880,
-      1872.63,
-      1857.52
+      1893.21,
+      1890.5,
+      1886.12,
+      1885.5,
+      1880.5,
+      1876.01
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa sırası (MA5 1887.12 > MA10 1886.45 > MA30 1883.42); fiyat 1885.09 MA5/MA10 altında ama MA30 ÜSTÜNDE — pullback, bozulma değil",
-    "15M yapı: 1850.26 (07/25 15:45) dibinden kesintisiz yükselen dipler, tepe 1893.00 → HH/HL sağlam",
-    "4S'te fiyat 1885.62 > MA5 1881.30 > MA10 1871.73 ama MA30 1892.79 ALTINDA — orta vade hâlâ ayı (1958.75 tepesinden)",
-    "15M likidite haritası: 1889-1890 bandında kalın duvar (hemen üstte), altta 1872-1874 bandı; 15M menzil 1872.63-1893.00",
-    "4S likidite haritası: 1940-1960 üstünde çok yoğun küme, altta 1800 bandında kalın taban — ETH BTC'ye göre çok daha yoğun likidite ortamında",
-    "Panel türevi: funding +0.0018% (BTC'nin 0.009%'undan düşük — ETH'de long baskısı daha ılımlı), Açık Faiz 2.4M ETH (yükselen), 4S likidasyon Longs 1.2K / Shorts 472.3K → yükseliş short temizlemesiyle beslendi",
-    "24S menzil 1857.52-1893.00, 24S hacim 2.49B USD, +1.5%"
+    "15M MA dizilimi boğa ve fiyat ÜÇÜNÜN DE ÜSTÜNDE: 1897.87 > MA5 1895.47 > MA10 1890.28 > MA30 1886.12",
+    "15M yapı: 1850.26 dibinden kesintisiz yükseliş, 1893.00 kırıldı, yeni tepe 1903.00 → BOS teyitli",
+    "4S REJİM DEĞİŞİMİ: fiyat 1897.75 artık MA30 1893.21'in ÜSTÜNDE (12:45 okumasında altındaydı) — orta vade ayı yapısı ilk kez geri alındı; MA5 1883.85 > MA10 1873.01",
+    "15M likidite haritası: 1890.5 / 1885.5 / 1880.5 / 1878 bantlarında kalın destek kümeleri; fiyatın ÜSTÜNDE 1903'e kadar seyrek — yukarı boşluk var",
+    "4S likidite haritası: 1940-1960 bandında çok yoğun küme (asıl yukarı hedef), 1800 bandında kalın taban",
+    "Panel türevi: funding -0.0007% NEGATİF (shortlar longlara ödüyor — pozisyonlanma ayı tarafında, contrarian boğa yakıtı), Açık Faiz 2.4M ETH (yükseliyor), 4S likidasyon Longs 27.6K / Shorts 2.2M",
+    "24S menzil 1863.54-1903.00, 24S hacim 2.72B USD, +1.69%"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı (MA30 1892.79 altında) — zaman dilimi çatışması AÇIK. Fiyat tam 4S MA30'un dibinde: bu seviye kırılırsa 4S de boğaya döner, reddedilirse 15M boğası biter.",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-26 12:47",
-  "zaman_yerel": "2026-07-26 15:46-15:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 15:46-15:47 (UTC+3) → UTC 12:46-12:47; panelin 4S geri sayımı 03:12:12 → sonraki 4S kapanışı 16:00 UTC ile tutarlı; son kline barı 12:45 UTC (2 dk fark), paket çekimi 12:48:40 UTC"
+  "h4_trend": "bull",
+  "celiski_notu": "15M ve 4S artık AYNI yönde (ilk kez hizalandı) — 12:45'teki zaman dilimi çatışması kapandı. Risk: yükselen OI + negatif funding + 2.2M short tasfiyesi kombinasyonu squeeze imzasıdır; squeeze biterse hızlı geri verme olabilir.",
+  "guven": 0.5,
+  "zaman_utc": "2026-07-26 15:03",
+  "zaman_yerel": "2026-07-26 18:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 18:03 (UTC+3) → UTC 15:03; son kline barı 15:00 UTC (3 dk fark), paket çekimi 15:03:56 UTC"
 }
