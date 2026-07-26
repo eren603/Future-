@@ -682,7 +682,12 @@
           "dogrular": null
         }
       },
-      "hatalar": [],
+      "hatalar": [
+        {
+          "motor": "llm-kurul",
+          "hata": "VERİ YOK — API anahtarı yok (KIMI_API_KEY / MOONSHOT_API_KEY / ANTHROPIC_AUTH_TOKEN)"
+        }
+      ],
       "motor_sayisi": 8,
       "gecti": true,
       "kapi": "K2 kapısı GEÇİLDİ: 8 motor bağımsız sayısal sonuç üretti."
@@ -1761,7 +1766,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "8 motor sonuç üretti, 0 motor gerekçeli başarısız — sessiz kayıp yok",
+          "kanit": "8 motor sonuç üretti, 1 motor gerekçeli başarısız — sessiz kayıp yok",
           "oneri": ""
         },
         {
@@ -1857,7 +1862,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'karar-motoru', 'turev-akis', 'gorsel-teyit'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'gorsel-teyit', 'turev-akis', 'karar-motoru', 'grafik-calisma'}",
           "oneri": ""
         },
         {

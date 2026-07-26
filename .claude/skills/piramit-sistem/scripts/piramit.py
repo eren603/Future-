@@ -84,6 +84,7 @@ MOTOR = {
     "kiyas": SKILL_DIR / "scripts" / "kiyas.py",
     "esik_kalibre": SKILL_DIR / "scripts" / "esik_kalibre.py",
     "emir_plani": SKILL_DIR / "scripts" / "emir_plani.py",
+    "llm_kurul": SKILL_DIR / "scripts" / "llm_kurul.py",
 }
 
 # --------------------------------------------------------------------------
@@ -103,6 +104,7 @@ KONVANSIYON = {
     "agirlik_alt": 0.40, "agirlik_ust": 1.00, "agirlik_taban_wr": 0.50,
     # Kapılar
     "gorsel_tavan": 0.50,        # elle görsel okumanın azami güveni (ölçüm değil)
+    "llm_tavan": 0.50,           # LLM danışmanının azami güveni (okuma, ölçüm değil)
     "min_motor_k2": 2,           # K2: en az bu kadar motor sayısal sonuç üretmeli
     "min_danisman_k3": 2,        # K3: en az bu kadar YÖNLÜ danışman
     # backtest doğrulama kapısı (yalnız job'da `dogrular` beyan edilirse kullanılır)
@@ -557,6 +559,51 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
         hatalar.append({"motor": "turev-akis",
                         "hata": f"türev paneli {YOK} — kurula EKLENMEZ (fail-closed)"})
 
+    # --- LLM KURULU: Kimi K3 (tez) ↔ Kimi Code (antitez) -------------------
+    # Piramidin LLM merceği. Modele YALNIZ bu turda ÖLÇÜLMÜŞ motor sayıları
+    # verilir; modelin ürettiği yeni sayı llm_kurul.py'de atılır. Anahtar/ağ
+    # yoksa danışman üretilmez (fail-closed) — sessiz varsayılan yok.
+    if job.get("llm_kurul") is not False:
+        kanit = {}
+        for ad in ("karar-motoru", "smc_tespit", "smc_tespit_h4",
+                   "grafik-calisma", "setup_dogrulama", "turev-akis",
+                   "korelasyon"):
+            v = sonuc.get(ad)
+            if not isinstance(v, dict):
+                continue
+            if ad == "karar-motoru":
+                kanit[ad] = v.get("karar")
+            elif ad == "turev-akis":
+                r = v.get("rapor") or {}
+                kanit[ad] = {k: r.get(k) for k in
+                             ("KARAR_TUREV", "yon_skoru", "kapsam", "erken_uyari")}
+            elif ad in ("smc_tespit", "smc_tespit_h4"):
+                kanit[ad] = {"trend": v.get("trend"), "atr": v.get("atr"),
+                             "rejim": v.get("rejim")}
+            elif ad == "grafik-calisma":
+                kanit[ad] = {k: v.get(k) for k in
+                             ("KARAR", "yon_bias", "confluence_skoru", "rr",
+                              "kapi_gerekceleri")}
+            elif ad == "setup_dogrulama":
+                kanit[ad] = {"SONUC": v.get("SONUC"), "gerekce": v.get("gerekce")}
+            else:
+                kanit[ad] = {k: v.get(k) for k in
+                             ("korelasyon", "beta", "HUKUM")}
+        lj = dict(job["llm_kurul"]) if isinstance(job.get("llm_kurul"), dict) else {}
+        lj["kanit"] = kanit
+        r = _kos(MOTOR["llm_kurul"], [], girdi_job=lj)
+        cik = r["cikti"] if (r["ok"] and isinstance(r["cikti"], dict)) else None
+        # Danışman ÜRETİLDİYSE motor sonucudur; üretilmediyse (anahtar/ağ/şema
+        # yok) SONUCA GİRMEZ, yalnız hataya yazılır — turev-akis ile aynı kural.
+        # Aksi halde "koştu ama boş" kaydı gözlemcide tutarsızlık sayılır ve
+        # opsiyonel bir kanalın yokluğu işlemi haksız yere mühürlerdi.
+        if cik and (cik.get("danismanlar") or []):
+            sonuc["llm-kurul"] = cik
+        else:
+            hatalar.append({"motor": "llm-kurul",
+                            "hata": (cik or {}).get("durum")
+                            or r["hata"] or "motor çalışmadı"})
+
     # --- backtest-motoru: mekanizma beklentisi ------------------------------
     bt = job.get("backtest")
     if isinstance(bt, dict) and bt:
@@ -731,6 +778,31 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
                             "_kaynak": "ELLE GÖRSEL OKUMA (ölçüm değil)"})
         notlar.append(f"gorsel-teyit güveni {KONVANSIYON['gorsel_tavan']} tavanıyla "
                       "sınırlandı: elle okuma mekanik ölçümle eş tutulmaz")
+
+    # --- LLM KURULU (Kimi K3 tez ↔ Kimi Code antitez) ----------------------
+    # Piramidin LLM merceği. İki model BİRBİRİNE KARŞI tartışır: antitez modeli
+    # tezin çıktısını GÖRÜR ve çürütmekle görevlidir (tek modelin kendini
+    # doğrulaması DAİRESEL olurdu). Güven llm_kurul.py'de tavanla sınırlanmış
+    # gelir — burada yeniden sınırlanır ki dosya elle şişirilemesin.
+    # Motor koşmadıysa/anahtar yoksa danışman EKLENMEZ (fail-closed).
+    lk = k2["motor_sonuclari"].get("llm-kurul")
+    if isinstance(lk, dict):
+        for d in (lk.get("danismanlar") or []):
+            ad = str(d.get("name", "")).strip()
+            duru = str(d.get("stance", "")).lower()
+            gv = _num(d.get("confidence"))
+            if not ad or duru not in ("long", "short", "flat") or gv is None:
+                continue
+            danismanlar.append({
+                "name": ad, "stance": duru,
+                "confidence": round(_clamp(gv, 0.0, KONVANSIYON["llm_tavan"]), 4),
+                "evidence": str(d.get("evidence", ""))[:400],
+                "_kaynak": "LLM OKUMASI (ölçüm değil)"})
+        if lk.get("danismanlar"):
+            notlar.append(
+                f"llm-kurul: {lk.get('HUKUM', YOK)} — güvenler "
+                f"{KONVANSIYON['llm_tavan']} tavanıyla sınırlandı (LLM okuması "
+                "ölçüm değildir)")
 
     # --- K5 geri beslemesi: güven × ağırlık --------------------------------
     for d in danismanlar:
