@@ -1,41 +1,41 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli, 8 ekran görüntüsü)",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli) + ekran kaydı kareleri (video-isleme, 12 kare)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "_etiketleme_olcutu": "trend = son BELİRLEYİCİ 15M hareketin yönü (iki sembolde de aynı ölçüt uygulandı; yapı yönü ayrıca gozlem'de belirtildi)",
-  "trend": "bear",
-  "yapi_olayi": "REDDEDİLİŞ — 64500 likidite duvarında iri kırmızı dönüş mumu",
+  "_etiketleme_olcutu": "trend = son BELİRLEYİCİ 15M hareketin yönü (iki sembolde de AYNI ölçüt; yapı yönü ayrıca gozlem'de)",
+  "trend": "bull",
+  "yapi_olayi": "TOPARLANMA — 64256.40 dibinden 64500'e iri yeşil mumla dönüş, üç MA geri alındı",
   "seviyeler": {
     "direnc": [
-      64500,
       64566.0,
-      64600,
-      65179.85
+      64620,
+      65116.92
     ],
     "destek": [
-      64375,
-      64290,
-      64092.2,
-      63760.5
+      64470,
+      64400,
+      64320,
+      64256.4,
+      64064.2,
+      64006
     ]
   },
   "gozlem": [
-    "15M MA dizilimi AYI'ya döndü: fiyat 64440.4 < MA30 64445.96 < MA5 64479.37 < MA10 64495.00 — fiyat ÜÇ MA'nın da altında",
-    "Son bar iri KIRMIZI dönüş mumu: 64566.00 tepesinden ~64440'a sert geri dönüş; pencerenin en belirleyici hareketi bu",
-    "YAPI NOTU (momentumdan ayrı): 63760.50 → 64566.00 yükselen bacak henüz KIRILMADI; alttaki 15M salınım dibi test edilmedi. Yani yapı hâlâ boğa, momentum ayı — ikisi ayrıştı",
-    "15M ısı haritası: 64500-64515'te KALIN KIRMIZI likidite duvarı, uzun süredir duruyor ve fiyat tam orada reddedildi (satış tarafı emir yığını)",
-    "15M ısı haritası destek: ~64375 ve ~64290'da mor bantlar; 64092.20 pencere dibi",
-    "4S'te fiyat 64440.8 > MA5 64354.39 > MA10 64214.48 ama MA30 65179.85 ALTINDA — orta vade hâlâ ayı, 66924.10 tepesinden düşüş",
-    "Funding +0.0046% (pozitif, düşük — aşırı ısınma yok; önceki koşuda +0.0037% idi, hafif arttı)",
-    "Açık Faiz 107.1K BTC ve panelde KIRMIZI/AZALAN (4S OHLC 107.3K/107.4K/107.1K/107.1K). Not: yön çıkarımı ölçüme bırakıldı — geçen koşuda bar rengini eğilim sanma hatası yapmıştım",
-    "Sembol Likidasyonları (açık 4S bar 04:00-08:00 UTC): Longs 38.9K vs Shorts 5.1K — long tarafı ~7.6x daha çok tasfiye",
-    "Aggregated Long/Short Ratio (Taker Buy/Sell): 15M 0.268, 4S 0.757 — İKİSİ DE 1'in ALTINDA, takerlar net SATICI",
-    "15M pencere menzili 63760.50-64566.00"
+    "15M MA dizilimi geri alındı: fiyat 64496, MA5 64498.67 ≈ MA10 64495.09, MA30 64439.75 ALTINDA kaldı — fiyat MA30'un üstünde",
+    "15M yapı: 64064.20 dibinden 64566.00 tepesine yükseliş, sonra 64256.40'a geri çekilme, ardından iri yeşil mumla 64500'e DÖNÜŞ. Son belirleyici hareket YUKARI; 64566 tepesi yeniden test ediliyor",
+    "ÖNCEKİ KOŞUDAN DÖNÜŞ: 05:30 barında bu alan 'bear' okumuştu (64500 duvarında reddediliş). Kanıt DEĞİŞTİ — reddediliş tutmadı, fiyat geri aldı",
+    "15M ısı haritası: fiyatın hemen ALTINDA ~64470 ve ~64400'de koyu mor likidite blokları (destek yığını); ~64320'de üçüncü blok. Üstteki kırmızı bant artık solda kaldı",
+    "4S'te fiyat 64496 > MA5 64410.37 > MA10 64237.51 ama MA30 65116.92 ALTINDA — orta vade hâlâ ayı, 66924.10 tepesinden düşüş sürüyor",
+    "Funding +0.0086% — önceki koşuda +0.0046% idi, ARTIYOR (long iştahı geri geliyor ama hâlâ nötr bandında)",
+    "Açık Faiz 107.4K BTC ve panelde YEŞİL/ARTAN (4S OHLC 107.1K/107.4K/107.0K/107.4K) — önceki koşuda azalıyordu, yön DEĞİŞTİ",
+    "Sembol Likidasyonları (açık 4S bar 08:00-12:00 UTC): Longs 774.0 vs Shorts 148.5K — SHORT tarafı ~192x daha çok tasfiye. Önceki koşuda TERSİ idi (long baskın)",
+    "Aggregated Long/Short Ratio (Taker Buy/Sell): 4S 1.0614 — 1'in ÜSTÜNDE, takerlar net ALICI. Önceki koşuda 0.757/0.268 ile net satıcıydı; bu kanalın işareti DÖNDÜ",
+    "24S menzil 64006.2-64566.0, 24S hacim 2,598,009,336 USD; ekran kaydı karesi (t=0.98s) aynı paneli 64500.0 / +0.72% ile teyit etti"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M momentum ayı / 15M yapı hâlâ boğa (bacak kırılmadı) / 4S ayı. Taker satış baskısı (LSR 0.268) + azalan OI + baskın long tasfiyesi = yükselişi taşıyan taze alıcı YOK; 64500 duvarı reddi bunu doğruluyor",
-  "guven": 0.4,
-  "zaman_utc": "2026-07-26 05:33",
-  "zaman_yerel": "2026-07-26 08:31-08:33 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 08:31-08:33 (UTC+3) → UTC 05:31-05:33; son kline barı 2026-07-26 05:30 UTC, paket çekimi 05:34:16 UTC — aynı bar"
+  "celiski_notu": "15M boğa / 4S ayı sürüyor. Ama türev tarafında ÜÇ kanal birden işaret değiştirdi: taker LSR satıcı→alıcı, likidasyon long→short baskın, OI azalan→artan. Bu, önceki koşudaki 'satıcı baskısı' okumasının artık geçerli olmadığını gösteriyor",
+  "guven": 0.45,
+  "zaman_utc": "2026-07-26 11:04",
+  "zaman_yerel": "2026-07-26 14:03-14:04 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri 14:03-14:04 (UTC+3) → UTC 11:03-11:04; son kline barı 2026-07-26 11:00 UTC, paket çekimi 11:05:38 UTC — aynı bar"
 }

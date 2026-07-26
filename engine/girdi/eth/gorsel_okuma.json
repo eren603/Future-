@@ -1,38 +1,40 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli)",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (15M/4S Liquidity Heatmap + 15M/4S gösterge paneli) + ekran kaydı karesi (t=14.67s)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "_etiketleme_olcutu": "trend = son BELİRLEYİCİ 15M hareketin yönü (BTC ile AYNI ölçüt)",
   "trend": "bull",
-  "yapi_olayi": "BOS — 1850.26 dibinden 1888.67'ye kesintisiz yükselen bacak",
+  "yapi_olayi": "BOS — 1850.26 dibinden 1888.67'ye kesintisiz yükselen bacak, tepe yeniden test ediliyor",
   "seviyeler": {
     "direnc": [
       1888.67,
-      1896.04,
+      1894.37,
+      1900,
       1958.75
     ],
     "destek": [
+      1882.79,
       1880,
-      1879.15,
-      1863.54,
+      1869.63,
+      1856.05,
       1850.26
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa: fiyat 1883.02, MA30 1879.15 ÜSTÜNDE; MA10 1883.32 ≈ fiyat, MA5 1885.17 hemen üstte — tepeden ufak geri çekilme, dizilim bozulmadı",
-    "15M yapı: 1850.26 dibinden 1888.67 tepesine DİK ve kesintisiz yükseliş; yükselen dipler korunuyor (BTC'nin aksine geri dönüş mumu YOK)",
-    "SHORT SQUEEZE KANITI: Sembol Likidasyonları 4S — Longs 16.2K vs Shorts 1.4M. Short tarafı ~86x daha çok tasfiye oldu; yükselişi taşıyan şey bu",
-    "FUNDING İŞARET DEĞİŞTİRDİ: -0.0023% → +0.002%. 15M funding histogramındaki sarı (negatif) seri BİTTİ, yeşile döndü — shortlar temizlendi",
-    "4S'te fiyat 1883.03 > MA5 1875.84 > MA10 1867.27 ama MA30 1896.04 ALTINDA — orta vade hâlâ ayı, 1958.75 tepesinden düşüş sürüyor",
-    "Açık Faiz 2.3M ETH; 4S OHLC 2.3M/2.4M/2.3M/2.3M. Yön çıkarımı ölçüme bırakıldı (panel rengi eğilim değildir)",
-    "Aggregated Long/Short Ratio (Taker Buy/Sell): 15M 0.7042 (1 altı, satıcı) ama 4S 1.0546 (1 üstü, alıcı) — iki ölçek ÇELİŞİYOR",
-    "15M ısı haritası: 1884-1886 ve 1880-1881 bantlarında yoğun mor likidite; fiyat tam iki yığının arasında sıkışmış",
-    "15M pencere menzili 1863.54-1888.67; 24S dibi 1850.26"
+    "15M MA dizilimi TAM BOĞA: fiyat 1886.89 > MA5 1885.28 > MA10 1883.80 > MA30 1882.79 — dördü de sıralı, bozulma yok",
+    "15M yapı: 1850.26 dibinden 1888.67 tepesine dik ve kesintisiz yükseliş; geri çekilmeler sığ, yükselen dipler korunuyor. Fiyat tepenin 2 puan altında",
+    "FUNDING POZİTİFE DÖNDÜ ve ARTIYOR: +0.003% (önceki koşuda +0.002%, ondan önce -0.0023%). 15M histogramındaki sarı (negatif) blok geride kaldı, yeşil seri yükseliyor",
+    "Açık Faiz 2.4M ETH ve YEŞİL/ARTAN (önceki koşuda 2.3M) — fiyat yükselirken OI genişliyor: TAZE LONG girişi, squeeze değil",
+    "Sembol Likidasyonları: 15M panelinde Longs -- / Shorts 9.5K; 4S barında Longs 102.2K / Shorts 89.0K (dengeye yakın, long tarafı hafif fazla)",
+    "Aggregated Long/Short Ratio panelde okunamadı (4S görünümde alan kesildi) — bu kanal için VERİ YOK, uydurulmadı",
+    "4S'te fiyat 1886.77 > MA5 1879.37 > MA10 1869.45 ama MA30 1894.37 ALTINDA — orta vade hâlâ ayı, 1958.75 tepesinden düşüş",
+    "15M ısı haritası: 1888 üstünde ve 1880 altında yoğun mor likidite; fiyat iki yığın arasında ama üst yığına yapışık",
+    "24S menzil 1856.05-1888.67 (+%1.52), 24S hacim 2,281,112,215 USD; video karesi (t=14.67s) 1886.63 / +1.5% ile teyit etti"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı. BTC'DEN AYRIŞMA: BTC'de long tasfiyesi baskın (38.9K vs 5.1K) ve taker satıcı, ETH'te short tasfiyesi baskın (1.4M vs 16.2K) ve 4S taker alıcı. Ama squeeze ile gelen yükseliş taze talep değildir — short yakıtı bitince destek kalmaz; 15M taker oranı 0.7042 zaten satıcı",
+  "celiski_notu": "15M boğa / 4S ayı. BTC ile AYNI YÖNE döndü (önceki koşuda ayrışmışlardı): iki sembolde de OI artıyor, funding pozitife gidiyor. ETH'te bu sefer squeeze DEĞİL taze long girişi var (OI genişliyor) — ama fiyat 1888.67 tepesine yapışık, kırılmadan devam teyidi yok",
   "guven": 0.45,
-  "zaman_utc": "2026-07-26 05:33",
-  "zaman_yerel": "2026-07-26 08:33 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 08:33 (UTC+3) → UTC 05:33; son kline barı 2026-07-26 05:30 UTC, paket çekimi 05:34:16 UTC — aynı bar"
+  "zaman_utc": "2026-07-26 11:04",
+  "zaman_yerel": "2026-07-26 14:04 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü 14:04 (UTC+3) → UTC 11:04; son kline barı 2026-07-26 11:00 UTC, paket çekimi 11:05:38 UTC — aynı bar"
 }

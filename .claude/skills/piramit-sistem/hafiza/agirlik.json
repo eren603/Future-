@@ -25,21 +25,21 @@
       "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
     }
   },
-  "uretildigi_bar": "2026-07-26 05:30",
+  "uretildigi_bar": "2026-07-26 11:00",
   "etiketleme": {
     "karar-motoru": {
       "etiketlenen": 0,
       "elle_korunan": 1,
       "olculemeyen": 4,
       "bar_havuzu": {
-        "bar": 336,
+        "bar": 358,
         "ilk": 1784742300000,
-        "son": 1785043800000
+        "son": 1785063600000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 336
+        "toplam_bar": 358
       }
     },
     "grafik-calisma": {
@@ -47,14 +47,14 @@
       "elle_korunan": 0,
       "olculemeyen": 1,
       "bar_havuzu": {
-        "bar": 336,
+        "bar": 358,
         "ilk": 1784742300000,
-        "son": 1785043800000
+        "son": 1785063600000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 336
+        "toplam_bar": 358
       }
     }
   },
