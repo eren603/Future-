@@ -7,28 +7,28 @@
       "n": 1,
       "wins": 1,
       "kaynak": "/home/user/Future-/engine/state/defter.jsonl",
-      "atlanan": 4,
+      "atlanan": 5,
       "pozisyonsuz": 0,
       "wilson_lo": 0.20654329147389294,
       "agirlik": 1.0,
       "durum": "VERİ YOK — ölçülmüş sonuç 1 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
     }
   },
-  "uretildigi_bar": "2026-07-26 15:00",
+  "uretildigi_bar": "2026-07-26 17:00",
   "etiketleme": {
     "karar-motoru": {
       "etiketlenen": 0,
       "elle_korunan": 1,
-      "olculemeyen": 4,
+      "olculemeyen": 5,
       "bar_havuzu": {
-        "bar": 374,
+        "bar": 382,
         "ilk": 1784742300000,
-        "son": 1785078000000
+        "son": 1785085200000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 374
+        "toplam_bar": 382
       }
     }
   },
