@@ -1,5 +1,23 @@
 # KİMİ KONSOL — Kurulum (adım adım, kopyala-yapıştır)
 
+## YOL 0 — KURULUMSUZ (sadece tarayıcı, önerilen) ⭐
+
+Hiçbir şey kurma. Telefonun tarayıcısında şu linki aç:
+
+**https://raw.githack.com/eren603/Future-/claude/new-session-wtmu3n/kimi_web.html**
+
+1. Üstteki kutuya Kimi anahtarını yapıştır → **Kaydet**
+2. Soruyu yaz → **Sor** → tez ↔ antitez ↔ savunma → HÜKÜM → NİHAİ KARAR (motor)
+
+Link açılmazsa yedek: şu adresi aç, sayfayı **indir**, Dosyalar'dan aça:
+`https://raw.githubusercontent.com/eren603/Future-/claude/new-session-wtmu3n/kimi_web.html`
+
+Not: Motor kararları depodaki SON koşudan gelir (sayfa kendisi koşu yapamaz).
+Kimi'nin ucu tarayıcı çağrısına (CORS) izin vermezse sayfa bunu açıkça söyler —
+o durumda YOL A/B gerekir.
+
+---
+
 Bu sayfa, claude.ai sohbetinin yerine geçen **Kimi Konsol**'u çalıştırmak
 içindir. Konsol; kimi-k3 (tez) ↔ kimi-code (antitez) tartıştırır ve en altta
 **motorun bağlayıcı kararını** (YÖN + İŞLEM KALİTESİ + EMİR) gösterir.
