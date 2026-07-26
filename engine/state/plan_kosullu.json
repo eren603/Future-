@@ -1,0 +1,43 @@
+{
+  "_aciklama": "KOŞULLU PLAN — 2026-07-26 17:00 UTC barında üretildi. Bir sonraki koşuda HESAP VERME bu dosyadan da ölçülür: hangi dal tetiklendi, seviye tutuldu mu.",
+  "sembol": "ETHUSDT",
+  "uretildigi_bar_utc": "2026-07-26 17:00",
+  "uretildigi_fiyat": 1913.5,
+  "kaynak": "usd_hedef.py taraması (1820-1965, 0.5 puan adım, eth_profil.json ile) + smc_tespit_h4 yapı + grafik-calisma golden zone",
+  "aktif_emir": {
+    "tip": "LIMIT",
+    "yon": "LONG",
+    "giris_band": [1895.5, 1898.5],
+    "stop": 1862.1667,
+    "hedef": 1945.365,
+    "gerekce": "profil-geçerli pencere B (usd_hedef 5/5) ∩ dolmamış 4H boğa FVG 1887.0-1907.99 ∩ golden zone 1890.76936-1898.70568",
+    "zayif_nokta": "stop yapının ötesinde DEĞİL — en yakın karşı yapı 1847.305 stopun altında",
+    "iptal_sarti": "BTC 64288.599231 altında 15M gövde kapanışı (ρ=0.8043, β=1.2585)",
+    "gecersizlik": "1874.570651 altında 15M gövde kapanışı → pozisyon kapat"
+  },
+  "dallar": {
+    "DAL2_yukari_devam": {
+      "tetik": "fiyat 1913.39-1930.74 arz bloğunda kalır ya da yukarı gider",
+      "long": "YOK — 1913.75 üstünde profil-geçerli giriş yok (1958.75 üstünde gerçek likidite kalmıyor)",
+      "short_penceresi": {"giris_band": [1956.0, 1960.5], "stop_band": [1989.3333, 1993.8333], "hedef": 1910.88}
+    },
+    "DAL3_fvg_dolar": {
+      "tetik": "1887.0 altında 15M gövde kapanışı",
+      "olu_bolge": "1866-1895 arasında profil-geçerli LONG YOK",
+      "sonraki_long": {"giris_band": [1861.0, 1865.5], "stop_band": [1827.6667, 1832.1667], "hedef": 1910.88, "not": "4H talep bloğu 1850.95-1873.15 içinde, stop yapının ötesinde"}
+    },
+    "DAL4_yapi_kirilir": {
+      "tetik": "1874.570651 altında 15M gövde kapanışı",
+      "short_pencereleri": [
+        {"giris_band": [1875.0, 1879.5], "stop_band": [1908.3333, 1912.8333], "hedef": 1829.5733},
+        {"giris_band": [1855.0, 1859.5], "stop_band": [1888.3333, 1892.8333], "hedef": 1809.9625}
+      ]
+    },
+    "DAL5_sikisma": {
+      "tetik": "fiyat 1898.5-1909.0 arasında kalır",
+      "islem": "YOK — iki pencere arasındaki ölü bölge, bant içi likidite yok"
+    }
+  },
+  "degismeyen_kisit": "setup_dogrulama işlem 5 < taban 10 — hiçbir seviyede tarihsel edge kanıtı kurulamıyor; motorun bağlayıcı çıktısı bu bar için EMİR YOK, bu plan koşullu bekleyen emirdir",
+  "uyari": "Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL."
+}
