@@ -1716,6 +1716,11 @@ def ozet_metin(rapor: dict) -> str:
         L.append(z["iki_satir"]["1_YON"])
         L.append(z["iki_satir"]["2_ISLEM_KALITESI"])
         L.append(f"EMİR: {z.get('EMIR', YOK)}")
+        if str(z.get("EMIR", "")).startswith("LIMIT"):
+            # İki hüküm karışmasın: İŞLEM KALİTESİ "şu anki fiyatta temiz giriş
+            # var mı" der; LIMIT emri ise yapıdan ölçülmüş BEKLEYEN seviyedir.
+            L.append("   ↳ EMİR = bekleyen limit; mevcut fiyattan giriş DEĞİL — "
+                     "fiyat giriş bölgesine gelirse geçerlidir")
         for a in (z.get("emir_adaylari") or [])[1:4]:
             L.append(f"   ↳ alternatif: {a['emir_tipi']} {a['yon']} @{a['giris']} | "
                      f"stop {a['stop']} | T1 {a['hedef']} | R {a['R']}")
