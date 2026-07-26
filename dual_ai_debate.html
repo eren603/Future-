@@ -118,6 +118,7 @@
       </label>
       <div class="hint">Resim/videoyu Claude görsel analiz eder · PDF/metin içeriği okunur · GitHub dosyaları da buraya eklenir.</div>
       <div id="attachList"></div>
+      <div class="stat" id="attachInfo" style="margin-top:8px">📎 Ekli içerik yok — modeller yalnızca sorunuzu görecek. Depo dosyaları için aşağıdaki 🐙 panelinden <b>⚡ Tüm depoyu ekle</b>'ye basın.</div>
 
       <div class="row" style="margin-top:14px">
         <div>
@@ -267,8 +268,9 @@
     <div class="hint">Token yalnızca tarayıcınızda saklanır ve doğrudan api.github.com'a gider. Salt-okunur (Contents: Read) yeterlidir.</div>
 
     <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
-      <button class="sm" id="ghRepos">Depoları listele</button>
-      <button class="sm" id="ghLoad">Dosyaları listele</button>
+      <button class="sm" id="ghAll">⚡ Tüm depoyu ekle</button>
+      <button class="sm ghost" id="ghRepos">Depoları listele</button>
+      <button class="sm ghost" id="ghLoad">Dosyaları listele</button>
       <button class="sm ghost" id="ghAdd">Seçilenleri ekle</button>
       <button class="sm ghost" id="ghNone">Seçimi temizle</button>
     </div>
@@ -494,6 +496,17 @@
       if (!a.loading) { const r = document.createElement("span"); r.className = "rm"; r.textContent = "✕"; r.onclick = () => { attachments.splice(i, 1); renderAttachments(); }; c.appendChild(r); }
       L.appendChild(c);
     });
+    const inf = $("attachInfo"); if (!inf) return;
+    const iyi = attachments.filter(a => !a.error && !a.loading);
+    if (!iyi.length) {
+      inf.innerHTML = "📎 Ekli içerik yok — modeller yalnızca sorunuzu görecek. Depo dosyaları için aşağıdaki 🐙 panelinden <b>⚡ Tüm depoyu ekle</b>'ye basın.";
+      inf.style.color = "var(--warn)";
+    } else {
+      const repo = iyi.filter(a => a.kind === "repo").length;
+      const kb = Math.round(iyi.reduce((s, a) => s + (a.text ? a.text.length : 0), 0) / 1024);
+      inf.innerHTML = "✅ <b>" + iyi.length + "</b> içerik ekli" + (repo ? " (" + repo + " tanesi repodan)" : "") + (kb ? " · ~" + kb + " KB metin" : "") + " — iki model de bunları okuyacak.";
+      inf.style.color = "var(--final)";
+    }
   }
   async function handleFiles(list) {
     for (const f of list) {
@@ -616,6 +629,38 @@
     } catch (e) { $("ghErr").textContent = e.message; }
     $("ghRepos").disabled = false;
   }
+  // Tek dokunuş: depoyu aç, metin dosyalarını seç, hepsini soruya ekle
+  const MAX_FILE = 80000, MAX_TOTAL = 600000, MAX_COUNT = 60;
+  async function ghAddAll() {
+    $("ghErr").textContent = ""; $("ghOk").textContent = "";
+    $("ghAll").disabled = true;
+    const eskiOk = $("ghAll").textContent; $("ghAll").textContent = "⏳ Yükleniyor…";
+    try {
+      await ghLoadTree();
+      if (!ghTree.length) throw new Error("depoda metin dosyası bulunamadı");
+      const alinan = [], atlanan = [];
+      let toplam = 0;
+      for (const x of ghTree) {
+        const sz = x.size || 0;
+        if (sz > MAX_FILE) { atlanan.push(x.path + " (çok büyük)"); continue; }
+        if (alinan.length >= MAX_COUNT || toplam + sz > MAX_TOTAL) { atlanan.push(x.path + " (sınır doldu)"); continue; }
+        alinan.push(x); toplam += sz;
+      }
+      let ok = 0;
+      for (const x of alinan) {
+        const a = { kind: "repo", name: x.path, loading: true, blocks: [], text: "", thumb: "" };
+        attachments.push(a); renderAttachments();
+        try { a.text = await ghFetchFile(x.path); ok++; }
+        catch (e) { a.error = true; a.name = x.path + " (hata: " + e.message + ")"; }
+        a.loading = false; renderAttachments();
+      }
+      let msg = "✓ " + ok + " dosya eklendi (~" + Math.round(toplam / 1024) + " KB) — iki model de okuyacak.";
+      if (atlanan.length) msg += " " + atlanan.length + " dosya atlandı: " + atlanan.slice(0, 3).join(", ") + (atlanan.length > 3 ? " …" : "") + ". Bunlar gerekiyorsa 'Dosyaları listele' ile tek tek ekleyin.";
+      $("ghOk").textContent = msg;
+    } catch (e) { $("ghErr").textContent = e.message; }
+    $("ghAll").textContent = eskiOk; $("ghAll").disabled = false;
+  }
+  $("ghAll").onclick = ghAddAll;
   $("ghRepos").onclick = ghListRepos;
   $("ghLoad").onclick = ghLoadTree;
   $("ghAdd").onclick = ghAddSelected;
