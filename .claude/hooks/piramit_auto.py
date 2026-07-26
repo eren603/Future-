@@ -459,6 +459,110 @@ def _zaten_islendi(girdi: Path | None = None, state: Path | None = None) -> bool
         return False
 
 
+def _ohlcv_csv(girdi: Path, hedef: Path, ad: str = "h4.json") -> Path | None:
+    """Kline JSON → OHLCV CSV (backtest-motoru yalnız kolon-adlı tablo okur).
+
+    Neden gerekli: backtest.py `close` kolonu arar; Binance kline'ı kolon adsız
+    liste-listesidir, `pd.read_json` ile 0..11 diye okunur ve motor hata verir.
+    """
+    kaynak = girdi / ad
+    if not kaynak.exists():
+        return None
+    try:
+        ham = json.loads(kaynak.read_text(encoding="utf-8"))
+        barlar = ham if isinstance(ham, list) else (ham.get("data") or [])
+        if not barlar:
+            return None
+        hedef.parent.mkdir(parents=True, exist_ok=True)
+        satirlar = ["timestamp,open,high,low,close,volume"]
+        satirlar += [f"{b[0]},{b[1]},{b[2]},{b[3]},{b[4]},{b[5]}" for b in barlar]
+        hedef.write_text("\n".join(satirlar) + "\n", encoding="utf-8")
+        return hedef
+    except (OSError, json.JSONDecodeError, IndexError, TypeError, ValueError):
+        return None
+
+
+def _getiri_csv(hedef: Path) -> Path | None:
+    """BTC+ETH hizalı log getirileri → CSV (portfoy-optimizasyonu girdisi).
+
+    YALNIZ eşleşen zaman damgaları kullanılır; hizasız bar atılır (uydurma
+    doldurma yok). İki sembolden biri yoksa None döner — beyan edilmez.
+    """
+    import math                                            # noqa: PLC0415
+    try:
+        def _kapanis(p: Path) -> dict:
+            ham = json.loads(p.read_text(encoding="utf-8"))
+            barlar = ham if isinstance(ham, list) else (ham.get("data") or [])
+            return {b[0]: float(b[4]) for b in barlar}
+        a = _kapanis(GIRDI / "m15.json")
+        b = _kapanis(IKINCI["girdi"] / "m15.json")
+    except (OSError, json.JSONDecodeError, IndexError, TypeError, ValueError):
+        return None
+    ts = sorted(set(a) & set(b))
+    if len(ts) < 30:                       # korelasyon.py ile aynı asgari
+        return None
+    satirlar = ["BTC,ETH"]
+    for i in range(1, len(ts)):
+        satirlar.append(f"{math.log(a[ts[i]] / a[ts[i - 1]])},"
+                        f"{math.log(b[ts[i]] / b[ts[i - 1]])}")
+    hedef.parent.mkdir(parents=True, exist_ok=True)
+    hedef.write_text("\n".join(satirlar) + "\n", encoding="utf-8")
+    return hedef
+
+
+def _analiz_beyanlari(job: dict, girdi: Path, sdir: Path,
+                      profil: Path | None = None, portfoy: bool = False) -> list:
+    """backtest / risk / portfoy motorlarını job'da BEYAN et.
+
+    Bu üçü piramit.py'de bağlıydı (satır 567/1065/1077) ama kanca job'da beyan
+    etmediği için HİÇBİR otomatik koşuda çalışmıyordu — yalnız elle koşuluyordu.
+    Beyan yalnız girdisi GERÇEKTEN varsa yapılır: beyan edilip koşmayan motor
+    gözlemcide EKSİK_AKTARIM ihlalidir (sessiz atlama yok).
+    """
+    bagli = []
+
+    # --- backtest-motoru: kurulum ölçeğinde (4H) mekanik kenar ölçümü ------
+    # `dogrular` BİLEREK beyan EDİLMEZ: backtest'te SMC strateji tipi yok,
+    # MA-kesişimi bir VEKİLDİR. Vekil sonucunu SMC danışmanının doğrulaması
+    # saymak yanlış atıf olurdu (DAİRESEL/UYDURMA). Sonuç K2'ye kanıt olarak
+    # girer, doğrulayıcı olarak DEĞİL.
+    csv4h = _ohlcv_csv(girdi, sdir / "ohlcv_4h.csv", "h4.json")
+    if csv4h is not None:
+        job["backtest"] = {
+            "input": str(csv4h), "timeframe": "4h",
+            "strategy": {"type": "sma_cross", "fast": 5, "slow": 30},
+            "fees_bps": 4.0, "slippage_bps": 2.0, "allow_short": True,
+            "monte_carlo": {"runs": 2000}, "seed": 7,
+            "walk_forward": {"splits": 3},
+            "_vekil_notu": "MA5/MA30 VEKİL stratejisi — SMC kurulumunun kendisi "
+                           "değil; rejimde mekanik kenar var mı sorusunu ölçer"}
+        bagli.append("backtest-motoru")
+
+    # --- risk-yonetimi: YALNIZ profil varsa (sermaye uydurulmaz) -----------
+    if profil is not None and profil.exists():
+        try:
+            pr = json.loads(profil.read_text(encoding="utf-8"))
+            teminat, stop_usdt = float(pr["teminat"]), float(pr["stop_usdt"])
+            if teminat > 0:
+                job["risk"] = {"op": "position_size", "method": "fixed_fractional",
+                               "equity": teminat,
+                               "risk_pct": round(100.0 * stop_usdt / teminat, 6),
+                               "seviye_kaynagi": "karar-motoru"}
+                bagli.append("risk-yonetimi")
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+            pass                        # profil okunamadı → beyan YOK (fail-closed)
+
+    # --- portfoy-optimizasyonu: iki sembol de varsa (ana job'da) -----------
+    if portfoy:
+        gp = _getiri_csv(sdir / "getiri.csv")
+        if gp is not None:
+            job["portfoy"] = {"op": "optimize", "returns_csv": str(gp),
+                              "method": "max_sharpe", "bars_per_year": 35040,
+                              "long_only": True, "rf": 0.0}
+            bagli.append("portfoy-optimizasyonu")
+    return bagli
+
+
 def _kos() -> tuple[str, int]:
     """Boru hattını koştur; (özet metni, çıkış kodu)."""
     kum = _zaten_islendi()
@@ -489,6 +593,11 @@ def _kos() -> tuple[str, int]:
     ek = _ek_kanallar(job)
     if ek:
         print(f"[PİRAMİT] Ek kanal(lar) otomatik bağlandı: {', '.join(ek)}")
+    # Ana sembolde profil YOK (sermaye beyan edilmemiş) → risk motoru beyan
+    # EDİLMEZ; portföy ağırlığı çapraz-varlık sonucu olduğu için burada koşar.
+    an = _analiz_beyanlari(job, GIRDI, sdir, profil=None, portfoy=True)
+    if an:
+        print(f"[PİRAMİT] Analiz motorları beyan edildi: {', '.join(an)}")
     return _job_kos(job, "otomatik_job.json", "son_rapor.json")
 
 
@@ -550,6 +659,12 @@ def _ikinci_job() -> dict | None:
     if not IKINCI["profil"].exists():
         job["_profil_uyarisi"] = (f"sabit-USDT profili DOSYASI YOK "
                                   f"({IKINCI['profil']}) — kısıt uygulanamaz")
+    # İkinci sembolde profil VAR → risk motoru sermayeyi profilden okur
+    # (uydurma yok). Portföy ana job'da koşuyor, burada tekrarlanmaz.
+    an = _analiz_beyanlari(job, g, sdir, profil=IKINCI["profil"], portfoy=False)
+    if an:
+        print(f"[PİRAMİT] {IKINCI['ad']} analiz motorları beyan edildi: "
+              f"{', '.join(an)}")
     return job
 
 

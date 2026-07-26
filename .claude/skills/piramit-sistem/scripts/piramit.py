@@ -1056,15 +1056,32 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     if isinstance(rj, dict) and rj:
         rjob = dict(rj)
         sev = (k3.get("seviyeler") or {}).get(rjob.pop("seviye_kaynagi", "karar-motoru"))
+        boyut_kaynagi = None
         if rjob.get("op") == "position_size" and rjob.get("method") == "fixed_fractional" \
                 and sev and rjob.get("entry") is None:
             rjob["entry"], rjob["stop"] = sev.get("entry"), sev.get("stop")
+            boyut_kaynagi = "K3 danışman seviyeleri"
+        # YEDEK KAYNAK: danışman seviye vermediyse (karar-motoru BEKLE derse
+        # `seviyeler` boştur) ama emir_plani DENETİMDEN GEÇMİŞ bir emir
+        # ürettiyse, boyut o emrin giriş/stopundan hesaplanır. Aksi halde risk
+        # motoru beyan edilse bile DAİMA "VERİ YOK" derdi ve pozisyon boyutu
+        # hiç ölçülmezdi. Uydurma yok: seviyeler emir_plani'nin rr_denetim +
+        # usd_hedef kapılarından geçmiş adayından gelir.
+        if rjob.get("entry") is None and isinstance(emir, dict):
+            ad0 = (emir.get("adaylar") or [None])[0]
+            if isinstance(ad0, dict) and ad0.get("giris") is not None \
+                    and ad0.get("stop") is not None:
+                rjob["entry"], rjob["stop"] = ad0["giris"], ad0["stop"]
+                boyut_kaynagi = "emir_plani birincil adayı (denetimden geçmiş)"
         if rjob.get("entry") is None and rjob.get("method") == "fixed_fractional":
             boyut = {"durum": f"{YOK} — giriş/stop yok, boyut hesaplanmadı (fail-closed)"}
         else:
             rr_ = _kos(MOTOR["risk"], [], girdi_job=rjob)
             boyut = rr_["cikti"] if (rr_["ok"] and isinstance(rr_["cikti"], dict)) \
                 else {"durum": "risk motoru ÇALIŞMADI", "hata": rr_["hata"]}
+            if isinstance(boyut, dict) and boyut_kaynagi:
+                boyut["_seviye_kaynagi"] = boyut_kaynagi
+                boyut["_giris"], boyut["_stop"] = rjob["entry"], rjob["stop"]
 
     # ---------- portföy ağırlığı (portfoy-optimizasyonu) -------------------
     portfoy = None

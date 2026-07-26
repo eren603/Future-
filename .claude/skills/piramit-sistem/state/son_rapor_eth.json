@@ -635,12 +635,57 @@
             "evidence": "Türev motoru: BOĞA eğilimli (skor 0.2591, kapsam 0.66). Faktörler: funding=0.0, cvd=0.7, taker_lsr=-0.5, liquidation=0.8. Kritik erken-uyarı yok.",
             "_verifier_confirmed": true
           }
+        },
+        "backtest-motoru": {
+          "rapor": {
+            "metrics": {
+              "bars": 200,
+              "total_return": -0.183519,
+              "max_drawdown": -0.192509,
+              "sharpe": -5.337,
+              "sortino": -6.5204,
+              "num_trades": 11,
+              "win_rate": 0.1818,
+              "profit_factor": 0.3442,
+              "expectancy_per_trade": -0.012368,
+              "avg_win": 0.035701,
+              "avg_loss": -0.02305,
+              "exposure": 0.85,
+              "final_equity": 0.816481,
+              "bars_per_year": 2190.0
+            },
+            "bars_per_year_kaynak": "bars_per_year=2190 (4h diliminden türetildi, kripto 365 gün)",
+            "monte_carlo": {
+              "runs": 2000,
+              "final_return_p5": -0.131965,
+              "final_return_p50": -0.131965,
+              "final_return_p95": -0.131965,
+              "max_dd_p5": -0.183942,
+              "max_dd_p50": -0.140847,
+              "max_dd_p95": -0.103209,
+              "prob_profit": 0.0
+            },
+            "walk_forward": {
+              "train": {
+                "total_return": -0.120352,
+                "sharpe": -4.3305,
+                "num_trades": 8
+              },
+              "test": {
+                "total_return": -0.044056,
+                "sharpe": -7.54,
+                "num_trades": 2
+              },
+              "consistent": false
+            }
+          },
+          "dogrular": null
         }
       },
       "hatalar": [],
-      "motor_sayisi": 7,
+      "motor_sayisi": 8,
       "gecti": true,
-      "kapi": "K2 kapısı GEÇİLDİ: 7 motor bağımsız sayısal sonuç üretti."
+      "kapi": "K2 kapısı GEÇİLDİ: 8 motor bağımsız sayısal sonuç üretti."
     },
     {
       "katman": "K3-COKLU-AJAN",
@@ -1273,7 +1318,17 @@
         "kapi_kurali": "hizalı seviye + rr_denetim TUTARLI + R_gercekci ≥ 1.35 + doğrulama çürütülmemiş",
         "not": "Seviyeler motorların tek-kaynak çıktısıdır; şişirilmiş R rr_denetim.py ile mekanik elenmiştir. BEKLE = kalite hükmü, yön reddi değil."
       },
-      "pozisyon_boyutu": null,
+      "pozisyon_boyutu": {
+        "method": "fixed_fractional",
+        "risk_amount": 100.0,
+        "units": 3.00000003,
+        "notional": 5740.5001,
+        "notional_pct_of_equity": 1435.13,
+        "r_per_unit": 33.333333,
+        "_seviye_kaynagi": "emir_plani birincil adayı (denetimden geçmiş)",
+        "_giris": 1913.5,
+        "_stop": 1880.166667
+      },
       "portfoy": null,
       "kalibrasyon": {
         "agirliklar": {
@@ -1338,7 +1393,34 @@
       "ad_a": "BTC",
       "ad_b": "ETH"
     },
-    "usd_profil": "/home/user/Future-/engine/girdi/eth_profil.json"
+    "usd_profil": "/home/user/Future-/engine/girdi/eth_profil.json",
+    "backtest": {
+      "input": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/ohlcv_4h.csv",
+      "timeframe": "4h",
+      "strategy": {
+        "type": "sma_cross",
+        "fast": 5,
+        "slow": 30
+      },
+      "fees_bps": 4.0,
+      "slippage_bps": 2.0,
+      "allow_short": true,
+      "monte_carlo": {
+        "runs": 2000
+      },
+      "seed": 7,
+      "walk_forward": {
+        "splits": 3
+      },
+      "_vekil_notu": "MA5/MA30 VEKİL stratejisi — SMC kurulumunun kendisi değil; rejimde mekanik kenar var mı sorusunu ölçer"
+    },
+    "risk": {
+      "op": "position_size",
+      "method": "fixed_fractional",
+      "equity": 400.0,
+      "risk_pct": 25.0,
+      "seviye_kaynagi": "karar-motoru"
+    }
   },
   "hafiza_dosyasi": "/home/user/Future-/.claude/skills/piramit-sistem/hafiza/agirlik_eth.json",
   "ZIRVE": {
@@ -1355,7 +1437,17 @@
     "kapi_gerekceleri": [],
     "gecersizlik": "VERİ YOK",
     "seviyeler": {},
-    "pozisyon_boyutu": null,
+    "pozisyon_boyutu": {
+      "method": "fixed_fractional",
+      "risk_amount": 100.0,
+      "units": 3.00000003,
+      "notional": 5740.5001,
+      "notional_pct_of_equity": 1435.13,
+      "r_per_unit": 33.333333,
+      "_seviye_kaynagi": "emir_plani birincil adayı (denetimden geçmiş)",
+      "_giris": 1913.5,
+      "_stop": 1880.166667
+    },
     "ulasilan_katman": "K5-SI (zirve)",
     "ZORUNLU_EKSIK": [],
     "zorunlu_girdiler": [
@@ -1663,13 +1755,13 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "beyan edilen 1 ek motorun tamamı koştu ya da gerekçeli hata verdi: korelasyon",
+          "kanit": "beyan edilen 2 ek motorun tamamı koştu ya da gerekçeli hata verdi: korelasyon, backtest-motoru",
           "oneri": ""
         },
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "7 motor sonuç üretti, 0 motor gerekçeli başarısız — sessiz kayıp yok",
+          "kanit": "8 motor sonuç üretti, 0 motor gerekçeli başarısız — sessiz kayıp yok",
           "oneri": ""
         },
         {
@@ -1765,7 +1857,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'gorsel-teyit', 'turev-akis', 'karar-motoru'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'karar-motoru', 'turev-akis', 'gorsel-teyit'}",
           "oneri": ""
         },
         {
