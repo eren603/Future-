@@ -1346,6 +1346,7 @@
       "gorsel"
     ],
     "EMIR": "LIMIT LONG @1863.68 | stop 1830.346667 | T1 1908.68 | R 1.35",
+    "EMIR_GEREKCE": "",
     "emir_adaylari": [
       {
         "emir_tipi": "LIMIT",
@@ -1517,7 +1518,7 @@
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
     "DENETIM": {
-      "ozet": "24 denetim, 0 ihlal, 2 uyarı",
+      "ozet": "26 denetim, 0 ihlal, 2 uyarı",
       "ihlal": [],
       "uyari": [
         "K1-LLM/HAFIZA: önceki kayıt var ama akıbet ölçülemedi: VERİ YOK — önceki koşuda işlem seviyesi verilmemişti (hüküm: TEMİZ GİRİŞ YOK — TEPKİ/SEVİY",
@@ -1736,9 +1737,21 @@
           "oneri": ""
         },
         {
+          "kod": "UYDURMA",
+          "durum": "TEMİZ",
+          "kanit": "emir seviyeleri ölçümden ve rr_denetim'den geçti: LIMIT LONG @1863.68 | stop 1830.346667 | T1 1908.68 | R 1.35",
+          "oneri": ""
+        },
+        {
+          "kod": "MEMNUN_ETME",
+          "durum": "TEMİZ",
+          "kanit": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG",
+          "oneri": ""
+        },
+        {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'gorsel-teyit', 'turev-akis', 'grafik-calisma'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'turev-akis', 'karar-motoru', 'gorsel-teyit'}",
           "oneri": ""
         },
         {
@@ -1780,7 +1793,7 @@
     ],
     "kritik_ihlal": [],
     "muhurlendi": false,
-    "ozet": "24 denetim, 0 ihlal, 2 uyarı",
+    "ozet": "26 denetim, 0 ihlal, 2 uyarı",
     "not": "Gözlemci ZİHİN okumaz, ARTEFAKT denetler: dosya yolu, motor çıktısı, danışman kaydı, sayı eşleşmesi. Kritik ihlalde işlem kalitesi mühürlenir; YÖN yine gösterilir."
   },
   "durum": "TAMAM — piramidin tepesine ulaşıldı"
