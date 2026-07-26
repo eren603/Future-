@@ -17,11 +17,18 @@ fi
 # Not: asıl otomatik koşu UserPromptSubmit kancasındadır
 # (.claude/hooks/piramit_auto.py) — burada yalnız DURUM bildirilir.
 PIRAMIT="${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/scripts/piramit.py"
+SAGLIK="${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/scripts/saglik.py"
 if [ -f "$PIRAMIT" ]; then
   if python3 -c "import pandas, numpy, scipy" >/dev/null 2>&1; then
     echo "[PİRAMİT] Boru hattı hazır (K1→K5). Piyasa analizi/kararında VARSAYILAN yol; tetikleyici gerekmez."
   else
     echo "[PİRAMİT] Boru hattı var ama pandas/numpy/scipy KURULAMADI — motorlar koşamaz; elle koşuya düşülür (AÇIKÇA söylenmeli)."
+  fi
+  # Sağlık kontrolü: her yeni pencere bütün halkaları (motor kayıtları,
+  # kancalar, girdi/görev, derleme) MEKANİK denetler ve tek satır bildirir.
+  # Kırık halka varsa GİZLENMEZ — garanti söz değil, bu denetimdir.
+  if [ -f "$SAGLIK" ]; then
+    python3 "$SAGLIK" --hizli 2>&1 || true
   fi
 else
   echo "[PİRAMİT] Boru hattı dosyası YOK — motorlar elle koşulur."
