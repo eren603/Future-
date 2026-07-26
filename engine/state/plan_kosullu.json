@@ -165,5 +165,25 @@
       0.848478020528
     ],
     "not": "korelasyon.py'nin 0.8043 değerini bağımsız ikinci motor teyit etti"
+  },
+  "atr_hatasi_duzeltildi": {
+    "tarih_bar_utc": "2026-07-26 17:00",
+    "hata": "emir_plani.yapi_oku._atr son 14 TR'nin BASİT ortalamasını alıyordu; smc_tespit ise Wilder yumuşatması kullanıyor. Aynı 4H barları için iki farklı ATR: ETH 15.26857142857146 vs 19.03247562.",
+    "etki": "usd_hedef ve rr_denetim kapıları (stop 0.8-2.0×ATR, hedef 3.0×ATR) yanlış ölçekte değerlendiriliyordu. Sabit-USDT profilinin 33.3333 puanlık stopu basit ortalamayla 2.1831×ATR (bant DIŞI), Wilder ile 1.7514×ATR (bant İÇİ) → ETH profili emir_plani'nden HİÇBİR ZAMAN geçemiyordu.",
+    "duzeltme": "_atr Wilder yumuşatmasına çevrildi (tohum: ilk 14 TR ortalaması, sonra yinelemeli). Artık smc_tespit ile aynı tanım.",
+    "dogrulama": {
+      "self_test_once": "34/35 (T33 KALDI)",
+      "self_test_sonra": "35/35",
+      "eth_emir_once": "EMİR YOK (0 aday)",
+      "eth_emir_sonra": "MARKET LONG @1913.5 | stop 1880.166667 | T1 1958.5 | R 1.35 (6 aday)",
+      "btc_emir_once": "EMİR YOK",
+      "btc_emir_sonra": "EMİR YOK (R 0.79→0.95, 0.25→0.30 — kapı yine kapalı)",
+      "yon_skorlari_degismedi": {
+        "BTC": 0.5262,
+        "ETH": 0.6219
+      },
+      "gozlemci": "BTC 25 denetim 0 ihlal, ETH 26 denetim 0 ihlal — öncesi/sonrası aynı"
+    },
+    "not": "Motor artık ETH'de emir üretiyor. Motorun 1 numaralı adayı MARKET @1913.5 — bu, 4H arz order block'unun (1913.39-1930.74) içinde. emir_plani arz bloğunu görmez. Motorun 5. adayı LIMIT @1895.23, yapısal analizde seçilen 1897.0 ile aynı bölge."
   }
 }

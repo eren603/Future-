@@ -94,11 +94,30 @@ def yapi_oku(m15: str, h4: str) -> dict:
     son = b15[-1].c
 
     def _atr(bars, n=14):
+        """ATR — WILDER yumuşatması (smc_tespit.py ile AYNI tanım).
+
+        Eskiden son n TR'nin BASİT ortalamasıydı. Bu, aynı 4H barları için
+        smc_tespit'in Wilder ATR'sinden farklı bir sayı üretiyordu (ETH 4H:
+        15.2686 vs 19.0325). Sonuç: `usd_hedef` ve `rr_denetim` kapıları —
+        eşikleri Wilder ölçeğine göre kalibre edilmiş olan [0.8, 2.0] ve 3.0 —
+        yanlış ölçekte değerlendiriliyordu. Sabit-USDT profilinin 33.3333
+        puanlık stopu basit ortalamayla 2.18×ATR (bant DIŞI), Wilder ile
+        1.75×ATR (bant İÇİ) çıkıyor; ETH profili bu yüzden emir_plani'nden
+        HİÇBİR ZAMAN geçemiyordu (self_test T33). usd_hedef'in kendi girdi
+        beyanı da zaten "smc_tespit_h4.atr (4H — kurulum ölçeği)" diyor.
+        """
+        if len(bars) < 2:
+            return None
         tr = []
         for i in range(1, len(bars)):
             h, l, pc = bars[i].h, bars[i].l, bars[i - 1].c
             tr.append(max(h - l, abs(h - pc), abs(l - pc)))
-        return sum(tr[-n:]) / min(n, len(tr)) if tr else None
+        if len(tr) < n:                       # periyot dolmadı: basit ortalama
+            return sum(tr) / len(tr)
+        atr = sum(tr[:n]) / n                 # Wilder tohumu: ilk n TR'nin ortalaması
+        for x in tr[n:]:                      # sonra yinelemeli yumuşatma
+            atr = (atr * (n - 1) + x) / n
+        return atr
 
     return {
         "son_kapanis": son, "atr15": _atr(b15), "atr4h": _atr(b4),

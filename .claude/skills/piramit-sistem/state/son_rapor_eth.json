@@ -108,13 +108,13 @@
             "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.1 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
           },
           "son_bar_utc": "2026-07-26 17:00",
-          "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 15:00).",
+          "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 17:00).",
           "rejim_4h": {
             "rejim": "FLAT",
             "fark": 17.487499999999955,
             "esik": 26.27229999999986
           },
-          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-26 17:00 UTC\nVeri: 15M 200 bar (2026-07-24 15:15→2026-07-26 17:00), 4H 200 bar (2026-06-23 12:00→2026-07-26 16:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 15:00).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=4.501 | son bar hacim sırası=0.75 | 4H |MA5-MA20| eşiği=26.2723 (fark=17.4875, rejim=FLAT)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.1 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.\n================================================================",
+          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-26 17:00 UTC\nVeri: 15M 200 bar (2026-07-24 15:15→2026-07-26 17:00), 4H 200 bar (2026-06-23 12:00→2026-07-26 16:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 17:00).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=4.501 | son bar hacim sırası=0.75 | 4H |MA5-MA20| eşiği=26.2723 (fark=17.4875, rejim=FLAT)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.1 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.\n================================================================",
           "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth"
         },
         "smc_tespit": {
@@ -1085,29 +1085,173 @@
         "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG"
       },
       "emir_plani": {
-        "EMIR": "EMİR YOK",
+        "EMIR": "MARKET LONG @1913.5 | stop 1880.166667 | T1 1958.5 | R 1.35",
+        "birincil": {
+          "emir_tipi": "MARKET",
+          "yon": "LONG",
+          "giris": 1913.5,
+          "stop": 1880.166667,
+          "hedef": 1958.5,
+          "R": 1.35,
+          "rr_denetim": "TUTARLI",
+          "risk_puan": 33.333333,
+          "giris_gerekcesi": "güncel fiyat (MARKET adayı)",
+          "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+          "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+          "gecersizlik": "1880.166667 ötesinde 15M gövde kapanışı → kurulum iptal",
+          "usd_hedef": {
+            "HUKUM": "UYGUN",
+            "dusen_kapilar": [],
+            "kazanc_usdt": [
+              130.41,
+              145.41
+            ]
+          }
+        },
+        "adaylar": [
+          {
+            "emir_tipi": "MARKET",
+            "yon": "LONG",
+            "giris": 1913.5,
+            "stop": 1880.166667,
+            "hedef": 1958.5,
+            "R": 1.35,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 33.333333,
+            "giris_gerekcesi": "güncel fiyat (MARKET adayı)",
+            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+            "gecersizlik": "1880.166667 ötesinde 15M gövde kapanışı → kurulum iptal",
+            "usd_hedef": {
+              "HUKUM": "UYGUN",
+              "dusen_kapilar": [],
+              "kazanc_usdt": [
+                130.41,
+                145.41
+              ]
+            }
+          },
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "LONG",
+            "giris": 1912.44,
+            "stop": 1879.106667,
+            "hedef": 1957.44,
+            "R": 1.35,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 33.333333,
+            "giris_gerekcesi": "4H teyitli swing desteği",
+            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+            "gecersizlik": "1879.106667 ötesinde 15M gövde kapanışı → kurulum iptal",
+            "usd_hedef": {
+              "HUKUM": "UYGUN",
+              "dusen_kapilar": [],
+              "kazanc_usdt": [
+                130.41,
+                145.41
+              ]
+            }
+          },
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "LONG",
+            "giris": 1909.32,
+            "stop": 1875.986667,
+            "hedef": 1954.32,
+            "R": 1.35,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 33.333333,
+            "giris_gerekcesi": "4H teyitli swing desteği",
+            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+            "gecersizlik": "1875.986667 ötesinde 15M gövde kapanışı → kurulum iptal",
+            "usd_hedef": {
+              "HUKUM": "UYGUN",
+              "dusen_kapilar": [],
+              "kazanc_usdt": [
+                130.41,
+                145.41
+              ]
+            }
+          },
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "LONG",
+            "giris": 1905.89,
+            "stop": 1872.556667,
+            "hedef": 1950.89,
+            "R": 1.35,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 33.333333,
+            "giris_gerekcesi": "15M FVG üst kenarı 1903.0-1905.89",
+            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+            "gecersizlik": "1872.556667 ötesinde 15M gövde kapanışı → kurulum iptal",
+            "usd_hedef": {
+              "HUKUM": "UYGUN",
+              "dusen_kapilar": [],
+              "kazanc_usdt": [
+                130.41,
+                145.41
+              ]
+            }
+          },
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "LONG",
+            "giris": 1895.23,
+            "stop": 1861.896667,
+            "hedef": 1940.23,
+            "R": 1.35,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 33.333333,
+            "giris_gerekcesi": "15M FVG üst kenarı 1894.63-1895.23",
+            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+            "gecersizlik": "1861.896667 ötesinde 15M gövde kapanışı → kurulum iptal",
+            "usd_hedef": {
+              "HUKUM": "UYGUN",
+              "dusen_kapilar": [],
+              "kazanc_usdt": [
+                130.41,
+                145.41
+              ]
+            }
+          },
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "LONG",
+            "giris": 1881.07,
+            "stop": 1847.736667,
+            "hedef": 1926.07,
+            "R": 1.35,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 33.333333,
+            "giris_gerekcesi": "15M teyitli swing desteği",
+            "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+            "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+            "gecersizlik": "1847.736667 ötesinde 15M gövde kapanışı → kurulum iptal",
+            "usd_hedef": {
+              "HUKUM": "UYGUN",
+              "dusen_kapilar": [],
+              "kazanc_usdt": [
+                130.41,
+                145.41
+              ]
+            }
+          }
+        ],
         "yon": "LONG",
         "fiyat": 1913.5,
-        "gerekce": "hiçbir aday kapıları geçemedi",
         "red_nedenleri": [
-          "giriş 1913.5: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1912.44: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1909.32: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1905.89: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1895.23: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1891.25: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
-          "giriş 1883.76: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
-          "giriş 1881.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1880.66: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1878.97: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-          "giriş 1876.11: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
-          "giriş 1870.57: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']"
+          "giriş 1891.25: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
+          "giriş 1883.76: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']"
         ],
-        "adaylar": [],
         "yapi_ozeti": {
           "son_kapanis": 1913.5,
-          "atr15": 7.501428571428619,
-          "atr4h": 15.26857142857146,
+          "atr15": 6.089347895154819,
+          "atr4h": 19.03247928159819,
           "bar15": 200,
           "bar4h": 200
         },
@@ -1218,22 +1362,145 @@
       "likidasyon",
       "gorsel"
     ],
-    "EMIR": "EMİR YOK",
-    "EMIR_GEREKCE": "hiçbir aday kapıları geçemedi",
-    "emir_adaylari": [],
+    "EMIR": "MARKET LONG @1913.5 | stop 1880.166667 | T1 1958.5 | R 1.35",
+    "EMIR_GEREKCE": "",
+    "emir_adaylari": [
+      {
+        "emir_tipi": "MARKET",
+        "yon": "LONG",
+        "giris": 1913.5,
+        "stop": 1880.166667,
+        "hedef": 1958.5,
+        "R": 1.35,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 33.333333,
+        "giris_gerekcesi": "güncel fiyat (MARKET adayı)",
+        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+        "gecersizlik": "1880.166667 ötesinde 15M gövde kapanışı → kurulum iptal",
+        "usd_hedef": {
+          "HUKUM": "UYGUN",
+          "dusen_kapilar": [],
+          "kazanc_usdt": [
+            130.41,
+            145.41
+          ]
+        }
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "LONG",
+        "giris": 1912.44,
+        "stop": 1879.106667,
+        "hedef": 1957.44,
+        "R": 1.35,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 33.333333,
+        "giris_gerekcesi": "4H teyitli swing desteği",
+        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+        "gecersizlik": "1879.106667 ötesinde 15M gövde kapanışı → kurulum iptal",
+        "usd_hedef": {
+          "HUKUM": "UYGUN",
+          "dusen_kapilar": [],
+          "kazanc_usdt": [
+            130.41,
+            145.41
+          ]
+        }
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "LONG",
+        "giris": 1909.32,
+        "stop": 1875.986667,
+        "hedef": 1954.32,
+        "R": 1.35,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 33.333333,
+        "giris_gerekcesi": "4H teyitli swing desteği",
+        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+        "gecersizlik": "1875.986667 ötesinde 15M gövde kapanışı → kurulum iptal",
+        "usd_hedef": {
+          "HUKUM": "UYGUN",
+          "dusen_kapilar": [],
+          "kazanc_usdt": [
+            130.41,
+            145.41
+          ]
+        }
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "LONG",
+        "giris": 1905.89,
+        "stop": 1872.556667,
+        "hedef": 1950.89,
+        "R": 1.35,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 33.333333,
+        "giris_gerekcesi": "15M FVG üst kenarı 1903.0-1905.89",
+        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+        "gecersizlik": "1872.556667 ötesinde 15M gövde kapanışı → kurulum iptal",
+        "usd_hedef": {
+          "HUKUM": "UYGUN",
+          "dusen_kapilar": [],
+          "kazanc_usdt": [
+            130.41,
+            145.41
+          ]
+        }
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "LONG",
+        "giris": 1895.23,
+        "stop": 1861.896667,
+        "hedef": 1940.23,
+        "R": 1.35,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 33.333333,
+        "giris_gerekcesi": "15M FVG üst kenarı 1894.63-1895.23",
+        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+        "gecersizlik": "1861.896667 ötesinde 15M gövde kapanışı → kurulum iptal",
+        "usd_hedef": {
+          "HUKUM": "UYGUN",
+          "dusen_kapilar": [],
+          "kazanc_usdt": [
+            130.41,
+            145.41
+          ]
+        }
+      },
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "LONG",
+        "giris": 1881.07,
+        "stop": 1847.736667,
+        "hedef": 1926.07,
+        "R": 1.35,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 33.333333,
+        "giris_gerekcesi": "15M teyitli swing desteği",
+        "stop_gerekcesi": "sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan",
+        "hedef_gerekcesi": "sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan",
+        "gecersizlik": "1847.736667 ötesinde 15M gövde kapanışı → kurulum iptal",
+        "usd_hedef": {
+          "HUKUM": "UYGUN",
+          "dusen_kapilar": [],
+          "kazanc_usdt": [
+            130.41,
+            145.41
+          ]
+        }
+      }
+    ],
     "emir_red_nedenleri": [
-      "giriş 1913.5: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1912.44: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1909.32: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1905.89: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1895.23: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1891.25: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
-      "giriş 1883.76: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
-      "giriş 1881.07: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1880.66: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1878.97: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
-      "giriş 1876.11: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği', 'yapı hedefi bandın içinde']",
-      "giriş 1870.57: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']"
+      "giriş 1891.25: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']",
+      "giriş 1883.76: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']"
     ],
     "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da LONG",
     "iki_satir": {
@@ -1484,9 +1751,9 @@
           "oneri": ""
         },
         {
-          "kod": "MEMNUN_ETME",
+          "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "emir üretilmedi ve gerekçesi mekanik: giriş 1913.5: usd_hedef UYGUN DEĞİL — düşen kapı ['stop ölçeği', 'hedef ölçeği']",
+          "kanit": "emir seviyeleri ölçümden ve rr_denetim'den geçti: MARKET LONG @1913.5 | stop 1880.166667 | T1 1958.5 | R 1.35",
           "oneri": ""
         },
         {
@@ -1498,7 +1765,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'gorsel-teyit', 'karar-motoru', 'turev-akis'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'gorsel-teyit', 'turev-akis', 'karar-motoru'}",
           "oneri": ""
         },
         {
