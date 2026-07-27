@@ -2,33 +2,31 @@
   "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü) ↔ grafik-cizim ölçülü yapı (smc_tespit, aynı bar)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bull",
-  "yapi_olayi": "1917.90 dibinden toparlanma 1948'e — 1982.00 tepe altı konsolidasyon; 15M MA'lar iç içe",
+  "trend": "bear",
+  "yapi_olayi": "1982.00 tepesinden 1881.16'ya sert düşüş — fiyat tüm 15M MA'ların altında; 1881.16 dibinden 1892'ye zayıf tepki",
   "seviyeler": {
     "direnc": [
-      1950,
-      1960,
-      1970,
-      1982
+      1900,
+      1920,
+      1940
     ],
     "destek": [
-      1930,
-      1920,
-      1917.9,
-      1910.55
+      1881.16,
+      1880,
+      1860
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 1948.79, +1.92%; 24S menzil 1910.55-1982.00; MA5 1941.44 / MA10 1941.19 / MA30 1942.58 iç içe (sıkışma); funding +0.0024% (soğuma sürüyor); OI 2.3M — tepeden düşüş sonrası yatay",
-    "4S panel: fiyat 1948.28 ≈ MA5 1949.26 sınırı, > MA10 1929.36 > MA30 1898.03; bu 4S barda likidasyon Longs 361.2K / Shorts 3.2M — short likidasyonu güçlü baskın",
-    "Heatmap: üst bantlar 1950/1960/1970, tepe 1982; alt 1920-1930 bölgesi ve dip 1917.90",
-    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): 1917.90 BİREBİR (ölçüm 1917.9); panel 1950 ↔ ölçüm 1950.63 (sapma 0.63); panel 1970 ↔ ölçüm 1971.62 (sapma 1.62); panel 1920 ↔ ölçüm 1921.43 (sapma 1.43); panel 1960 ↔ ölçüm 1963.64 (sapma 3.64) — 5 bant örtüştü; TEK SAPMA: panel tepe 1982.00 ↔ ölçülü en yakın teyitli seviye 1977.58 (sapma 4.42; spike ucu teyitli swing sayılmıyor)",
-    "Çapraz trend teyidi: görsel toparlanma ↔ smc_tespit trend=bull — UYUMLU"
+    "15M panel: fiyat 1891.99, -3.04%; 24S menzil 1881.16-1982.00; MA5 1895.98 / MA10 1917.25 / MA30 1934.36 aşağı sıralı (bear dizilim), fiyat tümünün altında; funding +0.0028% (soğuma sürüyor); bu 15M barda likidasyon Longs -- / Shorts 921.0 (küçük); OI 2.3M — düşüşte azaldı",
+    "4S panel: fiyat 1891.98, -3.03%; fiyat < MA30 1896.65 < MA10 1930.45 < MA5 1937.83 (tümünün altına indi); bu 4S barda likidasyon Longs 11.1M / Shorts 410.9K — LONG flush baskın",
+    "Heatmap 15M: dip 1881.16, tepe 1977.58; üst bantlar 1900-1940. Heatmap 4S: bantlar 1940/1920/1900/1880/1860; 4S dip 1841.84, eski dip 1748.00",
+    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 1881.16 BİREBİR (ölçüm 1881.16); panel tepe 1977.58 BİREBİR (ölçüm 1977.58); panel 1940 ↔ ölçüm 1939.27 (sapma 0.73); panel 1920 ↔ ölçüm 1921.43 (sapma 1.43); panel 1900 ↔ ölçüm 1897.27 (sapma 2.73) — 5 bant örtüştü; TEK AÇIK: 4S heatmap 1860 bandının ölçülü teyitli karşılığı YOK (15M yapı 1879.05'te bitiyor; 1860 yalnız panel kaynaklı)",
+    "Çapraz trend teyidi: görsel sert düşüş + MA-altı ↔ smc_tespit trend=bear (ADX 26.82) — UYUMLU; önceki koşunun bull okuması bu barda İKİ kaynakta birden DÖNDÜ"
   ],
-  "h4_trend": "bull",
-  "celiski_notu": "Görsel-mekanik uyum TAM (tek sapma 1982 spike ucu, 4.42 puan — bant genişliği içinde). Temkin: funding 0.0024'e soğudu ve OI tepeden düşük — momentum yakıtı azalmış",
+  "h4_trend": "bear",
+  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 2.73; 1860 bandı ölçülü teyitsiz — yalnız panel). Dikkat: BTC'nin aksine ETH'de düşüş barında OI DÜŞTÜ (tepeden 2.3M'e) = pozisyon kapanışı ağırlıklı; funding +0.0028'e soğudu",
   "guven": 0.5,
-  "zaman_utc": "2026-07-27 19:17",
-  "zaman_yerel": "2026-07-27 22:17 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 22:16-22:17 (UTC+3) → UTC 19:16-19:17; paket çekimi 2026-07-27 19:18:15 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-27 23:34",
+  "zaman_yerel": "2026-07-28 02:34 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 02:34 (UTC+3) → UTC 23:34; paket çekimi 2026-07-27 23:35 UTC ile aynı dakikalar"
 }
