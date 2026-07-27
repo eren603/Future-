@@ -1727,17 +1727,22 @@ def ozet_metin(rapor: dict) -> str:
             L.append(f"   ✖ {e}")
         L.append("-" * 68)
     if "iki_satir" in z:
+        emir_var = str(z.get("EMIR", "")).startswith(("MARKET", "LIMIT"))
         L.append(z["iki_satir"]["1_YON"])
         L.append(z["iki_satir"]["2_ISLEM_KALITESI"])
+        if emir_var and "TEMİZ GİRİŞ VAR" in z["iki_satir"]["2_ISLEM_KALITESI"]:
+            # İki ayrı işlem gibi okunmasın: kalite satırındaki seviyeler motor
+            # KANITIDIR; uygulanabilir işlem YALNIZ EMİR satırıdır (tek karar).
+            L.append("   ↳ üstteki seviyeler MOTOR KANITIDIR, ikinci bir işlem "
+                     "DEĞİL — uygulanabilir işlem yalnız EMİR satırıdır")
         L.append(f"EMİR: {z.get('EMIR', YOK)}")
         if str(z.get("EMIR", "")).startswith("LIMIT"):
             # İki hüküm karışmasın: İŞLEM KALİTESİ "şu anki fiyatta temiz giriş
             # var mı" der; LIMIT emri ise yapıdan ölçülmüş BEKLEYEN seviyedir.
-            L.append("   ↳ EMİR = bekleyen limit; mevcut fiyattan giriş DEĞİL — "
-                     "fiyat giriş bölgesine gelirse geçerlidir")
-        for a in (z.get("emir_adaylari") or [])[1:4]:
-            L.append(f"   ↳ alternatif: {a['emir_tipi']} {a['yon']} @{a['giris']} | "
-                     f"stop {a['stop']} | T1 {a['hedef']} | R {a['R']}")
+            L.append("   ↳ EMİR = bekleyen limit; dolmazsa işlem YOK (kovalama "
+                     "yok); dolarsa stop ve T1 sabittir")
+        # Alternatif adaylar kullanıcı çıktısına BASILMAZ (senaryo çoğaltıyordu;
+        # tam liste JSON raporda `emir_adaylari` altında durur).
         if str(z.get("EMIR", "")).startswith("EMİR YOK"):
             # Gerekçe HER KOLDA basılır: "yön nötr", "yapı okunamadı", "yol
             # çözülemedi", "motor çalışmadı" kollarında red_nedenleri boştur ve
@@ -1747,7 +1752,16 @@ def ozet_metin(rapor: dict) -> str:
                             else [f"{YOK} — gerekçe motordan taşınmadı (korkuluk)"]))
             for x in nedenler[:3]:
                 L.append(f"   ✖ {x[:104]}")
-        L.append(f"GEÇERSİZLİK: {z.get('gecersizlik', YOK)}")
+        # GEÇERSİZLİK daima BASILAN EMRİN iptal koşuludur — emre ait olmayan
+        # motor-içi koşul basılıp senaryo çoğaltılmaz (ucu açık trade yasak).
+        aday0 = (z.get("emir_adaylari") or [{}])[0]
+        if emir_var and aday0.get("gecersizlik"):
+            L.append(f"GEÇERSİZLİK (bu emrin): {aday0['gecersizlik']}")
+        elif emir_var:
+            L.append(f"GEÇERSİZLİK (bu emrin): stop {aday0.get('stop', YOK)} — "
+                     "stop çalışırsa kurulum bitmiştir, yeniden girilmez")
+        else:
+            L.append(f"GEÇERSİZLİK: {z.get('gecersizlik', YOK)}")
         L.append(z.get("CELISKI_TURU", YOK))
     else:
         # Katman kapısında duran koşuda da üç satır sözleşmesi korunur:

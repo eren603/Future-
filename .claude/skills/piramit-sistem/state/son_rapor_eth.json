@@ -124,13 +124,13 @@
             "r": 2.66
           },
           "son_bar_utc": "2026-07-27 04:30",
-          "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-25 13:45).",
+          "akibet_onceki": "Önceki LONG kararından sonra yeni bar yok — akıbet ölçülemez (VERİ YOK).",
           "rejim_4h": {
             "rejim": "UP",
             "fark": 48.42399999999998,
             "esik": 27.657100000000263
           },
-          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-27 04:30 UTC\nVeri: 15M 200 bar (2026-07-25 02:45→2026-07-27 04:30), 4H 200 bar (2026-06-24 00:00→2026-07-27 04:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-25 13:45).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=5.417 | son bar hacim sırası=0.302083 | 4H |MA5-MA20| eşiği=27.6571 (fark=48.424, rejim=UP)\n----------------------------------------------------------------\nKARAR : LONG  (zincir adımı 2)\nNEDEN : MARKET: son teyitli swing 1948.58 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.\nGİRİŞ : 1951.34 (market)\nSTOP  : 1945.46\nİPTAL : 15M gövde kapanışı kırılan 1948.58 seviyesinin gerisine dönerse sinyal geçersiz.\nT1    : 1966.97 | T2: 1966.04 (kaynak: likidite)\nR     : 2.66 (T1'e; giriş-stop mesafesine göre)\n----------------------------------------------------------------\nUYARI : dönüş dizisi 2/4 (LONG yönünde) — süpürülen seviye 1945.3, süpürme ucu 1942.95. Dizi tamamlanırsa yön değişebilir.\n================================================================",
+          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-27 04:30 UTC\nVeri: 15M 200 bar (2026-07-25 02:45→2026-07-27 04:30), 4H 200 bar (2026-06-24 00:00→2026-07-27 04:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Önceki LONG kararından sonra yeni bar yok — akıbet ölçülemez (VERİ YOK).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=5.417 | son bar hacim sırası=0.302083 | 4H |MA5-MA20| eşiği=27.6571 (fark=48.424, rejim=UP)\n----------------------------------------------------------------\nKARAR : LONG  (zincir adımı 2)\nNEDEN : MARKET: son teyitli swing 1948.58 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.\nGİRİŞ : 1951.34 (market)\nSTOP  : 1945.46\nİPTAL : 15M gövde kapanışı kırılan 1948.58 seviyesinin gerisine dönerse sinyal geçersiz.\nT1    : 1966.97 | T2: 1966.04 (kaynak: likidite)\nR     : 2.66 (T1'e; giriş-stop mesafesine göre)\n----------------------------------------------------------------\nUYARI : dönüş dizisi 2/4 (LONG yönünde) — süpürülen seviye 1945.3, süpürme ucu 1942.95. Dizi tamamlanırsa yön değişebilir.\n================================================================",
           "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth"
         },
         "smc_tespit": {
@@ -1813,7 +1813,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'gorsel-teyit', 'grafik-calisma', 'turev-akis', 'karar-motoru'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'turev-akis', 'gorsel-teyit', 'grafik-calisma'}",
           "oneri": ""
         },
         {
