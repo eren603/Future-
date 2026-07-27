@@ -492,6 +492,65 @@ def _turev_uret(onceki: dict, girdi: Path | None = None,
             "http_engelli": bool(job.get("_ag_hatalari"))}
 
 
+def _karar_grafigi() -> list:
+    """Koşu sonrası karar grafiği (SVG) — çizim karar ÜRETMEZ, kararı BASAR.
+
+    Seviyeler smc_tespit'in ölçtüğü yapıdan (grafik-cizim `otomatik.smc`),
+    emir kutusu son raporun birincil emrinden gelir. Çizim karara GERİ
+    BESLENMEZ: aynı ölçümler karara zaten smc_tespit/emir_plani üzerinden
+    giriyor; grafiği danışman yapmak DAİRESEL kanıt olurdu (gözlemci yasağı).
+    """
+    cizici = REPO / ".claude" / "skills" / "grafik-cizim" / "scripts" / "cizim.py"
+    if not cizici.exists():
+        return []
+    uret = []
+    isler = (("BTCUSDT", GIRDI / "m15.json", "son_rapor.json", "btc_karar.svg"),
+             ("ETHUSDT", IKINCI["girdi"] / "m15.json", "son_rapor_eth.json",
+              "eth_karar.svg"))
+    for ad, kline, rapor_ad, svg_ad in isler:
+        if not kline.exists():
+            continue
+        try:
+            z = (json.loads((SKILL / "state" / rapor_ad)
+                            .read_text(encoding="utf-8")).get("ZIRVE") or {})
+        except (OSError, json.JSONDecodeError):
+            z = {}
+        oto = {"smc": True, "ma": [{"tip": "ema", "period": 50, "renk": "#ff9800"}]}
+        emir0 = ((z.get("emir_adaylari") or [{}])[0]
+                 if str(z.get("EMIR", "")).startswith(("MARKET", "LIMIT")) else None)
+        if emir0 and None not in (emir0.get("giris"), emir0.get("stop"),
+                                  emir0.get("hedef")):
+            oto["emir"] = {"giris": emir0["giris"], "stop": emir0["stop"],
+                           "hedef": emir0["hedef"],
+                           "yon": str(emir0.get("yon", "")).lower()}
+        cikti = REPO / "engine" / "cikti" / svg_ad
+        skor = z.get("yon_skoru")
+        job = {"veri": {"kline": str(kline)},
+               "baslik": f"{ad} · 15M · Binance",
+               "alt_baslik": (f"otomatik SMC katmanı — YÖN: "
+                              f"{z.get('YON_BIAS', 'VERİ YOK')}"
+                              + (f" (skor {skor})" if skor is not None else "")
+                              + f" | {str(z.get('EMIR', 'VERİ YOK'))[:64]}"),
+               "tema": "koyu", "paneller": [{"tip": "hacim", "yukseklik": 0.12}],
+               "otomatik": oto, "cikti": str(cikti)}
+        jp = SKILL / "state" / "_job" / f"cizim_{svg_ad}.json"
+        try:
+            jp.parent.mkdir(parents=True, exist_ok=True)
+            cikti.parent.mkdir(parents=True, exist_ok=True)
+            jp.write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
+            pr = subprocess.run([sys.executable, str(cizici), "--job", str(jp)],
+                                capture_output=True, text=True, timeout=120,
+                                cwd=str(REPO))
+            if pr.returncode == 0 and cikti.exists():
+                uret.append(str(cikti.relative_to(REPO)))
+            else:
+                print(f"[PİRAMİT] Karar grafiği çizilemedi ({ad}): "
+                      f"{(pr.stderr or pr.stdout).strip()[:120]}")
+        except (subprocess.TimeoutExpired, OSError) as e:
+            print(f"[PİRAMİT] Karar grafiği çizilemedi ({ad}): {type(e).__name__}")
+    return uret
+
+
 def _durum_oku() -> dict:
     try:
         d = json.loads(DURUM.read_text(encoding="utf-8"))
@@ -756,6 +815,14 @@ def main() -> int:
         except (subprocess.TimeoutExpired, OSError) as e:
             print(f"[PİRAMİT] İkinci sembol koşulamadı ({type(e).__name__}: {e}) "
                   "— elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
+    # Karar grafiği: her koşudan sonra ölçülen yapı SVG'ye basılır (çizim
+    # karar üretmez; karara geri beslenmez — dairesel kanıt yasak).
+    grafikler = _karar_grafigi()
+    if grafikler:
+        satir = ("[PİRAMİT] Karar grafikleri çizildi (görsel çıktı; karar "
+                 "ÜRETMEZ): " + ", ".join(grafikler))
+        print(satir)
+        ozet = f"{ozet}\n{satir}"
     try:
         DURUM.parent.mkdir(parents=True, exist_ok=True)
         DURUM.write_text(json.dumps({"fp": fp, "ozet": ozet, "kod": kod,
