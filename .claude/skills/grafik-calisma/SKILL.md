@@ -109,14 +109,17 @@ Kullanıcı "BTC 4h analiz et" gibi bir istek verirse:
    + likidite havuzlarını çıkar, sonra `scripts/confluence.py` motoruna ver →
    yön + giriş/çıkış + R:R gerçek fiyatlarla hesaplanır (yalnız fib değil, confluence).
 3. Hesaplama/doğrulama gerekiyorsa `data-analysis-deep-scan` scriptleriyle çalış.
-4. İstenirse matplotlib ile **işaretlenmiş grafik çiz** (aşağıdaki C modu) ve
-   SendUserFile ile gönder.
+4. İstenirse **işaretlenmiş grafik çiz** (aşağıdaki C modu) ve SendUserFile ile gönder.
 
 ## C) Grafik üretme
-- **Analiz grafiği:** matplotlib ile mum grafiği + CHoCH/BOS çizgileri + fib
-  bölgeleri (renkli bantlar) + giriş/geçersizlik etiketleri çiz, PNG olarak gönder.
-  (pandas/numpy SessionStart hook ile kurulu; mplfinance yoksa `pip install
-  mplfinance` dene, olmazsa matplotlib ile candlestick'i elle çiz.)
+- **Analiz grafiği:** `grafik-cizim` becerisinin motoruyla üretilir —
+  `python3 ../grafik-cizim/scripts/cizim.py --job is.json`. Mum grafiği +
+  BOS/CHoCH + order block/FVG/likidite + impuls Fibonacci'si (altın bölge) +
+  giriş/stop/hedef pozisyon kutusu, `otomatik` katmanıyla bu becerinin
+  `smc_tespit.py` çıktısından ÇİZİLİR (elle seviye girilmez). Çıktı SVG'dir;
+  **matplotlib gerekmez** (bu ortamda kurulu değildir — eski matplotlib/mplfinance
+  yönergesi bu yüzden geçersizdir). Araç envanteri:
+  `../grafik-cizim/references/tradingview-arac-haritasi.md`.
 - **Genel grafik/dashboard:** `dataviz` becerisi kurallarıyla (erişilebilir renk,
   net eksen); Excel içi grafik için `xlsx`.
 

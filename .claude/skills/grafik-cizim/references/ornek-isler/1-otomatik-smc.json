@@ -1,0 +1,38 @@
+{
+  "veri": {
+    "kline": "engine/girdi/h4.json"
+  },
+  "son_bar": 160,
+  "baslik": "BTCUSDT · 4H · Binance",
+  "alt_baslik": "otomatik SMC + Fibonacci katmanı — ölçülen yapıdan",
+  "tema": "koyu",
+  "paneller": [
+    {
+      "tip": "hacim",
+      "yukseklik": 0.13
+    },
+    {
+      "tip": "rsi",
+      "period": 14,
+      "yukseklik": 0.14
+    }
+  ],
+  "otomatik": {
+    "ma": [
+      {
+        "tip": "ema",
+        "period": 50,
+        "renk": "#ff9800"
+      },
+      {
+        "tip": "ema",
+        "period": 200,
+        "renk": "#2962ff"
+      }
+    ],
+    "regresyon": {
+      "bar": 120
+    }
+  },
+  "cikti": "cikti/btc_4h_oto.svg"
+}

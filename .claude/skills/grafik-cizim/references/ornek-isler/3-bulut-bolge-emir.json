@@ -1,0 +1,59 @@
+{
+  "veri": {
+    "kline": "engine/girdi/m15.json"
+  },
+  "son_bar": 120,
+  "baslik": "BTCUSDT · 15M · Binance",
+  "alt_baslik": "bulut (MA cloud) + arz-talep bantları + emir seviyesi etiketleri — 7. görselin karşılığı",
+  "tema": "koyu",
+  "cizimler": [
+    {
+      "arac": "bulut",
+      "a": {
+        "tip": "ema",
+        "period": 9
+      },
+      "b": {
+        "tip": "ema",
+        "period": 21
+      },
+      "dolgu_saydam": 0.25
+    },
+    {
+      "arac": "ma",
+      "tip": "ema",
+      "period": 50,
+      "renk": "#e91e63"
+    },
+    {
+      "arac": "dikdortgen",
+      "fiyat1": 64950,
+      "fiyat2": 65050,
+      "bar_baslangic": 0,
+      "renk": "olumsuz",
+      "etiket": "arz 64.950–65.050"
+    },
+    {
+      "arac": "dikdortgen",
+      "fiyat1": 64600,
+      "fiyat2": 64700,
+      "bar_baslangic": 0,
+      "renk": "olumlu",
+      "etiket": "talep 64.600–64.700"
+    },
+    {
+      "arac": "yatay_cizgi",
+      "fiyat": 64703.75,
+      "renk": "olumsuz",
+      "kesik": "6 3",
+      "etiket": "1 Buy STP"
+    },
+    {
+      "arac": "yatay_cizgi",
+      "fiyat": 64642.75,
+      "renk": "olumlu",
+      "etiket": "1 Buy LMT"
+    }
+  ],
+  "cikti": "cikti/bulut.svg"
+}

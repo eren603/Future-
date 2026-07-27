@@ -1,0 +1,62 @@
+{
+  "veri": {
+    "kline": "engine/girdi/eth/h4.json"
+  },
+  "son_bar": 150,
+  "baslik": "ETHUSDT · 4H · Binance",
+  "alt_baslik": "elle çizim demosu — regresyon kanalı + LONG pozisyon aracı + gelecek projeksiyonu",
+  "tema": "koyu",
+  "sag_bosluk_bar": 45,
+  "paneller": [
+    {
+      "tip": "hacim",
+      "yukseklik": 0.12
+    }
+  ],
+  "cizimler": [
+    {
+      "arac": "regresyon_kanali",
+      "bar_baslangic": 30,
+      "bar_bitis": 149,
+      "sapma": 2.0,
+      "ileri_bar": 30,
+      "renk": "#2962ff"
+    },
+    {
+      "arac": "ema",
+      "period": 50,
+      "renk": "#ff9800"
+    },
+    {
+      "arac": "long_pozisyon",
+      "giris": 1863.68,
+      "stop": 1830.35,
+      "hedef": 1975.0,
+      "bar_baslangic": -1,
+      "uzunluk_bar": 40,
+      "r_etiketi": "R 1.35 (emir_plani)"
+    },
+    {
+      "arac": "olcum",
+      "p1": {
+        "bar": 96,
+        "fiyat": 2050.0
+      },
+      "p2": {
+        "bar": 130,
+        "fiyat": 1880.0
+      }
+    },
+    {
+      "arac": "metin",
+      "p1": {
+        "bar": 60,
+        "fiyat": 2100.0
+      },
+      "metin": "arz bölgesi reddi",
+      "kutu": true,
+      "renk": "olumsuz"
+    }
+  ],
+  "cikti": "cikti/eth_elle.svg"
+}

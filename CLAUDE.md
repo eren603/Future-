@@ -40,6 +40,7 @@ beceriyi uygula.
 | Değerleme, finansal model, DCF, comps, LBO, 3 tablo, çarpan, WACC, yatırım getirisi | `finansal-modelleme` |
 | Veri analizi, finansal tablo, oran, trend, istatistik, hesaplama, Excel/CSV/JSON denetimi, kripto/hisse verisi yorumlama, sayısal iddia doğrulama | `data-analysis-deep-scan` |
 | Grafik/chart okuma, mum grafiği, teknik analiz, SMC, CHoCH/BOS, order block, FVG, likidite, Fibonacci/golden zone, giriş bölgesi, grafik oluşturma, dashboard | `grafik-calisma` |
+| Grafik ÜZERİNE çizim: fibonacci çizme, trend çizgisi/kanal/regresyon/çatal, destek-direnç bölgesi, order block-FVG-likidite işaretleme, long/short pozisyon (R:R) kutusu, ölçüm, ok/metin/etiket, bilgi paneli, EMA bulutu, "çizimli grafik ver", "TradingView gibi çiz" | `grafik-cizim` (SVG; matplotlib GEREKMEZ) |
 | Trading stratejisi, forex/endeks/kripto CFD, MQL5, Pine Script, Expert Advisor, backtest, prop trading, Ichimoku, risk yönetimi | `forex-trading-expert` |
 | Kline verisi yapıştırma (15M/4H OHLCV), "motoru çalıştır", "koşu yap", motor kararı/akıbet/defter sorgusu | `karar-motoru` |
 | Backtest, geriye dönük test, strateji performansı, profit factor, Sharpe, drawdown, Monte Carlo, walk-forward, overfitting | `backtest-motoru` |
@@ -253,6 +254,18 @@ doğrulanmamış sayılır (fail-closed).
 Ek kural: Kullanıcı bir **grafik ekran görüntüsü** gönderirse (mum grafiği,
 fiyat grafiği), açıkça istemese bile `grafik-calisma` SMC + Fibonacci akışıyla
 analiz et; derin SMC tanımları için `forex-trading-expert` referanslarını kullan.
+
+Ek kural (ÇİZİM — çizilecekse motor koşar, elle SVG/kod yazılmaz): Bir grafik
+ÜRETİLECEKSE (kullanıcı "çiz/işaretle/grafik ver" dedi ya da seviyeleri
+göstermek gerekiyor) `grafik-cizim` becerisinin `scripts/cizim.py` motoru
+koşulur — matplotlib ARANMAZ (bu ortamda kurulu değil; motor sıfır bağımlılıkla
+SVG üretir). Seviyeler elle uydurulmaz: `otomatik` katmanı `smc_tespit`in
+ölçtüğü yapıdan (OB/FVG/likidite/BOS-CHoCH/impuls fibonacci'si), giriş-stop-hedef
+kutusu ise `emir_plani.py` çıktısından çizilir; ölçülemeyen çizim atlanır ve
+raporun `uyarilar` alanına gerekçesiyle yazılır. Sunulan R, `rr_denetim`den
+geçmiş değerdir (`r_etiketi`). Grafik bir KARAR DEĞİLDİR — yön/işlem hükmü
+yine `piramit-sistem`/`karar-kurulu` sentezinden gelir; çıktı `SendUserFile`
+ile gönderilir.
 
 Kurallar:
 1. Soru birden fazla kategoriye giriyorsa ilgili becerilerin **hepsini** birlikte
