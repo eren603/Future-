@@ -103,13 +103,13 @@
             "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.03 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
           },
           "son_bar_utc": "2026-07-27 17:00",
-          "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-27 12:00).",
+          "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-27 17:00).",
           "rejim_4h": {
             "rejim": "UP",
             "fark": 50.24749999999972,
             "esik": 28.311399999999903
           },
-          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-27 17:00 UTC\nVeri: 15M 200 bar (2026-07-25 15:15→2026-07-27 17:00), 4H 200 bar (2026-06-24 12:00→2026-07-27 16:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-27 12:00).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=9.765 | son bar hacim sırası=0.239583 | 4H |MA5-MA20| eşiği=28.3114 (fark=50.2475, rejim=UP)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.03 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.\n================================================================",
+          "rapor_metni": "================================================================\nKARAR MOTORU v1 — koşu: son 15M bar 2026-07-27 17:00 UTC\nVeri: 15M 200 bar (2026-07-25 15:15→2026-07-27 17:00), 4H 200 bar (2026-06-24 12:00→2026-07-27 16:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-27 17:00).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=9.765 | son bar hacim sırası=0.239583 | 4H |MA5-MA20| eşiği=28.3114 (fark=50.2475, rejim=UP)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.03 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın.\n================================================================",
           "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth"
         },
         "smc_tespit": {
@@ -1496,7 +1496,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'gorsel-teyit', 'turev-akis', 'grafik-calisma', 'karar-motoru'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'karar-motoru', 'gorsel-teyit', 'grafik-calisma'}",
           "oneri": ""
         },
         {
