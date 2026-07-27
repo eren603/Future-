@@ -1,34 +1,32 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (8 ekran görüntüsünün BTC bölümü)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (8 görüntünün BTC bölümü) ↔ grafik-cizim ölçülü yapı (smc_tespit, aynı bar)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bear",
-  "yapi_olayi": "65722.50 çift tepe reddi + 64374.40'a sert iniş — tepki toparlanması MA30 altında",
+  "trend": "bull",
+  "yapi_olayi": "64374.40 dibinden yükselen dipler — 65000 bandı altında toparlanma; 15M MA'lar iç içe (sıkışma)",
   "seviyeler": {
     "direnc": [
-      64978,
       65000,
       65200,
       65722.5
     ],
     "destek": [
-      64600,
-      64374.4,
-      64000
+      64800,
+      64460,
+      64374.4
     ]
   },
   "gozlem": [
-    "15M: fiyat 64799.90; 15:30 civarı 65500+ spike REDDEDİLDİ, ardından 64374.40 dibine sert iniş (16:45), tepki 64800'e",
-    "15M MA'lar: fiyat 64802 > MA5 64771.07 > MA10 64690.52 ama MA30 64978.98 ALTINDA — toparlanma zayıf",
-    "4S: fiyat 64788-64802 ≈ MA30 64788.78 sınırında, MA5 64970.22 ve MA10 64845.13 ALTINDA — dünkü boğa toparlanması reddedildi",
-    "Türev paneli 4S: funding +0.0037% (öğlen 0.0071'den soğudu), Açık Faiz 105.1K (öğlen ~104.7K'dan düşüş SIRASINDA ARTTI = yeni short girişi olası), bu 4S barda likidasyon Longs 22.9K / Shorts 283.2K",
-    "15M likidasyon: 16:45-17:00 düşüşünde long likidasyonları; 18:30 sonrası 8M ölçekli SHORT likidasyon yeşili ile 64800 tepkisi",
-    "Likidite haritası: 65500 bandı üstte duruyor (reddedildi), 64374-64400 taranmış, 64600 ara bant"
+    "15M heatmap: fiyat 64950.70; dip 64374.40, tepe 65722.50; bantlar ~65000 / ~64800 / ~64460",
+    "4S panel: fiyat 64955, +0.47%; fiyat > MA10 64860.13 > MA30 64793.78, MA5 65000.22 hemen altı; funding +0.0055%; bu 4S barda likidasyon Longs 155.1K / Shorts 1.8M (short squeeze toparlanması)",
+    "15M panel: MA5 64894.18 / MA10 64921.16 / MA30 64892.16 iç içe = sıkışma; OI ~104.9K yatay; 18:15 civarı büyük short-liq spike",
+    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): 64374.40 BİREBİR (panel dip = ölçülü seviye 64374.4); panel ~64800 ↔ ölçüm 64811.0 (sapma 11); panel ~64460 ↔ ölçüm 64479.0 (sapma 19); panel ~65000 ↔ ölçüm 65032.0 (sapma 32); panel tepe 65722.50 BİREBİR (ölçüm 65722.5) — 5/5 bant iki bağımsız kaynakta ÖRTÜŞTÜ",
+    "Çapraz trend teyidi: görsel toparlanma (yükselen dipler) ↔ smc_tespit trend=bull — UYUMLU (önceki koşudaki göz/algoritma çelişkisi bu barda YOK)"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "15M ve 4S kısa vade AYNI yönde zayıf (fiyat kısa MA'ların altı/sınırında) — düşüşte OI artışı short baskısını, 18:30 short-liq tepkisi ise alt bölge savunmasını gösteriyor; ikisi çelişik akış",
+  "h4_trend": "bull",
+  "celiski_notu": "Kısa vade 15M-4S uyumlu (toparlanma); büyük resim hâlâ 66924.10 tepesinin altında. Çapraz sorguda kayda değer sapma yok (en büyük 32 puan, bant genişliği içinde)",
   "guven": 0.5,
-  "zaman_utc": "2026-07-27 17:07",
-  "zaman_yerel": "2026-07-27 20:06-20:07 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 20:06-20:07 (UTC+3) → UTC 17:06-17:07; paket çekimi 2026-07-27 17:08:00 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-27 19:17",
+  "zaman_yerel": "2026-07-27 22:16-22:17 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 22:16-22:17 (UTC+3) → UTC 19:16-19:17; paket çekimi 2026-07-27 19:18:15 UTC ile aynı dakikalar"
 }

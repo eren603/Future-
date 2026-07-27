@@ -1,11 +1,11 @@
 {
-  "son_bar": 1785171600000,
-  "son_bar_utc": "2026-07-27 17:00",
+  "son_bar": 1785179700000,
+  "son_bar_utc": "2026-07-27 19:15",
   "karar": {
     "karar": "BEKLE",
     "yon": null,
     "zincir": 1,
-    "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.03 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+    "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.96 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
   },
   "takip": null,
   "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-27 17:00).",
@@ -15,7 +15,7 @@
       "ust": 1914.0,
       "alt": 1913.11,
       "ce": 1913.5549999999998,
-      "bar": 120,
+      "bar": 111,
       "zaman": 1785099600000
     },
     {
@@ -23,7 +23,7 @@
       "ust": 1919.39,
       "alt": 1916.24,
       "ce": 1917.815,
-      "bar": 121,
+      "bar": 112,
       "zaman": 1785100500000
     },
     {
@@ -31,31 +31,19 @@
       "ust": 1954.39,
       "alt": 1937.95,
       "ce": 1946.17,
-      "bar": 189,
+      "bar": 180,
       "zaman": 1785161700000
     },
     {
       "tip": "bull",
-      "ust": 1936.11,
-      "alt": 1931.12,
-      "ce": 1933.6149999999998,
-      "bar": 197,
-      "zaman": 1785168900000
+      "ust": 1946.9,
+      "alt": 1938.76,
+      "ce": 1942.83,
+      "bar": 199,
+      "zaman": 1785178800000
     }
   ],
   "swing_15m_son": [
-    [
-      1941.8,
-      "L"
-    ],
-    [
-      1977.58,
-      "H"
-    ],
-    [
-      1949.75,
-      "L"
-    ],
     [
       1917.9,
       "L"
@@ -75,6 +63,18 @@
     [
       1946.12,
       "H"
+    ],
+    [
+      1934.12,
+      "L"
+    ],
+    [
+      1945.37,
+      "H"
+    ],
+    [
+      1928.1,
+      "L"
     ]
   ],
   "swing_4h_son": [
@@ -105,7 +105,7 @@
   ],
   "rejim_4h": {
     "rejim": "UP",
-    "fark": 50.24749999999972,
+    "fark": 52.0024999999996,
     "esik": 28.311399999999903
   },
   "donus_dizisi": {

@@ -1,30 +1,31 @@
 {
   "sembol": "engine/girdi",
-  "son_bar": 1785171600000,
-  "son_bar_utc": "2026-07-27 17:00",
+  "son_bar": 1785179700000,
+  "son_bar_utc": "2026-07-27 19:15",
   "son_kapanis": null,
   "YON_BIAS": "SHORT",
-  "yon_skoru": -0.3925,
-  "guven_skoru": 0.1192,
-  "uzlasi": 0.6075,
+  "yon_skoru": -0.4728,
+  "guven_skoru": 0.1246,
+  "uzlasi": 0.5272,
   "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
   "islem_seviyeleri": {},
   "danismanlar": {
     "karar-motoru": "flat",
     "grafik-calisma": "flat",
-    "turev-akis": "short"
+    "turev-akis": "short",
+    "gorsel-teyit": "short"
   },
   "surucu": {
     "trend": "bull",
-    "adx": 14.99,
-    "atr": 223.2378802,
+    "adx": 11.58,
+    "atr": 176.94575997,
     "rejim": "range",
-    "turev_skor": -0.6365,
-    "turev_kapsam": 0.85,
+    "turev_skor": -0.421,
+    "turev_kapsam": 1.0,
     "funding": 0.0,
     "lsr": -0.5,
     "cvd_delta": -0.7,
     "oi_delta": -1.0,
-    "liq_long": null
+    "liq_long": 0.8
   }
 }
