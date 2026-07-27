@@ -1,35 +1,34 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (7 ekran görüntüsünün BTC bölümü)",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (8 ekran görüntüsünün BTC bölümü)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
   "trend": "bear",
-  "yapi_olayi": "65722.50 tepesinden düşüş — 15M'de fiyat MA dizilimi ALTINA döndü",
+  "yapi_olayi": "65722.50 çift tepe reddi + 64374.40'a sert iniş — tepki toparlanması MA30 altında",
   "seviyeler": {
     "direnc": [
+      64978,
+      65000,
       65200,
-      65400,
-      65500,
       65722.5
     ],
     "destek": [
-      65100,
-      65000,
-      64872,
-      64379.7
+      64600,
+      64374.4,
+      64000
     ]
   },
   "gozlem": [
-    "15M: fiyat 65125.90 < MA5 65131.33 < MA10 65213.81 < MA30 65276.24 — dizilim AYI dönüşü; 65722.50 gün içi tepe, 64872.00 dip",
-    "15M likidasyon panelinde 12:00 civarı long likidasyon kümesi (kırmızı çubuklar, ~3M ölçek)",
-    "4S: fiyat 65124 > MA10 64877.31 ve MA30 64845.25 ama son iki 4S mumu 65500 üstünü REDDETTİ (65722.50 fitil); 24S menzil 64380-65722",
-    "Likidite haritası 15M: 65500 bandı üstte duruyor (alınmadı), 65000'de koyu bant (alt mıknatıs), fiyat ikisinin ortasında",
-    "Türev paneli: funding +0.0071%, Açık Faiz ~104.7K (108.4K tepeden düşük, yatay) — bu 4S barında likidasyon değeri basılmamış (Longs/Shorts: --)",
-    "OI yatayken tepe reddi = kaldıraç yeni yön seçmedi; 65000-65722 arası sıkışma"
+    "15M: fiyat 64799.90; 15:30 civarı 65500+ spike REDDEDİLDİ, ardından 64374.40 dibine sert iniş (16:45), tepki 64800'e",
+    "15M MA'lar: fiyat 64802 > MA5 64771.07 > MA10 64690.52 ama MA30 64978.98 ALTINDA — toparlanma zayıf",
+    "4S: fiyat 64788-64802 ≈ MA30 64788.78 sınırında, MA5 64970.22 ve MA10 64845.13 ALTINDA — dünkü boğa toparlanması reddedildi",
+    "Türev paneli 4S: funding +0.0037% (öğlen 0.0071'den soğudu), Açık Faiz 105.1K (öğlen ~104.7K'dan düşüş SIRASINDA ARTTI = yeni short girişi olası), bu 4S barda likidasyon Longs 22.9K / Shorts 283.2K",
+    "15M likidasyon: 16:45-17:00 düşüşünde long likidasyonları; 18:30 sonrası 8M ölçekli SHORT likidasyon yeşili ile 64800 tepkisi",
+    "Likidite haritası: 65500 bandı üstte duruyor (reddedildi), 64374-64400 taranmış, 64600 ara bant"
   ],
-  "h4_trend": "bull",
-  "celiski_notu": "15M ayı dönüşü / 4S hâlâ boğa (fiyat MA10/30 üstü) — zaman dilimi çatışması AÇIK; 65500 reddi 4S boğasını zayıflatıyor",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-27 12:04",
-  "zaman_yerel": "2026-07-27 15:03-15:04 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 15:03-15:04 (UTC+3) → UTC 12:03-12:04; paket çekimi 2026-07-27 12:07:01 UTC ile aynı dakikalar"
+  "h4_trend": "bear",
+  "celiski_notu": "15M ve 4S kısa vade AYNI yönde zayıf (fiyat kısa MA'ların altı/sınırında) — düşüşte OI artışı short baskısını, 18:30 short-liq tepkisi ise alt bölge savunmasını gösteriyor; ikisi çelişik akış",
+  "guven": 0.5,
+  "zaman_utc": "2026-07-27 17:07",
+  "zaman_yerel": "2026-07-27 20:06-20:07 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 20:06-20:07 (UTC+3) → UTC 17:06-17:07; paket çekimi 2026-07-27 17:08:00 UTC ile aynı dakikalar"
 }

@@ -1,33 +1,34 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (7 ekran görüntüsünün ETH bölümü)",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (8 ekran görüntüsünün ETH bölümü)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bull",
-  "yapi_olayi": "1982.00 yeni tepe sonrası tepe altı geri çekilme — yükselen yapı korunuyor, momentum soğuma",
+  "trend": "bear",
+  "yapi_olayi": "1982.00 tepe reddi — 1917.90'a long-likidasyonlu iniş, tepki 1935'e; 15M MA30 altına dönüş",
   "seviyeler": {
     "direnc": [
-      1965,
-      1970,
+      1949,
+      1960,
       1982
     ],
     "destek": [
-      1960,
-      1950,
-      1935.29,
-      1920
+      1920,
+      1917.9,
+      1909.81,
+      1900
     ]
   },
   "gozlem": [
-    "15M haritası: fiyat 1961.78; 1982.00 tepe (08:15 civarı), 1935.29 dip (04:45); tepeden ~%1 geri çekilme, 1960 üstünde tutunma; son 15M mumları kırmızı (soğuma)",
-    "4S: fiyat 1962.85 > MA5 1957.47 > MA10 1926.22 > MA30 1898.41 — dizilim TAM BOĞA; 24S menzil 1880.66-1982.00, +4.0%",
-    "Likidite haritası 4S: 1980-1982 üst bant (tepe likiditesi kısmen alındı), 1920 altı yoğun mor destek bölgesi; 15M'de 1965/1970 ince bantlar üstte",
-    "Türev paneli 4S: funding +0.0067%, Açık Faiz 2.4M (artış korunuyor), bu 4S barında likidasyon Longs: -- / Shorts 211.9K — short likidasyonu hâlâ baskın",
-    "Sabahki koşuya göre: tepe 1966.97 → 1982.00 yükseldi, squeeze devam etti; ama 15M kısa vade mumları zayıfladı"
+    "15M: fiyat 1935.75; 1982.00 tepe (09:45 civarı) reddedildi, 17:00 sert inişle 1917.90; tepki 1935'e; 24S menzil 1909.81-1982.00",
+    "15M MA'lar: fiyat 1935.75 ≈ MA5 1936.01 > MA10 1933.16 ama MA30 1949.07 ALTINDA — kısa vade ayıya döndü",
+    "4S: MA dizilimi hâlâ boğa (MA5 1946.76 > MA10 1928.10 > MA30 1897.62) ama fiyat MA5'in ALTINA indi — momentum kırıldı",
+    "Türev paneli: funding +0.0011% (öğlen 0.0067'den GÜÇLÜ soğuma), Açık Faiz 2.4M ama 17:00 sonrası tepeden düşüş (long boşalması), bu 4S barda likidasyon Longs 186.9K / Shorts 1.9M (1982 squeeze barı)",
+    "15M likidasyon: bu barda Longs 26.6K / Shorts 1.4K — düşüş bacağı long likidasyonlu",
+    "Likidite haritası: 1920 bandı tarandı ve tepki verdi; 1940/1960 üst bantlar; 1900 altı yoğun bölge duruyor"
   ],
   "h4_trend": "bull",
-  "celiski_notu": "Görsel 4S tam boğa; 15M tepe altı soğuma — motorlar SHORT dönüş sinyali verirse GÖRSEL-MEKANİK ÇELİŞKİSİ bayrağı düşer (göz ile algoritma uyuşmazlığı gizlenmez)",
-  "guven": 0.5,
-  "zaman_utc": "2026-07-27 12:04",
-  "zaman_yerel": "2026-07-27 15:04 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 15:03-15:04 (UTC+3) → UTC 12:03-12:04; paket çekimi 2026-07-27 12:07:01 UTC ile aynı dakikalar"
+  "celiski_notu": "15M ayıya döndü / 4S dizilimi hâlâ boğa — zaman dilimi çatışması AÇIK; funding ve OI soğuması squeeze yakıtının bittiğini gösteriyor",
+  "guven": 0.45,
+  "zaman_utc": "2026-07-27 17:07",
+  "zaman_yerel": "2026-07-27 20:07 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 20:06-20:07 (UTC+3) → UTC 17:06-17:07; paket çekimi 2026-07-27 17:08:00 UTC ile aynı dakikalar"
 }
