@@ -8,7 +8,8 @@
     "4) ETHUSDT piramit koşusu — DAİMA BTC korelasyonlu (korelasyon.py job'da beyan edilir) + sabit-USDT profili.",
     "5) ÇELİŞKİ TURU: sentez yalnız DOĞRULANMIŞ danışmanlarla tekrarlanır; yön değişiyorsa fail-closed NÖTR.",
     "6) EMİR PLANI: karar MARKET/LIMIT emrine çevrilir (emir_plani.py) — giriş/stop/hedef/R, hepsi rr_denetim'den geçmiş.",
-    "7) Çıktı: YÖN + İŞLEM KALİTESİ + EMİR + geçersizlik + gerçek/varsayım/yorum ayrımı."
+    "7) Çıktı: YÖN + İŞLEM KALİTESİ + EMİR + geçersizlik + gerçek/varsayım/yorum ayrımı.",
+    "8) ÇİZİM (grafik-cizim, koşudan sonra kancada otomatik): girdiler = engine/girdi/m15.json + engine/girdi/eth/m15.json (ham kline) ve son_rapor*.json ZIRVE (YÖN/skor/EMİR); katmanlar = smc_tespit'in ÖLÇTÜĞÜ yapı (otomatik.smc: OB/FVG/likidite/BOS-CHoCH/fib) + EMA50 + hacim paneli + EMİR doğduysa giriş/stop/hedef pozisyon kutusu → engine/cikti/btc_karar.svg + eth_karar.svg; iki SVG SendUserFile ile kullanıcıya iletilir. Çizim karar ÜRETMEZ ve karara GERİ BESLENMEZ (dairesel kanıt yasak); çizilemezse gerekçesi '[PİRAMİT] Karar grafiği çizilemedi' satırıyla açıkça basılır."
   ],
   "eth_profili": {
     "sermaye_usd": 400.0,
