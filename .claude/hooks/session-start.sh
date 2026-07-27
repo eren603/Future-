@@ -6,10 +6,15 @@
 set -euo pipefail
 
 # --- Python bağımlılıkları (yoksa kur; durum raporundan ÖNCE ki rapor
-# kurulum SONRASI gerçeği söylesin — kurulum başarılıysa "eksik" denmez) ---
-if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
-  if ! python3 -c "import pandas, numpy, scipy" >/dev/null 2>&1; then
+# kurulum SONRASI gerçeği söylesin — kurulum başarılıysa "eksik" denmez).
+# Uzak-dışı yüzeyde de denenir (--user, sistemi kirletmez) — eskiden yalnız
+# CLAUDE_CODE_REMOTE=true iken kuruluyordu ve yerel taze pencerede motorlar
+# sessizce koşamıyordu. ---
+if ! python3 -c "import pandas, numpy, scipy" >/dev/null 2>&1; then
+  if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
     python3 -m pip install -q --disable-pip-version-check pandas numpy scipy || true
+  else
+    python3 -m pip install -q --disable-pip-version-check --user pandas numpy scipy || true
   fi
 fi
 

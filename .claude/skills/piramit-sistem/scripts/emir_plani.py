@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -67,6 +68,21 @@ def _f(x):
         return v if v == v else None
     except (TypeError, ValueError):
         return None
+
+
+def _nd(ref) -> int:
+    """Ondalık hane sayısı fiyat ölçeğinden türetilir.
+
+    Sabit 6 hane, mikro-fiyatlı sembolde (PEPE tipi, ~1e-5) farklı yapı
+    seviyelerini TEK seviyeye çökertip yapıda olmayan giriş üretiyordu
+    (giriş==stop, R basılan seviyelerle tutarsız)."""
+    try:
+        r = abs(float(ref))
+    except (TypeError, ValueError):
+        return 6
+    if r == 0 or r >= 0.1:
+        return 6
+    return min(12, 6 + int(math.ceil(-math.log10(r))))
 
 
 def _kos(script: Path, job: dict) -> dict:
@@ -134,9 +150,10 @@ def _giris_adaylari(yapi: dict, yon: str, fiyat: float) -> list:
             ad.append((s, "4H teyitli swing direnci"))
     # fiyatın kendisi de adaydır (MARKET olasılığı)
     ad.append((fiyat, "güncel fiyat (MARKET adayı)"))
+    nd = _nd(fiyat)
     gorulen, temiz = set(), []
     for g, gerekce in ad:
-        k = round(float(g), 6)
+        k = round(float(g), nd)
         if k in gorulen:
             continue
         gorulen.add(k)
@@ -203,8 +220,11 @@ def plan(job: dict) -> dict:
     p = {**KONVANSIYON, **(job.get("konvansiyon") or {})}
     yon = str(job.get("yon", "")).strip().upper()
     profil = job.get("profil") or None
-    r_min = _f((profil or {}).get("esikler", {}).get("r_min")) or _f(job.get("r_min")) \
-        or p["r_min"]
+    # `esikler: null` (ya da dict olmayan değer) motoru düşürmesin (fail-open
+    # değil: r_min yine depo kuralına düşer)
+    esikler = (profil or {}).get("esikler")
+    esikler = esikler if isinstance(esikler, dict) else {}
+    r_min = _f(esikler.get("r_min")) or _f(job.get("r_min")) or p["r_min"]
 
     if yon not in ("LONG", "SHORT"):
         return {"EMIR": "EMİR YOK", "gerekce": f"yön {yon or YOK} — yönsüz kurulumda "
@@ -237,7 +257,15 @@ def plan(job: dict) -> dict:
         rr = _kos(RR, {"yon": yon.lower(), "entry": giris, "stop": stop,
                        "target": hedef, "atr": atr_olcek})
         rv = rr.get("verdict", YOK)
-        R = _f(rr.get("R_gercekci")) or _f(rr.get("R_ham"))
+        if rr.get("_hata"):
+            # rr_denetim'in gerçek hatası yutulmasın: "R None < r_min" yerine
+            # düşen kapının asıl nedeni yazılır (ör. "atr > 0 olmalı").
+            redler.append(f"giriş {giris}: rr_denetim ÇALIŞMADI "
+                          f"({str(rr['_hata'])[:80]}) — reddedildi")
+            continue
+        R = _f(rr.get("R_gercekci"))
+        if R is None:
+            R = _f(rr.get("R_rapor"))   # eski "R_ham" anahtarı hiç basılmıyordu
         if rv == "ŞİŞİRİLMİŞ":
             redler.append(f"giriş {giris}: rr_denetim ŞİŞİRİLMİŞ (R {R}) — reddedildi")
             continue
@@ -247,15 +275,20 @@ def plan(job: dict) -> dict:
         if R is None or R < r_min:
             redler.append(f"giriş {giris}: R {R} < r_min {r_min} — reddedildi")
             continue
+        nd = _nd(fiyat)
+        if round(giris, nd) == round(stop, nd):
+            redler.append(f"giriş {giris}: yuvarlanınca stop ile çakışıyor "
+                          f"(hane {nd}) — reddedildi")
+            continue
         aday = {
             "emir_tipi": ("MARKET" if abs(giris - fiyat) <=
                           p["market_tolerans_atr"] * (yapi["atr15"] or 0) else "LIMIT"),
-            "yon": yon, "giris": round(giris, 6), "stop": round(stop, 6),
-            "hedef": round(hedef, 6), "R": R, "rr_denetim": rv,
-            "risk_puan": round(risk, 6),
+            "yon": yon, "giris": round(giris, nd), "stop": round(stop, nd),
+            "hedef": round(hedef, nd), "R": R, "rr_denetim": rv,
+            "risk_puan": round(risk, nd),
             "giris_gerekcesi": gerekce, "stop_gerekcesi": s_gerekce,
             "hedef_gerekcesi": h_gerekce,
-            "gecersizlik": (f"{round(stop, 6)} ötesinde 15M gövde kapanışı → "
+            "gecersizlik": (f"{round(stop, nd)} ötesinde 15M gövde kapanışı → "
                             "kurulum iptal"),
         }
         # --- sabit-USDT profili varsa 5 kapı ---

@@ -30,6 +30,8 @@ import argparse
 import importlib
 import json
 import py_compile
+import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -70,11 +72,18 @@ def kontrol_hizli() -> list[str]:
     try:
         motor = _motor_tablosu()
         for ad, yol in motor.items():
-            if not Path(yol).exists():
+            p = Path(yol)
+            if not p.exists():
                 kirik.append(f"MOTOR: {ad} dosyası YOK — {yol}")
+                continue
+            # varlık yetmez: sözdizimi-bozuk motor "SAĞLAM" sayılıyordu —
+            # 19 motorun HEPSİ derlenir (yanlış-negatif kapatıldı).
+            try:
+                py_compile.compile(str(p), doraise=True)
+            except Exception as e:  # noqa: BLE001
+                kirik.append(f"MOTOR: {ad} derlenemiyor ({e})")
     except Exception as e:  # noqa: BLE001
         kirik.append(f"MOTOR: piramit.py MOTOR tablosu okunamadı ({e})")
-        motor = {}
 
     for p in CEKIRDEK:
         if not p.exists():
@@ -90,48 +99,102 @@ def kontrol_hizli() -> list[str]:
         ayar = json.loads(ayar_p.read_text(encoding="utf-8"))
         kanca = ayar.get("hooks", {})
         for gerekli in ("SessionStart", "UserPromptSubmit"):
-            if not kanca.get(gerekli):
+            girisler = kanca.get(gerekli)
+            if not girisler:
                 kirik.append(f"KANCA: settings.json'da {gerekli} kayıtlı DEĞİL "
                              "— tetikleyicisiz otomatik koşu çalışmaz")
+                continue
+            # anahtar varlığı yetmez: komutun İŞARET ETTİĞİ dosya da denetlenir
+            # (komut ölü dosyaya bakarken "kanca 2/2" deniyordu).
+            for grup in girisler:
+                for h in (grup.get("hooks") or []):
+                    kmt = str(h.get("command") or "")
+                    for m in re.findall(r"\$CLAUDE_PROJECT_DIR[\"']?/([^\s\"']+)", kmt):
+                        if not (REPO / m).exists():
+                            kirik.append(f"KANCA: {gerekli} komutunun hedefi YOK "
+                                         f"— {m}")
     except Exception as e:  # noqa: BLE001
         kirik.append(f"KANCA: {ayar_p} okunamadı ({e})")
     for h in ("session-start.sh", "piramit_auto.py"):
         if not (REPO / ".claude" / "hooks" / h).exists():
             kirik.append(f"KANCA: hooks/{h} YOK")
 
-    for p, ad in ((ENGINE / "gorev.json", "duran görev"),
-                  (ENGINE / "girdi" / "m15.json", "BTC 15M kline"),
-                  (ENGINE / "girdi" / "h4.json", "BTC 4H kline")):
+    for p, ad, liste in ((ENGINE / "gorev.json", "duran görev", False),
+                         (ENGINE / "girdi" / "m15.json", "BTC 15M kline", True),
+                         (ENGINE / "girdi" / "h4.json", "BTC 4H kline", True)):
         try:
-            json.loads(p.read_text(encoding="utf-8"))
+            d = json.loads(p.read_text(encoding="utf-8"))
         except Exception as e:  # noqa: BLE001
             kirik.append(f"GİRDİ/GÖREV: {ad} okunamadı ({p.name}: {type(e).__name__})")
+            continue
+        if liste and not (isinstance(d, list) and d):
+            # '[]' geçerli JSON'dur ama boru hattı K1'de durur — "OK" değildir.
+            kirik.append(f"GİRDİ/GÖREV: {ad} BOŞ ya da liste değil ({p.name})")
+
+    # Kanca çalışma-zamanı durumu: bozuk state dosyası (sözlük olmayan kök)
+    # kancayı her istemde öldürüyordu ve sağlık "SAĞLAM" diyordu.
+    for sp, ad in ((SKILL / "state" / "otomatik.json", "kanca durumu"),
+                   (SKILL / "state" / "alinan_paketler.json", "paket defteri")):
+        if not sp.exists():
+            continue
+        try:
+            d = json.loads(sp.read_text(encoding="utf-8"))
+        except Exception as e:  # noqa: BLE001
+            kirik.append(f"KANCA-DURUM: {ad} bozuk JSON ({sp.name}: {type(e).__name__})")
+            continue
+        if not isinstance(d, dict):
+            kirik.append(f"KANCA-DURUM: {ad} kökü sözlük değil ({sp.name}) — "
+                         "kanca bu dosyayla ölür")
 
     return kirik
 
 
-def kontrol_tam() -> tuple[list[str], list[str]]:
-    """(kırık, geçen) — her öz-test subprocess ile koşulur."""
-    kirik, gecen = [], []
-    for t in OZ_TESTLER:
-        etiket = f"{t.parent.parent.name}/{t.name}" if "skills" in str(t) \
-            else f"engine/{t.name}"
-        if not t.exists():
-            kirik.append(f"ÖZ-TEST: {etiket} dosyası YOK")
-            continue
-        try:
-            pr = subprocess.run([sys.executable, str(t)], capture_output=True,
-                                text=True, timeout=600, cwd=str(t.parent))
-        except subprocess.TimeoutExpired:
-            kirik.append(f"ÖZ-TEST: {etiket} ZAMAN AŞIMI (600 s)")
-            continue
-        if pr.returncode == 0:
-            gecen.append(etiket)
-        else:
-            son = (pr.stdout + pr.stderr).strip().splitlines()
-            kirik.append(f"ÖZ-TEST: {etiket} KALDI (rc={pr.returncode}) — "
-                         f"{son[-1][:120] if son else 'çıktı yok'}")
-    return kirik, gecen
+def kontrol_tam() -> tuple[list[str], list[str], list[str]]:
+    """(kırık, geçen, atlanan) — her öz-test subprocess ile koşulur.
+
+    Gerçek SI hafızası (hafiza/*.json) koşudan ÖNCE anlık görüntüye alınır ve
+    koşudan sonra farklıysa GERİ YÜKLENİR: timeout/SIGKILL öz-testin kendi
+    finally-geri-yüklemesini atlayabiliyordu → öğrenilmiş ağırlık kalıcı
+    kayboluyordu. Ayrıca ffmpeg yoksa video-isleme öz-testi apt-get ile kurulum
+    DENEMESİN diye atlanır (sağlık denetimi sistem durumunu değiştirmez).
+    """
+    kirik, gecen, atlanan = [], [], []
+    hafiza_dizin = SKILL / "hafiza"
+    yedek = {p: p.read_bytes() for p in sorted(hafiza_dizin.glob("*.json"))} \
+        if hafiza_dizin.is_dir() else {}
+    try:
+        for t in OZ_TESTLER:
+            etiket = f"{t.parent.parent.name}/{t.name}" if "skills" in str(t) \
+                else f"engine/{t.name}"
+            if not t.exists():
+                kirik.append(f"ÖZ-TEST: {etiket} dosyası YOK")
+                continue
+            if "video-isleme" in str(t) and shutil.which("ffmpeg") is None:
+                atlanan.append(f"{etiket} (ffmpeg yok — kurulum denenmedi)")
+                continue
+            try:
+                pr = subprocess.run([sys.executable, str(t)], capture_output=True,
+                                    text=True, timeout=600, cwd=str(t.parent))
+            except subprocess.TimeoutExpired:
+                kirik.append(f"ÖZ-TEST: {etiket} ZAMAN AŞIMI (600 s)")
+                continue
+            if pr.returncode == 0:
+                gecen.append(etiket)
+            else:
+                son = (pr.stdout + pr.stderr).strip().splitlines()
+                kirik.append(f"ÖZ-TEST: {etiket} KALDI (rc={pr.returncode}) — "
+                             f"{son[-1][:120] if son else 'çıktı yok'}")
+    finally:
+        for p, icerik in yedek.items():
+            try:
+                if not p.exists() or p.read_bytes() != icerik:
+                    p.write_bytes(icerik)
+                    kirik.append(f"HAFIZA: {p.name} öz-test sonrası değişmişti — "
+                                 "anlık görüntüden GERİ YÜKLENDİ (veri kaybı yok; "
+                                 "öz-testin geri yüklemesi yarım kalmış)")
+            except OSError as e:
+                kirik.append(f"HAFIZA: {p.name} geri yüklenemedi ({e})")
+    return kirik, gecen, atlanan
 
 
 def main(argv=None) -> int:
@@ -150,9 +213,11 @@ def main(argv=None) -> int:
 
     ozet = ""
     if args.tam:
-        t_kirik, t_gecen = kontrol_tam()
+        t_kirik, t_gecen, t_atlanan = kontrol_tam()
         kirik += t_kirik
         ozet = f", öz-test {len(t_gecen)}/{len(OZ_TESTLER)} GEÇTİ"
+        if t_atlanan:
+            ozet += f" ({len(t_atlanan)} atlandı: {'; '.join(t_atlanan)})"
 
     if kirik:
         print(f"[SAĞLIK] ⛔ KIRIK — {len(kirik)} halka (motor kaydı {n_motor}):")

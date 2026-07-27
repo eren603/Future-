@@ -942,14 +942,20 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
 # ==========================================================================
 # K5 — SI: (a) güven-ağırlıklı sentez → (b) kendini-kalibre eden geri besleme
 # ==========================================================================
-def _wilson_lo(wins: int, n: int) -> float:
-    """kalibrasyon.py'nin Wilson alt sınırı — yeni istatistik YAZILMAZ."""
+def _wilson_lo(wins: int, n: int):
+    """kalibrasyon.py'nin Wilson alt sınırı — yeni istatistik YAZILMAZ.
+
+    Motor yüklenemezse (ör. numpy eksik) (None, None) döner; çağıran statik
+    korkuluğa (ağırlık 1.0) düşer — K5 sentezden SONRA çökmez, YÖN/EMİR basılır.
+    """
     yol = str(SKILLS / "grafik-calisma" / "scripts")
     if yol not in sys.path:
         sys.path.insert(0, yol)
-    import kalibrasyon as kb  # noqa: PLC0415
-
-    return float(kb.wilson_lo(wins, n)), int(kb.KONVANSIYON["n_taban"])
+    try:
+        import kalibrasyon as kb  # noqa: PLC0415
+        return float(kb.wilson_lo(wins, n)), int(kb.KONVANSIYON["n_taban"])
+    except Exception:  # noqa: BLE001 — bağımlılık yoksa fail-closed nötr ağırlık
+        return None, None
 
 
 def _defter_oku(p: Path) -> dict:
@@ -1474,6 +1480,14 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
         wlo, n_taban = _wilson_lo(st["wins"], st["n"]) if st["n"] > 0 else (None, None)
         if n_taban is None:
             _, n_taban = _wilson_lo(0, 1)
+        if n_taban is None:
+            # kalibrasyon motoru yüklenemedi (ör. numpy eksik) → ağırlık
+            # DEĞİŞTİRİLMEZ, etiketlenir; sentez ve emir yine basılır.
+            agirliklar[motor] = 1.0
+            ayrinti[motor] = {**st, "wilson_lo": None, "agirlik": 1.0,
+                              "durum": "STATİK KORKULUK (fail-closed) — "
+                                       "kalibrasyon motoru yüklenemedi"}
+            continue
         if st["n"] < n_taban:
             agirliklar[motor] = 1.0
             ayrinti[motor] = {**st, "wilson_lo": wlo, "agirlik": 1.0,
@@ -1736,6 +1750,12 @@ def ozet_metin(rapor: dict) -> str:
         L.append(f"GEÇERSİZLİK: {z.get('gecersizlik', YOK)}")
         L.append(z.get("CELISKI_TURU", YOK))
     else:
+        # Katman kapısında duran koşuda da üç satır sözleşmesi korunur:
+        # YÖN/İŞLEM/EMİR satırları hiç düşmez (çıplak katman raporu yerine).
+        L.append(f"YÖN (bias): {z.get('YON_BIAS', YOK)} — katman kapısında "
+                 "durdu; eksik veriyle yön uydurulmaz")
+        L.append(f"İŞLEM KALİTESİ: {z.get('ISLEM_KALITESI', YOK)}")
+        L.append(f"EMİR: EMİR YOK — {str(z.get('neden', YOK))[:104]}")
         L.append(f"ULAŞILAN KATMAN: {z.get('ulasilan_katman', YOK)}")
         L.append(f"NEDEN: {z.get('neden', YOK)}")
     d = (rapor.get("DENETIM") or {})

@@ -42,11 +42,16 @@ MAX_OZET = 4000            # enjekte edilen özet için üst sınır (bağlam ko
 PAKET_DIZINLERI = [
     Path.home() / ".claude" / "uploads",        # yüklenen dosyalar (oturum altdizinleri)
     Path("/root/.claude/uploads"),
+    Path("/mnt/user-data/uploads"),             # bazı yüzeylerin yükleme kökü
     REPO / "gelen",
     Path.home() / "Downloads",
     REPO,
 ]
 PAKET_KALIP = "*piramit_veri_*.json"
+
+# Bu deponun tanıdığı semboller: ana slot BTCUSDT, ikinci slot ETHUSDT
+# (engine/gorev.json ile aynı). Yabancı sembolün paketi ana slotu EZEMEZ.
+BEKLENEN_SEMBOL = {"BTCUSDT", "ETHUSDT"}
 
 # İKİNCİ SEMBOL: veri varsa kendiliğinden koşar (elle koşu artık gerekmiyor).
 IKINCI = {
@@ -88,15 +93,23 @@ def _fp() -> str | None:
     var = False
     for ad in ("m15.json", "h4.json", *EK_KANAL):
         p = GIRDI / ad
-        if p.exists():
-            h.update(ad.encode())
-            h.update(p.read_bytes())
-            var = var or ad in ("m15.json", "h4.json")
-        else:
-            h.update(b"YOK")
+        try:
+            if p.is_file():
+                h.update(ad.encode())
+                h.update(p.read_bytes())
+                var = var or ad in ("m15.json", "h4.json")
+            else:
+                h.update(b"YOK")
+        except OSError:
+            # dizin-adlı/okunamayan girdi kancayı ÖLDÜRMEZ (kalıcı sessizlik
+            # yerine parmak izine "OKUNAMADI" girer, koşu devam eder)
+            h.update(b"OKUNAMADI")
     for ad in ("m15.json", "h4.json", "turev.json"):
         p = IKINCI["girdi"] / ad
-        h.update(p.read_bytes() if p.exists() else b"YOK")
+        try:
+            h.update(p.read_bytes() if p.is_file() else b"YOK")
+        except OSError:
+            h.update(b"OKUNAMADI")
     return h.hexdigest() if var else None
 
 
@@ -111,7 +124,8 @@ def _paket_adaylari() -> list:
             if not d.is_dir():
                 continue
             # yükleme kökü oturum altdizinlidir; depo kökü düz taranır (ucuz)
-            adaylar = list(d.glob(PAKET_KALIP)) + list(d.glob("*/" + PAKET_KALIP))
+            adaylar = (list(d.glob(PAKET_KALIP)) + list(d.glob("*/" + PAKET_KALIP))
+                       + list(d.glob("*/*/" + PAKET_KALIP)))
             for p in adaylar:
                 if p.is_file():
                     bulunan[p.resolve()] = p.stat().st_mtime
@@ -204,31 +218,53 @@ def _paket_al() -> dict:
     except (OSError, json.JSONDecodeError):
         defter = {}
     islenen = set(defter.get("islenen") or [])
-    mevcut = _girdi_son_bar()
+    redded = dict(defter.get("reddedilen") or {})   # sha → gerekçe (görünür kalır)
     for p in _paket_adaylari():
         try:
             sha = hashlib.sha256(p.read_bytes()).hexdigest()
         except OSError:
             continue
-        if sha in islenen:
+        if sha in islenen or sha in redded:
             continue
-        harita, _ = _paket_zamani(p)
+        harita, ham = _paket_zamani(p)
         paket_ms = harita.get("_ANA")
         # FAIL-CLOSED: paketin barı OKUNAMIYORSA alınmaz. Eskiden None "sorun
         # yok, al" diye yorumlanıyordu; biçim değişince korkuluk sessizce
         # ölüyordu (v2 paketinde tam olarak bu oldu).
         if paket_ms is None:
-            islenen.add(sha)
-            _defter_yaz(islenen, p, sha)
+            redded[sha] = "son bar okunamadı (tanınmayan şema)"
+            _defter_yaz(islenen, p, sha, redded)
             return {"paket": p.name, "atlandi": (
                 "paketin son barı OKUNAMADI (tanınmayan şema) → ALINMADI "
                 "(fail-closed: tazeliği kanıtlanamayan paket depoya girmez)")}
+        # SEMBOL KİMLİĞİ: yanlış sembolün paketi ana (BTC) slotunu ezemez.
+        beyan = {str(s).upper() for s in harita if s != "_ANA"}
+        tek = str((ham or {}).get("sembol") or "").upper()
+        if tek:
+            beyan.add(tek)
+        if beyan and beyan.isdisjoint(BEKLENEN_SEMBOL):
+            redded[sha] = f"sembol {sorted(beyan)} ∉ beklenen {sorted(BEKLENEN_SEMBOL)}"
+            _defter_yaz(islenen, p, sha, redded)
+            return {"paket": p.name, "atlandi": (
+                f"paket sembolleri {sorted(beyan)} bu deponun sembolleriyle "
+                f"({sorted(BEKLENEN_SEMBOL)}) eşleşmiyor → ALINMADI "
+                "(yanlış sembol ana slotu ezemez; fail-closed)")}
+        surum = int((ham or {}).get("surum") or 1)
+        if surum < 2 and tek == "ETHUSDT":
+            redded[sha] = "tek-sembollü ETH paketi ana slota yazılırdı"
+            _defter_yaz(islenen, p, sha, redded)
+            return {"paket": p.name, "atlandi": (
+                "tek-sembollü ETHUSDT paketi ana (BTC) slotunu ezerdi → ALINMADI; "
+                "ETH için çift-sembollü v2 paketi gönder (veri_topla.py)")}
         # SEMBOL BAZINDA kıyas: BTC'si eski / ETH'si yeni bir paket, BTC'yi
-        # geri sardırmamalı. Herhangi bir sembol geri gidiyorsa paket alınmaz.
-        geri = []
-        for ad, yol in (("_ANA", GIRDI / "m15.json"),
-                        ("ETHUSDT", IKINCI["girdi"] / "m15.json")):
+        # geri sardırmamalı. BTCUSDT anahtarı varsa _ANA yerine o kullanılır
+        # (_ANA=max(tümü) idi: yeni ETH, eski BTC'yi maskeliyordu).
+        geri, taze = [], []
+        for ad, yedek, yol in (("BTCUSDT", "_ANA", GIRDI / "m15.json"),
+                               ("ETHUSDT", None, IKINCI["girdi"] / "m15.json")):
             p_ms = harita.get(ad)
+            if p_ms is None and yedek:
+                p_ms = harita.get(yedek)
             if p_ms is None:
                 continue
             try:
@@ -236,32 +272,57 @@ def _paket_al() -> dict:
             except (OSError, json.JSONDecodeError):
                 d_ms = None
             if d_ms is not None and p_ms <= d_ms:
-                geri.append(f"{'ana' if ad == '_ANA' else ad}: paket {int(p_ms)} "
-                            f"≤ depo {int(d_ms)}")
-        if geri:
-            islenen.add(sha)                    # bir daha bakma
-            _defter_yaz(islenen, p, sha)
+                geri.append(f"{ad}: paket {int(p_ms)} ≤ depo {int(d_ms)}")
+            else:
+                taze.append(ad)
+        if geri and not taze:
+            redded[sha] = f"tümü bayat: {'; '.join(geri)}"
+            _defter_yaz(islenen, p, sha, redded)
             return {"paket": p.name, "atlandi": (
                 "paketin verisi depodakinden yeni DEĞİL → veri GERİ SARILMADI "
                 f"({'; '.join(geri)})")}
+        if geri:
+            # KARIŞIK paket: taze sembol kara listeye GÖMÜLMEZ (deftere
+            # yazılmaz) — uyarı her istemde görünür kalır, taze tam paket
+            # gelince o işlenir. Eskiden SHA kalıcı yazılıyordu = taze veri
+            # sonsuza dek kayboluyordu.
+            return {"paket": p.name, "atlandi": (
+                f"KARIŞIK paket: {', '.join(taze)} taze ama {'; '.join(geri)} "
+                "bayat → kısmi geri sarma olmasın diye ALINMADI. Bütün "
+                "sembolleri taze TEK paket gönder (bu uyarı o gelene dek "
+                "tekrarlanır; paket kara listeye YAZILMADI)")}
+        argv = [sys.executable, str(acici), "--paket", str(p)]
+        if surum < 2 and tek in BEKLENEN_SEMBOL:
+            argv += ["--sembol", tek]          # paket_ac içinde ikinci kilit
         try:
-            pr = subprocess.run([sys.executable, str(acici), "--paket", str(p)],
-                                capture_output=True, text=True, timeout=120,
-                                cwd=str(REPO))
-            sonuc = json.loads(pr.stdout) if pr.stdout.strip().startswith("{") else {}
-        except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError) as e:
+            pr = subprocess.run(argv, capture_output=True, text=True,
+                                timeout=120, cwd=str(REPO))
+        except (subprocess.TimeoutExpired, OSError) as e:
             return {"paket": p.name, "hata": f"{type(e).__name__}: {e}"}
+        # ÇIKIŞ KODU DENETLENİR: paket_ac reddettiyse (exit≠0) bu "alındı"
+        # DEĞİLDİR ve SHA kara listeye GÖMÜLMEZ — gerçek hata görünür kalır,
+        # düzeltilmiş paket/yeniden deneme mümkün olur. (Eskiden returncode
+        # hiç bakılmadan 'depoya alındı → {}' basılıyordu.)
+        if pr.returncode != 0:
+            hata = (pr.stderr.strip() or pr.stdout.strip())[-300:] \
+                or f"paket_ac çıkış kodu {pr.returncode}"
+            return {"paket": p.name, "hata": hata}
+        try:
+            sonuc = json.loads(pr.stdout) if pr.stdout.strip().startswith("{") else {}
+        except json.JSONDecodeError as e:
+            return {"paket": p.name, "hata": f"JSONDecodeError: {e}"}
         islenen.add(sha)
-        _defter_yaz(islenen, p, sha)
+        _defter_yaz(islenen, p, sha, redded)
         return {"paket": p.name, "sonuc": sonuc, "yol": str(p)}
     return {}
 
 
-def _defter_yaz(islenen: set, p: Path, sha: str) -> None:
+def _defter_yaz(islenen: set, p: Path, sha: str, redded: dict | None = None) -> None:
     try:
         PAKET_DEFTER.parent.mkdir(parents=True, exist_ok=True)
         PAKET_DEFTER.write_text(json.dumps(
-            {"islenen": sorted(islenen), "son": {"dosya": str(p), "sha": sha}},
+            {"islenen": sorted(islenen), "reddedilen": redded or {},
+             "son": {"dosya": str(p), "sha": sha}},
             ensure_ascii=False, indent=2), encoding="utf-8")
     except OSError:
         pass
@@ -433,9 +494,22 @@ def _turev_uret(onceki: dict, girdi: Path | None = None,
 
 def _durum_oku() -> dict:
     try:
-        return json.loads(DURUM.read_text(encoding="utf-8"))
+        d = json.loads(DURUM.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
+    # kök sözlük değilse (elle bozulmuş liste vb.) "geçmiş yok" sayılır —
+    # aksi halde onceki.get() her istemde AttributeError ile kancayı
+    # öldürüyordu ve dosya hiç yeniden yazılmadığı için durum KALICIYDI.
+    return d if isinstance(d, dict) else {}
+
+
+def _durum_yaz(d: dict) -> None:
+    try:
+        DURUM.parent.mkdir(parents=True, exist_ok=True)
+        DURUM.write_text(json.dumps(d, ensure_ascii=False, indent=2),
+                         encoding="utf-8")
+    except OSError:
+        pass
 
 
 def _zaten_islendi(girdi: Path | None = None, state: Path | None = None) -> bool:
@@ -528,18 +602,35 @@ def _ikinci_job() -> dict | None:
             veri["turev"] = json.loads(tp.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             pass
+    # KORELASYON TAZELİĞİ: iki serinin son barları 240 dk'dan fazla ayrışıksa
+    # ρ bayat hizalı pencereden ölçülür ve "güncel" sanılır — beyan düşürülür
+    # (fail-closed) ve uyarı görünür kılınır.
+    ana_ms = _girdi_son_bar()
+    try:
+        eth_ms = _son_bar_ms(json.loads((g / "m15.json").read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError):
+        eth_ms = None
+    kor_bayat = (ana_ms is not None and eth_ms is not None
+                 and abs(ana_ms - eth_ms) > 240 * 60 * 1000)
     job = {
         "soru": f"otomatik koşu — {IKINCI['ad']} (ana sembolle korelasyonlu)",
         "sembol": f"engine/girdi/{IKINCI['girdi'].name}",
         "veri": veri, "state_dir": str(sdir), "defter_dizini": str(st),
         "bar_arsivi": str(st / "bar_arsivi.jsonl"),
-        "korelasyon": {"a": str(GIRDI / "m15.json"), "b": str(g / "m15.json"),
-                       "ad_a": "BTC", "ad_b": IKINCI["ad"]},
         "_hafiza": ("KUM HAVUZU — bu bar zaten işlenmişti" if kum
                     else "GERÇEK — yeni bar"),
         # Gözlemci "ikinci sembol" kuralını buradan tanır (ana sembolde YOK).
         "_ikinci_sembol": IKINCI["ad"],
     }
+    if kor_bayat:
+        job["_korelasyon_uyarisi"] = (
+            "KORELASYON ATLANDI: BTC/ETH son barları 240 dk'dan fazla ayrışık "
+            f"(BTC {int(ana_ms)} / ETH {int(eth_ms)}) — bayat hizalı pencereyle "
+            "ρ ölçülmez (fail-closed); iki sembolü de taze tek paket gönder")
+    else:
+        job["korelasyon"] = {"a": str(GIRDI / "m15.json"),
+                             "b": str(g / "m15.json"),
+                             "ad_a": "BTC", "ad_b": IKINCI["ad"]}
     # PROFİL KOŞULSUZ BEYAN EDİLİR. Eskiden `if exists()` idi: dosya yoksa
     # beyan düşüyor, gözlemci "beyan edilmedi"yi denetlemediği için ihlal
     # üretilmiyor ve sistem SESSİZCE daha agresif emir yayınlıyordu (sabit
@@ -591,6 +682,7 @@ def main() -> int:
         return 0
 
     onceki = _durum_oku()
+    http_once = bool(onceki.get("http_engelli"))
     # Türev girdisi HER İSTEMDE tazelenir (CVD determinist: aynı kline = aynı
     # dosya → gereksiz koşu tetiklenmez). Parmak izi bundan SONRA alınır ki
     # yeni OI görüntüsü/funding boru hattını kendiliğinden yeniden koştursun.
@@ -606,6 +698,8 @@ def main() -> int:
                     IKINCI["state"] / "turev_seri.jsonl")
     fp = _fp()
     if onceki.get("fp") == fp and onceki.get("ozet"):
+        if bool(onceki.get("http_engelli")) != http_once:
+            _durum_yaz(onceki)   # ağ-engeli bayrağı bu yolda da KALICI olsun
         print("[PİRAMİT] Girdi verisi DEĞİŞMEDİ — yeniden koşulmadı; son koşunun "
               "sonucu (motor hafızası kirletilmedi):")
         print(onceki["ozet"])
@@ -621,6 +715,15 @@ def main() -> int:
         print(f"[PİRAMİT] Boru hattı çalıştırılamadı ({type(e).__name__}: {e}) — "
               "elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
         return 0
+    # ÇÖKME ÖNBELLEĞE YAZILMAZ: geçerli rapor işareti yoksa (traceback vb.)
+    # özet DURUM'a girmez — girseydi sonraki her istem traceback'i "son
+    # koşunun sonucu" diye taşırdı ve fp aynı kaldığı için yeniden denenmezdi.
+    if kod not in (0, 2) or "PİRAMİT SİSTEMİ" not in ozet:
+        print(f"[PİRAMİT] Boru hattı ÇÖKTÜ (çıkış kodu {kod}) — çıktı önbelleğe "
+              "YAZILMADI, sonraki istemde yeniden denenir; elle koşuya düşülür "
+              "(bu AÇIKÇA söylenmeli). Son çıktı:")
+        print(ozet[-1200:])
+        return 0
 
     hafiza = ("KUM HAVUZU (motor bu barı zaten işlemişti — gerçek defter "
               "korundu)" if _zaten_islendi() else "GERÇEK hafıza (yeni bar)")
@@ -634,14 +737,22 @@ def main() -> int:
         print(f"[PİRAMİT] İkinci sembol ({IKINCI['ad']}) verisi YOK "
               f"({IKINCI['girdi']}/m15.json) — koşulmadı, uydurulmadı.")
     else:
+        if ij.get("_korelasyon_uyarisi"):
+            print(f"[PİRAMİT] {ij['_korelasyon_uyarisi']}")
         try:
             ozet2, kod2 = _job_kos(ij, "otomatik_job_eth.json",
                                    "son_rapor_eth.json")
-            print(f"[PİRAMİT] İkinci sembol {IKINCI['ad']} koştu "
-                  f"(çıkış kodu {kod2}; sabit-USDT profili "
-                  f"{'BAĞLI' if ij.get('usd_profil') else 'YOK'}):")
-            print(ozet2)
-            ozet = f"{ozet}\n{ozet2}"
+            if kod2 not in (0, 2) or "PİRAMİT SİSTEMİ" not in ozet2:
+                print(f"[PİRAMİT] İkinci sembol {IKINCI['ad']} ÇÖKTÜ (çıkış kodu "
+                      f"{kod2}) — çıktısı önbelleğe YAZILMADI; elle koşuya "
+                      "düşülür (bu AÇIKÇA söylenmeli). Son çıktı:")
+                print(ozet2[-800:])
+            else:
+                print(f"[PİRAMİT] İkinci sembol {IKINCI['ad']} koştu "
+                      f"(çıkış kodu {kod2}; sabit-USDT profili "
+                      f"{'BAĞLI' if ij.get('usd_profil') else 'YOK'}):")
+                print(ozet2)
+                ozet = f"{ozet}\n{ozet2}"
         except (subprocess.TimeoutExpired, OSError) as e:
             print(f"[PİRAMİT] İkinci sembol koşulamadı ({type(e).__name__}: {e}) "
                   "— elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
