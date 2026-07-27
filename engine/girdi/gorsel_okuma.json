@@ -1,34 +1,35 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (8 ekran görüntüsü + 25 sn ekran kaydı kareleri)",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (7 ekran görüntüsünün BTC bölümü)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bull",
-  "yapi_olayi": "yükselen dipler — 64379.70 dibinden 65555.00 tepesine, tepe altı konsolidasyon",
+  "trend": "bear",
+  "yapi_olayi": "65722.50 tepesinden düşüş — 15M'de fiyat MA dizilimi ALTINA döndü",
   "seviyeler": {
     "direnc": [
+      65200,
+      65400,
       65500,
-      65555,
-      65600
+      65722.5
     ],
     "destek": [
-      65200,
+      65100,
       65000,
-      64800,
-      64606.3
+      64872,
+      64379.7
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa (video karesi): fiyat 65262.6 ~ MA5 65287.39 > MA10 65249.99 > MA30 65185.11; 24S menzil 64256.4-65555.0, +1.14%",
-    "Likidite haritası 15M: yoğun bantlar 65500-65555 (üst mıknatıs), 65300, 65200, 65000; yerel dip 64606.30",
-    "Likidite haritası 4S: 65200 bandında yatay likidite; 63666.00 dip, 66924.10 tepe (07/20)",
-    "4S mumları: fiyat 65231 > MA5 65053.90 > MA10 64730.89 ve MA30 64906.38 üstü — 3 güçlü yeşil 4S mumuyla toparlanma",
-    "Türev paneli 4S: funding +0.006%, Açık Faiz ~104.1K-104.2K (108.4K tepeden DÜŞÜŞTE), son 4S barında likidasyon Shorts 277.2K / Longs --",
-    "OI düşerken fiyat yükseliyor = rallinin bir kısmı short kapanışı (yeni long girişi sınırlı — temkin)"
+    "15M: fiyat 65125.90 < MA5 65131.33 < MA10 65213.81 < MA30 65276.24 — dizilim AYI dönüşü; 65722.50 gün içi tepe, 64872.00 dip",
+    "15M likidasyon panelinde 12:00 civarı long likidasyon kümesi (kırmızı çubuklar, ~3M ölçek)",
+    "4S: fiyat 65124 > MA10 64877.31 ve MA30 64845.25 ama son iki 4S mumu 65500 üstünü REDDETTİ (65722.50 fitil); 24S menzil 64380-65722",
+    "Likidite haritası 15M: 65500 bandı üstte duruyor (alınmadı), 65000'de koyu bant (alt mıknatıs), fiyat ikisinin ortasında",
+    "Türev paneli: funding +0.0071%, Açık Faiz ~104.7K (108.4K tepeden düşük, yatay) — bu 4S barında likidasyon değeri basılmamış (Longs/Shorts: --)",
+    "OI yatayken tepe reddi = kaldıraç yeni yön seçmedi; 65000-65722 arası sıkışma"
   ],
   "h4_trend": "bull",
-  "celiski_notu": "4S kısa vadede boğa (fiyat MA5/10/30 üstü) ama 66924.10 tepesinden inen BÜYÜK yapının hâlâ altında; 15M-4S kısa vade uyumlu, büyük resim henüz dönmedi",
-  "guven": 0.5,
-  "zaman_utc": "2026-07-27 04:33",
-  "zaman_yerel": "2026-07-27 07:32-07:33 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 07:32-07:33 (UTC+3) → UTC 04:32-04:33; paket çekimi 2026-07-27 04:34:47 UTC ile aynı dakikalar; video kaydı 07:33 (25.1 sn, 6 kare çıkarıldı)"
+  "celiski_notu": "15M ayı dönüşü / 4S hâlâ boğa (fiyat MA10/30 üstü) — zaman dilimi çatışması AÇIK; 65500 reddi 4S boğasını zayıflatıyor",
+  "guven": 0.45,
+  "zaman_utc": "2026-07-27 12:04",
+  "zaman_yerel": "2026-07-27 15:03-15:04 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 15:03-15:04 (UTC+3) → UTC 12:03-12:04; paket çekimi 2026-07-27 12:07:01 UTC ile aynı dakikalar"
 }

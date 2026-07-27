@@ -6,29 +6,29 @@
     "karar-motoru": {
       "n": 0,
       "wins": 0,
-      "kaynak": "/home/user/Future-/engine/state/eth/defter.jsonl VERİ YOK",
-      "atlanan": 0,
+      "kaynak": "/home/user/Future-/engine/state/eth/defter.jsonl",
+      "atlanan": 1,
       "pozisyonsuz": 0,
       "wilson_lo": null,
       "agirlik": 1.0,
       "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
     }
   },
-  "uretildigi_bar": "2026-07-27 04:30",
+  "uretildigi_bar": "2026-07-27 12:00",
   "etiketleme": {
     "karar-motoru": {
       "etiketlenen": 0,
       "elle_korunan": 0,
-      "olculemeyen": 0,
+      "olculemeyen": 1,
       "bar_havuzu": {
-        "bar": 418,
+        "bar": 448,
         "ilk": 1784751300000,
-        "son": 1785126600000
+        "son": 1785153600000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/eth/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 418
+        "toplam_bar": 448
       }
     }
   },
