@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>İki Zeka — Opus 5 &amp; Kimi Paneli</title>
+<title>İki Zeka — Kimi 3 &amp; Kimi Code</title>
 <style>
   :root {
     --bg: #0f1117; --panel: #171a23; --panel2: #1e222d; --border: #2a2f3c;
     --text: #e7e9ee; --muted: #8b90a0; --accent: #6d8bff;
-    --ai1: #d97757; --ai2: #7c5cff; --final: #34c98b;
+    --ai1: #7c5cff; --ai2: #2bb3a3; --final: #34c98b;
     --danger: #ff6b6b; --warn: #e0b34a; --radius: 12px;
   }
   * { box-sizing: border-box; }
@@ -45,20 +45,20 @@
   .tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
   .presets button { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); font-size: 13px; font-weight: 500; padding: 7px 12px; }
-  .presets button.active { border-color: var(--ai2); color: var(--text); }
+  .presets button.active { border-color: var(--ai1); color: var(--text); }
 
   .attach-btn input[type=file] { display: none; }
   .attach-btn span { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--border); border-radius: 8px; padding: 9px 14px; font-size: 14px; color: var(--muted); cursor: pointer; }
   .attach-btn span:hover { border-color: var(--accent); color: var(--text); }
   #attachList { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .chip { display: flex; align-items: center; gap: 8px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px 6px 6px; font-size: 12.5px; max-width: 260px; }
+  .chip.bad { border-color: var(--warn); }
   .chip img { width: 34px; height: 34px; object-fit: cover; border-radius: 5px; flex: none; }
   .chip .ficon { width: 34px; height: 34px; display: grid; place-items: center; background: var(--border); border-radius: 5px; font-size: 16px; flex: none; }
   .chip .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .chip .rm { cursor: pointer; color: var(--muted); font-weight: 700; padding: 0 4px; }
   .chip .rm:hover { color: var(--danger); } .chip.loading { opacity: .6; }
 
-  /* GitHub file picker */
   #ghList { max-height: 260px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; background: var(--panel2); }
   .ghrow { display: flex; align-items: center; gap: 9px; padding: 6px 10px; font-size: 12.5px; border-bottom: 1px solid var(--border); font-family: ui-monospace, Menlo, Consolas, monospace; }
   .ghrow:last-child { border-bottom: none; }
@@ -97,7 +97,7 @@
 <div class="wrap">
   <header>
     <h1>🧠 İki Zeka Paneli</h1>
-    <p><span class="b1" id="hdr1">Claude Opus 5</span> ve <span class="b2" id="hdr2">Kimi 3</span> tartışır, hakem <b>kazananı</b> ilan eder. GitHub reposu, dosya, görsel ve video okuyabilir.</p>
+    <p><span class="b1" id="hdr1">Kimi 3</span> ve <span class="b2" id="hdr2">Kimi Code</span> tartışır, hakem <b>kazananı</b> ilan eder. Tek API anahtarı. GitHub reposu, dosya, görsel ve video okuyabilir.</p>
   </header>
 
   <div class="tabs">
@@ -109,16 +109,16 @@
   <section id="debateMode">
     <div class="card">
       <label style="font-size:15px;color:var(--text);font-weight:600;margin-top:0">❓ SORUNUZ — buraya yazın</label>
-      <textarea id="question" style="min-height:110px" placeholder="Örn: Bu repodaki karar_motoru.py'de ATR hesabı doğru mu? / Bu ekran görüntüsünde ne geliştirilebilir?"></textarea>
+      <textarea id="question" style="min-height:110px" placeholder="Örn: Bu repodaki engine klasöründe hata var mı? / Bu ekran görüntüsünde ne geliştirilebilir?"></textarea>
 
-      <label style="margin-top:14px">Dosya ekle — resim, PDF, metin, video</label>
+      <label style="margin-top:14px">Dosya ekle — resim, metin, kod, video</label>
       <label class="attach-btn">
-        <input type="file" id="fileInput" multiple accept="image/*,application/pdf,text/*,.md,.csv,.json,.js,.py,.html,video/*">
+        <input type="file" id="fileInput" multiple accept="image/*,text/*,.md,.csv,.json,.js,.py,.html,video/*,application/pdf">
         <span>📎 Dosya seç</span>
       </label>
-      <div class="hint">Resim/videoyu Claude görsel analiz eder · PDF/metin içeriği okunur · GitHub dosyaları da buraya eklenir.</div>
+      <div class="hint">Resim ve video kareleri görsel olarak gönderilir · metin/kod dosyaları okunur · GitHub dosyaları da buraya eklenir.</div>
       <div id="attachList"></div>
-      <div class="stat" id="attachInfo" style="margin-top:8px">📎 Ekli içerik yok — modeller yalnızca sorunuzu görecek. Depo dosyaları için aşağıdaki 🐙 panelinden <b>⚡ Tüm depoyu ekle</b>'ye basın.</div>
+      <div class="stat" id="attachInfo" style="margin-top:8px"></div>
 
       <div class="row" style="margin-top:14px">
         <div>
@@ -127,7 +127,7 @@
         </div>
         <div>
           <label>Hakem</label>
-          <select id="judge"><option value="claude">1. Zeka (Claude)</option><option value="k2">2. Zeka</option></select>
+          <select id="judge"><option value="a">1. Zeka</option><option value="b">2. Zeka</option></select>
         </div>
       </div>
 
@@ -160,7 +160,7 @@
       <div class="stat" id="docStat">0 satır · 0 karakter</div>
 
       <div class="row" style="margin-top:12px">
-        <div><label>İşleyecek zeka</label><select id="docEngine"><option value="claude">1. Zeka (Claude)</option><option value="k2">2. Zeka</option></select></div>
+        <div><label>İşleyecek zeka</label><select id="docEngine"><option value="a">1. Zeka</option><option value="b">2. Zeka</option></select></div>
         <div><label>Parça boyutu (satır)</label><input type="number" id="docChunk" value="120" min="20" max="1000"></div>
         <div><label>Eşzamanlı istek</label><input type="number" id="docConc" value="3" min="1" max="8"></div>
       </div>
@@ -189,64 +189,40 @@
 
   <!-- ===================== AYARLAR ===================== -->
   <details class="card" id="settings">
-    <summary>⚙️ Ayarlar &amp; API Anahtarları</summary>
+    <summary>⚙️ Ayarlar &amp; API Anahtarı</summary>
 
-    <div class="row">
-      <div>
-        <label>1. Zeka — Claude API Anahtarı <span class="b1">(sk-ant-...)</span></label>
-        <input type="password" id="claudeKey" placeholder="sk-ant-api03-..." autocomplete="off">
-      </div>
-      <div>
-        <label>Claude Modeli</label>
-        <input list="clModels" id="claudeModel" value="claude-opus-5" autocomplete="off">
-        <datalist id="clModels">
-          <option value="claude-opus-5"><option value="claude-fable-5"><option value="claude-sonnet-5">
-          <option value="claude-opus-4-8"><option value="claude-haiku-4-5">
-        </datalist>
-      </div>
-      <div>
-        <label>Düşünme derinliği (effort)</label>
-        <select id="claudeEffort">
-          <option value="">(gönderme — varsayılan)</option>
-          <option value="low">low</option><option value="medium">medium</option>
-          <option value="high">high</option><option value="xhigh">xhigh</option>
-          <option value="max" selected>max (ultra)</option>
-        </select>
-        <div class="hint">Model desteklemiyorsa hata verir → "(gönderme)" seçin.</div>
-      </div>
-    </div>
+    <label>🔑 Kimi API Anahtarı — <b>tek anahtar, iki model için</b></label>
+    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
 
-    <hr style="border:none;border-top:1px solid var(--border);margin:18px 0 4px">
-
-    <label>2. Zeka — sağlayıcı (OpenAI uyumlu)</label>
+    <label style="margin-top:14px">Sağlayıcı ucu</label>
     <div class="presets" id="presets">
-      <button data-p="kimi">Kimi (Moonshot)</button>
-      <button data-p="kimicn">Kimi (Çin ucu)</button>
-      <button data-p="deepseek">DeepSeek</button>
-      <button data-p="openrouter">OpenRouter</button>
+      <button data-p="global">Moonshot (global)</button>
+      <button data-p="cn">Moonshot (Çin)</button>
       <button data-p="custom">Özel…</button>
     </div>
-    <div class="row" style="margin-top:8px">
+    <input class="mono" id="apiUrl" style="margin-top:8px" value="https://api.moonshot.ai/v1/chat/completions" autocomplete="off">
+
+    <div class="row" style="margin-top:14px">
       <div>
-        <label>API Anahtarı <span class="b2" id="k2KeyHint">(sk-...)</span></label>
-        <input type="password" id="k2Key" placeholder="sk-..." autocomplete="off">
+        <label>1. Zeka modeli <span class="b1">●</span></label>
+        <input list="modelList" id="modelA" value="kimi-k3" autocomplete="off">
       </div>
       <div>
-        <label>Model <button class="sm ghost" id="k2Fetch" style="float:right;margin-top:-4px">🔄 Modelleri getir</button></label>
-        <input list="k2Models" id="k2Model" value="kimi-k3" autocomplete="off">
-        <datalist id="k2Models"></datalist>
+        <label>2. Zeka modeli <span class="b2">●</span></label>
+        <input list="modelList" id="modelB" value="kimi-code" autocomplete="off">
       </div>
     </div>
-    <label>Uç nokta (endpoint)</label>
-    <input class="mono" id="k2Url" value="https://api.moonshot.ai/v1/chat/completions" autocomplete="off">
-    <div class="warnline">⚠️ Varsayılan <b>kimi-k3</b> (Kimi 3). Hesabınızdaki tam kimlik farklıysa <b>🔄 Modelleri getir</b>'e basın — sağlayıcıdan gerçek listeyi çeker, doğru olanı seçersiniz.</div>
-    <div class="ok" id="k2FetchOk"></div><div class="err" id="k2FetchErr"></div>
+    <datalist id="modelList">
+      <option value="kimi-k3"><option value="kimi-code"><option value="kimi-k3-thinking">
+      <option value="kimi-latest"><option value="kimi-k2-thinking">
+    </datalist>
+    <button class="sm ghost" id="fetchModels" style="margin-top:10px">🔄 Modelleri getir</button>
+    <div class="warnline">⚠️ "model not found" hatası alırsanız <b>🔄 Modelleri getir</b>'e basın — hesabınızdaki gerçek listeyi çeker, iki alana da o listeden seçersiniz.</div>
+    <div class="ok" id="fetchOk"></div><div class="err" id="fetchErr"></div>
 
-    <div class="checkline"><input type="checkbox" id="k2Vision"><label for="k2Vision">Görselleri 2. zekaya da gönder (modeli görsel destekliyorsa)</label></div>
-    <div class="checkline"><input type="checkbox" id="saveKeys" checked><label for="saveKeys">Anahtarları bu tarayıcıda hatırla (localStorage)</label></div>
-    <p class="hint">Anahtarlar yalnızca sizin tarayıcınızda saklanır, hiçbir sunucuya gönderilmez.
-      <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude anahtarı</a> ·
-      <a href="https://platform.moonshot.ai/console/api-keys" target="_blank" rel="noopener">Kimi anahtarı</a></p>
+    <div class="checkline"><input type="checkbox" id="saveKeys" checked><label for="saveKeys">Anahtarı bu tarayıcıda hatırla (localStorage)</label></div>
+    <p class="hint">Anahtar yalnızca sizin tarayıcınızda saklanır, hiçbir sunucuya gönderilmez.
+      <a href="https://platform.moonshot.ai/console/api-keys" target="_blank" rel="noopener">Kimi anahtarı al</a></p>
   </details>
 
   <!-- ===================== GITHUB ===================== -->
@@ -271,8 +247,8 @@
       <button class="sm" id="ghAll">⚡ Tüm depoyu ekle</button>
       <button class="sm ghost" id="ghRepos">Depoları listele</button>
       <button class="sm ghost" id="ghLoad">Dosyaları listele</button>
-      <button class="sm ghost" id="ghAdd">Seçilenleri ekle</button>
       <button class="sm ghost" id="ghNone">Seçimi temizle</button>
+      <button class="sm ghost" id="ghAdd">Seçilenleri ekle</button>
     </div>
     <div class="err" id="ghErr"></div>
     <div class="ok" id="ghOk"></div>
@@ -297,64 +273,31 @@
     a.href = u; a.download = fn; a.click(); setTimeout(() => URL.revokeObjectURL(u), 1000);
   }
 
-  // ===================== SAĞLAYICI ÖN AYARLARI =====================
-  const KIMI3 = ["kimi-k3", "kimi-k3-thinking", "kimi-k3-turbo-preview", "kimi-latest", "kimi-k2-thinking"];
+  // ===================== SAĞLAYICI =====================
   const PRESETS = {
-    kimi:       { label: "Kimi 3", url: "https://api.moonshot.ai/v1/chat/completions", model: "kimi-k3", models: KIMI3 },
-    kimicn:     { label: "Kimi 3", url: "https://api.moonshot.cn/v1/chat/completions", model: "kimi-k3", models: KIMI3 },
-    deepseek:   { label: "DeepSeek", url: "https://api.deepseek.com/chat/completions", model: "deepseek-chat",
-                  models: ["deepseek-chat", "deepseek-reasoner"] },
-    openrouter: { label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", model: "moonshotai/kimi-k3",
-                  models: ["moonshotai/kimi-k3", "moonshotai/kimi-k2", "deepseek/deepseek-chat"] },
-    custom:     { label: "2. Zeka", url: "", model: "", models: [] },
+    global: "https://api.moonshot.ai/v1/chat/completions",
+    cn:     "https://api.moonshot.cn/v1/chat/completions",
+    custom: "",
   };
-  let preset = "kimi";
-
-  function applyPreset(key, keepValues) {
-    preset = key;
-    const p = PRESETS[key];
-    document.querySelectorAll("#presets button").forEach(b => b.classList.toggle("active", b.dataset.p === key));
-    if (!keepValues) {
-      if (p.url) $("k2Url").value = p.url;
-      if (p.model) $("k2Model").value = p.model;
-    }
-    $("k2Models").innerHTML = p.models.map(m => '<option value="' + m + '">').join("");
-    updateNames();
+  let preset = "global";
+  function applyPreset(k, keep) {
+    preset = k;
+    document.querySelectorAll("#presets button").forEach(b => b.classList.toggle("active", b.dataset.p === k));
+    if (!keep && PRESETS[k]) $("apiUrl").value = PRESETS[k];
   }
   document.querySelectorAll("#presets button").forEach(b => b.onclick = () => { applyPreset(b.dataset.p); saveSettings(); });
 
-  // Görünen isimler
-  function name1() { const m = $("claudeModel").value.trim(); return m.includes("opus-5") ? "Claude Opus 5" : "Claude"; }
-  function name2() {
-    const m = $("k2Model").value.trim();
+  // Model adından okunabilir isim
+  function nameFor(m) {
+    m = (m || "").trim();
+    if (/code|coder/i.test(m)) return "Kimi Code";
     if (/k3|kimi-3/i.test(m)) return "Kimi 3";
+    if (/k2/i.test(m)) return "Kimi K2";
     if (/kimi|moonshot/i.test(m)) return "Kimi";
-    if (/deepseek/i.test(m)) return "DeepSeek";
-    if (/gemini/i.test(m)) return "Gemini";
-    return PRESETS[preset].label || "2. Zeka";
+    return m || "Model";
   }
-
-  // Sağlayıcıdan gerçek model listesini çek (OpenAI uyumlu GET /v1/models)
-  $("k2Fetch").onclick = async () => {
-    $("k2FetchErr").textContent = ""; $("k2FetchOk").textContent = "";
-    const key = $("k2Key").value.trim();
-    if (!key) { $("k2FetchErr").textContent = "Önce 2. zekanın API anahtarını girin."; return; }
-    const url = $("k2Url").value.trim().replace(/\/chat\/completions\/?$/, "/models");
-    $("k2Fetch").disabled = true;
-    try {
-      const res = await fetch(url, { headers: { "authorization": "Bearer " + key } });
-      const data = await res.json();
-      if (!res.ok) throw new Error((data.error && data.error.message) || res.status);
-      const ids = (data.data || []).map(m => m.id).filter(Boolean).sort();
-      if (!ids.length) throw new Error("liste boş döndü");
-      $("k2Models").innerHTML = ids.map(i => '<option value="' + i + '">').join("");
-      const k3 = ids.find(i => /k3|kimi-3/i.test(i));
-      if (k3) { $("k2Model").value = k3; updateNames(); }
-      $("k2FetchOk").textContent = "✓ " + ids.length + " model bulundu" + (k3 ? " — Kimi 3 seçildi: " + k3 : "") + ". Alana tıklayıp listeden seçebilirsiniz.";
-      saveSettings();
-    } catch (e) { $("k2FetchErr").textContent = "Model listesi alınamadı: " + e.message; }
-    $("k2Fetch").disabled = false;
-  };
+  function name1() { const a = nameFor($("modelA").value), b = nameFor($("modelB").value); return a === b ? a + " (A)" : a; }
+  function name2() { const a = nameFor($("modelA").value), b = nameFor($("modelB").value); return a === b ? b + " (B)" : b; }
   function updateNames() {
     $("hdr1").textContent = name1(); $("hdr2").textContent = name2();
     $("judge").options[0].text = "1. Zeka (" + name1() + ")";
@@ -363,32 +306,57 @@
     $("docEngine").options[1].text = "2. Zeka (" + name2() + ")";
   }
 
+  // Sağlayıcıdan gerçek model listesi
+  $("fetchModels").onclick = async () => {
+    $("fetchErr").textContent = ""; $("fetchOk").textContent = "";
+    const key = $("apiKey").value.trim();
+    if (!key) { $("fetchErr").textContent = "Önce API anahtarını girin."; return; }
+    const url = $("apiUrl").value.trim().replace(/\/chat\/completions\/?$/, "/models");
+    $("fetchModels").disabled = true;
+    try {
+      const res = await fetch(url, { headers: { "authorization": "Bearer " + key } });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data.error && data.error.message) || res.status);
+      const ids = (data.data || []).map(m => m.id).filter(Boolean).sort();
+      if (!ids.length) throw new Error("liste boş döndü");
+      $("modelList").innerHTML = ids.map(i => '<option value="' + i + '">').join("");
+      const k3 = ids.find(i => /k3|kimi-3/i.test(i));
+      const code = ids.find(i => /code|coder/i.test(i));
+      if (k3) $("modelA").value = k3;
+      if (code) $("modelB").value = code;
+      updateNames(); saveSettings();
+      $("fetchOk").textContent = "✓ " + ids.length + " model bulundu" +
+        (k3 ? " · 1. zeka: " + k3 : "") + (code ? " · 2. zeka: " + code : "") +
+        ". Alanlara dokunup listeden değiştirebilirsiniz.";
+    } catch (e) { $("fetchErr").textContent = "Model listesi alınamadı: " + e.message; }
+    $("fetchModels").disabled = false;
+  };
+
   // ===================== AYAR HAFIZASI =====================
-  const LS = "dualAiDebate.v4";
+  const LS = "kimiDebate.v1";
   function loadSettings() {
     let s = {};
     try { s = JSON.parse(localStorage.getItem(LS) || "{}"); } catch (e) {}
     const set = (id, v, chk) => { if (v !== undefined && $(id)) { chk ? $(id).checked = v : $(id).value = v; } };
-    applyPreset(s.preset || "kimi", true);
-    set("claudeKey", s.claudeKey); set("claudeModel", s.claudeModel); set("claudeEffort", s.claudeEffort);
-    set("k2Key", s.k2Key); set("k2Model", s.k2Model); set("k2Url", s.k2Url); set("k2Vision", s.k2Vision, true);
+    applyPreset(s.preset || "global", true);
+    set("apiKey", s.apiKey); set("apiUrl", s.apiUrl);
+    set("modelA", s.modelA); set("modelB", s.modelB);
     set("rounds", s.rounds); set("judge", s.judge);
     set("docEngine", s.docEngine); set("docChunk", s.docChunk); set("docConc", s.docConc);
     set("ghRepo", s.ghRepo); set("ghBranch", s.ghBranch); set("ghToken", s.ghToken);
-    if (!s.preset) applyPreset("kimi");
-    if (!s.claudeKey || !s.k2Key) $("settings").open = true;
+    if (!s.preset) applyPreset("global");
+    if (!s.apiKey) $("settings").open = true;
     updateNames();
   }
   function saveSettings() {
     const d = {
-      preset: preset,
-      claudeModel: $("claudeModel").value, claudeEffort: $("claudeEffort").value,
-      k2Model: $("k2Model").value, k2Url: $("k2Url").value, k2Vision: $("k2Vision").checked,
+      preset: preset, apiUrl: $("apiUrl").value,
+      modelA: $("modelA").value, modelB: $("modelB").value,
       rounds: $("rounds").value, judge: $("judge").value,
       docEngine: $("docEngine").value, docChunk: $("docChunk").value, docConc: $("docConc").value,
       ghRepo: $("ghRepo").value, ghBranch: $("ghBranch").value,
     };
-    if ($("saveKeys").checked) { d.claudeKey = $("claudeKey").value.trim(); d.k2Key = $("k2Key").value.trim(); d.ghToken = $("ghToken").value.trim(); }
+    if ($("saveKeys").checked) { d.apiKey = $("apiKey").value.trim(); d.ghToken = $("ghToken").value.trim(); }
     localStorage.setItem(LS, JSON.stringify(d));
   }
 
@@ -401,47 +369,34 @@
   $("tabDebate").onclick = () => switchTab("debate");
   $("tabDoc").onclick = () => switchTab("doc");
 
-  // ===================== API =====================
+  // ===================== API (tek anahtar, iki model) =====================
   let aborter = null;
+  const modelOf = (w) => (w === "b" ? $("modelB") : $("modelA")).value.trim();
+  const nameOf  = (w) => (w === "b" ? name2() : name1());
 
-  async function claudeRaw(system, messages, maxTokens) {
-    const body = { model: $("claudeModel").value.trim(), max_tokens: maxTokens, system, messages };
-    const eff = $("claudeEffort").value;
-    if (eff) body.output_config = { effort: eff };
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+  async function chatRaw(which, system, messages, maxTokens) {
+    const res = await fetch($("apiUrl").value.trim(), {
       method: "POST", signal: aborter.signal,
-      headers: { "content-type": "application/json", "x-api-key": $("claudeKey").value.trim(),
-                 "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-      body: JSON.stringify(body),
+      headers: { "content-type": "application/json", "authorization": "Bearer " + $("apiKey").value.trim() },
+      body: JSON.stringify({
+        model: modelOf(which), max_tokens: maxTokens,
+        messages: [{ role: "system", content: system }, ...messages],
+      }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(name1() + ": " + (data.error && data.error.message ? data.error.message : res.status));
-    const tb = (data.content || []).find(b => b.type === "text");
-    return { text: tb ? tb.text : "", stop: data.stop_reason };
-  }
-  async function k2Raw(system, messages, maxTokens) {
-    const res = await fetch($("k2Url").value.trim(), {
-      method: "POST", signal: aborter.signal,
-      headers: { "content-type": "application/json", "authorization": "Bearer " + $("k2Key").value.trim() },
-      body: JSON.stringify({ model: $("k2Model").value.trim(), max_tokens: maxTokens,
-                             messages: [{ role: "system", content: system }, ...messages] }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(name2() + ": " + (data.error && data.error.message ? data.error.message : res.status));
+    if (!res.ok) throw new Error(nameOf(which) + " (" + modelOf(which) + "): " + (data.error && data.error.message ? data.error.message : res.status));
     const c = data.choices && data.choices[0];
     return { text: c && c.message && c.message.content ? c.message.content : "", stop: c ? c.finish_reason : "stop" };
   }
 
   // Kesilmeye karşı otomatik "kaldığın yerden devam et"
-  async function generateFull(engine, system, userContent, maxTokens, maxCont) {
+  async function generateFull(which, system, userContent, maxTokens, maxCont) {
     maxTokens = maxTokens || 8000; maxCont = maxCont === undefined ? 12 : maxCont;
-    const raw = engine === "claude" ? claudeRaw : k2Raw;
     let messages = [{ role: "user", content: userContent }], full = "";
     for (let k = 0; k <= maxCont; k++) {
-      const r = await raw(system, messages, maxTokens);
+      const r = await chatRaw(which, system, messages, maxTokens);
       full += r.text;
-      const cut = engine === "claude" ? r.stop === "max_tokens" : r.stop === "length";
-      if (!cut || k === maxCont) break;
+      if (r.stop !== "length" || k === maxCont) break;
       messages = [
         { role: "user", content: userContent },
         { role: "assistant", content: full },
@@ -450,14 +405,12 @@
     }
     return full;
   }
-  const ask1 = (s, c) => generateFull("claude", s, c, 4000, 8).then(t => t.trim() || "(boş yanıt)");
-  const ask2 = (s, c) => generateFull("k2", s, c, 4000, 8).then(t => t.trim() || "(boş yanıt)");
+  const ask = (which, sys, content) => generateFull(which, sys, content, 4000, 8).then(t => t.trim() || "(boş yanıt)");
 
-  // ===================== EKLER (dosya/görsel/video/github) =====================
+  // ===================== EKLER =====================
   let attachments = [];
   const parseDataURL = (d) => ({ media_type: d.substring(5, d.indexOf(";")), data: d.substring(d.indexOf(",") + 1) });
   const readAsText = (f) => new Promise((r, j) => { const x = new FileReader(); x.onload = () => r(x.result); x.onerror = j; x.readAsText(f); });
-  const readAsDataURL = (f) => new Promise((r, j) => { const x = new FileReader(); x.onload = () => r(x.result); x.onerror = j; x.readAsDataURL(f); });
 
   async function imageToScaled(file, maxDim = 1400, q = 0.85) {
     const url = URL.createObjectURL(file);
@@ -490,14 +443,15 @@
   function renderAttachments() {
     const L = $("attachList"); L.innerHTML = "";
     attachments.forEach((a, i) => {
-      const c = document.createElement("div"); c.className = "chip" + (a.loading ? " loading" : "");
-      const ic = a.thumb ? '<img src="' + a.thumb + '">' : '<div class="ficon">' + ({ pdf: "📄", text: "📝", video: "🎬", image: "🖼️", repo: "🐙" }[a.kind] || "📎") + "</div>";
+      const c = document.createElement("div"); c.className = "chip" + (a.loading ? " loading" : "") + (a.unsupported ? " bad" : "");
+      const ic = a.thumb ? '<img src="' + a.thumb + '">' : '<div class="ficon">' + ({ pdf: "⚠️", text: "📝", video: "🎬", image: "🖼️", repo: "🐙" }[a.kind] || "📎") + "</div>";
       c.innerHTML = ic + '<span class="fname">' + esc(a.name) + (a.loading ? " …" : "") + "</span>";
       if (!a.loading) { const r = document.createElement("span"); r.className = "rm"; r.textContent = "✕"; r.onclick = () => { attachments.splice(i, 1); renderAttachments(); }; c.appendChild(r); }
       L.appendChild(c);
     });
     const inf = $("attachInfo"); if (!inf) return;
-    const iyi = attachments.filter(a => !a.error && !a.loading);
+    const iyi = attachments.filter(a => !a.error && !a.loading && !a.unsupported);
+    const pdfler = attachments.filter(a => a.unsupported).length;
     if (!iyi.length) {
       inf.innerHTML = "📎 Ekli içerik yok — modeller yalnızca sorunuzu görecek. Depo dosyaları için aşağıdaki 🐙 panelinden <b>⚡ Tüm depoyu ekle</b>'ye basın.";
       inf.style.color = "var(--warn)";
@@ -507,6 +461,7 @@
       inf.innerHTML = "✅ <b>" + iyi.length + "</b> içerik ekli" + (repo ? " (" + repo + " tanesi repodan)" : "") + (kb ? " · ~" + kb + " KB metin" : "") + " — iki model de bunları okuyacak.";
       inf.style.color = "var(--final)";
     }
+    if (pdfler) inf.innerHTML += '<br><span style="color:var(--warn)">⚠️ ' + pdfler + " PDF gönderilmeyecek — bu sağlayıcı PDF okumuyor. İçeriğini metin olarak yapıştırın.</span>";
   }
   async function handleFiles(list) {
     for (const f of list) {
@@ -514,7 +469,7 @@
       attachments.push(a); renderAttachments();
       try {
         if (f.type.startsWith("image/")) { a.kind = "image"; const d = await imageToScaled(f); a.blocks.push(parseDataURL(d)); a.thumb = d; }
-        else if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) { a.kind = "pdf"; const d = await readAsDataURL(f); a.blocks.push({ media_type: "application/pdf", data: parseDataURL(d).data }); }
+        else if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) { a.kind = "pdf"; a.unsupported = true; }
         else if (f.type.startsWith("video/")) { a.kind = "video"; const fs = await videoFrames(f, 3); fs.forEach(x => a.blocks.push(parseDataURL(x))); a.thumb = fs[0]; }
         else { a.kind = "text"; a.text = await readAsText(f); }
       } catch (e) { a.error = true; a.name = f.name + " (hata: " + e.message + ")"; }
@@ -528,7 +483,7 @@
   function parseRepo(v) {
     v = v.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\.git$/, "").replace(/\/$/, "");
     const p = v.split("/").filter(Boolean);
-    if (p.length < 2) throw new Error("Repo 'owner/repo' biçiminde olmalı.");
+    if (p.length < 2) throw new Error("Repo 'owner/repo' biçiminde olmalı (ör. eren603/Future-).");
     return { owner: p[0], name: p[1] };
   }
   async function ghApi(path, accept) {
@@ -544,21 +499,19 @@
     return res;
   }
   const TEXTY = /\.(txt|md|markdown|py|js|mjs|ts|tsx|jsx|json|ya?ml|toml|ini|cfg|conf|xml|html?|css|scss|csv|tsv|sql|sh|bash|zsh|rb|go|rs|java|kt|c|h|cpp|hpp|cs|php|swift|r|jl|lua|pl|env|gitignore|dockerfile|makefile|log|srt|vue|svelte)$/i;
-  function isTexty(p) { return TEXTY.test(p) || /(^|\/)(Dockerfile|Makefile|LICENSE|README)$/i.test(p); }
+  const isTexty = (p) => TEXTY.test(p) || /(^|\/)(Dockerfile|Makefile|LICENSE|README)$/i.test(p);
 
   async function ghLoadTree() {
     $("ghErr").textContent = ""; $("ghOk").textContent = "";
-    try {
-      const r = parseRepo($("ghRepo").value); ghRepoInfo = r;
-      let br = $("ghBranch").value.trim();
-      if (!br) { const info = await (await ghApi("/repos/" + r.owner + "/" + r.name)).json(); br = info.default_branch; $("ghBranch").value = br; }
-      const t = await (await ghApi("/repos/" + r.owner + "/" + r.name + "/git/trees/" + encodeURIComponent(br) + "?recursive=1")).json();
-      ghTree = (t.tree || []).filter(x => x.type === "blob" && isTexty(x.path)).sort((a, b) => a.path.localeCompare(b.path));
-      $("ghFilterWrap").classList.remove("hidden");
-      renderGhList();
-      $("ghOk").textContent = "✓ " + r.owner + "/" + r.name + "@" + br + " — " + ghTree.length + " metin dosyası bulundu.";
-      saveSettings();
-    } catch (e) { $("ghErr").textContent = e.message; }
+    const r = parseRepo($("ghRepo").value); ghRepoInfo = r;
+    let br = $("ghBranch").value.trim();
+    if (!br) { const info = await (await ghApi("/repos/" + r.owner + "/" + r.name)).json(); br = info.default_branch; $("ghBranch").value = br; }
+    const t = await (await ghApi("/repos/" + r.owner + "/" + r.name + "/git/trees/" + encodeURIComponent(br) + "?recursive=1")).json();
+    ghTree = (t.tree || []).filter(x => x.type === "blob" && isTexty(x.path)).sort((a, b) => a.path.localeCompare(b.path));
+    $("ghFilterWrap").classList.remove("hidden");
+    renderGhList();
+    $("ghOk").textContent = "✓ " + r.owner + "/" + r.name + "@" + br + " — " + ghTree.length + " metin dosyası bulundu.";
+    saveSettings();
   }
   function renderGhList() {
     const f = $("ghFilter").value.trim().toLowerCase();
@@ -566,7 +519,7 @@
     const L = $("ghList"); L.innerHTML = "";
     shown.slice(0, 500).forEach(x => {
       const row = document.createElement("div"); row.className = "ghrow";
-      const cb = document.createElement("input"); cb.type = "checkbox"; cb.dataset.path = x.path; cb.checked = !!x._sel;
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!x._sel;
       cb.onchange = () => { x._sel = cb.checked; updateGhStat(); };
       const p = document.createElement("span"); p.className = "p"; p.textContent = x.path;
       const s = document.createElement("span"); s.className = "sz"; s.textContent = x.size ? (x.size / 1024).toFixed(1) + " KB" : "";
@@ -585,23 +538,39 @@
     const res = await ghApi("/repos/" + r.owner + "/" + r.name + "/contents/" + path.split("/").map(encodeURIComponent).join("/") + "?ref=" + encodeURIComponent(br), "application/vnd.github.raw");
     return await res.text();
   }
-  async function ghAddSelected() {
-    $("ghErr").textContent = ""; $("ghOk").textContent = "";
-    const sel = ghTree.filter(x => x._sel);
-    if (!sel.length) { $("ghErr").textContent = "Önce dosya seçin."; return; }
-    $("ghAdd").disabled = true;
+  async function ekleDosyalar(liste) {
     let ok = 0;
-    for (const x of sel) {
+    for (const x of liste) {
       const a = { kind: "repo", name: x.path, loading: true, blocks: [], text: "", thumb: "" };
       attachments.push(a); renderAttachments();
       try { a.text = await ghFetchFile(x.path); ok++; }
       catch (e) { a.error = true; a.name = x.path + " (hata: " + e.message + ")"; }
       a.loading = false; renderAttachments();
     }
-    $("ghAdd").disabled = false;
-    $("ghOk").textContent = "✓ " + ok + " dosya eklendi — her iki zeka da okuyabilir.";
+    return ok;
   }
-  // Sadece kullanıcı adı verildiyse depoları listele ve seçtir
+
+  const MAX_FILE = 80000, MAX_TOTAL = 600000, MAX_COUNT = 60;
+  async function ghAddAll() {
+    $("ghErr").textContent = ""; $("ghOk").textContent = "";
+    $("ghAll").disabled = true; const eski = $("ghAll").textContent; $("ghAll").textContent = "⏳ Yükleniyor…";
+    try {
+      await ghLoadTree();
+      if (!ghTree.length) throw new Error("depoda metin dosyası bulunamadı");
+      const alinan = [], atlanan = []; let toplam = 0;
+      for (const x of ghTree) {
+        const sz = x.size || 0;
+        if (sz > MAX_FILE) { atlanan.push(x.path + " (çok büyük)"); continue; }
+        if (alinan.length >= MAX_COUNT || toplam + sz > MAX_TOTAL) { atlanan.push(x.path + " (sınır doldu)"); continue; }
+        alinan.push(x); toplam += sz;
+      }
+      const ok = await ekleDosyalar(alinan);
+      let msg = "✓ " + ok + " dosya eklendi (~" + Math.round(toplam / 1024) + " KB) — iki model de okuyacak.";
+      if (atlanan.length) msg += " " + atlanan.length + " dosya atlandı: " + atlanan.slice(0, 3).join(", ") + (atlanan.length > 3 ? " …" : "") + ". Gerekiyorsa 'Dosyaları listele' ile tek tek ekleyin.";
+      $("ghOk").textContent = msg;
+    } catch (e) { $("ghErr").textContent = e.message; }
+    $("ghAll").textContent = eski; $("ghAll").disabled = false;
+  }
   async function ghListRepos() {
     $("ghErr").textContent = ""; $("ghOk").textContent = "";
     const owner = $("ghRepo").value.trim().replace(/^https?:\/\/github\.com\//i, "").split("/")[0];
@@ -609,10 +578,9 @@
     $("ghRepos").disabled = true;
     try {
       const tok = $("ghToken").value.trim();
-      // Token varsa özel depolar da gelsin
       const path = tok ? "/user/repos?per_page=100&sort=updated" : "/users/" + encodeURIComponent(owner) + "/repos?per_page=100&sort=updated";
       let list = await (await ghApi(path)).json();
-      if (tok) list = list.filter(r => (r.owner && r.owner.login || "").toLowerCase() === owner.toLowerCase());
+      if (tok) list = list.filter(r => ((r.owner && r.owner.login) || "").toLowerCase() === owner.toLowerCase());
       if (!list.length) throw new Error("bu hesapta depo bulunamadı");
       $("ghFilterWrap").classList.remove("hidden");
       const L = $("ghList"); L.innerHTML = ""; ghTree = [];
@@ -621,7 +589,7 @@
         const p = document.createElement("span"); p.className = "p";
         p.textContent = r.full_name + (r.private ? "  🔒" : "");
         p.style.cursor = "pointer"; p.style.color = "var(--accent)";
-        p.onclick = () => { $("ghRepo").value = r.full_name; $("ghBranch").value = r.default_branch || ""; saveSettings(); ghLoadTree(); };
+        p.onclick = () => { $("ghRepo").value = r.full_name; $("ghBranch").value = r.default_branch || ""; saveSettings(); ghLoadTree().catch(e => $("ghErr").textContent = e.message); };
         row.appendChild(p); L.appendChild(row);
       });
       $("ghStat").textContent = list.length + " depo — açmak için birine dokunun";
@@ -629,42 +597,19 @@
     } catch (e) { $("ghErr").textContent = e.message; }
     $("ghRepos").disabled = false;
   }
-  // Tek dokunuş: depoyu aç, metin dosyalarını seç, hepsini soruya ekle
-  const MAX_FILE = 80000, MAX_TOTAL = 600000, MAX_COUNT = 60;
-  async function ghAddAll() {
-    $("ghErr").textContent = ""; $("ghOk").textContent = "";
-    $("ghAll").disabled = true;
-    const eskiOk = $("ghAll").textContent; $("ghAll").textContent = "⏳ Yükleniyor…";
-    try {
-      await ghLoadTree();
-      if (!ghTree.length) throw new Error("depoda metin dosyası bulunamadı");
-      const alinan = [], atlanan = [];
-      let toplam = 0;
-      for (const x of ghTree) {
-        const sz = x.size || 0;
-        if (sz > MAX_FILE) { atlanan.push(x.path + " (çok büyük)"); continue; }
-        if (alinan.length >= MAX_COUNT || toplam + sz > MAX_TOTAL) { atlanan.push(x.path + " (sınır doldu)"); continue; }
-        alinan.push(x); toplam += sz;
-      }
-      let ok = 0;
-      for (const x of alinan) {
-        const a = { kind: "repo", name: x.path, loading: true, blocks: [], text: "", thumb: "" };
-        attachments.push(a); renderAttachments();
-        try { a.text = await ghFetchFile(x.path); ok++; }
-        catch (e) { a.error = true; a.name = x.path + " (hata: " + e.message + ")"; }
-        a.loading = false; renderAttachments();
-      }
-      let msg = "✓ " + ok + " dosya eklendi (~" + Math.round(toplam / 1024) + " KB) — iki model de okuyacak.";
-      if (atlanan.length) msg += " " + atlanan.length + " dosya atlandı: " + atlanan.slice(0, 3).join(", ") + (atlanan.length > 3 ? " …" : "") + ". Bunlar gerekiyorsa 'Dosyaları listele' ile tek tek ekleyin.";
-      $("ghOk").textContent = msg;
-    } catch (e) { $("ghErr").textContent = e.message; }
-    $("ghAll").textContent = eskiOk; $("ghAll").disabled = false;
-  }
   $("ghAll").onclick = ghAddAll;
   $("ghRepos").onclick = ghListRepos;
-  $("ghLoad").onclick = ghLoadTree;
-  $("ghAdd").onclick = ghAddSelected;
+  $("ghLoad").onclick = () => ghLoadTree().catch(e => $("ghErr").textContent = e.message);
   $("ghNone").onclick = () => { ghTree.forEach(x => x._sel = false); renderGhList(); };
+  $("ghAdd").onclick = async () => {
+    $("ghErr").textContent = ""; $("ghOk").textContent = "";
+    const sel = ghTree.filter(x => x._sel);
+    if (!sel.length) { $("ghErr").textContent = "Önce dosya seçin."; return; }
+    $("ghAdd").disabled = true;
+    const ok = await ekleDosyalar(sel);
+    $("ghAdd").disabled = false;
+    $("ghOk").textContent = "✓ " + ok + " dosya eklendi — iki model de okuyabilir.";
+  };
   $("ghFilter").addEventListener("input", renderGhList);
   $("docFromGh").onclick = async () => {
     const sel = ghTree.filter(x => x._sel);
@@ -690,32 +635,19 @@
   }
   function roundLabel(t) { const d = document.createElement("div"); d.className = "msg round-label"; d.textContent = t; $("output").appendChild(d); }
 
-  function mediaBlocksForClaude() {
-    const out = [];
-    for (const a of attachments) { if (a.error) continue;
-      if (a.kind === "image" || a.kind === "video") a.blocks.forEach(b => out.push({ type: "image", source: { type: "base64", media_type: b.media_type, data: b.data } }));
-      else if (a.kind === "pdf") a.blocks.forEach(b => out.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: b.data } }));
-    }
-    return out;
-  }
   function inlineText() {
     let o = "";
-    for (const a of attachments) if (!a.error && (a.kind === "text" || a.kind === "repo") && a.text)
+    for (const a of attachments) if (!a.error && !a.unsupported && (a.kind === "text" || a.kind === "repo") && a.text)
       o += "\n\n--- " + (a.kind === "repo" ? "GitHub dosyası" : "Ekli dosya") + ": " + a.name + " ---\n" + a.text.slice(0, 60000);
     return o;
   }
-  function visualNote() {
-    const n = attachments.filter(a => !a.error && (a.kind === "image" || a.kind === "video" || a.kind === "pdf")).map(a => a.name);
-    return n.length ? "\n\n(Not: Kullanıcı şu görsel/belge dosyalarını ekledi: " + n.join(", ") + ". Bunları " + name1() + " görsel analiz ediyor; onun analizine göre yorum yap.)" : "";
-  }
-  function imagesForK2() {
+  function imageParts() {
     const arr = [];
     for (const a of attachments) if (!a.error && (a.kind === "image" || a.kind === "video"))
       a.blocks.forEach(b => arr.push({ type: "image_url", image_url: { url: "data:" + b.media_type + ";base64," + b.data } }));
     return arr;
   }
 
-  // Her soruda içeride uygulanan çalışma disiplini
   const WORKFLOW =
     "\n\nÇALIŞMA DİSİPLİNİ — her yanıtta bu adımları İÇERİDE uygula (çıktıda tek tek dökme):\n" +
     "1) HİPOTEZ: 2-3 olası cevap/açıklama üret, en güçlüsünde karar kıl.\n" +
@@ -728,8 +660,11 @@
     "Kod/repo dosyası verildiyse iddialarını DOSYADAKİ SATIRLARA dayandır; uydurma. " +
     "Emin olmadığın yeri açıkça belirt. Sonuçta NET, gerekçeli, kanıta dayalı bir cevap sun.";
 
-  const sys1 = () => "Sen " + name1() + "'sun, uzman bir analistsin. " + name2() + " adlı başka bir yapay zeka ile kullanıcının sorusu (ve varsa eklediği dosya/repo/görsel/video) üzerine yapıcı bir tartışma yürütüyorsun. Amacın en doğru ve faydalı cevaba ulaşmak. Ekli içerikleri dikkatle incele. Karşı tarafın görüşünü değerlendir; katıldığın yerleri kabul et, katılmadığın yerleri gerekçeyle belirt. Kısa, net ve Türkçe yaz. Doğrudan konuya gir." + WORKFLOW;
-  const sys2 = () => "Sen " + name2() + "'sin, uzman bir analistsin. " + name1() + " adlı başka bir yapay zeka ile kullanıcının sorusu üzerine yapıcı bir tartışma yürütüyorsun. Amacın en doğru ve faydalı cevaba ulaşmak. Karşı tarafın görüşünü değerlendir; katıldığın yerleri kabul et, katılmadığın yerleri gerekçeyle belirt. Kısa, net ve Türkçe yaz. Doğrudan konuya gir." + WORKFLOW;
+  const sysFor = (which) => "Sen " + nameOf(which) + "'sin, uzman bir analistsin. " + nameOf(which === "a" ? "b" : "a") +
+    " adlı başka bir yapay zeka ile kullanıcının sorusu (ve varsa eklediği dosya/repo/görsel/video) üzerine yapıcı bir " +
+    "tartışma yürütüyorsun. Amacın en doğru ve faydalı cevaba ulaşmak. Ekli içerikleri dikkatle incele. Karşı tarafın " +
+    "görüşünü değerlendir; katıldığın yerleri kabul et, katılmadığın yerleri gerekçeyle belirt. Kısa, net ve Türkçe yaz. " +
+    "Doğrudan konuya gir." + WORKFLOW;
 
   let lastFinal = "", lastQuestion = "";
 
@@ -737,7 +672,8 @@
     $("globalErr").textContent = "";
     const q = $("question").value.trim();
     if (!q && !attachments.length) { $("globalErr").textContent = "Lütfen bir soru yazın veya dosya ekleyin."; return; }
-    if (!$("claudeKey").value.trim() || !$("k2Key").value.trim()) { $("globalErr").textContent = "Lütfen her iki API anahtarını da girin (Ayarlar)."; $("settings").open = true; return; }
+    if (!$("apiKey").value.trim()) { $("globalErr").textContent = "Lütfen API anahtarını girin (Ayarlar)."; $("settings").open = true; return; }
+    if (!modelOf("a") || !modelOf("b")) { $("globalErr").textContent = "İki model alanı da dolu olmalı (Ayarlar)."; $("settings").open = true; return; }
     if (attachments.some(a => a.loading)) { $("globalErr").textContent = "Dosyalar hâlâ yükleniyor, bekleyin."; return; }
 
     saveSettings(); $("output").innerHTML = ""; $("toolbar").style.display = "none";
@@ -745,7 +681,7 @@
 
     const rounds = parseInt($("rounds").value, 10);
     let a1 = "", a2 = "";
-    const txt = inlineText(), media = mediaBlocksForClaude(), imgs2 = $("k2Vision").checked ? imagesForK2() : [];
+    const txt = inlineText(), imgs = imageParts();
 
     try {
       for (let r = 1; r <= rounds; r++) {
@@ -758,23 +694,24 @@
           "olduğunu kanıtla gerekçelendirip kapat; kanıt eşitse ikisini de kapsayan ortak formülü seç. " +
           "Çıktın şu iki başlıkla olsun:\n" +
           "**Uzlaşılan noktalar:** …\n**Ortak kararım:** <tek, net, uygulanabilir nihai cevap>";
-        let c1, c2;
+
+        let cA, cB;
         if (r === 1) {
           const bagimsiz = "\n\nBU 1. TURDUR — BAĞIMSIZ CEVAP TURU. Karşı tarafın cevabını GÖRMÜYORSUN ve o da " +
             "seninkini görmüyor. Kendi bağımsız sonucunu, hiç kimseye hizalanmadan üret. Ne düşündüğünü ve " +
             "hangi kanıta dayandığını net yaz — sonraki turda bunları karşılaştıracaksınız.";
-          const t1 = "Kullanıcının sorusu:\n\"" + (q || "(soru yok — ekli içerikleri analiz et)") + "\"" + txt + bagimsiz;
-          c1 = [{ type: "text", text: t1 }, ...media];
-          const t2 = "Kullanıcının sorusu:\n\"" + (q || "(soru yok — ekli içerikler analiz ediliyor)") + "\"" + txt + visualNote() + bagimsiz;
-          c2 = imgs2.length ? [{ type: "text", text: t2 }, ...imgs2] : t2;
+          const t = "Kullanıcının sorusu:\n\"" + (q || "(soru yok — ekli içerikleri analiz et)") + "\"" + txt + bagimsiz;
+          cA = imgs.length ? [{ type: "text", text: t }, ...imgs] : t;
+          cB = cA;
         } else {
           const kuyruk = son ? uzlas : "\n\nOnun noktalarını değerlendir ve cevabını gözden geçirilmiş haliyle tekrar sun.";
-          c1 = "Kullanıcının sorusu:\n\"" + q + "\"\n\nSenin önceki cevabın:\n" + a1 + "\n\n" + name2() + "'nin son cevabı:\n" + a2 + kuyruk;
-          c2 = "Kullanıcının sorusu:\n\"" + q + "\"\n\nSenin önceki cevabın:\n" + a2 + "\n\n" + name1() + "'un son cevabı:\n" + a1 + kuyruk;
+          cA = "Kullanıcının sorusu:\n\"" + q + "\"\n\nSenin önceki cevabın:\n" + a1 + "\n\n" + name2() + "'nin son cevabı:\n" + a2 + kuyruk;
+          cB = "Kullanıcının sorusu:\n\"" + q + "\"\n\nSenin önceki cevabın:\n" + a2 + "\n\n" + name1() + "'in son cevabı:\n" + a1 + kuyruk;
         }
+
         const B1 = addBlock("ai1", name1()), B2 = addBlock("ai2", name2());
         B1.setThinking("düşünüyor…"); B2.setThinking("düşünüyor…");
-        const [r1, r2] = await Promise.allSettled([ask1(sys1(), c1), ask2(sys2(), c2)]);
+        const [r1, r2] = await Promise.allSettled([ask("a", sysFor("a"), cA), ask("b", sysFor("b"), cB)]);
         if (r1.status === "fulfilled") { a1 = r1.value; B1.setText(a1); } else { B1.error(r1.reason.message); throw r1.reason; }
         if (r2.status === "fulfilled") { a2 = r2.value; B2.setText(a2); } else { B2.error(r2.reason.message); throw r2.reason; }
       }
@@ -790,10 +727,10 @@
         "### 🏆 Kazanan: <" + name1() + " | " + name2() + " | Sentez>\n" +
         "**Gerekçe:** kriterlere dayalı 2-4 kısa madde.\n\n" +
         "### Nihai Cevap\n<kazanan/uzlaşılan cevabı doğrudan, net ve uygulanabilir yaz — 'şu dedi' deme>";
-      const judgePrompt = "Kullanıcının sorusu:\n\"" + q + "\"\n\n" + name1() + "'un son cevabı:\n" + a1 +
+      const judgePrompt = "Kullanıcının sorusu:\n\"" + q + "\"\n\n" + name1() + "'in son cevabı:\n" + a1 +
         "\n\n" + name2() + "'nin son cevabı:\n" + a2 + "\n\nKazananı belirle ve nihai cevabı yaz.";
       try {
-        lastFinal = await ($("judge").value === "k2" ? ask2 : ask1)(judgeSys, judgePrompt);
+        lastFinal = await ask($("judge").value === "b" ? "b" : "a", judgeSys, judgePrompt);
         F.setText(lastFinal); $("toolbar").style.display = "flex";
       } catch (e) { F.error(e.message); }
 
@@ -845,10 +782,10 @@
     const ins = $("docInstruction").value.trim(), text = $("docText").value;
     if (!ins) { $("docErr").textContent = "Lütfen ne yapılacağını yazın (talimat)."; return; }
     if (!text.trim()) { $("docErr").textContent = "Lütfen bir belge seçin, GitHub'dan yükleyin veya yapıştırın."; return; }
-    const eng = $("docEngine").value;
-    if (!(eng === "claude" ? $("claudeKey").value.trim() : $("k2Key").value.trim())) { $("docErr").textContent = "Seçtiğiniz zekanın API anahtarını girin (Ayarlar)."; $("settings").open = true; return; }
+    if (!$("apiKey").value.trim()) { $("docErr").textContent = "API anahtarını girin (Ayarlar)."; $("settings").open = true; return; }
 
     saveSettings();
+    const which = $("docEngine").value === "b" ? "b" : "a";
     const chunks = chunkLines(text, Math.max(20, parseInt($("docChunk").value, 10) || 120));
     const conc = Math.min(8, Math.max(1, parseInt($("docConc").value, 10) || 3));
     setDocBusy(true); aborter = new AbortController();
@@ -856,7 +793,7 @@
     const prog = (d, t) => { const p = Math.round(d / t * 100); $("docBar").style.width = p + "%"; $("docProg").textContent = "Bölüm " + d + " / " + t + " tamamlandı (%" + p + ")"; };
     prog(0, chunks.length);
     try {
-      const parts = await pool(chunks, ch => generateFull(eng, DOC_SYS,
+      const parts = await pool(chunks, ch => generateFull(which, DOC_SYS,
         "Talimat: " + ins + "\n\nİşlenecek metin parçası:\n\"\"\"\n" + ch + "\n\"\"\"", 8000, 20), conc, prog);
       docOut = parts.join("\n"); $("docResult").value = docOut;
       $("docResultCard").classList.remove("hidden"); $("docToolbar").style.display = "flex";
@@ -872,11 +809,11 @@
   $("dlDoc").onclick = () => download("islenmis-belge.txt", docOut, "text/plain");
   $("copyDoc").onclick = () => { $("docResult").select(); document.execCommand("copy"); $("copyDoc").textContent = "✓ Kopyalandı"; setTimeout(() => $("copyDoc").textContent = "📋 Kopyala", 1500); };
 
-  ["claudeModel","claudeEffort","k2Model","k2Url","k2Vision","rounds","judge","docEngine","docChunk","docConc","ghRepo","ghBranch"]
+  ["apiUrl","modelA","modelB","rounds","judge","docEngine","docChunk","docConc","ghRepo","ghBranch"]
     .forEach(id => $(id).addEventListener("change", () => { updateNames(); saveSettings(); }));
-  ["claudeModel","k2Model"].forEach(id => $(id).addEventListener("input", updateNames));
+  ["modelA","modelB"].forEach(id => $(id).addEventListener("input", updateNames));
 
-  loadSettings(); updateDocStat();
+  loadSettings(); updateDocStat(); renderAttachments();
 })();
 </script>
 </body>
