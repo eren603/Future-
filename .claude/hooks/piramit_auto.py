@@ -492,77 +492,6 @@ def _turev_uret(onceki: dict, girdi: Path | None = None,
             "http_engelli": bool(job.get("_ag_hatalari"))}
 
 
-def _zirve_ozet(rapor_ad: str) -> dict:
-    """Son rapordan tek-karar bloğu için gereken alanları okur (uydurma yok)."""
-    try:
-        r = json.loads((SKILL / "state" / rapor_ad).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    z = r.get("ZIRVE") or {}
-    kor = {}
-    for k in r.get("katmanlar") or []:
-        if k.get("katman") == "K2-AI-AJAN":
-            kor = (k.get("motor_sonuclari") or {}).get("korelasyon") or {}
-    return {"EMIR": str(z.get("EMIR") or ""), "YON": str(z.get("YON_BIAS") or ""),
-            "skor": z.get("yon_skoru"), "kalite": str(z.get("ISLEM_KALITESI") or ""),
-            "kor": kor}
-
-
-def _tek_karar_bloku() -> str:
-    """NİHAİ TEK KARAR — ucu açık senaryo bırakmayan tek işlem hükmü.
-
-    Kural (mekanik, rapor değerlerinden):
-    - Korelasyon KOPYA/GÜÇLÜ BAĞLI + iki sembol AYNI yönde emirli ise yalnız
-      BİRİ işlemdir: önce "TEMİZ GİRİŞ VAR" olan, eşitlikte yüksek yön skoru.
-      Diğeri: İŞLEM YOK (tek bahis kuralı).
-    - Tek sembolde emir varsa o işlemdir; hiçbirinde yoksa İŞLEM YOK.
-    - Yönler farklı ya da bağ zayıfsa her sembolün kendi hükmü ayrı yazılır.
-    """
-    a, e = _zirve_ozet("son_rapor.json"), _zirve_ozet("son_rapor_eth.json")
-    if not a or not e:
-        return ""
-    cizgi = "=" * 68
-    L = [cizgi, "NİHAİ TEK KARAR (kanca; iki sembol birlikte — ucu açık senaryo YOK)",
-         "-" * 68]
-    a_var = a["EMIR"].startswith(("MARKET", "LIMIT"))
-    e_var = e["EMIR"].startswith(("MARKET", "LIMIT"))
-    hukum = str(a["kor"].get("HUKUM") or e["kor"].get("HUKUM") or "")
-    rho = a["kor"].get("korelasyon") or e["kor"].get("korelasyon")
-    bagli = hukum in ("KOPYA POZİSYON", "GÜÇLÜ BAĞLI")
-    if a_var and e_var and bagli and a["YON"] == e["YON"]:
-        a_temiz = a["kalite"].startswith("TEMİZ GİRİŞ VAR")
-        e_temiz = e["kalite"].startswith("TEMİZ GİRİŞ VAR")
-        if a_temiz != e_temiz:
-            kazanan, kaybeden, k_ad, y_ad = ((a, e, "BTCUSDT", "ETHUSDT")
-                                             if a_temiz else (e, a, "ETHUSDT", "BTCUSDT"))
-            gerekce = "temiz giriş yalnız onda"
-        else:
-            kazanan, kaybeden, k_ad, y_ad = ((a, e, "BTCUSDT", "ETHUSDT")
-                                             if (a["skor"] or 0) >= (e["skor"] or 0)
-                                             else (e, a, "ETHUSDT", "BTCUSDT"))
-            gerekce = f"yön skoru üstün ({kazanan['skor']} ≥ {kaybeden['skor']})"
-        L.append(f"İŞLEM: {k_ad} → {kazanan['EMIR']}")
-        L.append(f"{y_ad}: İŞLEM YOK — korelasyon {hukum}"
-                 + (f" (ρ={rho})" if rho is not None else "")
-                 + f", aynı yönde tek bahis; seçim: {gerekce}")
-    elif a_var != e_var:
-        k_ad, kazanan = ("BTCUSDT", a) if a_var else ("ETHUSDT", e)
-        y_ad, kaybeden = ("ETHUSDT", e) if a_var else ("BTCUSDT", a)
-        L.append(f"İŞLEM: {k_ad} → {kazanan['EMIR']}")
-        L.append(f"{y_ad}: İŞLEM YOK — {kaybeden['EMIR'] or 'emir kapılardan geçmedi'}")
-    elif not a_var and not e_var:
-        L.append("İŞLEM: YOK — iki sembolde de aday emir kapılardan geçmedi")
-    else:
-        L.append(f"İŞLEM 1: BTCUSDT → {a['EMIR']}")
-        L.append(f"İŞLEM 2: ETHUSDT → {e['EMIR']}")
-        L.append(f"   (yönler farklı ya da bağ zayıf — iki bağımsız karar; "
-                 f"korelasyon {hukum or 'VERİ YOK'})")
-    L.append("KURAL: LIMIT dolmazsa işlem YOK (kovalama yok); dolan işlemde "
-             "stop ve T1 sabittir — başka koşul YOK")
-    L.append(cizgi)
-    return "\n".join(L)
-
-
 def _durum_oku() -> dict:
     try:
         d = json.loads(DURUM.read_text(encoding="utf-8"))
@@ -824,12 +753,6 @@ def main() -> int:
                       f"{'BAĞLI' if ij.get('usd_profil') else 'YOK'}):")
                 print(ozet2)
                 ozet = f"{ozet}\n{ozet2}"
-                # NİHAİ TEK KARAR: iki sembol birlikte tek işlem hükmüne
-                # bağlanır (korelasyonlu çift pozisyon = tek bahis kuralı).
-                tek = _tek_karar_bloku()
-                if tek:
-                    print(tek)
-                    ozet = f"{ozet}\n{tek}"
         except (subprocess.TimeoutExpired, OSError) as e:
             print(f"[PİRAMİT] İkinci sembol koşulamadı ({type(e).__name__}: {e}) "
                   "— elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
