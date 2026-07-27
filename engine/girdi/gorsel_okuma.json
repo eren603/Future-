@@ -1,33 +1,34 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance BTCUSDT Perpetual (8 ekran görüntüsü + 25 sn ekran kaydı kareleri)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "CHoCH",
+  "yapi_olayi": "yükselen dipler — 64379.70 dibinden 65555.00 tepesine, tepe altı konsolidasyon",
   "seviyeler": {
     "direnc": [
-      64236.8,
-      64403,
-      64600,
-      65780
+      65500,
+      65555,
+      65600
     ],
     "destek": [
-      64005,
-      63760.5,
-      63666
+      65200,
+      65000,
+      64800,
+      64606.3
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa: fiyat 64200 > MA5 64129.19 > MA10 64082.39 > MA30 64005.04",
-    "63666 dibinden yükselen dipler; 64236.80 gün içi tepe",
-    "4S'te YAPI HÂLÂ AYI: fiyat 64205 < MA10 64458.62 < MA30 65329.20 (66924.10 tepesinden düşüş sürüyor)",
-    "Likidite haritası: 64000-64050 bandında yoğun küme (mıknatıs), 63760 altı boşluk",
-    "24S menzil 63666-64403, funding +0.0018% (hafif pozitif)"
+    "15M MA dizilimi boğa (video karesi): fiyat 65262.6 ~ MA5 65287.39 > MA10 65249.99 > MA30 65185.11; 24S menzil 64256.4-65555.0, +1.14%",
+    "Likidite haritası 15M: yoğun bantlar 65500-65555 (üst mıknatıs), 65300, 65200, 65000; yerel dip 64606.30",
+    "Likidite haritası 4S: 65200 bandında yatay likidite; 63666.00 dip, 66924.10 tepe (07/20)",
+    "4S mumları: fiyat 65231 > MA5 65053.90 > MA10 64730.89 ve MA30 64906.38 üstü — 3 güçlü yeşil 4S mumuyla toparlanma",
+    "Türev paneli 4S: funding +0.006%, Açık Faiz ~104.1K-104.2K (108.4K tepeden DÜŞÜŞTE), son 4S barında likidasyon Shorts 277.2K / Longs --",
+    "OI düşerken fiyat yükseliyor = rallinin bir kısmı short kapanışı (yeni long girişi sınırlı — temkin)"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK, gizlenmiyor",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-25 13:46",
-  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
+  "h4_trend": "bull",
+  "celiski_notu": "4S kısa vadede boğa (fiyat MA5/10/30 üstü) ama 66924.10 tepesinden inen BÜYÜK yapının hâlâ altında; 15M-4S kısa vade uyumlu, büyük resim henüz dönmedi",
+  "guven": 0.5,
+  "zaman_utc": "2026-07-27 04:33",
+  "zaman_yerel": "2026-07-27 07:32-07:33 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 07:32-07:33 (UTC+3) → UTC 04:32-04:33; paket çekimi 2026-07-27 04:34:47 UTC ile aynı dakikalar; video kaydı 07:33 (25.1 sn, 6 kare çıkarıldı)"
 }

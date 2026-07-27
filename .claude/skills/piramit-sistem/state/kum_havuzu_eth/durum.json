@@ -1,99 +1,143 @@
 {
-  "son_bar": 1784987100000,
-  "son_bar_utc": "2026-07-25 13:45",
+  "son_bar": 1785126600000,
+  "son_bar_utc": "2026-07-27 04:30",
   "karar": {
-    "karar": "BEKLE",
-    "yon": null,
-    "zincir": 1,
-    "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.83 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+    "karar": "LONG",
+    "yon": "LONG",
+    "zincir": 2,
+    "neden": "MARKET: son teyitli swing 1948.58 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.",
+    "giris_alt": 1951.34,
+    "giris_ust": 1951.34,
+    "giris": 1951.34,
+    "stop": 1945.46,
+    "iptal": 1948.58,
+    "t1": 1966.97,
+    "t2": 1966.0399999999995,
+    "iptal_kural": "15M gövde kapanışı kırılan 1948.58 seviyesinin gerisine dönerse sinyal geçersiz.",
+    "hedef_kaynak": "likidite",
+    "r": 2.66
   },
-  "takip": null,
+  "takip": {
+    "son_bar": 1785126600000,
+    "karar": {
+      "karar": "LONG",
+      "yon": "LONG",
+      "zincir": 2,
+      "neden": "MARKET: son teyitli swing 1948.58 gövdeyle kırıldı, sonraki bar C0 ekstremi ötesinde kapandı; 4H rejim (UP) karşı değil.",
+      "giris_alt": 1951.34,
+      "giris_ust": 1951.34,
+      "giris": 1951.34,
+      "stop": 1945.46,
+      "iptal": 1948.58,
+      "t1": 1966.97,
+      "t2": 1966.0399999999995,
+      "iptal_kural": "15M gövde kapanışı kırılan 1948.58 seviyesinin gerisine dönerse sinyal geçersiz.",
+      "hedef_kaynak": "likidite",
+      "r": 2.66
+    }
+  },
   "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-25 13:45).",
   "acik_bolgeler": [
     {
       "tip": "bull",
-      "ust": 1854.62,
-      "alt": 1854.09,
-      "ce": 1854.355,
-      "bar": 182,
-      "zaman": 1784970900000
+      "ust": 1891.25,
+      "alt": 1888.0,
+      "ce": 1889.625,
+      "bar": 142,
+      "zaman": 1785074400000
     },
     {
       "tip": "bull",
-      "ust": 1855.57,
-      "alt": 1855.0,
-      "ce": 1855.2849999999999,
-      "bar": 183,
-      "zaman": 1784971800000
+      "ust": 1895.23,
+      "alt": 1894.63,
+      "ce": 1894.93,
+      "bar": 144,
+      "zaman": 1785076200000
     },
     {
       "tip": "bull",
-      "ust": 1859.11,
-      "alt": 1857.69,
-      "ce": 1858.4,
-      "bar": 196,
-      "zaman": 1784983500000
+      "ust": 1905.89,
+      "alt": 1903.0,
+      "ce": 1904.4450000000002,
+      "bar": 147,
+      "zaman": 1785078900000
     },
     {
       "tip": "bull",
-      "ust": 1861.48,
-      "alt": 1859.78,
-      "ce": 1860.63,
+      "ust": 1914.0,
+      "alt": 1913.11,
+      "ce": 1913.5549999999998,
+      "bar": 170,
+      "zaman": 1785099600000
+    },
+    {
+      "tip": "bull",
+      "ust": 1919.39,
+      "alt": 1916.24,
+      "ce": 1917.815,
+      "bar": 171,
+      "zaman": 1785100500000
+    },
+    {
+      "tip": "bull",
+      "ust": 1925.24,
+      "alt": 1922.98,
+      "ce": 1924.1100000000001,
+      "bar": 173,
+      "zaman": 1785102300000
+    },
+    {
+      "tip": "bull",
+      "ust": 1934.18,
+      "alt": 1930.44,
+      "ce": 1932.31,
+      "bar": 174,
+      "zaman": 1785103200000
+    },
+    {
+      "tip": "bull",
+      "ust": 1947.66,
+      "alt": 1946.65,
+      "ce": 1947.1550000000002,
       "bar": 197,
-      "zaman": 1784984400000
-    },
-    {
-      "tip": "bull",
-      "ust": 1866.7,
-      "alt": 1864.8,
-      "ce": 1865.75,
-      "bar": 199,
-      "zaman": 1784986200000
+      "zaman": 1785123900000
     }
   ],
   "swing_15m_son": [
     [
-      1853.44,
+      1910.55,
       "L"
     ],
     [
-      1857.91,
+      1966.97,
       "H"
     ],
     [
-      1852.11,
+      1945.3,
       "L"
     ],
     [
-      1850.26,
+      1938.53,
       "L"
     ],
     [
-      1858.5,
+      1947.41,
       "H"
     ],
     [
-      1855.71,
+      1935.29,
       "L"
     ],
     [
-      1859.38,
+      1948.58,
       "H"
     ],
     [
-      1856.05,
+      1940.77,
       "L"
     ]
   ],
   "swing_4h_son": [
-    [
-      1943.98,
-      "H"
-    ],
-    [
-      1909.32,
-      "L"
-    ],
     [
       1958.75,
       "H"
@@ -109,16 +153,24 @@
     [
       1846.17,
       "L"
+    ],
+    [
+      1850.26,
+      "L"
+    ],
+    [
+      1966.97,
+      "H"
     ]
   ],
   "rejim_4h": {
-    "rejim": "DOWN",
-    "fark": -30.7829999999999,
-    "esik": 26.27229999999986
+    "rejim": "UP",
+    "fark": 48.42399999999998,
+    "esik": 27.657100000000263
   },
   "donus_dizisi": {
     "yon": "LONG",
-    "adim": 4,
-    "supurme_ucu": 1856.75
+    "adim": 2,
+    "supurme_ucu": 1942.95
   }
 }

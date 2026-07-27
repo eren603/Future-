@@ -1,33 +1,36 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual",
+  "kaynak": "elle-görsel (Claude okuması) — CoinGlass Binance ETHUSDT Perpetual (8 ekran görüntüsü + 25 sn ekran kaydı kareleri)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "trend": "bull",
-  "yapi_olayi": "CHoCH",
+  "yapi_olayi": "güçlü boğa bacağı — 1877.73 dibinden 1966.97 tepesine, tepe altı konsolidasyon",
   "seviyeler": {
     "direnc": [
-      1871.73,
-      1882,
-      1909.32,
-      1958.75
+      1958.75,
+      1966.97,
+      1970
     ],
     "destek": [
-      1857.6,
-      1850.26,
-      1846.17
+      1940,
+      1930,
+      1920,
+      1900,
+      1897.03
     ]
   },
   "gozlem": [
-    "15M MA dizilimi boğa: fiyat 1869.43 > MA5 1864.52 > MA10 1860.93 > MA30 1857.60",
-    "1846.17 dibinden dik toparlanma, son barda sert boğa mumu",
-    "4S'te fiyat 1869.84 > MA5 1860.06 ama MA30 1901.07 ALTINDA — orta vade hâlâ ayı",
-    "Likidite haritası: 1870 üstü ve 1880-1890 bandı yoğun, 1850/1846 altı bant",
-    "24S menzil 1846.17-1871.73, funding +0.0051%"
+    "15M MA dizilimi boğa: fiyat 1949.61 ~ MA5 1950.14 > MA10 1947.39 > MA30 1944.01; 24S menzil 1877.24-1966.97, +3.55%",
+    "4S mumları: fiyat 1949.60 > MA5 1935.99 > MA10 1907.49 > MA30 1896.19 — dizilim tam boğa; 1966.97 24S tepesi test edildi",
+    "Likidite haritası 4S: 1950 üstü yoğun bant + 1966.97 tepe; alt bantlar 1920 / 1900 / 1880; dip 1836.36",
+    "Likidite haritası 15M: 1940-1950 bandı yoğun; yerel dip 1897.03",
+    "Türev paneli 4S: funding +0.01%, Açık Faiz 2.4M (artış trendi, son barda tepeden hafif geri), son 4S barında likidasyon Longs 70.2K / Shorts 1.3M — SHORT SQUEEZE karakteri",
+    "Video karesi 15M: taker Long/Short oranı 0.6646 (satış ağır), CVD 26.9K (-177.5K'dan güçlü yükseliş) — ralliye rağmen agresif satış emiliyor",
+    "OI artarken fiyat yükseliyor = yeni pozisyon girişli sağlıklı bacak; ama squeeze-sonrası soğuma riski taker satış ağırlığında görünüyor"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "15M boğa / 4S ayı — zaman dilimi çatışması AÇIK",
-  "guven": 0.45,
-  "zaman_utc": "2026-07-25 13:46",
-  "zaman_yerel": "2026-07-25 16:45-16:46 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 16:45-16:46 (UTC+3) → UTC 13:45-13:46; paket çekimi 2026-07-25 13:47:23 UTC ile aynı dakikalar"
+  "h4_trend": "bull",
+  "celiski_notu": "15M ve 4S AYNI yönde (boğa) — önceki koşudaki zaman dilimi çatışması kapandı; tek temkin: taker L/S 0.6646 satış ağırlıklı",
+  "guven": 0.5,
+  "zaman_utc": "2026-07-27 04:33",
+  "zaman_yerel": "2026-07-27 07:33 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 07:32-07:33 (UTC+3) → UTC 04:32-04:33; paket çekimi 2026-07-27 04:34:47 UTC ile aynı dakikalar; video kaydı 07:33 (25.1 sn, 6 kare çıkarıldı)"
 }
