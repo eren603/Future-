@@ -125,6 +125,7 @@
     64894.3,
     64871.1
   ],
+  "basis_pct": -0.038601,
   "funding": 0.003657,
   "taker_lsr": 0.7595,
   "liq_long": 0.0229,
@@ -132,6 +133,7 @@
   "_kaynaklar": {
     "cvd": "hesaplandı (200 bar, kaynak: kullanıcının kendi kline'ı, taker alış hacmi alan 9)",
     "oi": "Binance vadeli openInterestHist (15m) — kline ile AYNI borsa [elle yapıştırıldı]",
+    "basis": "perp-endeks bazı, premiumIndex mark/index [bilgi — skorlanmaz]",
     "funding": "Binance vadeli genel uç [elle yapıştırıldı]",
     "taker_lsr": "Binance vadeli genel uç [elle yapıştırıldı]",
     "likidasyon": "elle verildi (--ek)"

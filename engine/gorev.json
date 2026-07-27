@@ -44,5 +44,8 @@
   },
   "korelasyon_kurali": "ETHUSDT DAİMA BTCUSDT korelasyonlu hesaplanır; |ρ| ≥ 0.85 → KOPYA POZİSYON, iki sembolde aynı yön = tek bahis, toplam risk ×2 → yalnız BİRİ seçilir",
   "celiski_kurali": "Çelişki çıkarsa piramit YENİDEN analiz eder: sentez ikinci kez yalnız doğrulanmış danışmanlarla koşulur (_celiski_turu). Yön değişirse karar NÖTR'e çekilir ve gerekçesi yazılır (fail-closed).",
-  "gecmis_kurali": "Önceki kararlar her koşuda SORGULANIR ve yeni kararın altyapısıdır: akıbet ölçümü (tetiklendi mi/stop mu/hedef mi), kıyas (yön devam/dönüş), sicilden Wilson ağırlık kalibrasyonu. Ölçülmemiş sonuç istatistiğe girmez."
+  "gecmis_kurali": "Önceki kararlar her koşuda SORGULANIR ve yeni kararın altyapısıdır: akıbet ölçümü (tetiklendi mi/stop mu/hedef mi), kıyas (yön devam/dönüş), sicilden Wilson ağırlık kalibrasyonu. Ölçülmemiş sonuç istatistiğe girmez.",
+  "akibet_sicil_kurali": "EMİR PLANININ bastığı MARKET/LIMIT emri de akıbet siciline yazılır (onceki_kosu.json islem_seviyeleri, kaynak=emir_plani): motor temiz-giriş vermese de basılan emrin hesabı bir SONRAKİ koşuda kiyas.py ile MEKANİK ölçülür — elle yorum yerine motor ölçümü. Gözlemci mührü düşerse emir-kaynaklı sicil kaydı temizlenir (mühürlü emir ölçülmez).",
+  "tuzak_kurali": "Her emir adayında STOP-AV denetimi (emir_plani.py, ölçülü tuzak merceği): stop, ölçülü likidite havuzunun ≤0.25×ATR15 yakınındaysa 'STOP-AV RİSKİ' bayrağı çıktıda basılır. Bayrak emri REDDETMEZ, süpürülme olasılığını görünür kılar; balina/manipülasyon ANLATISI yazılmaz — yalnız mesafe ölçümü.",
+  "kadans_kurali": "Veri kadansı hedefi: yeni paket ≤ 4 saatte bir (likidasyon/görsel tazelik toleransı 240 dk ile hizalı). Çıktıda K4/TUNEL uyarısı görülürse kanıt ailesi dardır → bir sonraki gönderimde CoinGlass panel görüntüleri (likidasyon + OI + funding + taker) MUTLAKA eklenir. premiumIndex'ten türetilen perp-endeks bazı (basis_pct) turev.json'a BİLGİ kanalı olarak yazılır (skorlanmaz)."
 }

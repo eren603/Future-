@@ -291,6 +291,19 @@ def plan(job: dict) -> dict:
             "gecersizlik": (f"{round(stop, nd)} ötesinde 15M gövde kapanışı → "
                             "kurulum iptal"),
         }
+        # STOP-AV RİSKİ (ölçülü tuzak merceği): stop, bariz likidite havuzunun
+        # ≤ 0.25×ATR15 dibinde/tepesindeyse süpürülme olasılığı yüksektir —
+        # emir REDDEDİLMEZ, bayrak görünür basılır (anlatı değil, mesafe ölçümü).
+        havuzlar = (yapi["destek15"] + yapi["destek4h"] if yon == "LONG"
+                    else yapi["direnc15"] + yapi["direnc4h"])
+        atr15 = yapi["atr15"] or 0
+        if havuzlar and atr15:
+            yakin = min(havuzlar, key=lambda s: abs(stop - s))
+            if abs(stop - yakin) <= 0.25 * atr15:
+                aday["tuzak_uyarisi"] = (
+                    f"STOP-AV RİSKİ: stop {round(stop, nd)}, likidite "
+                    f"{round(yakin, nd)} havuzunun ≤0.25×ATR15 yakınında — "
+                    "süpürülme (stop avı) olasılığı yüksek")
         # --- sabit-USDT profili varsa 5 kapı ---
         if profil:
             uj = {**profil, "yon": yon.lower(), "fiyat": fiyat,

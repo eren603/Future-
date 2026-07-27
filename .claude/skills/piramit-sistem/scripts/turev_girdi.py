@@ -230,6 +230,13 @@ def http_isle(h: dict) -> dict:
     fr = (v.get("funding") or {}).get("lastFundingRate")
     if _f(fr) is not None:
         out["funding"] = round(_f(fr) * 100.0, 6)      # oran → yüzde (motor % bekler)
+    # BAZ KANALI (bilgi — skorlanmaz): perp mark ile endeks farkı. Pozitif =
+    # perp primli (long iştahı), negatif = iskonto. premiumIndex pakette zaten
+    # geliyordu, kullanılmıyordu; kanal genişliği için görünür kılındı.
+    mp = _f((v.get("funding") or {}).get("markPrice"))
+    ip = _f((v.get("funding") or {}).get("indexPrice"))
+    if mp and ip:
+        out["basis_pct"] = round((mp - ip) / ip * 100.0, 6)
     lsr = v.get("taker_lsr")
     if isinstance(lsr, list) and lsr:
         r = _f(lsr[-1].get("buySellRatio"))
@@ -293,6 +300,12 @@ def uret(m15: Path | None, seri: Path | None, ek: dict, http: dict | None,
                                       "FARKLI olabilir — vekil gösterge, birebir değil")
         else:
             eksik.append(f"oi: en az 2 anlık görüntü gerekli (mevcut {len(snaps)}) → {YOK}")
+
+    # --- baz (bilgi kanalı — skorlanmaz, kaynak beyanlı) -------------------
+    if _f(hp.get("basis_pct")) is not None:
+        job["basis_pct"] = hp["basis_pct"]
+        kaynak["basis"] = ("perp-endeks bazı, premiumIndex mark/index "
+                           "[bilgi — skorlanmaz]")
 
     # --- funding / lsr (HTTP ya da elle) ---
     for alan, ad in (("funding", "funding"), ("taker_lsr", "taker LSR")):

@@ -1184,6 +1184,13 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
     ik = k5.get("islem_kalitesi") or {}
     aday = (ik.get("adaylar") or [{}])[0] if ik.get("adaylar") else {}
     kmk = m.get("karar-motoru") or {}      # bölge alanları motorun kararından
+    # EMİR PLANI SİCİLE YAZILIR: motor temiz-giriş seti vermese de basılan
+    # MARKET/LIMIT emri bir sonraki koşuda HESAP VERME ile ölçülmelidir.
+    # Yazılmayınca akıbet üst üste "VERİ YOK — işlem seviyesi verilmemişti"
+    # diyordu ve emirlerin hesabı ELLE yorumlanıyordu (2026-07-27, 3 koşu).
+    emir0 = ((zirve.get("emir_adaylari") or [{}])[0]
+             if str(zirve.get("EMIR", "")).startswith(("MARKET", "LIMIT"))
+             else {})
     return {
         "sembol": zirve.get("sembol"),
         "son_bar": (k1.get("olcumler") or {}).get("m15_son_bar"),
@@ -1202,7 +1209,14 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
             "giris_ust": aday.get("giris_ust", (kmk.get("karar") or {}).get("giris_ust")),
             "iptal": aday.get("iptal", (kmk.get("karar") or {}).get("iptal")),
             "giris_tipi": aday.get("giris_tipi", "limit"),
-        } if aday else {}),
+        } if aday else ({
+            # motor seti yoksa EMİR PLANININ birincil emri sicile girer;
+            # kaynak etiketi gözlemci/mühür temizliği için ayırt edicidir
+            "giris": emir0.get("giris"), "stop": emir0.get("stop"),
+            "hedef": emir0.get("hedef"),
+            "giris_tipi": str(emir0.get("emir_tipi", "limit")).lower(),
+            "kaynak": "emir_plani",
+        } if emir0 else {})),
         "danismanlar": {d["name"]: d["stance"] for d in (k3.get("danismanlar") or [])},
         "surucu": {
             "trend": smc.get("trend"), "adx": _num(rej.get("adx")),
@@ -1654,6 +1668,20 @@ def kos(job: dict, taban: Path) -> dict:
         rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
             "İŞLEM KALİTESİ: DENETİM İHLALİ — işlem yok. Gözlemci bulguları: "
             + " | ".join(denetim["kritik_ihlal"]))
+        # Sicil tutarlılığı: anlık görüntü mühürden ÖNCE yazıldı; emir-kaynaklı
+        # işlem seviyesi kaldıysa temizle — mühürlü emir bir sonraki koşuda
+        # "verilmiş işlem" gibi ÖLÇÜLMEMELİ (işlem yok hükmüyle çelişirdi).
+        try:
+            gp = Path(str(rapor["ZIRVE"].get("_anlik_goruntu", "")))
+            if gp.is_file():
+                g = json.loads(gp.read_text(encoding="utf-8"))
+                if (g.get("islem_seviyeleri") or {}).get("kaynak") == "emir_plani":
+                    g["islem_seviyeleri"] = {}
+                    g["islem_kalitesi"] = rapor["ZIRVE"]["ISLEM_KALITESI"]
+                    gp.write_text(json.dumps(g, ensure_ascii=False, indent=2),
+                                  encoding="utf-8")
+        except (OSError, json.JSONDecodeError):
+            pass
     rapor["durum"] = ("TAMAM — piramidin tepesine ulaşıldı"
                       + (" (DENETİM MÜHÜRÜ)" if denetim["muhurlendi"] else ""))
     _deftere_yaz(rapor)
@@ -1730,6 +1758,9 @@ def ozet_metin(rapor: dict) -> str:
         L.append(z["iki_satir"]["1_YON"])
         L.append(z["iki_satir"]["2_ISLEM_KALITESI"])
         L.append(f"EMİR: {z.get('EMIR', YOK)}")
+        _a0 = (z.get("emir_adaylari") or [{}])[0]
+        if _a0.get("tuzak_uyarisi"):
+            L.append(f"   ⚠ {_a0['tuzak_uyarisi']}")
         if str(z.get("EMIR", "")).startswith("LIMIT"):
             # İki hüküm karışmasın: İŞLEM KALİTESİ "şu anki fiyatta temiz giriş
             # var mı" der; LIMIT emri ise yapıdan ölçülmüş BEKLEYEN seviyedir.

@@ -25,12 +25,14 @@
     187473.229,
     183935.671
   ],
+  "basis_pct": -0.026905,
   "funding": 0.001078,
   "taker_lsr": 0.8958,
   "liq_long": 0.1869,
   "liq_short": 1.9,
   "_kaynaklar": {
     "cvd": "hesaplandı (200 bar, kaynak: kullanıcının kendi kline'ı, taker alış hacmi alan 9)",
+    "basis": "perp-endeks bazı, premiumIndex mark/index [bilgi — skorlanmaz]",
     "funding": "Binance vadeli genel uç [elle yapıştırıldı]",
     "taker_lsr": "Binance vadeli genel uç [elle yapıştırıldı]",
     "likidasyon": "elle verildi (--ek)"
