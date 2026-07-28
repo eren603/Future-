@@ -193,6 +193,15 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
                 continue
             ts = d[-1].get("timestamp")
         else:
+            # SÖZLÜK biçimli panelde de sembol denetlenir. Korkuluk yalnız
+            # LİSTE dalında vardı; tek nesne dönen uçlar (premiumIndex bir
+            # sembol için sözlük döner) hiç denetlenmeden karara giriyordu —
+            # "yanlış sembol karara giremez" kuralı bu dalda ÖLÜYDÜ.
+            sym = str((d or {}).get("symbol", sembol))
+            if sym != sembol:
+                hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
+                               "(yanlış sembol karara giremez)")
+                continue
             ts = (d or {}).get("time")
         veri[ad] = d
         if isinstance(ts, (int, float)):

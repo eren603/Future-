@@ -23,6 +23,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(os.environ.get("CLAUDE_PROJECT_DIR")
@@ -34,7 +35,20 @@ DURUM = SKILL / "state" / "otomatik.json"
 GOREV = REPO / "engine" / "gorev.json"          # duran görev (yeni pencere okur)
 PAKET_DEFTER = SKILL / "state" / "alinan_paketler.json"
 ZAMAN_ASIMI = 240          # saniye — boru hattı ölçülen koşuda ~1.6 s
+
+# KÜMÜLATİF BÜTÇE: settings.json kancaya 900 s veriyor, ama bir istemde art
+# arda koşabilen alt süreçlerin BEYAN EDİLEN toplamı 960 s idi (paket_ac 120 +
+# türev 60×2 + BTC 240 + ETH 240 + çizim 120×2). Hiçbir adım kalan süreyi
+# görmediği için son adımlar hiç koşamadan harness kancayı öldürebiliyordu.
+_SON_TARIH = time.monotonic() + 780       # 900'ün altında emniyet payı
+
+
 MAX_OZET = 4000            # enjekte edilen özet için üst sınır (bağlam korunur)
+
+
+def _kalan(varsayilan: int) -> int:
+    """Bu adıma verilebilecek süre: kendi tavanı ile kalan bütçenin küçüğü."""
+    return max(5, min(int(varsayilan), int(_SON_TARIH - time.monotonic())))
 
 # Kullanıcının GÖNDERDİĞİ paket depoya kendiliğinden girmeliydi; girmiyordu —
 # yüklenen dosyalar oturuma özel dizinde durur, kanca oraya BAKMIYORDU. Sonuç:
@@ -55,7 +69,7 @@ BEKLENEN_SEMBOL = {"BTCUSDT", "ETHUSDT"}
 
 # İKİNCİ SEMBOL: veri varsa kendiliğinden koşar (elle koşu artık gerekmiyor).
 IKINCI = {
-    "ad": "ETH", "girdi": GIRDI / "eth",
+    "ad": "ETH", "sembol": "ETHUSDT", "girdi": GIRDI / "eth",
     "state": REPO / "engine" / "state" / "eth",
     "profil": GIRDI / "eth_profil.json",
 }
@@ -154,7 +168,11 @@ def _paket_zamani(p: Path) -> tuple:
     """
     try:
         d = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    # Yakalama GENİŞ: json.loads biçimsiz girdide JSONDecodeError dışında da
+    # fırlatır (çok derin iç içe dizide RecursionError, dev sayıda MemoryError,
+    # bozuk baytta UnicodeDecodeError). Dar yakalama bu istemde kancayı
+    # tamamen öldürüyordu — kanca ölünce hiçbir korkuluk koşmaz.
+    except (OSError, ValueError, RecursionError, MemoryError):
         return {}, None
     if not isinstance(d, dict):
         return {}, None
@@ -296,7 +314,7 @@ def _paket_al() -> dict:
             argv += ["--sembol", tek]          # paket_ac içinde ikinci kilit
         try:
             pr = subprocess.run(argv, capture_output=True, text=True,
-                                timeout=120, cwd=str(REPO))
+                                timeout=_kalan(120), cwd=str(REPO))
         except (subprocess.TimeoutExpired, OSError) as e:
             return {"paket": p.name, "hata": f"{type(e).__name__}: {e}"}
         # ÇIKIŞ KODU DENETLENİR: paket_ac reddettiyse (exit≠0) bu "alındı"
@@ -475,7 +493,7 @@ def _ek_kanallar(job: dict) -> list:
 
 
 def _turev_uret(onceki: dict, girdi: Path | None = None,
-                seri: Path | None = None) -> dict:
+                seri: Path | None = None, sembol: str = "BTCUSDT") -> dict:
     """Türev girdisini KENDİLİĞİNDEN üret (kline körlüğü panzehiri).
 
     CVD kullanıcının kendi kline'ından çevrimdışı hesaplanır — panel
@@ -489,18 +507,29 @@ def _turev_uret(onceki: dict, girdi: Path | None = None,
     m15 = girdi / "m15.json"
     if not (uretec.exists() and m15.exists()):
         return {"durum": "üreteç ya da m15 yok — türev girdisi üretilmedi"}
+    # SEMBOL AÇIKÇA GEÇİLİR: turev_girdi.py'nin varsayılanı "BTCUSDT" idi ve
+    # burası --sembol'ü hiç vermiyordu → ETH koşusunda üreteç kendini BTC
+    # sanıyor, ETH panellerini "sembol uyuşmuyor" diye eliyor ve --http ile
+    # BTC'nin funding/LSR uçlarını çekip ETH'in turev.json'ına yazıyordu.
     argv = [sys.executable, str(uretec), "--m15", str(m15),
             "--seri", str(seri),
             "--ham", str(girdi / "turev_ham"),
+            "--sembol", str(sembol),
             "--out", str(girdi / "turev.json")]
     if not onceki.get("http_engelli"):
         argv.append("--http")
     try:
-        pr = subprocess.run(argv, capture_output=True, text=True, timeout=60,
+        pr = subprocess.run(argv, capture_output=True, text=True, timeout=_kalan(60),
                             cwd=str(REPO))
         job = json.loads(pr.stdout) if pr.stdout.strip().startswith("{") else {}
     except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError) as e:
         return {"durum": f"türev üreteci çalışmadı ({type(e).__name__})"}
+    # ÇIKIŞ KODU DENETLENİR: üreteç çökerse stdout boş kalır, job {} olur ve
+    # fonksiyon "kaynaklar: {}" ile BAŞARILI görünürdü → bayat turev.json
+    # tazelenmiş sanılıp karara giriyordu (sessiz yutma).
+    if pr.returncode != 0:
+        return {"durum": f"türev üreteci ÇÖKTÜ (kod {pr.returncode}): "
+                         f"{(pr.stderr or '').strip()[-200:]}"}
     return {"kaynaklar": job.get("_kaynaklar", {}), "eksikler": job.get("_eksikler", []),
             "http_engelli": bool(job.get("_ag_hatalari"))}
 
@@ -552,7 +581,7 @@ def _karar_grafigi() -> list:
             cikti.parent.mkdir(parents=True, exist_ok=True)
             jp.write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
             pr = subprocess.run([sys.executable, str(cizici), "--job", str(jp)],
-                                capture_output=True, text=True, timeout=120,
+                                capture_output=True, text=True, timeout=_kalan(120),
                                 cwd=str(REPO))
             if pr.returncode == 0 and cikti.exists():
                 uret.append(str(cikti.relative_to(REPO)))
@@ -645,7 +674,7 @@ def _job_kos(job: dict, job_ad: str, rapor_ad: str) -> tuple[str, int]:
     pr = subprocess.run(
         [sys.executable, str(PIRAMIT), "--job", str(jp),
          "--out", str(SKILL / "state" / rapor_ad), "--ozet"],
-        capture_output=True, text=True, timeout=ZAMAN_ASIMI, cwd=str(REPO))
+        capture_output=True, text=True, timeout=_kalan(ZAMAN_ASIMI), cwd=str(REPO))
     metin = (pr.stdout or "").strip() or (pr.stderr or "").strip()[-600:]
     return metin[:MAX_OZET], pr.returncode
 
@@ -766,8 +795,19 @@ def main() -> int:
               f"eksik: {len(turev.get('eksikler', []))} kanal (uydurulmadı)")
     # İkinci sembolün türevi de KENDİ kline'ından üretilir (CVD çevrimdışı).
     if (IKINCI["girdi"] / "m15.json").exists():
-        _turev_uret(onceki, IKINCI["girdi"],
-                    IKINCI["state"] / "turev_seri.jsonl")
+        t2 = _turev_uret(onceki, IKINCI["girdi"],
+                         IKINCI["state"] / "turev_seri.jsonl",
+                         sembol=IKINCI["sembol"])
+        # Dönüş artık KULLANILIYOR: eskiden atılıyordu, ikinci sembolün türev
+        # kanalı sessizce boş kalsa da hiçbir iz düşmüyordu.
+        if t2.get("kaynaklar") is not None:
+            print(f"[PİRAMİT] {IKINCI['ad']} türev kanalı → dolu: "
+                  f"{', '.join(t2['kaynaklar']) or 'yok'} | "
+                  f"eksik: {len(t2.get('eksikler', []))} kanal (uydurulmadı)")
+        else:
+            print(f"[PİRAMİT] {IKINCI['ad']} türev kanalı ÜRETİLEMEDİ: "
+                  f"{t2.get('durum')} — turev.json TAZELENMEDİ "
+                  "(bayat kanal karara girmemeli)")
     fp = _fp()
     if onceki.get("fp") == fp and onceki.get("ozet"):
         if bool(onceki.get("http_engelli")) != http_once:
