@@ -321,7 +321,12 @@ def k1_llm(job: dict, taban: Path) -> dict:
             return False, (f"{ad}: zaman damgası YOK (`bar_utc`/`zaman_utc`) → hangi "
                            "veriye ait olduğu kanıtlanamıyor, BAYAT sayıldı")
         if son_ms is None:
-            return True, f"{ad}: damga var, kline son barı ölçülemedi — kıyaslanmadı"
+            # FAIL-CLOSED: kapı tam da ölçüm yapılamadığı anda AÇILIYORDU.
+            # m15 son barı okunamazsa damga hangi veriye ait olduğunu
+            # KANITLAYAMAZ; yıllar öncesine ait bir panel okuması "taze"
+            # sayılıp güncel türev değerlerini eziyordu (sahte güncellik).
+            return False, (f"{ad}: kline son barı ölçülemedi → damga hangi veriye "
+                           "ait olduğunu KANITLAYAMIYOR, BAYAT sayıldı (fail-closed)")
         yas = (son_ms - ms) / 60000.0
         if yas > tol_dk:
             return False, (f"{ad}: BAYAT — okuma son bardan {yas:.0f} dk eski "
@@ -805,8 +810,15 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
         ok, ne = _bt_dogrular(bt)
         hedef = str(bt["dogrular"])
         if ok is not None:
-            verifier[hedef] = {"confirmed": bool(ok), "reason": ne}
-            gerekce[hedef] = ne
+            # EZME YOK: setup_dogrulama daha önce bu danışman için fail-closed
+            # False yazmış olabilir. Backtest'in onayı o çürütmeyi GEREKÇESİZ
+            # silemez — iki doğrulayıcı VE'lenir (bir çürütme yeter).
+            onceki = verifier.get(hedef)
+            onceki_ok = onceki.get("confirmed", True) if isinstance(onceki, dict) else True
+            onceki_ne = (onceki or {}).get("reason", "") if isinstance(onceki, dict) else ""
+            verifier[hedef] = {"confirmed": bool(ok) and bool(onceki_ok),
+                               "reason": " | ".join(x for x in (onceki_ne, ne) if x)}
+            gerekce[hedef] = " | ".join(x for x in (gerekce.get(hedef, ""), ne) if x)
 
     # --- şişirilmiş-R denetimi (CLAUDE.md: mekanik, tetikleyicisiz) ---------
     rr = {}
@@ -996,7 +1008,14 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     # ---------- (a) ÖNCE: güven-ağırlıklı en yüksek sentez ------------------
     sentez_job = {
         "question": job.get("soru") or job.get("sembol") or "nihai karar",
-        "advisors": [{k: v for k, v in d.items() if not k.startswith("_")}
+        # `_verifier_confirmed` KORUNUR: sentez.py:81 bunu doğrulama
+        # önceliğinde 2. sıra olarak okur (motorun kendi kapsam kapısı).
+        # Tüm `_` alanlarını silmek köprüyü koparıyordu → motor kendini
+        # doğrulasa bile sentez "doğrulama YOK" deyip çürütme cezası
+        # uyguluyordu; meşru karşıt danışman susturulup sahte yönlü güven
+        # üretiliyordu (ölçüldü: SHORT ↔ NÖTR-BEKLE farkı).
+        "advisors": [{k: v for k, v in d.items()
+                      if not k.startswith("_") or k == "_verifier_confirmed"}
                      for d in k3["danismanlar"]],
         "verifier": {k: v for k, v in k4["verifier"].items()},
         "invalidation": job.get("gecersizlik") or _gecersizlik(k2),
@@ -1114,16 +1133,26 @@ def _celiski_turu(sentez_job: dict, sentez: dict) -> dict:
     dogrulanan = [a for a in tumu
                   if (ver.get(str(a.get("name")), {}) or {}).get("confirmed") is True
                   or a.get("_verifier_confirmed") is True]
-    if not dogrulanan or len(dogrulanan) == len(tumu):
+    if not dogrulanan:
+        # AZAMİ ŞÜPHE: hiçbir danışman doğrulanmamış. Eskiden bu, "tüm
+        # danışmanlar doğrulanmış" haliyle aynı kefeye konup tur ATLANIYOR ve
+        # `yon_dayaniksiz: False` (= yön dayanıklı) dönüyordu — yani doğrulama
+        # hiç olmadığında karar DAYANIKLI sayılıyordu (fail-OPEN).
         return {"kostu": False,
-                "hukum": ("ÇELİŞKİ TURU: gerekmedi — "
-                          + ("doğrulanmış danışman yok" if not dogrulanan
-                             else "tüm danışmanlar doğrulanmış")),
+                "hukum": ("ÇELİŞKİ TURU: doğrulanmış danışman YOK → yön hiçbir "
+                          "doğrulanmış kanıta yaslanmıyor, fail-closed"),
+                "yon_dayaniksiz": True}
+    if len(dogrulanan) == len(tumu):
+        return {"kostu": False,
+                "hukum": "ÇELİŞKİ TURU: gerekmedi — tüm danışmanlar doğrulanmış",
                 "yon_dayaniksiz": False}
     r = _kos(MOTOR["sentez"], [], girdi_job={**sentez_job, "advisors": dogrulanan})
     if not (r["ok"] and isinstance(r["cikti"], dict)):
-        return {"kostu": False, "hukum": f"ÇELİŞKİ TURU koşamadı ({r['hata']})",
-                "yon_dayaniksiz": False}
+        # Adversarial tur koşamadıysa yön DOĞRULANMAMIŞTIR; "dayanıklı"
+        # sayılamaz (fail-closed).
+        return {"kostu": False, "hukum": f"ÇELİŞKİ TURU koşamadı ({r['hata']}) "
+                                         "→ yön doğrulanamadı, fail-closed",
+                "yon_dayaniksiz": True}
     ikinci = r["cikti"]
     ilk_yon, ik_yon = sentez.get("YON_BIAS"), ikinci.get("YON_BIAS")
     dayaniksiz = (ilk_yon in ("LONG", "SHORT") and ik_yon != ilk_yon)

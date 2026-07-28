@@ -299,10 +299,15 @@ def bootstrap_taban(rows: list, alpha: float, n_boot: int, seed: int) -> dict:
             "toplam_etkin_agirlik": round(toplam_w, 4),
             "score": round(z * se, 4),
             "min_agreement": 0.5,
-            "min_side_weight": round(0.5 * toplam_w, 4),
+            # Ölçek HAM güven toplamından gelir, ETKİN ağırlıktan değil.
+            # Eskiden 0.5×Σeff idi: çürütme cezası eff'i düşürünce hem
+            # side_weight hem eşik birlikte küçülüyor, ceza SADELEŞİYOR ve
+            # çürütülmüş kurul doğrulanmış kurulla AYNI kapıdan geçiyordu.
+            # Ham güvene bağlanınca eşik sabit kalır → çürütülen kurul düşer.
+            "min_side_weight": round(0.5 * sum(r["confidence"] for r in rows), 4),
             "yorum": ("score = z×SE_bootstrap (sinyal kendi gürültüsünü aşmalı); "
-                      "uzlaşı/yön ağırlığı = çoğunluk kuralı (yapısal, "
-                      "veriden türetilmedi — ölçek TOPLAM AĞIRLIKTAN gelir)")}
+                      "uzlaşı = çoğunluk kuralı (yapısal); yön ağırlığı eşiği "
+                      "HAM güven toplamından (çürütme penaltısı sadeleşmesin)")}
 
 
 def _quantile(xs: list, q: float) -> float:
