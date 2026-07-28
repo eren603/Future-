@@ -201,4 +201,30 @@ K4'te çelişki olur, çıktının en üstünde `⚠ ZORUNLU GİRDİ EKSİK` ile
 - 5 mercek **kanıta bağlanır**; bağlanamayan mercek `BAĞLANMADI` işaretlenir —
   anlatı için sayı uydurulmaz.
 
+## Çelişki turu (adversarial ikinci koşu, tetikleyicisiz)
+
+Sentez bittikten sonra `_celiski_turu` aynı kurulu YALNIZ doğrulanmış
+danışmanlarla yeniden sentezler. Yön değişiyorsa karar doğrulanmamış kanıta
+yaslanıyordur → **fail-closed NÖTR** (yön yine gösterilir, işleme çevrilmez).
+Değişmiyorsa "yön DAYANIKLI" diye raporlanır. Gözlemci, dayanıksız bulguya
+rağmen kararın yönlü kalmasını MEMNUN_ETME ihlali sayar.
+
+## Emir çıktısı (hikâye değil, emir; tetikleyicisiz)
+
+Her karar analizinin sonunda `emir_plani.py` koşar ve kararı UYGULANABİLİR emre
+çevirir: `<MARKET|LIMIT> <LONG|SHORT> @giriş | stop | T1 | R`.
+
+| Alan | Kaynak | Kural |
+|---|---|---|
+| **Seviyeler** | Ölçülen yapı: açık 15M FVG kenarları + teyitli swingler | Yuvarlak/uydurma seviye **yasak** |
+| **Stop** | Sabit-USDT profili varsa mesafe profilden (usdt/kontrat) | Yoksa girişin ötesindeki EN YAKIN teyitli swing |
+| **Hedef** | Profil varsa profilin kazanç bandı | Yoksa yön tarafındaki İLK teyitli likidite — yoksa aday **DÜŞER** ("R katı" uydurma hedef üretilmez) |
+| **Emir tipi** | `MARKET` yalnız fiyat giriş bölgesindeyse (`\|giriş−fiyat\| ≤ 0.1×ATR15`) | Aksi halde `LIMIT` |
+
+Her aday `rr_denetim` (ATR ölçeği) ve profil varsa `usd_hedef` 5 kapısından
+geçer; **ŞİŞİRİLMİŞ** ya da `R < 1.35` olan reddedilir. Hiçbir aday geçemezse
+**"EMİR YOK"** + düşen kapı yazılır — boş bırakılmaz. Gözlemci: emir seviyeleri
+denetimden geçmemişse UYDURMA, emir yönü kararla çelişiyorsa MEMNUN_ETME
+ihlali verir.
+
 ⚠️ Yalnız karar-destek. Canlı/otomatik emir (gerçek para) **DAHİL DEĞİL**.
