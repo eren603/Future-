@@ -85,7 +85,12 @@ def _sembol_dogrula(sembol) -> str:
     kullanılamaz. Yalnız [A-Z0-9]{2,20} kabul edilir; '../', mutlak yol,
     ayraç ve nokta REDDEDİLİR (fail-closed: şüpheli sembol depoya giremez).
     """
-    s = str(sembol).upper()
+    # `str(None)` → "NONE" idi: tip hatası KABUL EDİLEN sembole dönüşüyor,
+    # `semboller:[null]` engine/girdi/none dizini açıyordu. Tip önce denetlenir.
+    if not isinstance(sembol, str):
+        raise SystemExit(f"HATA: sembol adı metin değil ({type(sembol).__name__}: "
+                         f"{sembol!r}) — reddedildi (fail-closed).")
+    s = sembol.upper()
     if not SEMBOL_BICIMI.match(s):
         raise SystemExit(f"HATA: geçersiz sembol adı {sembol!r} — yalnız "
                          "A-Z0-9 (2-20 karakter) kabul edilir; yol bileşeni "
@@ -125,11 +130,19 @@ def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
                              "ana slot sahibi belirsiz (fail-closed).")
     elif ANA_VARSAYILAN in semboller:
         # Beyan yoksa ana slot paketteki SIRAYA bırakılmaz: depo sabiti kazanır.
-        # Önceden `semboller[0]` idi; ETH'i başa alan bir paket BTC'nin
-        # engine/girdi slotunu eziyordu (ayrışmış sahte kıyas).
         ana = ANA_VARSAYILAN
+    elif semboller:
+        # FAIL-CLOSED: ne `ana_sembol` beyanı var ne de BTCUSDT listede.
+        # Eskiden burada `semboller[0]` seçiliyordu — yani yalnız ETHUSDT
+        # içeren bir v2 paketi ANA slotu (engine/girdi = BTC yuvası) ele
+        # geçirip BTC girdisini eziyordu. Ana slot sahibi belirsizse
+        # yazmıyoruz; paket `ana_sembol` beyan etmelidir.
+        raise SystemExit(
+            f"HATA: ana slot sahibi belirsiz — pakette {ANA_VARSAYILAN} yok "
+            f"{semboller} ve `ana_sembol` beyanı da yok. Paketteki SIRA ana "
+            "slotu belirleyemez (fail-closed).")
     else:
-        ana = semboller[0] if semboller else None
+        ana = None
     veri = paket.get("veri") or {}
     sonuc = {}
     for sem in semboller:

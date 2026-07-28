@@ -20,7 +20,10 @@ yani tek bir sabit eşiğin "doğru" olduğu bir dünya yok.
         Aynı yöne bakan kurul → küçük SE → düşük eşik; bölünmüş kurul →
         büyük SE → yüksek eşik. Koşudan koşuya değişir.
       · uzlaşı ve yön-ağırlığı tabanı YAPISALDIR: çoğunluk kuralı (0.5 pay,
-        mutlak ölçekte 0.5 × toplam etkin ağırlık). Bu veriden türetilmez ve
+        mutlak ölçekte 0.5 × toplam HAM GÜVEN). Ölçek ETKİN ağırlıktan
+        alınmaz: çürütme penaltısı hem side_weight'i hem eşiği birlikte
+        küçültüp SADELEŞİYOR, çürütülmüş kurul doğrulanmışla aynı kapıdan
+        geçiyordu (2026-07 denetimi). Bu veriden türetilmez ve
         çıktıda öyle etiketlenir. Yan fayda: sabit 0.60 bir ÖLÇEK HATASIYDI —
         yön ağırlığı mutlak toplamdır, danışman sayısı arttıkça kapı kendiliğinden
         gevşiyordu (4 danışmanda toplam ≈ 2.2 iken eşik 0.60).
@@ -271,7 +274,7 @@ def bootstrap_taban(rows: list, alpha: float, n_boot: int, seed: int) -> dict:
                    büyük SE → yüksek eşik. Küçük kurulda da dejenere olmaz.
     uzlaşı eşiği : 0.5 — YAPISAL çoğunluk kuralı (ağırlığın yarısından fazlası
                    tek tarafta). Veriden türetilmez, açıkça etiketlenir.
-    yön ağırlığı : 0.5 × toplam etkin ağırlık — aynı çoğunluk kuralının MUTLAK
+    yön ağırlığı : 0.5 × toplam HAM güven (çürütme penaltısı sadeleşmesin) — aynı çoğunluk kuralının MUTLAK
                    ölçekteki karşılığı. Sabit 0.60 ölçek hatasıydı: danışman
                    sayısı arttıkça mutlak toplam büyüdüğü için kapı kendiliğinden
                    gevşiyordu (4 danışmanda toplam ~2.2 iken eşik 0.60).

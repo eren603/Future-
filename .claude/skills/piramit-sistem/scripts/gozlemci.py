@@ -437,10 +437,15 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
     # 0d) ÇELİŞKİ TURU: koştu mu, sonucu karara yansıdı mı?
     ct = k5.get("celiski_turu")
     if isinstance(ct, dict):
-        if ct.get("yon_dayaniksiz") and str(sentez.get("YON_BIAS")) != "NÖTR":
+        # KARAR'a bakılır, YON_BIAS'a DEĞİL. Sözleşme gereği yön asla
+        # saklanmaz: fail-closed uygulandığında bile YON_BIAS yönlü KALIR
+        # (piramit.py:1056) ve kapanan şey KARAR'dır. Koşul YON_BIAS'a
+        # baktığı için fail-closed her DOĞRU çalıştığında sistem kendine
+        # sahte MEMNUN_ETME ihlali (ve kritik mühür) yazıyordu.
+        if ct.get("yon_dayaniksiz") and str(sentez.get("KARAR")) != "NÖTR-BEKLE":
             b.append(_bulgu("MEMNUN_ETME", "İHLAL",
-                            "çelişki turu yönü DAYANIKSIZ buldu ama karar hâlâ "
-                            f"{sentez.get('YON_BIAS')} — fail-closed uygulanmamış"))
+                            "çelişki turu yönü DAYANIKSIZ buldu ama KARAR hâlâ "
+                            f"{sentez.get('KARAR')} — fail-closed uygulanmamış"))
         else:
             b.append(_bulgu("MEMNUN_ETME", "TEMİZ", str(ct.get("hukum", YOK))[:110]))
 

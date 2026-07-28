@@ -186,6 +186,10 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
                 hatalar.append(f"{dosya}: {sembol} bulunamadı → atlandı")
                 continue
         if isinstance(d, list) and d:
+            if d[0].get("symbol") is None:
+                hatalar.append(f"{dosya}: `symbol` alanı yok → kaynak sembolü "
+                               f"KANITLANMADI, yalnız dosya yoluna güvenildi "
+                               f"({sembol} varsayıldı)")
             sym = str(d[0].get("symbol", sembol))
             if sym != sembol:
                 hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
@@ -197,7 +201,17 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
             # LİSTE dalında vardı; tek nesne dönen uçlar (premiumIndex bir
             # sembol için sözlük döner) hiç denetlenmeden karara giriyordu —
             # "yanlış sembol karara giremez" kuralı bu dalda ÖLÜYDÜ.
-            sym = str((d or {}).get("symbol", sembol))
+            # `symbol` alanı OLMAYAN panel reddedilmez — bazı kanallar bu alanı
+            # hiç taşımaz (ölçüldü: takerlongshortRatio ve likidasyon, her iki
+            # sembolde de symbol'süz). Zorunlu kılmak zorunlu girdi #2'yi
+            # kırardı. Ama sessizce GÜVENİLMEZ de: sembolün kanıtlanmadığı
+            # `hatalar`a yazılır, kaynak yalnız DOSYA YOLUNA dayanır.
+            ham_sym = (d or {}).get("symbol")
+            if ham_sym is None:
+                hatalar.append(f"{dosya}: `symbol` alanı yok → kaynak sembolü "
+                               f"KANITLANMADI, yalnız dosya yoluna güvenildi "
+                               f"({sembol} varsayıldı)")
+            sym = str(ham_sym) if ham_sym is not None else sembol
             if sym != sembol:
                 hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
                                "(yanlış sembol karara giremez)")
@@ -210,6 +224,20 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
     if p.exists():
         try:
             veri["likidasyon"] = json.loads(p.read_text(encoding="utf-8"))
+            # Zorunlu girdi #2 hiçbir sembol denetiminden geçmiyor: elle
+            # girildiği için `symbol` alanı yok. Reddedilmez (kanal ölür), ama
+            # kanıtlanmamış olduğu GİZLENMEZ. Tazelik ayrıca piramit.py
+            # `_taze()` içinde `zaman_utc` damgasıyla denetlenir.
+            lk = veri["likidasyon"]
+            lk_sym = lk.get("sembol") or lk.get("symbol") if isinstance(lk, dict) else None
+            if lk_sym is None:
+                hatalar.append(f"{HAM_LIKIDASYON}: sembol alanı yok → bu okumanın "
+                               f"{sembol} verisi olduğu KANITLANMADI (elle girdi, "
+                               "yalnız dosya yoluna güvenildi)")
+            elif str(lk_sym).upper() != sembol:
+                hatalar.append(f"{HAM_LIKIDASYON}: sembol {lk_sym} ≠ {sembol} → "
+                               "atlandı (yanlış sembol karara giremez)")
+                veri.pop("likidasyon", None)
         except (OSError, json.JSONDecodeError) as e:
             hatalar.append(f"{HAM_LIKIDASYON}: okunamadı ({type(e).__name__})")
     return {"veri": veri, "hatalar": hatalar, "yas": yas}
