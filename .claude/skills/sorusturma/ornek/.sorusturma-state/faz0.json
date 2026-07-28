@@ -1,0 +1,15 @@
+{
+ "faz": 0,
+ "baglam": {
+  "mod": "auto",
+  "kapsam": "Bilinmiyor. Boru hattının TAMAMI kapsam sayılır; hangi katman/motorun etkilendiği varsayımı gerekçede AÇIKÇA işaretlenir.",
+  "etki_modeli": [],
+  "siddet_standardi": "türetilmiş YÜKSEK/ORTA/DÜŞÜK (ön koşul + tekrar koşulu)",
+  "gurultu_toleransi": "kesinlik",
+  "oy_sayisi": 3,
+  "depo": "/home/user/Future-/.claude/skills/sorusturma",
+  "ariza_yolu": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+  "yp_kurallari": null,
+  "_baglam_kaynagi": "auto varsayılanları"
+ }
+}

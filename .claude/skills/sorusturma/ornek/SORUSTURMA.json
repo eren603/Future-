@@ -1,0 +1,275 @@
+{
+  "sorusturma_tamam": true,
+  "sorusturma_baglami": {
+    "mod": "auto",
+    "kapsam": "Bilinmiyor. Boru hattının TAMAMI kapsam sayılır; hangi katman/motorun etkilendiği varsayımı gerekçede AÇIKÇA işaretlenir.",
+    "etki_modeli": [],
+    "siddet_standardi": "türetilmiş YÜKSEK/ORTA/DÜŞÜK (ön koşul + tekrar koşulu)",
+    "gurultu_toleransi": "kesinlik",
+    "oy_sayisi": 3,
+    "depo": "/home/user/Future-/.claude/skills/sorusturma",
+    "ariza_yolu": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+    "yp_kaynaklari": null,
+    "yp_kural_sayisi": null,
+    "baglam_kaynagi": "auto varsayılanları"
+  },
+  "ozet": {
+    "girdi_sayisi": 6,
+    "kopyalar": 1,
+    "yanlis_pozitifler": 3,
+    "gercek_arizalar": 2,
+    "elle_inceleme_gerek": 1,
+    "siddete_gore": {
+      "YÜKSEK": 1,
+      "ORTA": 1,
+      "DÜŞÜK": 0
+    },
+    "bolunmus_oylar": []
+  },
+  "bulgular": [
+    {
+      "dosya": "ornek/ornek_rapor.json",
+      "konum": "K5-SI",
+      "kategori": "EKSIK_AKTARIM",
+      "siddet": "YÜKSEK",
+      "baslik": "Kıyas motoru koşmadı: hesap verme başlığı boş kaldı",
+      "belirti": "K5-SI/EKSIK_AKTARIM: önceki kayıt VAR ama kıyas koşmadı — kıyas motoru sessizce atlandı, hesap verme başlığı boş kaldı",
+      "tekrar_senaryosu": "önceki_kosu.json mevcutken boru hattını koştur; KIYAS bloğu 'KIYASLANDI' yerine boş döner",
+      "oneri": "piramit.py içinde kiyas.kiyasla çağrısı istisna yutuyor olabilir; try bloğunun gerekçesi rapora taşınmalı",
+      "tarayici_guveni": 0.9,
+      "id": "a001",
+      "kaynak": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+      "iddia_edilen_siddet": "İHLAL",
+      "eksik_alanlar": [
+        "on_kosullar"
+      ],
+      "yuttuklari": [
+        "a002"
+      ],
+      "oy_dagilimi": {
+        "gercek_ariza": 3,
+        "yanlis_pozitif": 0,
+        "dogrulanamadi": 0
+      },
+      "curutme_nedenleri": [],
+      "yp_kurali": null,
+      "ilk_kanitlar": [
+        "13 YP kuralı",
+        "ornek_rapor.json:10"
+      ],
+      "hukum": "gercek_ariza",
+      "bolunmus_oy": false,
+      "guven": 7.0,
+      "gerekce": "EKSIK_AKTARIM deponun KENDİ sözleşmesinde KRİTİK ihlaldir (gozlemci.py KRITIK kümesi, VERİ YOK) — kritik ihlalde işlem kalitesi mühürlenir\n\nETKİ: 0 ön koşul, tekrar koşulu her_kosuda → YÜKSEK; hafifletici kontrol devrede → gözlemci mührü: kritik ihlalde EMİR kapatılır ve işlem kalitesi MÜHÜRLENİR (piramit.py fail-closed korkuluğu)",
+      "on_kosullar": [],
+      "tekrar_kosulu": "her_kosuda",
+      "siddet_hizasi": 2,
+      "etki_eslesmesi": null,
+      "dogrulama_hukmu": "hafifletilmis",
+      "hafifletici": "gözlemci mührü: kritik ihlalde EMİR kapatılır ve işlem kalitesi MÜHÜRLENİR (piramit.py fail-closed korkuluğu)",
+      "siddet_etiketi": "YÜKSEK",
+      "sahip_ipucu": "en çok katkı veren: Claude (1/1 son commit); CODEOWNERS kaydı yok"
+    },
+    {
+      "dosya": "ornek/ornek_defter.jsonl",
+      "konum": "duzeltme_notu",
+      "kategori": "SICIL_EZILME",
+      "siddet": "ORTA",
+      "baslik": "Kapanan karar defterde yeniden yazıldı, gerçekleşen R iptal edildi",
+      "belirti": "defter satırında duzeltme_notu ile eski sonuç ezildi ve r_iptal_nedeni yazıldı; kalibrasyon o satırı artık göremiyor",
+      "tekrar_senaryosu": "ikinci sembol (ETH) koşusunda aynı bar için iki kez karar yazılınca defter satırı üzerine yazılıyor",
+      "on_kosullar": [
+        "ikinci sembol koşusu açık olmalı",
+        "ikinci sembol koşusu gerekir"
+      ],
+      "tarayici_guveni": 0.85,
+      "id": "a003",
+      "kaynak": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+      "iddia_edilen_siddet": "İHLAL",
+      "eksik_alanlar": [
+        "oneri"
+      ],
+      "yuttuklari": [],
+      "oy_dagilimi": {
+        "gercek_ariza": 2,
+        "yanlis_pozitif": 0,
+        "dogrulanamadi": 1
+      },
+      "curutme_nedenleri": [],
+      "yp_kurali": null,
+      "ilk_kanitlar": [
+        "13 YP kuralı",
+        "ornek_defter.jsonl:1"
+      ],
+      "hukum": "gercek_ariza",
+      "bolunmus_oy": false,
+      "guven": 6.0,
+      "gerekce": "iddia artefaktta birebir bulundu: ornek_defter.jsonl:1 (2 isabet); belirti kaynaktan yeniden türetildi\n\nETKİ: 2 ön koşul, tekrar koşulu belirli_veride → ORTA",
+      "tekrar_kosulu": "belirli_veride",
+      "siddet_hizasi": -3,
+      "etki_eslesmesi": null,
+      "dogrulama_hukmu": "elle_inceleme_gerek",
+      "hafifletici": null,
+      "siddet_etiketi": "ORTA",
+      "sahip_ipucu": "en çok katkı veren: Claude (1/1 son commit); CODEOWNERS kaydı yok"
+    },
+    {
+      "dosya": "ornek/ornek_rapor.json",
+      "konum": "K5-SI",
+      "kategori": "EKSIK_AKTARIM",
+      "siddet": null,
+      "baslik": "Hesap verme satırı çıktının en üstünde görünmedi",
+      "belirti": "kullanıcıya sunulan çıktıda ÖNCEKİ KARAR AKIBETİ / KIYAS başlıkları yok; K5 raporunda da kıyas sessizce atlanmış",
+      "id": "a002",
+      "kaynak": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+      "tarayici_guveni": null,
+      "iddia_edilen_siddet": "İHLAL",
+      "eksik_alanlar": [
+        "tekrar_senaryosu",
+        "on_kosullar",
+        "oneri"
+      ],
+      "hukum": "kopya",
+      "kopyasi": "a001",
+      "curutme_nedenleri": [
+        "kopya"
+      ],
+      "guven": 0,
+      "gerekce": "a001 ile aynı artefakt+kategori+konum kümesinde; biri düzeltilirse diğeri de düzelir",
+      "siddet_etiketi": null,
+      "siddet_hizasi": null,
+      "dogrulama_hukmu": null,
+      "on_kosullar": [],
+      "tekrar_kosulu": null,
+      "etki_eslesmesi": null,
+      "sahip_ipucu": null
+    },
+    {
+      "dosya": "ornek/ornek_rapor.json",
+      "konum": "K2-AI-AJAN",
+      "kategori": "KAPI",
+      "siddet": null,
+      "baslik": "Boru hattı K2'de durdu, zirve üretilmedi",
+      "belirti": "K2 kapısı GEÇİLMEDİ: yalnız 1 motor sonuç üretti (asgari 2). Boru hattı DURDU — K2-AI-AJAN; ZIRVE bölümü NÖTR-BEKLE ile kapandı",
+      "id": "a004",
+      "kaynak": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+      "tarayici_guveni": null,
+      "iddia_edilen_siddet": "İHLAL",
+      "eksik_alanlar": [
+        "tekrar_senaryosu",
+        "on_kosullar",
+        "oneri"
+      ],
+      "yuttuklari": [],
+      "oy_dagilimi": {
+        "gercek_ariza": 1,
+        "yanlis_pozitif": 2,
+        "dogrulanamadi": 0
+      },
+      "curutme_nedenleri": [
+        "tasarim_geregi"
+      ],
+      "yp_kurali": 1,
+      "ilk_kanitlar": [
+        "YP kural 1",
+        "ornek_rapor.json:7"
+      ],
+      "hukum": "yanlis_pozitif",
+      "bolunmus_oy": false,
+      "guven": 8.5,
+      "gerekce": "YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar).",
+      "siddet_etiketi": null,
+      "siddet_hizasi": null,
+      "dogrulama_hukmu": null,
+      "on_kosullar": [],
+      "tekrar_kosulu": null,
+      "etki_eslesmesi": null,
+      "sahip_ipucu": null
+    },
+    {
+      "dosya": "ornek/ornek_rapor.json",
+      "konum": "K5-SI",
+      "kategori": "KARAR",
+      "siddet": null,
+      "baslik": "Motor işlem vermedi",
+      "belirti": "Karar motoru BEKLE verdi; işlem kalitesi 'temiz giriş yok' dedi ve emir üretilmedi",
+      "id": "a005",
+      "kaynak": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+      "tarayici_guveni": null,
+      "iddia_edilen_siddet": "UYARI",
+      "eksik_alanlar": [
+        "tekrar_senaryosu",
+        "on_kosullar",
+        "oneri"
+      ],
+      "yuttuklari": [],
+      "oy_dagilimi": {
+        "gercek_ariza": 1,
+        "yanlis_pozitif": 1,
+        "dogrulanamadi": 1
+      },
+      "curutme_nedenleri": [
+        "tasarim_geregi"
+      ],
+      "yp_kurali": 2,
+      "ilk_kanitlar": [
+        "YP kural 2",
+        "ornek_rapor.json:10"
+      ],
+      "bolunmus_oy": true,
+      "hukum": "yanlis_pozitif",
+      "guven": 9.0,
+      "gerekce": "YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. (oy bölündü, kesinlik politikasıyla düşürüldü)",
+      "siddet_etiketi": null,
+      "siddet_hizasi": null,
+      "dogrulama_hukmu": null,
+      "on_kosullar": [],
+      "tekrar_kosulu": null,
+      "etki_eslesmesi": null,
+      "sahip_ipucu": null
+    },
+    {
+      "kategori": "BELIRSIZ",
+      "siddet": null,
+      "baslik": "Bir şeyler ters gitti",
+      "belirti": "koşu bana yanlış geldi ama hangi dosyada olduğunu bilmiyorum",
+      "id": "a006",
+      "kaynak": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_ariza.json",
+      "tarayici_guveni": null,
+      "iddia_edilen_siddet": "UYARI",
+      "eksik_alanlar": [
+        "dosya",
+        "konum",
+        "tekrar_senaryosu",
+        "on_kosullar",
+        "oneri"
+      ],
+      "hukum": "yanlis_pozitif",
+      "dogrulama_hukmu": "elle_inceleme_gerek",
+      "guven": 0,
+      "curutme_nedenleri": [
+        "kanit_yok"
+      ],
+      "gerekce": "girdide artefakt yolu yok; statik olarak doğrulanamaz, elle inceleme gerekir",
+      "oy_dagilimi": {
+        "gercek_ariza": 0,
+        "yanlis_pozitif": 0,
+        "dogrulanamadi": 0
+      },
+      "siddet_etiketi": null,
+      "siddet_hizasi": null,
+      "on_kosullar": [],
+      "tekrar_kosulu": null,
+      "etki_eslesmesi": null,
+      "sahip_ipucu": null
+    }
+  ],
+  "varsayimlar": [
+    "Şiddet ön koşul sayısı + tekrar koşulundan TÜRETİLİR; iddia edilen şiddet ayrıca `siddet_hizasi` ile puanlanır (-5..+5).",
+    "Ön koşullar beyandan okunur; beyan yoksa metindeki mekanik işaretlerden türetilir (ON_KOSUL_ISARET) — bu bir SEZGİDİR, ölçüm değil.",
+    "Etki modeli eşleşmesi şiddeti EN FAZLA bir basamak yükseltir.",
+    "Doğrulama artefakt okumaya dayanır; hedef kodu ÇALIŞTIRILMAZ, boru hattı yeniden koşturulmaz, ağa çıkılmaz.",
+    "Mercek sırası ['artefakt', 'yp_kural', 'tasarim', 'tekrar', 'celiski']; --oy N ilk N merceği koşturur."
+  ],
+  "not": "Her girdi bulgusu ÇIKTIDA TAM OLARAK BİR KEZ görünür; kopyalar `kopyasi` ile kanoniğe bağlanır. Hiçbir bulgu sessizce düşürülmez."
+}
