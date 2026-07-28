@@ -155,7 +155,7 @@ Her koşu sonunda `onceki_kosu.json` anlık görüntüsü yazılır. Kayıt yoks
 | Motor | Katman | İşi |
 |---|---|---|
 | `korelasyon.py` | K2 → K4 | İki varlığın hizalı log getirileri → ρ, beta, R², kararlılık. \|ρ\|≥0.85 → **KOPYA POZİSYON**, K4'te "toplam risk ×2" çelişkisi |
-| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; ATR ve likidite **4H yapı motorundan** (`smc_tespit_h4`) gelir |
+| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; ATR ve likidite **4H yapı motorundan** (`smc_tespit_h4`) gelir. **stop/ATR ∈ [0.8, 2.0] olan dilim KURULUM ÖLÇEĞİDİR; alt dilim yalnız TETİK içindir** (kodla hizalı: `usd_hedef.py` `min_stop_atr` 0.8 / `max_stop_atr` 2.0) |
 
 İkisi de **beyan edilip koşmazsa** gözlemci `EKSİK_AKTARIM` ihlali verir —
 elle koşu artık gerekmez ve sessiz atlama mümkün değildir.
@@ -216,7 +216,7 @@ Her karar analizinin sonunda `emir_plani.py` koşar ve kararı UYGULANABİLİR e
 
 | Alan | Kaynak | Kural |
 |---|---|---|
-| **Seviyeler** | Ölçülen yapı: açık 15M FVG kenarları + teyitli swingler | Yuvarlak/uydurma seviye **yasak** |
+| **Seviyeler** | **YALNIZ** ölçülen yapı: açık 15M FVG kenarları + teyitli swingler | Başka kaynak karışamaz; yuvarlak/uydurma seviye **yasak** |
 | **Stop** | Sabit-USDT profili varsa mesafe profilden (usdt/kontrat) | Yoksa girişin ötesindeki EN YAKIN teyitli swing |
 | **Hedef** | Profil varsa profilin kazanç bandı | Yoksa yön tarafındaki İLK teyitli likidite — yoksa aday **DÜŞER** ("R katı" uydurma hedef üretilmez) |
 | **Emir tipi** | `MARKET` yalnız fiyat giriş bölgesindeyse (`\|giriş−fiyat\| ≤ 0.1×ATR15`) | Aksi halde `LIMIT` |

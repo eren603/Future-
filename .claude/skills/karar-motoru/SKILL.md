@@ -5,8 +5,11 @@ description: >-
   yapıştırdığında (15 dakikalık ve/veya 4 saatlik OHLCV seti, Binance REST
   formatı, JSON veya CSV), "motoru çalıştır", "koşu yap", "karar ver",
   "analiz et" dediğinde ya da yeni piyasa verisi gönderdiğinde OTOMATİK
-  devreye girer — slash komutu gerekmez. Tetikleyici kelimeler (TR/EN):
-  motor, koşu, karar, kline, candles, 15m, 4h, veri gönderiyorum, run engine.
+  devreye girer — slash komutu gerekmez. Ayrıca geçmiş koşuların sicili
+  sorulduğunda ("defteri göster", "isabet ne durumda", "önceki kararın akıbeti")
+  da devreye girer. Tetikleyici kelimeler (TR/EN): motor, koşu, karar, kline,
+  candles, 15m, 4h, veri gönderiyorum, run engine, defter, defteri göster,
+  akıbet, isabet, sicil, ledger.
   Motor kodu: engine/karar_motoru.py; hafıza: engine/state/.
 ---
 

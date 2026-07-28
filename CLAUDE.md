@@ -73,17 +73,36 @@ veri, motor hatası) elle koşuya düşülür ve bu AÇIKÇA söylenir.
 ⚠️ K4/K5'in "AGI/SI" adları resimdeki piramide sadakattir; teknik iddia
 DEĞİLDİR (K4 = çelişki/doğrulama denetçisi, K5 = sentez + Wilson kalibrasyonu).
 
-Ek kural (PİRAMİT MEKANİĞİ — ayrıntı becerinin kendisindedir): Gözlemci ajanlar
-(8 ihlal + mühürleme), hesap-verme + kıyas (`kiyas.py`), çapraz-varlık ve
-sabit-kısıt motorları (`korelasyon.py` / `usd_hedef.py`), zorunlu girdilerin
-üçlüsü, emir çıktısı (`emir_plani.py`) ve çelişki turu
-`.claude/skills/piramit-sistem/SKILL.md`'de tanımlıdır; boru hattı koştuğunda
-yüklenir. Burada tekrarlanmaz — ama hükümleri BAĞLAYICIDIR: eksik veriyle karar
-UYDURULMAZ, kapılar fail-closed'dır, kritik ihlalde YÖN gösterilir ve işlem
-kalitesi MÜHÜRLENİR, hesap-verme + kıyas başlıkları çıktının EN ÜSTÜNDE
-YÖN/İŞLEM satırlarından ÖNCE gösterilir.
+Ek kural (PİRAMİT MEKANİĞİ — mekanik ayrıntı beceride, HÜKÜM burada):
+Gözlemci ajanların 8 ihlali, `kiyas.py` ölçüm kuralları, `korelasyon.py` /
+`usd_hedef.py` iç mekaniği, `emir_plani.py` kapıları ve çelişki turunun işleyişi
+`.claude/skills/piramit-sistem/SKILL.md`'dedir. ⚠️ O gövde YALNIZ beceri Skill
+aracıyla çağrılırsa bağlama girer — kanca boru hattını subprocess olarak koşturur
+ve SKILL.md'yi OKUMAZ. Bu yüzden davranış hükümleri burada, her oturumda yüklü
+kalır ve BAĞLAYICIDIR:
+1. Eksik veriyle karar UYDURULMAZ; bütün kapılar fail-closed'dır.
+2. Kritik ihlalde (UYDURMA/DAİRESEL/EKSİK_AKTARIM/MEMNUN_ETME) YÖN gösterilir,
+   işlem kalitesi MÜHÜRLENİR. **Gözlemci uyarıları gizlenmez — kritik olmayanlar
+   (TÜNEL/SIRADAN/ÇARPIŞMA/HAFIZA) dahil çıktının altında listelenir.**
+3. Hesap-verme + kıyas başlıkları çıktının EN ÜSTÜNDE, YÖN/İŞLEM satırlarından
+   ÖNCE gösterilir. Kayıt yoksa "ilk analiz" denir, geçmiş UYDURULMAZ.
+4. **Emir sözleşmesi:** her karar analizinin sonunda `emir_plani.py` koşar;
+   çıktı ya `<MARKET|LIMIT> <LONG|SHORT> @giriş | stop | T1 | R` ya da düşen
+   kapıyla birlikte **"EMİR YOK"**tur — boş BIRAKILMAZ. Seviyeler YALNIZ ölçülen
+   yapıdan; her aday `rr_denetim`den geçer, R < 1.35 reddedilir.
+5. **İkinci sembol varsa** `korelasyon.py` koşar: |ρ| ≥ 0.85 → KOPYA POZİSYON,
+   aynı yöndeki ikinci pozisyon bağımsız bahis DEĞİLDİR, toplam risk ×2 sayılır.
+6. **Görsel/ekran görüntüsünden okunan hiçbir seviye ÖLÇÜM DEĞİLDİR:** güveni
+   `gorsel_tavan` (0.50) ile tavanlıdır ve `smc_tespit` yapısıyla uyuşmazsa
+   çürütülür → "GÖRSEL-MEKANİK ÇELİŞKİSİ" bayrağı düşer.
 
-Ek kural (TAZELİK ZORUNLU — zorunlu girdilerin damgası): Elle gelen
+Ek kural (ZORUNLU GİRDİLER + TAZELİK — her koşuda, atlanamaz): Üç girdi birlikte
+beklenir, hiçbiri sessizce atlanamaz: (1) `piramit_veri_*.json` paketi (15M+4H
+kline + OI + funding + taker-LSR), (2) **CoinGlass likidasyon** long/short →
+`engine/girdi/turev_ham/likidasyon.json` (türev kapsamı 0.85 → 1.00),
+(3) **grafik ekran görüntüsü ya da video** → `engine/girdi/gorsel_okuma.json`.
+Eksik girdi K1'de yakalanır, K4'te çelişkiye dönüşür ve çıktının EN ÜSTÜNDE
+"⚠ ZORUNLU GİRDİ EKSİK" ile gösterilir; eksikle karar UYDURULMAZ. Elle gelen
 likidasyon/görsel okuma hangi veriye ait olduğunu
 `zaman_utc` damgasıyla KANITLAR. Damgasız ya da son bardan `zorunlu_damga_
 tolerans_dk` (240) dakikadan eski okuma **BAYAT** sayılır ve kullanılmaz —
@@ -120,9 +139,10 @@ Yani BEKLE bir **işlem-kalitesi** hükmüdür, **yön reddi değildir** — iki
 karıştırılıp kullanıcı "BEKLE" ile oyalanmaz. Doğruluk sözleşmesi korunur:
 yön ağırlıklı kanıttan türetilir (uydurma değil), canlı/otomatik emir yine YOK.
 
-Ek kural (KURUL MEKANİĞİ — ayrıntı becerinin kendisindedir): 5 danışman merceği,
-birleşik sentez çıktısının 5 parçalı yapısı ve şişirilmiş-R denetiminin mekaniği
-`.claude/skills/karar-kurulu/SKILL.md`'de tanımlıdır (kurul koştuğunda yüklenir).
+Ek kural (KURUL MEKANİĞİ — mekanik ayrıntı beceride, HÜKÜM burada): 5 danışman
+merceğinin tanımları, birleşik sentez çıktısının 5 parçalı yapısı ve
+şişirilmiş-R denetiminin iç mekaniği `.claude/skills/karar-kurulu/SKILL.md`'dedir
+(o gövde yalnız beceri Skill aracıyla çağrılırsa yüklenir).
 Hükümleri BAĞLAYICIDIR: motorun tek-kaynaklı çıktısı olmayan her R
 `rr_denetim.py`'den GEÇMEDEN yayınlanamaz (ŞİŞİRİLMİŞSE **R_gercekci**
 kullanılır); anlatı için sayı UYDURULMAZ; akıcı anlatı otomatik "daha kaliteli"
@@ -152,11 +172,14 @@ verilir → sayısal yön skoru + DELEVERAGING/TAZE-SHORT/SOĞUMA erken-uyarıla
 üretilir ve `karar-kurulu`ya **sözel değil ölçülmüş** bir danışman olarak girer.
 Türev verisi okunmuşsa kurula lafla eklenmez; motor koşulur. Uydurma sayı yasak;
 eksik alan "VERİ YOK" (fail-closed). Canlı/otomatik emir DAHİL DEĞİL.
-PANEL YOKSA DA KÖRLÜK KAPANIR: `piramit-sistem/scripts/turev_girdi.py` türev
-girdisini (CVD / OI / funding / LSR / likidasyon) kendiliğinden üretir; kanal
-kaynakları ve ağ gereksinimleri `piramit-sistem/SKILL.md` §"Türev kanalı"
-tablosundadır. Eksik kanal UYDURULMAZ — motor kapsamı düşükse skoru VERİ YOK'a
-çeker ve danışman doğrulanmamış sayılır (fail-closed).
+PANEL YOKSA DA KÖRLÜK KISMEN KAPANIR: `piramit-sistem/scripts/turev_girdi.py`
+CVD'yi kullanıcının KENDİ kline'ından her zaman, OI'yi anlık görüntü defterinden,
+funding/LSR'yi ağ izin verirse Binance vadeli uçlarından üretir. **LİKİDASYON
+OTOMATİK GELMEZ — yalnız elle panelden** (zorunlu girdi #2); gelmezse türev
+kapsamı 0.85'te kalır ve bu eksiklik raporlanır. Kanal kaynakları
+`piramit-sistem/SKILL.md` §"Türev kanalı" tablosundadır. Eksik kanal UYDURULMAZ —
+motor kapsamı düşükse skoru VERİ YOK'a çeker ve danışman doğrulanmamış sayılır
+(fail-closed).
 
 Ek kural: Kullanıcı bir **grafik ekran görüntüsü** gönderirse (mum grafiği,
 fiyat grafiği), açıkça istemese bile `grafik-calisma` SMC + Fibonacci akışıyla

@@ -22,7 +22,13 @@ Denetlenen halkalar:
                      ve kanca dosyaları yerinde mi? (Bu ikisi kopar =
                      "tetikleyicisiz otomatik" ölür.)
     5. GİRDİ/GÖREV — gorev.json + engine/girdi kline dosyaları okunuyor mu?
-    6. ÖZ-TEST     — (yalnız --tam) her becerinin self_test.py'si GEÇİYOR mu?
+    6. SÖZLEŞME    — sozlesme.json kütüğündeki her kural, olması gereken
+                     dosyada HÂLÂ yazılı mı? (Kırpma/yeniden yazma sırasında bir
+                     kural hem CLAUDE.md'den hem beceri dosyasından sessizce
+                     kaybolmasın diye. RESIDENT kurallar CLAUDE.md'de olmak
+                     ZORUNDA: kanca boru hattını subprocess koşturur ve hiçbir
+                     SKILL.md gövdesini bağlama YÜKLEMEZ.)
+    7. ÖZ-TEST     — (yalnız --tam) her becerinin self_test.py'si GEÇİYOR mu?
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ import re
 import shutil
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -53,10 +60,74 @@ OZ_TESTLER = sorted(SKILLS.glob("*/scripts/self_test.py")) + [
     SKILLS / "karar-kurulu" / "scripts" / "rr_denetim_test.py",
 ]
 
+SOZLESME = SKILL / "sozlesme.json"
+
 
 def _motor_tablosu() -> dict:
     sys.path.insert(0, str(SCRIPTS))
     return importlib.import_module("piramit").MOTOR
+
+
+def _duz(metin: str) -> str:
+    """Beyaz boşluğu tek boşluğa indirger + NFC normalize eder.
+
+    Gerekçe: kurallar 79 sütuna sarılmış Türkçe metinler; satır sarması bir
+    dizgeyi ikiye bölerse denetim haksız yere KIRIK derdi. Büyük/küçük harf
+    KORUNUR — "MÜHÜRLENİR" / "EMİR YOK" gibi kipler bilinçlidir.
+    """
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", metin))
+
+
+def kontrol_sozlesme() -> list[str]:
+    """Sözleşme kütüğü denetimi — kırık kuralların listesi (boş = SAĞLAM).
+
+    Fail-closed: kütük yoksa ya da okunamıyorsa denetim "geçti" saymaz, KIRIK
+    der. Aksi halde kütüğü silmek denetimi sessizce kapatmanın yolu olurdu.
+    """
+    kirik: list[str] = []
+    try:
+        reg = json.loads(SOZLESME.read_text(encoding="utf-8"))
+        kurallar = reg["kurallar"]
+        if not isinstance(kurallar, list) or not kurallar:
+            raise ValueError("kurallar listesi boş")
+    except Exception as e:  # noqa: BLE001
+        return [f"SÖZLEŞME: kütük okunamadı ({SOZLESME.name}: {type(e).__name__}: {e}) "
+                "— korunan kural listesi denetlenemiyor (fail-closed)"]
+
+    onbellek: dict[Path, str] = {}
+    for k in kurallar:
+        try:
+            ad, katman = k["ad"], k["katman"]
+            hedef, dizge = REPO / k["dosya"], k["dizge"]
+        except Exception as e:  # noqa: BLE001
+            kirik.append(f"SÖZLEŞME: kütükte bozuk kural kaydı ({type(e).__name__}: {e})")
+            continue
+        if not hedef.exists():
+            kirik.append(f"SÖZLEŞME: [{katman}] {ad} — hedef dosya YOK ({k['dosya']})")
+            continue
+        if hedef not in onbellek:
+            try:
+                onbellek[hedef] = _duz(hedef.read_text(encoding="utf-8"))
+            except OSError as e:
+                kirik.append(f"SÖZLEŞME: {k['dosya']} okunamadı ({e})")
+                onbellek[hedef] = ""
+        if _duz(dizge) not in onbellek[hedef]:
+            nicin = " (her oturumda yüklü olmak ZORUNDA — SKILL.md gövdesi " \
+                    "varsayılan yolda bağlama girmez)" if katman == "RESIDENT" else ""
+            kirik.append(f"SÖZLEŞME: [{katman}] {ad} KAYBOLDU — "
+                         f"\"{dizge}\" artık {k['dosya']} içinde YOK{nicin}")
+
+    # Ölü çapraz-referans: bir SKILL.md CLAUDE.md'ye işaret ederse, CLAUDE.md
+    # kırpıldığı anda o işaret sessizce hiçbir yere çıkmaz (2026-07'de oldu).
+    for sm in sorted(SKILLS.glob("*/SKILL.md")):
+        try:
+            if "bkz. CLAUDE.md" in _duz(sm.read_text(encoding="utf-8")):
+                kirik.append(f"SÖZLEŞME: ölü çapraz-referans — {sm.parent.name}/SKILL.md "
+                             "'bkz. CLAUDE.md' diyor; kural orada birebir yazılmalı "
+                             "(CLAUDE.md kırpılınca bu işaret hiçbir yere çıkmaz)")
+        except OSError:
+            continue
+    return kirik
 
 
 def kontrol_hizli() -> list[str]:
@@ -146,6 +217,8 @@ def kontrol_hizli() -> list[str]:
             kirik.append(f"KANCA-DURUM: {ad} kökü sözlük değil ({sp.name}) — "
                          "kanca bu dosyayla ölür")
 
+    kirik += kontrol_sozlesme()
+
     return kirik
 
 
@@ -210,6 +283,10 @@ def main(argv=None) -> int:
         n_motor = len(_motor_tablosu())
     except Exception:  # noqa: BLE001
         n_motor = 0
+    try:
+        n_sozlesme = len(json.loads(SOZLESME.read_text(encoding="utf-8"))["kurallar"])
+    except Exception:  # noqa: BLE001
+        n_sozlesme = 0
 
     ozet = ""
     if args.tam:
@@ -225,7 +302,8 @@ def main(argv=None) -> int:
             print(f"   ✖ {k}")
         return 1
     print(f"[SAĞLIK] ✔ SAĞLAM — motor {n_motor}/{n_motor} yerinde, "
-          f"bağımlılık 3/3, kanca 2/2, girdi/görev OK{ozet}")
+          f"bağımlılık 3/3, kanca 2/2, girdi/görev OK, "
+          f"sözleşme {n_sozlesme}/{n_sozlesme} kural yerinde{ozet}")
     return 0
 
 
