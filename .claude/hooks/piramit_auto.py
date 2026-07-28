@@ -387,6 +387,19 @@ def _gorev_bas() -> None:
                   f"(sabit), hedef {prof.get('hedef_usdt_brut')} USDT brüt, "
                   f"R_min {prof.get('r_min')}, kurulum ölçeği "
                   f"{prof.get('kurulum_olcegi')}")
+        if g.get("strateji_kurali"):
+            print("   strateji: " + str(g.get("strateji_kurali")))
+        for _ad, _sk in (("BTCUSDT", REPO / "engine" / "state" / "sunulan_karar.json"),
+                         ("ETHUSDT", IKINCI["state"] / "sunulan_karar.json")):
+            try:
+                if _sk.exists():
+                    _s = json.loads(_sk.read_text(encoding="utf-8"))
+                    print(f"   AÇIK SUNULAN EMİR [{_ad}]: {_s.get('yon')} "
+                          f"@{_s.get('giris')} | stop {_s.get('stop')} | "
+                          f"T1 {_s.get('t1')} (karar barı {_s.get('karar_bari_utc')}; "
+                          f"her koşuda HESAP VERME'de ölçülür, kapanınca düşülür)")
+            except (OSError, json.JSONDecodeError, TypeError, ValueError):
+                print(f"   ⚠ {_sk.name} [{_ad}] okunamadı — açık emir kaydı elle kontrol edilmeli")
         _hafiza_bas(g)
     except Exception as e:  # noqa: BLE001 — görev bloğu boru hattını DÜŞÜREMEZ
         print(f"[PİRAMİT] ⚠ DURAN GÖREV OKUNAMADI ({type(e).__name__}: {e}) — "
