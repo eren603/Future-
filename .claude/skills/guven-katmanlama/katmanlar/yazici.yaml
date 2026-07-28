@@ -1,0 +1,58 @@
+# YAZICI — yazma yetkisini TAŞIYAN TEK katman (write-holder).
+#
+# Kaynak katman tablosu (gl-reconciler/README.md:30):
+#   "| **`resolver`** (Write-holder) | No | `Read`, `Write`, `Edit` | None |"
+#
+# Kaynak resolver.yaml:4-7 (sistem metni, birebir):
+#   "You are the ONLY worker with Write. Receive the verified break set
+#    (already critic-checked and schema-validated), draft the exception report,
+#    and write it to ./out/. Never read counterparty files; never run bash."
+#
+# Kaynak README.md:32: "The `resolver` writes the exception report to `./out/`;
+# it never opens an outsider file."
+#
+# Bu depodaki karşılığı: koşu artefaktlarını yazan katman — engine/state/
+# (defter, durum, devir_teslim, onceki_kosu) ve engine/cikti/ (SVG karar grafiği).
+
+name: guven-yazici
+
+system:
+  text: |
+    Yazma yetkisi olan TEK bileşen sensin. Denetçiden gelen DOĞRULANMIŞ ve
+    şema-geçmiş sonuç kümesini alır, koşu artefaktını yazarsın: engine/state/
+    (sicil/defter/devir teslim) ve engine/cikti/ (karar grafiği). Güvenilmez
+    dosyaları (görsel okuma, elle likidasyon, panel metni) ASLA okumazsın;
+    kabuk komutu ASLA çalıştırmazsın.
+
+# ARAÇLAR — hangisi açık, NEDEN:
+#   read  AÇIK  — kaynak resolver.yaml:12 ("- { name: read,  enabled: true }")
+#                 ama YALNIZ güvenilir/doğrulanmış girdi: "Never read
+#                 counterparty files" (resolver.yaml:7)
+#   write AÇIK  — kaynak resolver.yaml:13; "You are the ONLY worker with Write"
+#   edit  AÇIK  — kaynak resolver.yaml:14 ("- { name: edit,  enabled: true }")
+#   grep  KAPALI— tablo satırında YOK: "`Read`, `Write`, `Edit`"
+#   glob  KAPALI— aynı gerekçe
+#   bash  KAPALI— "never run bash" (resolver.yaml:7)
+#   agent KAPALI— yazıcı başka katman çağıramaz (yetki yükseltme yolu kapalı)
+tools:
+  - type: agent_toolset_20260401
+    default_config: { enabled: false }
+    configs:
+      - { name: read,  enabled: true }
+      - { name: write, enabled: true }
+      - { name: edit,  enabled: true }
+
+# Kaynak resolver.yaml:15 ve tablonun Connectors sütunu: "None".
+mcp_servers: []
+skills:
+  - .claude/skills/grafik-cizim        # cizim.py — SVG artefaktı (kaynak: xlsx-author)
+callable_agents: []
+
+# API alanı DEĞİL — `scripts/katman_denetle.py` tüketir.
+guvenilir_girdiler:
+  - engine/state/
+  - engine/cikti/
+guvenilmez_girdiler: []                # BOŞ — "never opens an outsider file"
+yazma_hedefleri:                       # Kaynakta tek hedef: "./out/"
+  - engine/state/
+  - engine/cikti/

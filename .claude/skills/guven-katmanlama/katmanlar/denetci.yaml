@@ -1,0 +1,86 @@
+# DENETÇİ — orkestratör katmanı. GÜVENİLMEZ dosyayı ASLA açmaz.
+#
+# Kaynak katman tablosu (gl-reconciler/README.md:29):
+#   "| **Orchestrator** | No | `Read`, `Grep`, `Glob`, `Agent` | Read-only GL + subledger MCPs |"
+#
+# Kaynak agent.yaml:14-15:
+#   "# The orchestrator never reads counterparty documents directly and never holds
+#   #  bash or write — it dispatches, aggregates, and hands off."
+#
+# Doğrulama görevi kaynak critic.yaml:4-7'den gelir:
+#   "You independently re-verify each reported break against the GL and
+#    subledger MCPs. You read trusted internal sources only; never open
+#    counterparty files. Return confirmed/rejected per break. Read-only."
+#
+# Bu depodaki karşılığı: piramit boru hattı (K1→K5) — okuyucunun şema-doğrulanmış
+# çıktısını alır, GÜVENİLİR kaynaklara (Binance kline paketi + motor çıktıları)
+# karşı bağımsız olarak yeniden doğrular, motorları çağırır, sentezler.
+
+name: guven-denetci
+
+system:
+  text: |
+    Okuyucudan gelen şema-doğrulanmış ölçümleri GÜVENİLİR kaynaklara karşı
+    bağımsız olarak yeniden doğrularsın: Binance kline paketi (m15.json,
+    h4.json) ve motorların kendi çıktıları. Güvenilmez dosyaları (görsel okuma,
+    elle likidasyon, panel metni) ASLA açmazsın — onları yalnız okuyucunun
+    kısıtlı JSON'u üzerinden görürsün. Her ölçüm için doğrulandı/çürütüldü
+    döndürürsün. Salt-okunur: yazma ve kabuk yetkin yoktur.
+
+# ARAÇLAR — hangisi açık, NEDEN:
+#   read  AÇIK  — tablo satırı: "`Read`, `Grep`, `Glob`, `Agent`" (agent.yaml:21-22)
+#   grep  AÇIK  — aynı satır (agent.yaml:23-24)
+#   glob  AÇIK  — aynı satır (agent.yaml:25-26); okuyucuda YOK, burada VAR
+#   agent AÇIK  — "it dispatches, aggregates, and hands off" (agent.yaml:15);
+#                 alt katmanları (okuyucu/yazici) yalnız bu katman çağırır
+#   write KAPALI— "never holds bash or write" (agent.yaml:15)
+#   edit  KAPALI— aynı gerekçe
+#   bash  KAPALI— "never holds bash or write" (agent.yaml:15)
+tools:
+  - type: agent_toolset_20260401
+    default_config:
+      enabled: false
+    configs:
+      - name: read
+        enabled: true
+      - name: grep
+        enabled: true
+      - name: glob
+        enabled: true
+      - name: agent
+        enabled: true
+  # Kaynakta bu satırlar salt-okunur MCP sunucularıdır (agent.yaml:27-34,
+  # "enabled: true   # read-only server"). Bu depoda ağ sunucusu yoktur;
+  # karşılığı salt-okunur YEREL veri kaynaklarıdır (bkz. SAPMALAR, KANIT.md).
+  - type: yerel_kaynak
+    ad: binance-kline
+    default_config:
+      enabled: true   # salt-okunur: engine/girdi/m15.json, engine/girdi/h4.json
+  - type: yerel_kaynak
+    ad: motor-ciktilari
+    default_config:
+      enabled: true   # salt-okunur: engine/state/, engine/cikti/
+
+# Kaynak agent.yaml:47-50 — orkestratör alt katmanları manifest ile çağırır.
+callable_agents:
+  - manifest: ./okuyucu.yaml
+  - manifest: ./yazici.yaml
+
+skills:
+  - .claude/skills/piramit-sistem      # K1→K5 boru hattı (scripts/piramit.py)
+  - .claude/skills/karar-kurulu        # sentez.py + rr_denetim.py
+  - .claude/skills/turev-akis          # turev_akis.py
+  - .claude/skills/grafik-calisma      # smc_tespit.py / confluence.py
+
+# API alanı DEĞİL — `scripts/katman_denetle.py` tüketir.
+guvenilir_girdiler:
+  - engine/girdi/m15.json
+  - engine/girdi/h4.json
+  - engine/girdi/turev.json
+  - engine/girdi/turev_ham/openInterestHist.json
+  - engine/girdi/turev_ham/premiumIndex.json
+  - engine/girdi/turev_ham/takerlongshortRatio.json
+  - engine/state/                      # motor çıktıları (defter, durum, devir_teslim)
+  - engine/cikti/
+guvenilmez_girdiler: []                # BOŞ — "never open counterparty files"
+yazma_hedefleri: []                    # BOŞ — "never holds bash or write"
