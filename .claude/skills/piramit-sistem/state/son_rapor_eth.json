@@ -580,16 +580,16 @@
         },
         "turev-akis": {
           "rapor": {
-            "KARAR_TUREV": "AYI eğilimli",
-            "yon_skoru": -0.2591,
-            "kapsam": 0.66,
-            "guven": 0.303,
+            "KARAR_TUREV": "NÖTR / karışık",
+            "yon_skoru": -0.171,
+            "kapsam": 1.0,
+            "guven": 0.371,
             "faktorler": [
               {
                 "faktor": "oi_price",
                 "agirlik": 0.34,
-                "skor": null,
-                "aciklama": "VERİ YOK (OI veya fiyat serisi eksik)"
+                "skor": 0.0,
+                "aciklama": "OI yatay (Δ%0.47) → türev-yönsüz"
               },
               {
                 "faktor": "funding",
@@ -629,15 +629,15 @@
               "faktör skor büyüklükleri (yön işareti kanıttan, büyüklük konvansiyon): OI taze=±1.0/deleveraging=∓0.6/zayıf=+0.4, funding aşırı=±1.0/ılımlı=±0.3, CVD=±0.7, LSR=±0.5, likidasyon=±0.8",
               "danışman eşleme eşikleri: stance |skor|≥0.2 yön verir, okunan kapsam≥0.5 doğrulanmış sayılır (altı fail-closed çürütme)",
               "Bu skor türev verisini KARARA DAHİL EDER; geleceği bilmez, garanti vermez.",
-              "okunan kapsam=0.66 (1.0=tüm türev alanları geldi; eksikse ağırlık yeniden normalize edildi)"
+              "okunan kapsam=1.0 (1.0=tüm türev alanları geldi; eksikse ağırlık yeniden normalize edildi)"
             ],
             "not": "Karar-destek çıktısıdır — türev verisini KARARA DAHİL EDER, kesinlik/sinyal değil. Geleceği bilmez. Canlı/otomatik emir DAHİL DEĞİL."
           },
           "danisman": {
             "name": "turev-akis",
-            "stance": "short",
-            "confidence": 0.303,
-            "evidence": "Türev motoru: AYI eğilimli (skor -0.2591, kapsam 0.66). Faktörler: funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
+            "stance": "flat",
+            "confidence": 0.371,
+            "evidence": "Türev motoru: NÖTR / karışık (skor -0.171, kapsam 1.0). Faktörler: oi_price=0.0, funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
             "_verifier_confirmed": true
           }
         }
@@ -669,11 +669,11 @@
         },
         {
           "name": "turev-akis",
-          "stance": "short",
-          "confidence": 0.303,
-          "evidence": "Türev motoru: AYI eğilimli (skor -0.2591, kapsam 0.66). Faktörler: funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
+          "stance": "flat",
+          "confidence": 0.371,
+          "evidence": "Türev motoru: NÖTR / karışık (skor -0.171, kapsam 1.0). Faktörler: oi_price=0.0, funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
           "_verifier_confirmed": true,
-          "_ham_confidence": 0.303,
+          "_ham_confidence": 0.371,
           "_agirlik": 1.0
         },
         {
@@ -699,7 +699,7 @@
         "gorsel-teyit güveni 0.5 tavanıyla sınırlandı: elle okuma mekanik ölçümle eş tutulmaz"
       ],
       "gecti": true,
-      "kapi": "K3 kapısı GEÇİLDİ: 4 danışman (2 yönlü)."
+      "kapi": "K3 kapısı GEÇİLDİ: 4 danışman (1 yönlü)."
     },
     {
       "katman": "K4-AGI",
@@ -729,7 +729,7 @@
       ],
       "mercekler": {
         "muhalif": {
-          "kaynak": "karar-motoru, grafik-calisma",
+          "kaynak": "karar-motoru, grafik-calisma, turev-akis",
           "rol": "kurul içindeki zıt-yön danışman(lar)ı",
           "baglanma": "otomatik"
         },
@@ -764,21 +764,25 @@
       "sentez": {
         "question": "otomatik koşu — ETH (ana sembolle korelasyonlu)",
         "YON_BIAS": "SHORT",
-        "KARAR": "SHORT",
-        "guven_skoru": 0.2626,
-        "yon_skoru": -0.6482,
-        "uzlasi": 0.6482,
+        "KARAR": "NÖTR-BEKLE",
+        "guven_skoru": 0.183,
+        "yon_skoru": -0.4225,
+        "uzlasi": 0.5775,
         "muhalefet": [
           "karar-motoru",
-          "grafik-calisma"
+          "grafik-calisma",
+          "turev-akis"
         ],
-        "kapi_gerekceleri": [],
+        "kapi_gerekceleri": [
+          "|skor|=0.42 < eşik 0.5792",
+          "yön ağırlığı 0.50 < 1.0799"
+        ],
         "gecersizlik_kosulu": "VERİ YOK",
         "esik_kaynagi": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)",
         "esikler": {
-          "score": 0.5822,
+          "score": 0.5792,
           "min_agreement": 0.5091,
-          "min_side_weight": 0.4522,
+          "min_side_weight": 1.0799,
           "refute_penalty": 0.25
         },
         "danisman_ozeti": [
@@ -802,12 +806,12 @@
           },
           {
             "ad": "turev-akis",
-            "yon": "short",
-            "guven": 0.303,
-            "dogrulandi": false,
-            "etkin_agirlik": 0.0757,
-            "kanit": "Türev motoru: AYI eğilimli (skor -0.2591, kapsam 0.66). Faktörler: funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
-            "curutme": "doğrulama YOK → fail-closed varsayılan (çürütme penaltısı)"
+            "yon": "nötr",
+            "guven": 0.371,
+            "dogrulandi": true,
+            "etkin_agirlik": 0.371,
+            "kanit": "Türev motoru: NÖTR / karışık (skor -0.171, kapsam 1.0). Faktörler: oi_price=0.0, funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
+            "curutme": null
           },
           {
             "ad": "gorsel-teyit",
@@ -838,9 +842,10 @@
           },
           {
             "name": "turev-akis",
-            "stance": "short",
-            "confidence": 0.303,
-            "evidence": "Türev motoru: AYI eğilimli (skor -0.2591, kapsam 0.66). Faktörler: funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok."
+            "stance": "flat",
+            "confidence": 0.371,
+            "evidence": "Türev motoru: NÖTR / karışık (skor -0.171, kapsam 1.0). Faktörler: oi_price=0.0, funding=0.0, cvd=-0.7, taker_lsr=0.5, liquidation=-0.8. Kritik erken-uyarı yok.",
+            "_verifier_confirmed": true
           },
           {
             "name": "gorsel-teyit",
@@ -864,9 +869,9 @@
         },
         "invalidation": "VERİ YOK",
         "thresholds": {
-          "score": 0.5822,
+          "score": 0.5792,
           "min_agreement": 0.5091,
-          "min_side_weight": 0.4522
+          "min_side_weight": 1.0799
         },
         "esik_kaynagi": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)"
       },
@@ -971,9 +976,9 @@
       },
       "esik_kalibrasyonu": {
         "esikler": {
-          "score": 0.5822,
+          "score": 0.5792,
           "min_agreement": 0.5091,
-          "min_side_weight": 0.4522
+          "min_side_weight": 1.0799
         },
         "kaynak": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunluk kuralı (uzlaşı/yön ağırlığı) × ÖLÇÜLEN rejim sertliği (yön devamlılığı vs başabaş oran)",
         "taban": {
@@ -981,14 +986,14 @@
           "n_boot": 2000,
           "alpha": 0.05,
           "z": 1.96,
-          "se_skor": 0.2917,
-          "bootstrap_ort_skor": -0.5766,
+          "se_skor": 0.2902,
+          "bootstrap_ort_skor": -0.3759,
           "isaret_kararliligi": 1.0,
-          "toplam_etkin_agirlik": 0.8882,
-          "score": 0.5717,
+          "toplam_etkin_agirlik": 1.1835,
+          "score": 0.5688,
           "min_agreement": 0.5,
-          "min_side_weight": 0.4441,
-          "yorum": "score = z×SE_bootstrap (sinyal kendi gürültüsünü aşmalı); uzlaşı/yön ağırlığı = çoğunluk kuralı (yapısal, veriden türetilmedi — ölçek TOPLAM AĞIRLIKTAN gelir)"
+          "min_side_weight": 1.0605,
+          "yorum": "score = z×SE_bootstrap (sinyal kendi gürültüsünü aşmalı); uzlaşı = çoğunluk kuralı (yapısal); yön ağırlığı eşiği HAM güven toplamından (çürütme penaltısı sadeleşmesin)"
         },
         "rejim": {
           "varyans_orani": {
@@ -1016,28 +1021,21 @@
         },
         "sertlik": 1.0183,
         "signflip_tanisi": {
-          "durum": "ÖLÇÜLDÜ",
-          "yonlu_danisman": 2,
-          "gozlenen_skor": 0.6482,
-          "randomizasyon_p": 0.4763,
-          "p_min_ulasilabilir": 0.5,
-          "alpha_ulasilabilir": false,
-          "n_perm": 2000,
-          "yorum": "p_min = 2/2^2 = 0.5000; α=0.05 BU KURUL BÜYÜKLÜĞÜNDE ULAŞILAMAZ — sign-flip eşik üretemez, yalnız tanıdır"
+          "durum": "VERİ YOK — 1 yönlü danışman < 2"
         },
         "ayrinti": {
           "score": {
-            "null_taban": 0.5717,
+            "null_taban": 0.5688,
             "sertlik": 1.0183,
-            "ham": 0.5822,
-            "son": 0.5822,
+            "ham": 0.5792,
+            "son": 0.5792,
             "korkuluk": [
               0.05,
               0.6
             ],
             "kirpildi": false,
             "statik_karsiligi": 0.15,
-            "degisim_statige_gore": 0.4322
+            "degisim_statige_gore": 0.4292
           },
           "min_agreement": {
             "null_taban": 0.5,
@@ -1053,17 +1051,17 @@
             "degisim_statige_gore": -0.0409
           },
           "min_side_weight": {
-            "null_taban": 0.4441,
+            "null_taban": 1.0605,
             "sertlik": 1.0183,
-            "ham": 0.4522,
-            "son": 0.4522,
+            "ham": 1.0799,
+            "son": 1.0799,
             "korkuluk": [
               0.3,
               3.0
             ],
             "kirpildi": false,
             "statik_karsiligi": 0.6,
-            "degisim_statige_gore": -0.1478
+            "degisim_statige_gore": 0.4799
           }
         },
         "bar": 200,
@@ -1082,12 +1080,12 @@
         "kostu": true,
         "yon_ilk": "SHORT",
         "yon_dogrulanmis_kurul": "SHORT",
-        "skor_ilk": -0.6482,
-        "skor_ikinci": -1.0,
+        "skor_ilk": -0.4225,
+        "skor_ikinci": -0.5741,
         "danisman_ilk": 4,
-        "danisman_dogrulanmis": 1,
+        "danisman_dogrulanmis": 2,
         "yon_dayaniksiz": false,
-        "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da SHORT"
+        "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 2 danışmanla da SHORT"
       },
       "emir_plani": {
         "EMIR": "LIMIT SHORT @1881.72 | stop 1915.053333 | T1 1836.72 | R 1.35",
@@ -1354,15 +1352,19 @@
   "ZIRVE": {
     "YON_BIAS": "SHORT",
     "ISLEM_KALITESI": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
-    "sentez_karari": "SHORT",
-    "guven_skoru": 0.2626,
-    "yon_skoru": -0.6482,
-    "uzlasi": 0.6482,
+    "sentez_karari": "NÖTR-BEKLE",
+    "guven_skoru": 0.183,
+    "yon_skoru": -0.4225,
+    "uzlasi": 0.5775,
     "muhalefet": [
       "karar-motoru",
-      "grafik-calisma"
+      "grafik-calisma",
+      "turev-akis"
     ],
-    "kapi_gerekceleri": [],
+    "kapi_gerekceleri": [
+      "|skor|=0.42 < eşik 0.5792",
+      "yön ağırlığı 0.50 < 1.0799"
+    ],
     "gecersizlik": "VERİ YOK",
     "seviyeler": {},
     "pozisyon_boyutu": null,
@@ -1516,9 +1518,9 @@
     "emir_red_nedenleri": [
       "giriş 1879.79: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']"
     ],
-    "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da SHORT",
+    "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 2 danışmanla da SHORT",
     "iki_satir": {
-      "1_YON": "YÖN (bias): SHORT — ağırlıklı yön skoru -0.6482, uzlaşı 0.6482 (kapıdan bağımsız; BEKLE yön reddi değildir)",
+      "1_YON": "YÖN (bias): SHORT — ağırlıklı yön skoru -0.4225, uzlaşı 0.5775 (kapıdan bağımsız; BEKLE yön reddi değildir)",
       "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: Yön SHORT ama temiz giriş yok — motorlardan giriş/stop/hedef seti gelmedi (VERİ YOK)"
     },
     "ONCEKI_AKIBET": {
@@ -1542,15 +1544,16 @@
         "etiket": "DEVAM",
         "aciklama": "SHORT yönü korundu",
         "skor_onceki": -0.6482,
-        "skor_yeni": -0.6482,
-        "skor_delta": 0.0
+        "skor_yeni": -0.4225,
+        "skor_delta": 0.2257
       },
       "fiyat": "VERİ YOK",
       "onemli_degisimler": [
-        "kayda değer sürücü değişimi yok"
+        "türev veri kapsamı: 0.66 → 1.0 (+0.34)",
+        "açık faiz değişimi: None → 0.0"
       ],
       "danisman_donusleri": [
-        "danışman duruşları aynı"
+        "turev-akis: short → flat"
       ]
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
@@ -1574,8 +1577,8 @@
       "etiket": "DEVAM",
       "aciklama": "SHORT yönü korundu",
       "skor_onceki": -0.6482,
-      "skor_yeni": -0.6482,
-      "skor_delta": 0.0
+      "skor_yeni": -0.4225,
+      "skor_delta": 0.2257
     },
     "fiyat": "VERİ YOK",
     "surucu_tablosu": [
@@ -1603,16 +1606,16 @@
       {
         "kanal": "türev yön skoru",
         "onceki": -0.2591,
-        "yeni": -0.2591,
-        "delta": 0.0,
+        "yeni": -0.171,
+        "delta": 0.0881,
         "onemli": false
       },
       {
         "kanal": "türev veri kapsamı",
         "onceki": 0.66,
-        "yeni": 0.66,
-        "delta": 0.0,
-        "onemli": false
+        "yeni": 1.0,
+        "delta": 0.34,
+        "onemli": true
       },
       {
         "kanal": "fonlama",
@@ -1636,6 +1639,13 @@
         "onemli": false
       },
       {
+        "kanal": "açık faiz değişimi",
+        "onceki": "VERİ YOK",
+        "yeni": 0.0,
+        "delta": "—",
+        "onemli": true
+      },
+      {
         "kanal": "long likidasyon",
         "onceki": -0.8,
         "yeni": -0.8,
@@ -1644,10 +1654,11 @@
       }
     ],
     "onemli_degisimler": [
-      "kayda değer sürücü değişimi yok"
+      "türev veri kapsamı: 0.66 → 1.0 (+0.34)",
+      "açık faiz değişimi: None → 0.0"
     ],
     "danisman_donusleri": [
-      "danışman duruşları aynı"
+      "turev-akis: short → flat"
     ],
     "varsayimlar": [
       "anlamlı değişim eşikleri: skor 0.15, oransal %10, ADX 3.0 (konvansiyon)",
@@ -1718,7 +1729,7 @@
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "güven değerleri motor çıktısından: grafik-calisma ham güven 0.85 == confluence_skoru 0.85: EVET; turev-akis ham güven 0.303 == motor çıktısı 0.303: EVET",
+          "kanit": "güven değerleri motor çıktısından: grafik-calisma ham güven 0.85 == confluence_skoru 0.85: EVET; turev-akis ham güven 0.371 == motor çıktısı 0.371: EVET",
           "oneri": ""
         },
         {
@@ -1770,7 +1781,7 @@
         {
           "kod": "UYDURMA",
           "durum": "TEMİZ",
-          "kanit": "karar kapıları veriden türetildi ve aynen uygulandı: {'score': 0.5822, 'min_agreement': 0.5091, 'min_side_weight': 0.4522} | kaynak: VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunl",
+          "kanit": "karar kapıları veriden türetildi ve aynen uygulandı: {'score': 0.5792, 'min_agreement': 0.5091, 'min_side_weight': 1.0799} | kaynak: VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı (score) + çoğunl",
           "oneri": ""
         },
         {
@@ -1782,13 +1793,13 @@
         {
           "kod": "MEMNUN_ETME",
           "durum": "TEMİZ",
-          "kanit": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da SHORT",
+          "kanit": "ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 2 danışmanla da SHORT",
           "oneri": ""
         },
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'turev-akis', 'karar-motoru', 'gorsel-teyit'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'gorsel-teyit', 'grafik-calisma', 'turev-akis'}",
           "oneri": ""
         },
         {
@@ -1800,7 +1811,7 @@
         {
           "kod": "MEMNUN_ETME",
           "durum": "TEMİZ",
-          "kanit": "YÖN_BIAS=SHORT ağırlıklı skorun (-0.6482) işaretinden mekanik türedi — beklentiye göre ayarlanmadı",
+          "kanit": "YÖN_BIAS=SHORT ağırlıklı skorun (-0.4225) işaretinden mekanik türedi — beklentiye göre ayarlanmadı",
           "oneri": ""
         },
         {
@@ -1812,7 +1823,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "kıyas koştu: SHORT → SHORT (DEVAM), 1 sürücü değişimi raporlandı",
+          "kanit": "kıyas koştu: SHORT → SHORT (DEVAM), 2 sürücü değişimi raporlandı",
           "oneri": ""
         },
         {
