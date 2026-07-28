@@ -224,7 +224,10 @@ def plan(job: dict) -> dict:
     # değil: r_min yine depo kuralına düşer)
     esikler = (profil or {}).get("esikler")
     esikler = esikler if isinstance(esikler, dict) else {}
-    r_min = _f(esikler.get("r_min")) or _f(job.get("r_min")) or p["r_min"]
+    # r_min bir TABANDIR, varsayılan değil: profil/job yalnız SIKILAŞTIRABİLİR.
+    # Önceden profil dosyası ya da job depo kuralını (1.35) aşağı çekebiliyordu.
+    _istenen = _f(esikler.get("r_min")) or _f(job.get("r_min")) or p["r_min"]
+    r_min = max(KONVANSIYON["r_min"], _istenen)
 
     if yon not in ("LONG", "SHORT"):
         return {"EMIR": "EMİR YOK", "gerekce": f"yön {yon or YOK} — yönsüz kurulumda "

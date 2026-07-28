@@ -291,7 +291,10 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
         if ad in str(g) and not [k for k in kaynaklar if k != ad]:
             dairesel.append(f"{ad} ← {str(g)[:70]}")
     if dairesel:
-        b.append(_bulgu("DAIRESEL", "UYARI",
+        # İHLAL (UYARI değil): DAIRESEL, KRITIK kümesindedir ve mühür yalnız
+        # İHLAL satırlarını sayar — UYARI olarak kalırsa kritik ihlal ASLA
+        # mühürlenemez (kapı sözleşmede var, kodda ölüydü).
+        b.append(_bulgu("DAIRESEL", "İHLAL",
                         "kendi çıktısıyla doğrulanan danışman: " + "; ".join(dairesel),
                         "çapraz doğrulayıcı ekle (başka motor onaylasın)"))
     else:

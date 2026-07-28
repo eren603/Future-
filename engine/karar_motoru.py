@@ -604,9 +604,16 @@ def load_state():
 
 
 def save_state(state):
+    # ATOMİK yazım: doğrudan STATE_FILE'a yazmak dosyayı anında sıfırlıyordu;
+    # yazım ortasında süreç ölürse yarım JSON kalıyor ve load_state kurtaramıyor
+    # (aynı desen akibet_etiketle.py'de zaten doğru uygulanmış).
     os.makedirs(STATE_DIR, exist_ok=True)
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
+    gecici = STATE_FILE + ".tmp"
+    with open(gecici, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(gecici, STATE_FILE)
 
 
 def append_ledger(entry):

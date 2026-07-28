@@ -24,9 +24,11 @@ import re
 import sys
 from pathlib import Path
 
-# Yapısal sayılar: katman numaraları, tarih/saat parçaları, liste sıraları.
-# Bunlar piyasa iddiası değildir; kaynak aranmaz (ama listelenir).
-YAPISAL = {0, 1, 2, 3, 4, 5, 10, 100}
+# Yapısal sayılar: katman numaraları, liste sıraları — piyasa iddiası DEĞİL.
+# DARALTILDI: 2/3/4/5/10/100 aynı zamanda R katsayısı, kanal sayısı, kaldıraç ve
+# yüzde iddialarında geçiyordu; beyaz listede kalmaları bu iddiaların kaynak
+# denetiminden MUAF olması demekti (uydurma sayı için açık kapı).
+YAPISAL = {0, 1}
 # Negatif işaret yalnız rakam/nokta ile ÖNCELENMEMİŞSE geçerlidir; aksi halde
 # "64515.6-64707.5" gibi ARALIKLAR negatif sayı sanılır (yanlış KAYNAKSIZ).
 SAYI = re.compile(r"(?<![\d.,])[-+]?\d+(?:[.,]\d+)?")
@@ -60,7 +62,7 @@ def rapor_sayilari(nesne, kume=None) -> set:
     return kume
 
 
-def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
+def denetle(metin: str, rapor: dict, tolerans: float = 0.0) -> dict:
     kaynak = rapor_sayilari(rapor)
     zaman_sayisi = len(ZAMAN.findall(metin))
     metin = ZAMAN.sub(lambda m: "#" * len(m.group()), metin)   # zaman maskele
@@ -77,8 +79,14 @@ def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
         if v in YAPISAL:
             yapisal.append({"deger": v, "baglam": baglam})
             continue
-        if v in kaynak or any(abs(v - k) <= tolerans * max(1.0, abs(k))
-                              for k in kaynak):
+        # Kabul: birebir eşleşme YA DA raporun sayısının GÖSTERİM yuvarlaması
+        # (63511.096 → "63511.1"). Eskiden ölçüt bağıl bir banttı
+        # (tolerans*max(1,|k|) = %0.5) — BTC ölçeğinde ±320 USDT'lik pencere,
+        # yani uydurma bir sayı raporda yakın bir sayı olduğu için "kaynaklı"
+        # sayılabiliyordu. Artık bant YOK; yalnız yuvarlama denkliği kabul edilir.
+        if v in kaynak \
+                or any(round(k, d) == v for k in kaynak for d in (0, 1, 2, 3, 4)) \
+                or (tolerans > 0 and any(abs(v - k) <= tolerans for k in kaynak)):
             bulundu.append(v)
         else:
             kaynaksiz.append({"deger": v, "baglam": baglam})
@@ -89,6 +97,8 @@ def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
         "commit_kimligi_atlanan": sha_sayisi,
         "KAYNAKSIZ": kaynaksiz,
         "gecti": not kaynaksiz,
+        "tolerans": tolerans,          # gizli eşik kalmasın (0.0 = bant yok)
+        "yapisal_muaf": sorted(YAPISAL),
         "sinir": ("Yalnız SAYI kaynağı denetlenir; anlam/çıkarım doğruluğu "
                   "denetlenmez (elle ikinci-göz gerekir). Zaman damgaları "
                   "maskelenir — piyasa iddiası değildir."),

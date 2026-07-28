@@ -38,6 +38,14 @@ HAM = GIRDI / "turev_ham"
 
 MIN_M15 = 104        # engine/karar_motoru: N_VOL + 2*SWING_K + 4
 MIN_H4 = 25          # engine/karar_motoru: MA_SLOW + 5
+ANA_VARSAYILAN = "BTCUSDT"   # ana slot (engine/girdi) sahibi — paket seçemez
+
+
+def _sabit_yasak(c):
+    """json.loads NaN/Infinity'yi VARSAYILAN olarak kabul eder. NaN ile yapılan
+    her karşılaştırma False döndüğü için `_kline_gecerli`in 'artan sıra' kapısı
+    ve kancanın 'geri sarma' kapısı sessizce geçilebiliyordu."""
+    raise ValueError(f"JSON sabiti yasak: {c} (NaN/Infinity veri olamaz)")
 YOK = "VERİ YOK"
 
 
@@ -115,6 +123,11 @@ def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
             raise SystemExit(f"HATA: beyan edilen ana_sembol {ana} paketin "
                              f"semboller listesinde yok {semboller} — "
                              "ana slot sahibi belirsiz (fail-closed).")
+    elif ANA_VARSAYILAN in semboller:
+        # Beyan yoksa ana slot paketteki SIRAYA bırakılmaz: depo sabiti kazanır.
+        # Önceden `semboller[0]` idi; ETH'i başa alan bir paket BTC'nin
+        # engine/girdi slotunu eziyordu (ayrışmış sahte kıyas).
+        ana = ANA_VARSAYILAN
     else:
         ana = semboller[0] if semboller else None
     veri = paket.get("veri") or {}
@@ -197,9 +210,10 @@ def main(argv=None) -> int:
     if not p.exists():
         raise SystemExit(f"HATA: paket bulunamadı: {p}")
     try:
-        paket = json.loads(p.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-        raise SystemExit(f"HATA: paket JSON değil: {e}") from e
+        paket = json.loads(p.read_text(encoding="utf-8"),
+                           parse_constant=_sabit_yasak)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise SystemExit(f"HATA: paket JSON değil ya da geçersiz sabit: {e}") from e
 
     sonuc = ac_coklu(paket, a.sembol)
     print(json.dumps(sonuc, ensure_ascii=False, indent=2))
