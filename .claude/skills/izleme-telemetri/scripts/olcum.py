@@ -458,25 +458,25 @@ def self_test(dosya=None) -> dict:
     for sembol, durdu, ihl, kapsam, sureler in senaryolar:
         kid = yeni_kosu_id()
         kosular.append(kid)
-        t_kosu = 0.0
-        for ad, ms in zip(KATMANLAR, sureler):
-            # Gerçek zamanlayıcı kullanılır (sahte sayı ENJEKTE EDİLMEZ):
-            # blok gerçekten `ms/1000` kadar uyur, süre ölçülür.
-            with zamanlayici("piramit.katman.sure_ms", katman=ad, kosu_id=kid,
-                             sembol=sembol):
-                time.sleep(min(ms, 30.0) / 1000.0)
-            t_kosu += ms
-        with zamanlayici("piramit.motor.sure_ms", motor="smc_tespit",
-                         kosu_id=kid, sembol=sembol):
-            time.sleep(0.002)
-        try:
-            with zamanlayici("piramit.motor.sure_ms", motor="turev-akis",
-                             kosu_id=kid, sembol=sembol):
-                raise RuntimeError("türev paneli VERİ YOK")
-        except RuntimeError:
-            pass                             # hata sayacı yazıldı, koşu sürüyor
+        # Sarmalama İÇ İÇEDİR: koşu zamanlayıcısı katman/motor ölçümlerini
+        # kapsar → toplam süre ile parça süreleri tutarlı olur.
         with zamanlayici("piramit.kosu.sure_ms", kosu_id=kid, sembol=sembol):
-            time.sleep(0.003)
+            for ad, ms in zip(KATMANLAR, sureler):
+                # Gerçek zamanlayıcı kullanılır (sahte sayı ENJEKTE EDİLMEZ):
+                # blok gerçekten uyur, süre ÖLÇÜLÜR (öz-testi hızlı tutmak için
+                # uyku 30 ms ile sınırlanır).
+                with zamanlayici("piramit.katman.sure_ms", katman=ad,
+                                 kosu_id=kid, sembol=sembol):
+                    time.sleep(min(ms, 30.0) / 1000.0)
+            with zamanlayici("piramit.motor.sure_ms", motor="smc_tespit",
+                             kosu_id=kid, sembol=sembol):
+                time.sleep(0.002)
+            try:
+                with zamanlayici("piramit.motor.sure_ms", motor="turev-akis",
+                                 kosu_id=kid, sembol=sembol):
+                    raise RuntimeError("türev paneli VERİ YOK")
+            except RuntimeError:
+                pass                         # hata sayacı yazıldı, koşu sürüyor
         rapor = _sahte_rapor(sembol, durdu, ihl, kapsam)
         rapordan_yaz(rapor, kosu_id=kid, sembol=sembol)
         # Veri imzası = girdinin parmak izi, sonuç imzası = çıktının parmak izi.

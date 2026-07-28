@@ -1,0 +1,30 @@
+# OPSİYONEL — BU ORTAMDA KURULU DEĞİL (Prometheus yok, Docker yok).
+# Kaynak: a-claude-code-monitoring-guide/prometheus.yml (22 satır)
+# Uyarlama: kaynağın "your-app" yorum satırı, bu depodaki piramit ölçüm
+# köprüsüne (JSONL → OTLP/exporter, YAZILMADI) işaret edecek şekilde
+# somutlaştırıldı; scrape aralığı korundu.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # OpenTelemetry Collector'ın metrik ucunu topla
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+
+  # Prometheus'un kendisi
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Piramit köprüsü (opsiyonel, bu depoda YAZILMADI): state/olcum.jsonl'i
+  # OTLP'ye ya da bir /metrics ucuna çeviren süreç buraya eklenir.
+  # - job_name: 'piramit-olcum'
+  #   static_configs:
+  #     - targets: ['localhost:8890']

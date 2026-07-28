@@ -1,0 +1,57 @@
+# OPSİYONEL — BU ORTAMDA KURULU DEĞİL.
+# Docker / OpenTelemetry Collector / Prometheus / Grafana bu depoda YOKTUR.
+# Birincil ölçüm yolu yereldir: scripts/olcum.py → JSONL, scripts/rapor.py → MD.
+# Bu dosya, dış yığını kurmak İSTEYEN biri için kaynak rehberden uyarlanmıştır.
+#
+# Kaynak: a-claude-code-monitoring-guide/otel-collector-config.yaml (39 satır)
+# Uyarlama: alıcı/işlemci/dışa aktarıcı bloğu kaynakla AYNIDIR (jenerik OTLP
+# boru hattı; Claude Code'a özgü bir alan içermiyordu). Değişen tek şey
+# `metric_expiration` gerekçesi ve aşağıdaki köprü notudur.
+#
+# KÖPRÜ: JSONL → OTLP dönüştürücü bu becerinin kapsamında DEĞİLDİR (bağımlılık
+# gerektirir). state/olcum.jsonl'deki her satır zaten OTel veri noktası
+# şeklindedir: {"descriptor": {name,type,description,unit}, "attributes", "value"}
+# — böylece dışarı aktarım yazılacaksa alan eşlemesi birebirdir.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    send_timestamps: true
+    # Piramit koşuları seyrektir (günde birkaç kez); kaynaktaki 180m korunur ki
+    # iki koşu arasında seri düşmesin.
+    metric_expiration: 180m
+    enable_open_metrics: true
+
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+
+  extensions: []
+
+  telemetry:
+    logs:
+      level: "debug"
