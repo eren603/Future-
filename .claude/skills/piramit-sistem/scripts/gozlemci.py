@@ -327,7 +327,12 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
     # 4) rr denetimi seviye taşıyan her danışmana uygulandı mı?
     rr = k4.get("rr_denetimi") or {}
     seviyeli = set((k3.get("seviyeler") or {}))
-    atlanan = seviyeli - set(rr)
+    # ANAHTAR VARLIĞI YETMEZ, SONUÇ denetlenir: çağıran taraf rr_denetim
+    # koşamadığında da anahtarı "VERİ YOK — denetim yapılamadı" ile
+    # dolduruyor. Varlığa bakan kapı bunu "koştu" sayıp geçiyordu.
+    kosan = {a for a, v in rr.items()
+             if isinstance(v, dict) and YOK not in str(v.get("durum", ""))}
+    atlanan = seviyeli - kosan
     if atlanan:
         b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
                         f"seviye taşıyan {atlanan} için rr_denetim koşmadı"))

@@ -424,8 +424,13 @@ def main() -> int:
         report = run_contract(contract, input_override=args.input, contract_base=contract_path.parent)
         write_json(report, args.output)
         return 0 if report["status"] == "VERIFIED" else 2
-    except (DataContractError, json.JSONDecodeError, OSError) as exc:
-        write_json({"status": "QUARANTINE", "error": str(exc)}, args.output)
+    # HER hata yolunda karantina kaydı ZORUNLU: dar yakalama (yalnız
+    # DataContractError/JSONDecodeError/OSError) beklenmedik bir istisnada
+    # --output dosyasını HİÇ yazmıyordu → çağıran taraf eski/olmayan rapora
+    # bakıp "sözleşme geçti" sanabiliyordu (sessiz fail-OPEN).
+    except Exception as exc:  # noqa: BLE001
+        write_json({"status": "QUARANTINE",
+                    "error": f"{type(exc).__name__}: {exc}"}, args.output)
         return 2
 
 

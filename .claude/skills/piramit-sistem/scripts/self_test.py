@@ -70,7 +70,11 @@ def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="piramit_test_"))
     try:
         if agirlik_p.exists():
-            agirlik_p.unlink()   # T1 temiz başlasın (ağırlık 1.0 nötr)
+            # SİLMEK YERİNE TAŞI: eskiden unlink ediliyor ve yalnız `finally`
+            # ile geri yazılıyordu — SIGKILL/zaman aşımı finally'yi atlarsa
+            # ÖĞRENİLMİŞ SI AĞIRLIĞI KALICI KAYBOLUYORDU. Taşıma atomiktir ve
+            # süreç ölse bile dosya diskte durur (elle geri alınabilir).
+            agirlik_p.rename(agirlik_p.with_suffix(".json.oztest_yedek"))
 
         # ---- T1: zirveye tırmanma -----------------------------------------
         (tmp / "state").mkdir(parents=True, exist_ok=True)
@@ -668,6 +672,9 @@ def main() -> int:
                             "gorsel": str(z_dir / "gorsel.json")})
             j = json.loads(jz.read_text(encoding="utf-8"))
             j["state_dir"] = str(tmp / f"z_{ad}")
+            # state_dir HİÇ oluşturulmuyordu: üç senaryo da yazılamayan bir
+            # dizine işaret ediyordu (izolasyon iddiası kanıtsızdı).
+            Path(j["state_dir"]).mkdir(parents=True, exist_ok=True)
             jz.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
             k1z = [k for k in _kos(jz)["katmanlar"] if k["katman"] == "K1-LLM"][0]
             senaryo[ad] = (k1z.get("zorunlu_girdiler", {}).get("likidasyon") is not None,
@@ -862,8 +869,10 @@ def main() -> int:
                 f"arşivsiz={kapsamsiz['sonuc'][:28]}… | arşivli r={kapsamli.get('r')}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        tasinan = agirlik_p.with_suffix(".json.oztest_yedek")
         if yedek is not None:
             agirlik_p.write_text(yedek, encoding="utf-8")
+            tasinan.unlink(missing_ok=True)      # taşınan kopya artık gereksiz
         elif agirlik_p.exists():
             agirlik_p.unlink()
 

@@ -581,7 +581,20 @@ def decide(bars15, bars4h):
         risk = abs(karar["giris"] - karar["stop"])
         karar["r"] = round(abs(karar["t1"] - karar["giris"]) / risk, 2) if risk > 0 else None
         # Depo kuralı (Analiz yapma komutu, 5_RISK): R/R < 1.35 => kenar zayıf
-        if karar["r"] is None or karar["r"] < R_MIN:
+        # R TOTOLOJİSİ KAPATILDI: T1 ölçülen likiditeden değil R_T1_FALLBACK
+        # (1.5) sabitinden türediyse R = |T1−giriş|/risk zorunlu olarak 1.5
+        # çıkar ve R_MIN (1.35) kapısını DAİMA geçer — kapı kendi ürettiği
+        # sayıyı doğruluyordu, ölçüm yoktu. Ölçülmemiş hedefle işlem açılmaz.
+        r_totoloji = str(karar.get("hedef_kaynak", "")).startswith("R-katı")
+        if karar["r"] is None or karar["r"] < R_MIN or r_totoloji:
+            if r_totoloji:
+                karar = {"karar": "BEKLE", "yon": None, "zincir": karar["zincir"],
+                         "neden": ("BEKLE: %s sinyali var (zincir %d) ama T1 ÖLÇÜLEN "
+                                   "likiditeden değil R-katı sabitinden türedi — "
+                                   "R kapısı totoloji, ölçüm YOK (fail-closed)."
+                                   % (karar["yon"], karar["zincir"]))}
+                return karar, {"swings15": swings15, "swings4h": swings4h,
+                               "fvgs": fvgs, "rejim": rej, "rev": rev, "bos": bos}
             karar = {"karar": "BEKLE", "yon": None, "zincir": karar["zincir"],
                      "neden": ("BEKLE: %s sinyali var (zincir %d) ama kenar zayıf — "
                                "R=%s < %.2f (depo risk kuralı); T1 likiditesi stopa "

@@ -120,8 +120,12 @@ def varyans_orani(kapanis: list, q: int) -> dict:
     Saf rassal yürüyüşte q-periyot getiri varyansı = q × 1-periyot varyansı,
     yani VR(q)=1. VR>1 pozitif otokorelasyon (trend), VR<1 negatif (dönüş).
     """
+    # PAY da korunur: koşul yalnız paydayı koruyordu, kapanış 0/negatif olunca
+    # math.log(0.0) ValueError fırlatıp esikler() içindeki tek try'ı tetikliyor
+    # ve TÜM kalibrasyon statik korkuluğa düşüyordu (sessiz eşik kaybı).
     r = [math.log(kapanis[i] / kapanis[i - 1])
-         for i in range(1, len(kapanis)) if kapanis[i - 1] > 0]
+         for i in range(1, len(kapanis))
+         if kapanis[i - 1] > 0 and kapanis[i] > 0]
     n = len(r)
     if n < max(20, 2 * q):
         return {"durum": f"{YOK} — {n} getiri < gerek {max(20, 2 * q)}"}
