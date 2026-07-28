@@ -1799,7 +1799,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'gorsel-teyit', 'grafik-calisma', 'turev-akis'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'gorsel-teyit', 'grafik-calisma', 'karar-motoru', 'turev-akis'}",
           "oneri": ""
         },
         {
