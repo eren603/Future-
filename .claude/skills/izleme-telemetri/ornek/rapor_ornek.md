@@ -1,5 +1,5 @@
 # Piramit Boru Hattı İzleme Raporu
-## 2026-07-28T23:33:25Z - 2026-07-28T23:33:25Z
+## 2026-07-28T23:39:22Z - 2026-07-28T23:39:22Z
 
 > **Not**: Bu rapor `izleme-telemetri` becerisinin yerel JSONL ölçümlerinden üretildi (`/home/user/Future-/.claude/skills/izleme-telemetri/ornek/olcum_ornek.jsonl`, 72 veri noktası). OTel/Prometheus/Grafana bu ortamda KURULU DEĞİLDİR; dış yığın opsiyoneldir (`sunucu/`). Her sayı dosyadan okunmuştur.
 
@@ -14,11 +14,11 @@ Emir çıktısı: **2** koşuda emir üretildi, **1** koşuda "EMİR YOK". Deter
 ```mermaid
 pie
     title Katman Süre Dağılımı (ms)
-    "K1-LLM" : 90.5
+    "K1-LLM" : 90.4
     "K2-AI-AJAN" : 90.4
-    "K3-COKLU-AJAN" : 90.5
+    "K3-COKLU-AJAN" : 90.4
     "K4-AGI" : 60.2
-    "K5-SI" : 60.3
+    "K5-SI" : 60.2
 ```
 
 ### Anahtar Metrikler
@@ -68,7 +68,7 @@ Uyarılar (mühür sebebi değil): `TUNEL`×3
 |---|---|---|---|---|---|
 | K1-LLM | 3 | 30 ms | 30 ms | 30 ms | 90 ms |
 | K2-AI-AJAN | 3 | 30 ms | 30 ms | 30 ms | 90 ms |
-| K3-COKLU-AJAN | 3 | 30 ms | 30 ms | 30 ms | 91 ms |
+| K3-COKLU-AJAN | 3 | 30 ms | 30 ms | 30 ms | 90 ms |
 | K4-AGI | 2 | 30 ms | 30 ms | 30 ms | 60 ms |
 | K5-SI | 2 | 30 ms | 30 ms | 30 ms | 60 ms |
 
@@ -110,9 +110,9 @@ graph TD
 
 | Koşu | Sembol | Katman süresi | İhlal | Mühür | Durduğu kapı | Türev kapsamı | Emir |
 |---|---|---|---|---|---|---|---|
-| 212aaaf76501 | BTCUSDT | 151 ms | 0 | hayır | — | 1.00 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
-| c414ffe66394 | BTCUSDT | 151 ms | 1 | EVET | — | 0.55 | EMİR YOK — DENETİM MÜHÜRÜ |
-| 9157a6959c1d | ETHUSDT | 90 ms | 0 | hayır | K3-COKLU-AJAN | 0.40 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
+| b508d37030d0 | BTCUSDT | 151 ms | 0 | hayır | — | 1.00 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
+| c8608d769f92 | BTCUSDT | 151 ms | 1 | EVET | — | 0.55 | EMİR YOK — DENETİM MÜHÜRÜ |
+| 96da51b80fd4 | ETHUSDT | 90 ms | 0 | hayır | K3-COKLU-AJAN | 0.40 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
 
 ## Süre Analizi
 
@@ -134,7 +134,7 @@ pie
 
 | Koşu | Veri imzası | Önceki sonuç | Yeni sonuç |
 |---|---|---|---|
-| c414ffe66394 | 2a1a935fc626a01b | f0e47b77fb8f5edd | e10f3112cf69a9f4 |
+| c8608d769f92 | 2a1a935fc626a01b | f0e47b77fb8f5edd | e10f3112cf69a9f4 |
 
 ## Uygulanabilir İçgörüler
 

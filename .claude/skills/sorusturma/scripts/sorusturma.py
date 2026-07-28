@@ -721,7 +721,8 @@ def _mercek_yp_kural(b: dict, depo: Path, ctx: dict) -> dict:
                 "gerekce": f"YP kuralı {k.get('id')} ({k.get('ad')}): "
                            f"{_metin(k.get('gerekce')).strip()}"}
     return {"mercek": "yp_kural", "hukum": "GERCEK_ARIZA", "guven": 4,
-            "curutme_nedeni": "yok", "ilk_kanit": f"{len(ctx['yp']['kurallar'])} YP kuralı",
+            "curutme_nedeni": "yok",
+            "ilk_kanit": f"YP kuralları: {len(ctx['yp']['kurallar'])} kural, eşleşme yok",
             "gerekce": (f"{len(ctx['yp']['kurallar'])} yanlış-pozitif kuralının hiçbiri "
                         "tutmadı → tasarım savunması yok")}
 
@@ -922,6 +923,23 @@ def faz3_dogrula(durum: dict, args, durum_dizini: Path) -> dict:
         # pahalıdır ve oylamadan fayda görmez.
         n = 1 if not _metin(b.get("konum")).strip() else max(1, min(args.oy, len(MERCEKLER)))
         oylar = [_MERCEK_FN[m](b, depo, ctx) for m in MERCEKLER[:n]]
+        # YP KURALI VETOSU: kaynak sözleşmesinde dışlama kuralları HER
+        # doğrulayıcının önüne konur ("if the finding matches any of these, it
+        # is FALSE_POSITIVE even if technically accurate"), yani kural bir
+        # oyla geçiştirilemez. Kural (istisnasız) tuttuysa tüm oylar YANLIŞ
+        # POZİTİF'e çevrilir; her merceğin kendi kanıtı gerekçede KORUNUR.
+        veto = _mercek_yp_kural(b, depo, ctx)
+        if _metin(veto.get("hukum")) == "YANLIS_POZITIF":
+            b["yp_veto"] = veto.get("yp_kurali")
+            for o in oylar:
+                if _metin(o.get("hukum")) == "YANLIS_POZITIF":
+                    continue
+                o["gerekce"] = (f"[YP kural {veto.get('yp_kurali')} vetosu] "
+                                f"{_metin(veto.get('gerekce'))} — merceğin kendi "
+                                f"bulgusu: {_metin(o.get('gerekce'))}")
+                o.update({"hukum": "YANLIS_POZITIF", "guven": veto.get("guven", 8),
+                          "curutme_nedeni": veto.get("curutme_nedeni", "tasarim_geregi"),
+                          "yp_kurali": veto.get("yp_kurali")})
         for dis in (dis_oylar.get(aid) or []):
             if isinstance(dis, dict) and dis.get("hukum"):
                 dis.setdefault("mercek", "dis_dogrulayici")
@@ -943,14 +961,22 @@ def faz3_dogrula(durum: dict, args, durum_dizini: Path) -> dict:
 # FAZ 4 — ETKİ SIRALAMASI (yalnız onaylanan bulgular)
 # ==========================================================================
 def _on_kosul_turet(b: dict) -> list:
+    """Beyan edilen ön koşullar + metinden türetilenler.
+
+    Türetilen bir koşul, BEYAN EDİLEN bir koşulla AYNI işaretten geliyorsa
+    eklenmez — aksi halde aynı koşul iki kez sayılır ve şiddet yapay olarak
+    düşer (ön koşul sayısı şiddet tablosunun girdisidir).
+    """
     beyan = [_metin(x) for x in (b.get("on_kosullar") or []) if _metin(x).strip()]
     metin = _alan_metni(b, ("baslik", "belirti", "tekrar_senaryosu", "konum"))
-    turetilen = [etiket for desen, etiket in ON_KOSUL_ISARET
-                 if re.search(desen, metin, re.IGNORECASE)]
-    out = []
-    for x in beyan + turetilen:
-        if x not in out:
-            out.append(x)
+    out = list(beyan)
+    for desen, etiket in ON_KOSUL_ISARET:
+        if not re.search(desen, metin, re.IGNORECASE):
+            continue
+        if any(re.search(desen, x, re.IGNORECASE) for x in beyan):
+            continue                      # beyan zaten bu işareti kapsıyor
+        if etiket not in out:
+            out.append(etiket)
     return out
 
 

@@ -22,8 +22,8 @@
   ],
   "sure_ozet_ms": {
     "n": 13,
-    "ortalama": 31.602,
-    "en_uzun": 49.151
+    "ortalama": 30.126,
+    "en_uzun": 30.182
   },
   "kontroller": [
     {
@@ -90,8 +90,8 @@
   "SONUC": "GEÇTİ",
   "gecen": "15/15",
   "kosu_idler": [
-    "cd151ac153c2",
-    "bf7b280f7ff4",
-    "a1ba069762cd"
+    "88f7b76e1ad3",
+    "04e68a7ad491",
+    "1af9d2122202"
   ]
 }

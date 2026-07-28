@@ -17,9 +17,10 @@
  ],
  "_cozulmus": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_rapor.json",
  "yuttuklari": [],
+ "yp_veto": 1,
  "oy_dagilimi": {
-  "gercek_ariza": 1,
-  "yanlis_pozitif": 2,
+  "gercek_ariza": 0,
+  "yanlis_pozitif": 3,
   "dogrulanamadi": 0
  },
  "curutme_nedenleri": [
@@ -32,6 +33,6 @@
  ],
  "hukum": "yanlis_pozitif",
  "bolunmus_oy": false,
- "guven": 8.5,
- "gerekce": "YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar)."
+ "guven": 8.7,
+ "gerekce": "[YP kural 1 vetosu] YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar). — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:7 (1 isabet); belirti kaynaktan yeniden türetildi"
 }

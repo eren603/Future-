@@ -54,7 +54,7 @@
       "curutme_nedenleri": [],
       "yp_kurali": null,
       "ilk_kanitlar": [
-        "13 YP kuralı",
+        "YP kuralları: 13 kural, eşleşme yok",
         "ornek_rapor.json:10"
       ],
       "hukum": "gercek_ariza",
@@ -79,8 +79,7 @@
       "belirti": "defter satırında duzeltme_notu ile eski sonuç ezildi ve r_iptal_nedeni yazıldı; kalibrasyon o satırı artık göremiyor",
       "tekrar_senaryosu": "ikinci sembol (ETH) koşusunda aynı bar için iki kez karar yazılınca defter satırı üzerine yazılıyor",
       "on_kosullar": [
-        "ikinci sembol koşusu açık olmalı",
-        "ikinci sembol koşusu gerekir"
+        "ikinci sembol koşusu açık olmalı"
       ],
       "tarayici_guveni": 0.85,
       "id": "a003",
@@ -98,13 +97,13 @@
       "curutme_nedenleri": [],
       "yp_kurali": null,
       "ilk_kanitlar": [
-        "13 YP kuralı",
+        "YP kuralları: 13 kural, eşleşme yok",
         "ornek_defter.jsonl:1"
       ],
       "hukum": "gercek_ariza",
       "bolunmus_oy": false,
       "guven": 6.0,
-      "gerekce": "iddia artefaktta birebir bulundu: ornek_defter.jsonl:1 (2 isabet); belirti kaynaktan yeniden türetildi\n\nETKİ: 2 ön koşul, tekrar koşulu belirli_veride → ORTA",
+      "gerekce": "iddia artefaktta birebir bulundu: ornek_defter.jsonl:1 (2 isabet); belirti kaynaktan yeniden türetildi\n\nETKİ: 1 ön koşul, tekrar koşulu belirli_veride → ORTA",
       "tekrar_kosulu": "belirli_veride",
       "siddet_hizasi": -3,
       "etki_eslesmesi": null,
@@ -161,9 +160,10 @@
         "oneri"
       ],
       "yuttuklari": [],
+      "yp_veto": 1,
       "oy_dagilimi": {
-        "gercek_ariza": 1,
-        "yanlis_pozitif": 2,
+        "gercek_ariza": 0,
+        "yanlis_pozitif": 3,
         "dogrulanamadi": 0
       },
       "curutme_nedenleri": [
@@ -176,8 +176,8 @@
       ],
       "hukum": "yanlis_pozitif",
       "bolunmus_oy": false,
-      "guven": 8.5,
-      "gerekce": "YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar).",
+      "guven": 8.7,
+      "gerekce": "[YP kural 1 vetosu] YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar). — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:7 (1 isabet); belirti kaynaktan yeniden türetildi",
       "siddet_etiketi": null,
       "siddet_hizasi": null,
       "dogrulama_hukmu": null,
@@ -203,10 +203,11 @@
         "oneri"
       ],
       "yuttuklari": [],
+      "yp_veto": 2,
       "oy_dagilimi": {
-        "gercek_ariza": 1,
-        "yanlis_pozitif": 1,
-        "dogrulanamadi": 1
+        "gercek_ariza": 0,
+        "yanlis_pozitif": 3,
+        "dogrulanamadi": 0
       },
       "curutme_nedenleri": [
         "tasarim_geregi"
@@ -216,10 +217,10 @@
         "YP kural 2",
         "ornek_rapor.json:10"
       ],
-      "bolunmus_oy": true,
       "hukum": "yanlis_pozitif",
+      "bolunmus_oy": false,
       "guven": 9.0,
-      "gerekce": "YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. (oy bölündü, kesinlik politikasıyla düşürüldü)",
+      "gerekce": "[YP kural 2 vetosu] YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:10 (6 isabet); belirti kaynaktan yeniden türetildi",
       "siddet_etiketi": null,
       "siddet_hizasi": null,
       "dogrulama_hukmu": null,

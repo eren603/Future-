@@ -53,7 +53,7 @@
      "hukum": "GERCEK_ARIZA",
      "guven": 4,
      "curutme_nedeni": "yok",
-     "ilk_kanit": "13 YP kuralı",
+     "ilk_kanit": "YP kuralları: 13 kural, eşleşme yok",
      "gerekce": "13 yanlış-pozitif kuralının hiçbiri tutmadı → tasarım savunması yok"
     },
     {
@@ -68,7 +68,7 @@
    "curutme_nedenleri": [],
    "yp_kurali": null,
    "ilk_kanitlar": [
-    "13 YP kuralı",
+    "YP kuralları: 13 kural, eşleşme yok",
     "ornek_rapor.json:10"
    ],
    "hukum": "gercek_ariza",
@@ -143,7 +143,7 @@
      "hukum": "GERCEK_ARIZA",
      "guven": 4,
      "curutme_nedeni": "yok",
-     "ilk_kanit": "13 YP kuralı",
+     "ilk_kanit": "YP kuralları: 13 kural, eşleşme yok",
      "gerekce": "13 yanlış-pozitif kuralının hiçbiri tutmadı → tasarım savunması yok"
     },
     {
@@ -158,7 +158,7 @@
    "curutme_nedenleri": [],
    "yp_kurali": null,
    "ilk_kanitlar": [
-    "13 YP kuralı",
+    "YP kuralları: 13 kural, eşleşme yok",
     "ornek_defter.jsonl:1"
    ],
    "hukum": "gercek_ariza",
@@ -186,19 +186,21 @@
    ],
    "_cozulmus": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_rapor.json",
    "yuttuklari": [],
+   "yp_veto": 1,
    "oy_dagilimi": {
-    "gercek_ariza": 1,
-    "yanlis_pozitif": 2,
+    "gercek_ariza": 0,
+    "yanlis_pozitif": 3,
     "dogrulanamadi": 0
    },
    "_oylar": [
     {
      "mercek": "artefakt",
-     "hukum": "GERCEK_ARIZA",
-     "guven": 6,
-     "curutme_nedeni": "yok",
+     "hukum": "YANLIS_POZITIF",
+     "guven": 9,
+     "curutme_nedeni": "tasarim_geregi",
      "ilk_kanit": "ornek_rapor.json:7",
-     "gerekce": "iddia artefaktta birebir bulundu: ornek_rapor.json:7 (1 isabet); belirti kaynaktan yeniden türetildi"
+     "gerekce": "[YP kural 1 vetosu] YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar). — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:7 (1 isabet); belirti kaynaktan yeniden türetildi",
+     "yp_kurali": 1
     },
     {
      "mercek": "yp_kural",
@@ -228,8 +230,8 @@
    ],
    "hukum": "yanlis_pozitif",
    "bolunmus_oy": false,
-   "guven": 8.5,
-   "gerekce": "YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar).",
+   "guven": 8.7,
+   "gerekce": "[YP kural 1 vetosu] YP kuralı 1 (kapi_dusmesi_tasarimdir): Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır: piramit.py \"FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse üst katman KOŞMAZ\". Arıza olan, kapının düşmesi değil kapının UYGULANMAMASIDIR (istisna deseni onu yakalar). — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:7 (1 isabet); belirti kaynaktan yeniden türetildi",
    "_oy_sayisi": 3
   },
   {
@@ -251,19 +253,21 @@
    ],
    "_cozulmus": "/home/user/Future-/.claude/skills/sorusturma/ornek/ornek_rapor.json",
    "yuttuklari": [],
+   "yp_veto": 2,
    "oy_dagilimi": {
-    "gercek_ariza": 1,
-    "yanlis_pozitif": 1,
-    "dogrulanamadi": 1
+    "gercek_ariza": 0,
+    "yanlis_pozitif": 3,
+    "dogrulanamadi": 0
    },
    "_oylar": [
     {
      "mercek": "artefakt",
-     "hukum": "GERCEK_ARIZA",
-     "guven": 8,
-     "curutme_nedeni": "yok",
+     "hukum": "YANLIS_POZITIF",
+     "guven": 9,
+     "curutme_nedeni": "tasarim_geregi",
      "ilk_kanit": "ornek_rapor.json:10",
-     "gerekce": "iddia artefaktta birebir bulundu: ornek_rapor.json:10 (6 isabet); belirti kaynaktan yeniden türetildi"
+     "gerekce": "[YP kural 2 vetosu] YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:10 (6 isabet); belirti kaynaktan yeniden türetildi",
+     "yp_kurali": 2
     },
     {
      "mercek": "yp_kural",
@@ -276,11 +280,12 @@
     },
     {
      "mercek": "tasarim",
-     "hukum": "DOGRULANAMADI",
-     "guven": 3,
-     "curutme_nedeni": "yok",
+     "hukum": "YANLIS_POZITIF",
+     "guven": 9,
+     "curutme_nedeni": "tasarim_geregi",
      "ilk_kanit": "VERİ YOK",
-     "gerekce": "kategori 'KARAR' deponun sözleşme kümelerinde (kritik/uyarı) yer almıyor → tasarım mı arıza mı statik olarak belirsiz"
+     "gerekce": "[YP kural 2 vetosu] YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. — merceğin kendi bulgusu: kategori 'KARAR' deponun sözleşme kümelerinde (kritik/uyarı) yer almıyor → tasarım mı arıza mı statik olarak belirsiz",
+     "yp_kurali": 2
     }
    ],
    "curutme_nedenleri": [
@@ -291,10 +296,10 @@
     "YP kural 2",
     "ornek_rapor.json:10"
    ],
-   "bolunmus_oy": true,
    "hukum": "yanlis_pozitif",
+   "bolunmus_oy": false,
    "guven": 9.0,
-   "gerekce": "YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. (oy bölündü, kesinlik politikasıyla düşürüldü)",
+   "gerekce": "[YP kural 2 vetosu] YP kuralı 2 (bekle_karari_arizadegil): BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md \"YÖN ZORUNLU\" kuralı). Arıza yalnız YÖN de gizlendiyse vardır. — merceğin kendi bulgusu: iddia artefaktta birebir bulundu: ornek_rapor.json:10 (6 isabet); belirti kaynaktan yeniden türetildi",
    "_oy_sayisi": 3
   },
   {
@@ -343,7 +348,5 @@
   "/home/user/Future-/.claude/skills/sorusturma/kurallar/yanlis_pozitif.yaml"
  ],
  "yp_kural_sayisi": 13,
- "bolunmus_oylar": [
-  "a005"
- ]
+ "bolunmus_oylar": []
 }

@@ -15,7 +15,7 @@ Bağlam: auto; kapsam = Bilinmiyor. Boru hattının TAMAMI kapsam sayılır; han
 **Neden:** EKSIK_AKTARIM deponun KENDİ sözleşmesinde KRİTİK ihlaldir (gozlemci.py KRITIK kümesi, VERİ YOK) — kritik ihlalde işlem kalitesi mühürlenir
 
 ETKİ: 0 ön koşul, tekrar koşulu her_kosuda → YÜKSEK; hafifletici kontrol devrede → gözlemci mührü: kritik ihlalde EMİR kapatılır ve işlem kalitesi MÜHÜRLENİR (piramit.py fail-closed korkuluğu)
-**Kanıt izi:** 13 YP kuralı, ornek_rapor.json:10
+**Kanıt izi:** YP kuralları: 13 kural, eşleşme yok, ornek_rapor.json:10
 **Yuttukları:** a002
 **Öneri (girdiden):** piramit.py içinde kiyas.kiyasla çağrısı istisna yutuyor olabilir; try bloğunun gerekçesi rapora taşınmalı
 
@@ -23,15 +23,14 @@ ETKİ: 0 ön koşul, tekrar koşulu her_kosuda → YÜKSEK; hafifletici kontrol 
 `ornek/ornek_defter.jsonl:duzeltme_notu` | SICIL_EZILME | iddia edilen İHLAL (hiza -3) | güven 6.0/10
 **Sahip:** en çok katkı veren: Claude (1/1 son commit); CODEOWNERS kaydı yok
 **Hüküm:** elle_inceleme_gerek, oylar {'gercek_ariza': 2, 'yanlis_pozitif': 0, 'dogrulanamadi': 1}
-**Ön koşullar (2):** 
+**Ön koşullar (1):** 
 - ikinci sembol koşusu açık olmalı
-- ikinci sembol koşusu gerekir
 **Tekrar koşulu:** belirli_veride
 **Etki modeli eşleşmesi:** yok
 **Neden:** iddia artefaktta birebir bulundu: ornek_defter.jsonl:1 (2 isabet); belirti kaynaktan yeniden türetildi
 
-ETKİ: 2 ön koşul, tekrar koşulu belirli_veride → ORTA
-**Kanıt izi:** 13 YP kuralı, ornek_defter.jsonl:1
+ETKİ: 1 ön koşul, tekrar koşulu belirli_veride → ORTA
+**Kanıt izi:** YP kuralları: 13 kural, eşleşme yok, ornek_defter.jsonl:1
 
 > Statik muhakeme sınırına dayandı; bu bulguyu ELLE tekrar üret (kontrollü koşu) — otomatik hüküm verilmedi.
 ## Düşenler
