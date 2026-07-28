@@ -8,16 +8,13 @@ description: >-
   regex desen aileleriyle genel felaket cümlesi, seviyesiz tavsiye, işletim
   bulgusu, düşük etkili/teorik mikro-yapı, kapsam dışı (canlı emir) iddiaları;
   (2) BAĞLAM KAPISI — türev iddiası fiyat-yapısı motorundan geliyorsa ya da
-  turev kapsamı 0.5 altındaysa, squeeze/kaskad bayrağı RANGE rejimindeyse,
-  elle okuma damgasız/240 dk'dan bayatsa; (3) EMSAL DENETİMİ — 33 maddelik
-  emsal defterine (emsaller/emsal_defteri.yaml) karşı kontrol + 1-10 güven
-  bandı. Çalışan motor scripts/eleme.py (öz-test: --self-test, 16 vaka).
-  Tetikleyici kelimeler (TR/EN): eleme, ele, filtre, filter, yanlış pozitif,
-  false positive, gürültü, noise, emsal, precedent, sinyal kalitesi, signal
-  quality, danışman ayıklama, iddia denetimi, düşük sinyal, alert fatigue.
-  Kaynak: claude-code-security-review eleme boru hattı (findings_filter.py +
-  claude_api_client.py) — güvenlik alanından finans karar-desteğine çevrildi.
-allowed-tools: Read, Bash
+  turev kapsamı 0.5 altındaysa, squeeze/kaskad bayrağı RANGE rejimindeyse, elle
+  okuma damgasız/240 dk'dan bayatsa; (3) EMSAL DENETİMİ — emsal defterine
+  (emsaller/emsal_defteri.yaml) karşı kontrol + 1-10 güven bandı. Çalışan motor
+  scripts/eleme.py (öz-test: --self-test, 16 vaka). Tetikleyici kelimeler
+  (TR/EN): eleme, ele, filtre, filter, yanlış pozitif, false positive, gürültü,
+  noise, emsal, precedent, sinyal kalitesi, signal quality, danışman ayıklama,
+  iddia denetimi, düşük sinyal, alert fatigue.
 ---
 
 # Eleme Motoru (emsal defteri + bağlam-duyarlı filtre + eleme istatistiği)

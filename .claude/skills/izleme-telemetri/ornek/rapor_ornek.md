@@ -1,11 +1,11 @@
 # Piramit Boru Hattı İzleme Raporu
-## 2026-07-28T23:39:22Z - 2026-07-28T23:39:22Z
+## 2026-07-28T23:43:19Z - 2026-07-28T23:43:19Z
 
 > **Not**: Bu rapor `izleme-telemetri` becerisinin yerel JSONL ölçümlerinden üretildi (`/home/user/Future-/.claude/skills/izleme-telemetri/ornek/olcum_ornek.jsonl`, 72 veri noktası). OTel/Prometheus/Grafana bu ortamda KURULU DEĞİLDİR; dış yığın opsiyoneldir (`sunucu/`). Her sayı dosyadan okunmuştur.
 
 ## Yönetici Özeti
 
-Bu dönemde **3 piramit koşusu** ölçüldü; **1** koşu bir katman kapısında durdu, **1** koşu gözlemci kritik ihlaliyle **mühürlendi** (işlem yok). Danışman doğrulama oranı **%33** (2/6). Toplam katman süresi **392 ms**, koşu başına ortalama **134 ms**.
+Bu dönemde **3 piramit koşusu** ölçüldü; **1** koşu bir katman kapısında durdu, **1** koşu gözlemci kritik ihlaliyle **mühürlendi** (işlem yok). Danışman doğrulama oranı **%33** (2/6). Toplam katman süresi **396 ms**, koşu başına ortalama **135 ms**.
 
 Emir çıktısı: **2** koşuda emir üretildi, **1** koşuda "EMİR YOK". Determinizm: **0** tekrar gözlemi aynı, **1** kırık (2 ilk gözlem kıyaslanmadı).
 
@@ -15,16 +15,16 @@ Emir çıktısı: **2** koşuda emir üretildi, **1** koşuda "EMİR YOK". Deter
 pie
     title Katman Süre Dağılımı (ms)
     "K1-LLM" : 90.4
-    "K2-AI-AJAN" : 90.4
-    "K3-COKLU-AJAN" : 90.4
-    "K4-AGI" : 60.2
+    "K2-AI-AJAN" : 94.7
+    "K3-COKLU-AJAN" : 90.5
+    "K4-AGI" : 60.3
     "K5-SI" : 60.2
 ```
 
 ### Anahtar Metrikler
 
 - **Koşu Sayısı**: 3 (BTCUSDT: 2, ETHUSDT: 1)
-- **Ortalama Koşu Süresi**: 134 ms (p50 154 ms, p95 154 ms)
+- **Ortalama Koşu Süresi**: 135 ms (p50 154 ms, p95 154 ms)
 - **Danışman Doğrulama Oranı**: %33
   - gorsel-teyit: %0 (0/2)
   - grafik-calisma: %0 (0/2)
@@ -50,8 +50,8 @@ Boru hattının kendi artefaktından (piramit raporu) okunan kapı ve danışman
 
 | Danışman | Doğrulandı | Doğrulanmadı | Oran |
 |---|---|---|---|
-| gorsel-teyit | 0 | 2 | %0 |
 | grafik-calisma | 0 | 2 | %0 |
+| gorsel-teyit | 0 | 2 | %0 |
 | karar-motoru | 2 | 0 | %100 |
 
 ### Gözlemci İhlalleri
@@ -67,7 +67,7 @@ Uyarılar (mühür sebebi değil): `TUNEL`×3
 | Katman | Koşu | Ortalama | p95 | En uzun | Toplam |
 |---|---|---|---|---|---|
 | K1-LLM | 3 | 30 ms | 30 ms | 30 ms | 90 ms |
-| K2-AI-AJAN | 3 | 30 ms | 30 ms | 30 ms | 90 ms |
+| K2-AI-AJAN | 3 | 32 ms | 34 ms | 34 ms | 95 ms |
 | K3-COKLU-AJAN | 3 | 30 ms | 30 ms | 30 ms | 90 ms |
 | K4-AGI | 2 | 30 ms | 30 ms | 30 ms | 60 ms |
 | K5-SI | 2 | 30 ms | 30 ms | 30 ms | 60 ms |
@@ -83,13 +83,13 @@ graph TD
     B4["Kapı durdurma: 0"]
     end
     subgraph "Son yarı"
-    A1["Katman süresi: 121 ms"]
+    A1["Katman süresi: 123 ms"]
     A2["İhlal/koşu: 0.50"]
     A3["Mühür: 1"]
     A4["Kapı durdurma: 1"]
     end
     subgraph "Değişim"
-    I1["-20.0%"]
+    I1["-18.6%"]
     I2["+0.50"]
     I3["+1"]
     I4["+1"]
@@ -110,9 +110,9 @@ graph TD
 
 | Koşu | Sembol | Katman süresi | İhlal | Mühür | Durduğu kapı | Türev kapsamı | Emir |
 |---|---|---|---|---|---|---|---|
-| b508d37030d0 | BTCUSDT | 151 ms | 0 | hayır | — | 1.00 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
-| c8608d769f92 | BTCUSDT | 151 ms | 1 | EVET | — | 0.55 | EMİR YOK — DENETİM MÜHÜRÜ |
-| 96da51b80fd4 | ETHUSDT | 90 ms | 0 | hayır | K3-COKLU-AJAN | 0.40 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
+| 1956001b34c3 | BTCUSDT | 151 ms | 0 | hayır | — | 1.00 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
+| 541c4c296787 | BTCUSDT | 151 ms | 1 | EVET | — | 0.55 | EMİR YOK — DENETİM MÜHÜRÜ |
+| 7eea910a34e3 | ETHUSDT | 95 ms | 0 | hayır | K3-COKLU-AJAN | 0.40 | LIMIT LONG @100.0 \| 98.0 \| 104.0 \| R=2.00 |
 
 ## Süre Analizi
 
@@ -125,22 +125,22 @@ pie
     "turev-akis" : 0.0
 ```
 
-- **Toplam Katman Süresi**: 392 ms
+- **Toplam Katman Süresi**: 396 ms
 - **Toplam Motor Süresi (sarmalanan)**: 6 ms
-- **Koşu Başına Süre**: 134 ms
+- **Koşu Başına Süre**: 135 ms
 - **Türev Kapsamı**: ortalama 0.65, en düşük 0.40, en yüksek 1.00 (n=3)
 - **Kapsam Dağılımı**: 0.25–0.50: 1, 0.50–0.75: 1, 0.75–1.00: 1
 - **Determinizm**: 0 aynı / 1 kırık / 2 ilk gözlem
 
 | Koşu | Veri imzası | Önceki sonuç | Yeni sonuç |
 |---|---|---|---|
-| c8608d769f92 | 2a1a935fc626a01b | f0e47b77fb8f5edd | e10f3112cf69a9f4 |
+| 541c4c296787 | 2a1a935fc626a01b | f0e47b77fb8f5edd | e10f3112cf69a9f4 |
 
 ## Uygulanabilir İçgörüler
 
 1. **Kronik kapı `K3-COKLU-AJAN`**: 3 koşunun 1'inde (%33) boru hattı burada durdu — gerekçe: K3-COKLU-AJAN kapısı KAPALI: yetersiz kanıt
-2. **`gorsel-teyit` danışmanı zayıf doğrulanıyor**: 2 koşuda doğrulama oranı %0 (kural: < %50). Bu danışmanın kanıtı sentezde ağırlık kaybediyor.
-3. **`grafik-calisma` danışmanı zayıf doğrulanıyor**: 2 koşuda doğrulama oranı %0 (kural: < %50). Bu danışmanın kanıtı sentezde ağırlık kaybediyor.
+2. **`grafik-calisma` danışmanı zayıf doğrulanıyor**: 2 koşuda doğrulama oranı %0 (kural: < %50). Bu danışmanın kanıtı sentezde ağırlık kaybediyor.
+3. **`gorsel-teyit` danışmanı zayıf doğrulanıyor**: 2 koşuda doğrulama oranı %0 (kural: < %50). Bu danışmanın kanıtı sentezde ağırlık kaybediyor.
 4. **En sık gözlemci ihlali `UYDURMA`**: 1 kez (KRİTİK — mühür sebebi). Toplam mühürlenen koşu: 1.
 5. **Zorunlu girdi `likidasyon` en sık eksik**: 3 kez. Kapsam bu yüzden 1.00'e çıkamıyor; karar eksik kanalla veriliyor.
 6. **Türev kapsamı ortalama 0.65** (hedef 1.00); 1 koşu turev-akis'in kendi fail-closed eşiğinin (0.5) altında kaldı → danışman doğrulanmamış sayıldı.

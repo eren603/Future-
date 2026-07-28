@@ -1,6 +1,19 @@
 ---
 name: sema-dogrulama
-description: Elle gelen (UNTRUSTED) girdi dosyalarını şemaya karşı doğrulayan enjeksiyona-dayanıklı kapı. Bir dosya insan/panel/ekran-görüntüsü okumasıyla üretildiyse ve motora girecekse OTOMATİK devreye girer — slash komutu gerekmez. Özellikle engine/girdi/gorsel_okuma.json ve engine/girdi/turev_ham/likidasyon.json (zorunlu girdiler) boru hattına girmeden ÖNCE doğrulanır. Şema korkulukları: maxLength, pattern, enum, additionalProperties:false, maxItems, required, minimum/maximum. Çalışan motor scripts/sema_dogrula.py — stdlib-only (jsonschema BU DEPODA KURULU DEĞİL); geçerliyse exit 0 + "OK", geçersizse exit 1 + stderr'e "INVALID: <mesaj> at <yol>". Tetikleyici kelimeler (TR/EN): şema, sema, doğrula, validate, schema, JSON doğrulama, girdi denetimi, prompt injection, enjeksiyon, untrusted, elle girdi, panel okuması, görsel okuma, likidasyon dosyası, zorunlu girdi kontrolü.
+description: >-
+  Elle gelen (UNTRUSTED) girdi dosyalarını şemaya karşı doğrulayan
+  enjeksiyona-dayanıklı kapı. Bir dosya insan/panel/ekran-görüntüsü okumasıyla
+  üretildiyse ve motora girecekse OTOMATİK devreye girer — slash komutu
+  gerekmez. Özellikle engine/girdi/gorsel_okuma.json ve
+  engine/girdi/turev_ham/likidasyon.json (zorunlu girdiler) boru hattına
+  girmeden ÖNCE doğrulanır. Şema korkulukları: maxLength, pattern, enum,
+  additionalProperties:false, maxItems, required, minimum/maximum. Çalışan motor
+  scripts/sema_dogrula.py — stdlib-only (jsonschema BU DEPODA KURULU DEĞİL);
+  geçerliyse exit 0 + "OK", geçersizse exit 1 + stderr'e "INVALID: <mesaj> at
+  <yol>". Tetikleyici kelimeler (TR/EN): şema, sema, doğrula, validate, schema,
+  JSON doğrulama, girdi denetimi, prompt injection, enjeksiyon, untrusted, elle
+  girdi, panel okuması, görsel okuma, likidasyon dosyası, zorunlu girdi
+  kontrolü.
 ---
 
 # sema-dogrulama — untrusted girdi kapısı

@@ -1,6 +1,20 @@
 ---
 name: izleme-telemetri
-description: Piramit boru hattının KENDİSİNİ ölçen yerel telemetri becerisi. Bir soru ya da iş "koşu ne kadar sürdü", "hangi katman yavaş", "hangi kapıda durduk", "hangi danışman doğrulanmıyor", "gözlemci kaç ihlal verdi", "zorunlu girdi kaç kez eksikti", "türev kapsamı ne", "aynı veriyle aynı sonucu alıyor muyuz" (determinizm), izleme, telemetri, metrik, ölçüm, gözlemlenebilirlik, performans raporu, boru hattı sağlığı ile ilgili olduğunda OTOMATİK devreye girer — slash komutu gerekmez. Çalışan motorlar: scripts/olcum.py (bağımlılıksız JSONL metrik yazıcı + `zamanlayici` context manager ile motor/katman sarmalama) ve scripts/rapor.py (JSONL → Markdown rapor: özet, katman/kapı dökümü, trend, mermaid). Sıfır bağımlılık (stdlib); OTel/Prometheus/Grafana BU ORTAMDA KURULU DEĞİLDİR — dış yığın `sunucu/` altında OPSİYONELDİR. Tetikleyici kelimeler (TR/EN): izleme, telemetri, metrik, ölçüm, monitoring, observability, süre, latency, profil, darboğaz, bottleneck, kapı, gate, ihlal, determinizm, sağlık, health, dashboard, rapor, ROI.
+description: >-
+  Piramit boru hattının KENDİSİNİ ölçen yerel telemetri becerisi. Bir soru ya da
+  iş "koşu ne kadar sürdü", "hangi katman yavaş", "hangi kapıda durduk", "hangi
+  danışman doğrulanmıyor", "gözlemci kaç ihlal verdi", "zorunlu girdi kaç kez
+  eksikti", "türev kapsamı ne", "aynı veriyle aynı sonucu alıyor muyuz"
+  (determinizm), izleme, telemetri, metrik, ölçüm, gözlemlenebilirlik,
+  performans raporu, boru hattı sağlığı ile ilgili olduğunda OTOMATİK devreye
+  girer — slash komutu gerekmez. Çalışan motorlar; scripts/olcum.py
+  (bağımlılıksız JSONL metrik yazıcı + `zamanlayici` context manager ile
+  motor/katman sarmalama) ve scripts/rapor.py (JSONL → Markdown rapor; özet,
+  katman/kapı dökümü, trend, mermaid). OTel/Prometheus/Grafana BU ORTAMDA KURULU
+  DEĞİLDİR — dış yığın `sunucu/` altında OPSİYONELDİR. Tetikleyici kelimeler
+  (TR/EN); izleme, telemetri, metrik, ölçüm, monitoring, observability, süre,
+  latency, profil, darboğaz, bottleneck, kapı, gate, ihlal, determinizm, sağlık,
+  health, dashboard, rapor, ROI.
 ---
 
 # izleme-telemetri — piramit boru hattının kendi telemetrisi

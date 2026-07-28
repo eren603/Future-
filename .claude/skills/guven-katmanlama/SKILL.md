@@ -3,18 +3,18 @@ name: guven-katmanlama
 description: >-
   Güven katmanlama / izolasyon becerisi. Bir koşuda GÜVENİLMEZ girdi
   (yapıştırılan CoinGlass-borsa paneli metni, grafik ekran görüntüsü veya video
-  okuması, elle girilen likidasyon değerleri) işlenecekse OTOMATİK devreye
-  girer — slash komutu gerekmez. Bu girdileri okuyan bileşenin bir kabuğa, bir
-  yazma aracına ya da motor siciline ULAŞAMADIĞINI mekanik olarak doğrular:
-  okuyucu (güvenilmez okur, yazamaz) / denetçi (yalnız güvenilir kaynak,
-  yazamaz) / yazıcı (tek write sahibi, güvenilmez okumaz). Ayrıca boru hattı
-  çıktısında yankılanan devir (handoff) taleplerini sabit allowlist + uzunluk ve
-  regex sınırlı yük şemasından geçirir. Çalışan motorlar: scripts/katman_denetle.py
-  (iş tanımı → TEMİZ/İHLAL), scripts/devir_allowlist.py (devir talebi → KABUL/RED).
-  Sıfır bağımlılık (stdlib; jsonschema BU DEPODA KURULU DEĞİL). Tetikleyici
-  kelimeler (TR/EN): güven katmanı, izolasyon, karantina, güvenilmez girdi,
-  untrusted, prompt injection, enjeksiyon, yetki, yazma yetkisi, allowlist,
-  devir, handoff, panel metni, görsel okuma, likidasyon dosyası, sandbox.
+  okuması, elle girilen likidasyon değerleri) işlenecekse OTOMATİK devreye girer
+  — slash komutu gerekmez. Bu girdileri okuyan bileşenin bir kabuğa, bir yazma
+  aracına ya da motor siciline ULAŞAMADIĞINI mekanik olarak doğrular: okuyucu
+  (güvenilmez okur, yazamaz) / denetçi (yalnız güvenilir kaynak, yazamaz) /
+  yazıcı (tek write sahibi, güvenilmez okumaz). Ayrıca boru hattı çıktısında
+  yankılanan devir (handoff) taleplerini sabit allowlist + uzunluk ve regex
+  sınırlı yük şemasından geçirir. Çalışan motorlar: scripts/katman_denetle.py
+  (iş tanımı → TEMİZ/İHLAL), scripts/devir_allowlist.py (devir talebi →
+  KABUL/RED). Tetikleyici kelimeler (TR/EN): güven katmanı, izolasyon,
+  karantina, güvenilmez girdi, untrusted, prompt injection, enjeksiyon, yetki,
+  yazma yetkisi, allowlist, devir, handoff, panel metni, görsel okuma,
+  likidasyon dosyası, sandbox.
 ---
 
 # Güven katmanlama — güvenilmez girdi ile yazma yetkisini AYIRMA
