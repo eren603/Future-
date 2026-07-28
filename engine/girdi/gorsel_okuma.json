@@ -3,29 +3,30 @@
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
   "trend": "bear",
-  "yapi_olayi": "65000 bölgesinden 63567.00'a sert kırılım — fiyat tüm 15M ve 4S MA'ların altında; 63567 dibinden zayıf tepki",
+  "yapi_olayi": "63021.00 dibinden toparlanma 63600'e — 15M MA'lar iç içe (sıkışma), fiyat MA'ların hafif üstünde; 4S MA'ların hâlâ belirgin altında",
   "seviyeler": {
     "direnc": [
-      64000,
-      64300,
-      64800
+      63600,
+      63800,
+      64000
     ],
     "destek": [
-      63600,
-      63567
+      63300,
+      63200,
+      63021
     ]
   },
   "gozlem": [
-    "15M heatmap: fiyat 63822.80; dip 63567.00, tepe 65689.60; bantlar ~63600 / ~64000 / ~64800",
-    "4S panel: fiyat 63825, -2.3%; fiyat < MA5 64714.84 < MA30 64718.86 < MA10 64809.47 (tümünün ALTINDA); funding +0.0054%; bu 4S barda likidasyon Longs 28.8M / Shorts 386.8K — LONG flush; OI 104.8K→105.6K (düşüşte OI YÜKSELİYOR = yeni short/absorpsiyon)",
-    "15M panel: MA5 63875.05 / MA10 64303.97 / MA30 64710.45 aşağı sıralı (bear dizilim); dip 63567.00 07/28 01:45 etiketiyle; bu 15M barda likidasyon Longs 63.8 / Shorts 63.9 (küçük — flush tamamlanmış görünüyor)",
-    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 63567.00 BİREBİR (ölçüm 63567.0); panel tepe 65689.60 BİREBİR (ölçüm 65689.6); panel ~64800 ↔ ölçüm 64811.0 (sapma 11); panel ~64000 ↔ ölçüm 64063.8 (sapma 63.8); panel ~63600 ↔ ölçüm 63567.0 (sapma 33) — 5/5 bant iki bağımsız kaynakta örtüştü",
-    "Çapraz trend teyidi: görsel sert kırılım + MA-altı ↔ smc_tespit trend=bear (ADX 27.78) — UYUMLU; önceki koşunun bull okuması bu barda İKİ kaynakta birden DÖNDÜ"
+    "15M heatmap: fiyat 63510.00; dip 63021.00 (07/28 03:30 civarı), sol tepe 64880.10; koyu likidite bantları ~64000 üstte, ~63300/63200 altta; 63021'den 63600'e toparlanıp 63400-63500 bandında konsolidasyon",
+    "4S panel: fiyat 63508, -2.86%; 24S menzil 63021-65690; fiyat < MA5 63795.70 < MA10 64440.14 < MA30 64506.63 (tümünün altında); funding +0.0028%; bu 4S barda likidasyon Longs 229.9K / Shorts 136.0K (küçük — flush bitti); OI 106.0K→105.4K (yüksek kaldı)",
+    "15M panel: MA5 63410.26 / MA10 63427.88 / MA30 63428.54 İÇ İÇE (sıkışma), fiyat 63508 hafif üstünde; funding şeridinde düşüş sırasında SARI (negatif) bölge oluşup tekrar pozitife döndü; bu 15M barda likidasyon yok (--/--)",
+    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 63021.00 BİREBİR (ölçüm 63021.0); panel sol tepe 64880.10 ↔ ölçüm 64876.96667 (sapma 3.13); panel ~64000 bandı ↔ ölçüm 64063.8 (63.8); panel ~63600 ↔ ölçüm 63588.0 (12); panel ~63200 ↔ ölçüm 63212.1 (12.1) — 5 bant iki bağımsız kaynakta örtüştü",
+    "Çapraz trend teyidi: görsel sıkışma-altı-bear (fiyat 4S MA'ların altında) ↔ smc_tespit trend=bear ama ADX 13.59 (trend gücü ZAYIFLADI — sıkışma) — UYUMLU"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 63.8 puan, bant genişliği içinde). Dikkat: düşüş barında OI artışı (104.8K→105.6K) — long flush sonrası taze short girişi; funding hâlâ pozitif (+0.0054) = squeeze yakıtı taşıyor",
+  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 63.8, bant genişliği içinde). Dikkat: ADX 27.78→13.59 düştü — düşüş momentumu soğudu, 15M sıkışması var; OI yüksek kalırken funding'in negatife değip toparlanması iki yönlü gergin pozisyonlanma demek",
   "guven": 0.5,
-  "zaman_utc": "2026-07-27 23:34",
-  "zaman_yerel": "2026-07-28 02:33-02:34 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 02:33-02:34 (UTC+3) → UTC 23:33-23:34; paket çekimi 2026-07-27 23:35 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-28 10:46",
+  "zaman_yerel": "2026-07-28 13:46-13:47 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:46-13:47 (UTC+3) → UTC 10:46-10:47; paket çekimi 2026-07-28 10:47:54 UTC ile aynı dakikalar"
 }

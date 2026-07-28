@@ -1,0 +1,18 @@
+{
+  "aciklama": "Kullanıcıya SUNULMUŞ ve mekanik ölçümde hâlâ AÇIK olan emir — sicil ezilmesine karşı kalıcı takip kaydı; her yeni koşuda simule_et ile ölçülür, kapanınca (STOP/T1/INVALIDATION) bu dosyadan düşülür",
+  "sembol": "ETHUSDT",
+  "sunum_utc": "2026-07-27 (23:35 paketi turu)",
+  "karar_bari": 1785195000000,
+  "karar_bari_utc": "2026-07-27 23:30",
+  "yon": "SHORT",
+  "giris": 1891.66,
+  "giris_alt": 1891.66,
+  "giris_ust": 1891.66,
+  "stop": 1924.993333,
+  "t1": 1846.66,
+  "giris_tipi": "market",
+  "son_olcum": {
+    "zaman_utc": "2026-07-28 10:47 turu",
+    "sonuc": "AÇIK — çıkış henüz olmadı; karar sonrası en düşük 1865.0 (T1 1846.66 görülmedi), en yüksek 1893.33 (stop 1924.993333 görülmedi)"
+  }
+}

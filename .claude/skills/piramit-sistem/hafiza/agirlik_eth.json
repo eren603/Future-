@@ -14,21 +14,21 @@
       "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ (fail-closed)"
     }
   },
-  "uretildigi_bar": "2026-07-27 23:30",
+  "uretildigi_bar": "2026-07-28 10:45",
   "etiketleme": {
     "karar-motoru": {
       "etiketlenen": 0,
       "elle_korunan": 0,
       "olculemeyen": 1,
       "bar_havuzu": {
-        "bar": 494,
+        "bar": 539,
         "ilk": 1784751300000,
-        "son": 1785195000000
+        "son": 1785235500000
       },
       "arsiv": {
         "arsiv": "/home/user/Future-/engine/state/eth/bar_arsivi.jsonl",
         "eklenen_bar": 0,
-        "toplam_bar": 494
+        "toplam_bar": 539
       }
     }
   },

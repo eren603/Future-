@@ -1,38 +1,37 @@
 {
   "sembol": "engine/girdi",
-  "son_bar": 1785195000000,
-  "son_bar_utc": "2026-07-27 23:30",
-  "son_kapanis": 64364.0,
+  "son_bar": 1785235500000,
+  "son_bar_utc": "2026-07-28 10:45",
+  "son_kapanis": null,
   "YON_BIAS": "SHORT",
-  "yon_skoru": -0.8473,
-  "guven_skoru": 0.4786,
-  "uzlasi": 0.8473,
-  "islem_kalitesi": "TEMİZ GİRİŞ VAR",
+  "yon_skoru": -0.5712,
+  "guven_skoru": 0.2039,
+  "uzlasi": 0.5712,
+  "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
   "islem_seviyeleri": {
-    "giris": 64364.0,
-    "stop": 64790.3,
-    "hedef": 63567.0,
-    "giris_alt": 64193.9,
-    "giris_ust": 64534.1,
-    "iptal": 64534.1,
-    "giris_tipi": "limit"
+    "giris": 63990.7,
+    "stop": 64234.1,
+    "hedef": 63461.2,
+    "giris_tipi": "limit",
+    "kaynak": "emir_plani"
   },
   "danismanlar": {
-    "karar-motoru": "short",
+    "karar-motoru": "flat",
     "grafik-calisma": "flat",
-    "turev-akis": "short"
+    "turev-akis": "flat",
+    "gorsel-teyit": "short"
   },
   "surucu": {
     "trend": "bear",
-    "adx": 27.78,
-    "atr": 185.18806055,
-    "rejim": "trend",
-    "turev_skor": -0.46,
-    "turev_kapsam": 0.85,
+    "adx": 13.59,
+    "atr": 113.02247385,
+    "rejim": "range",
+    "turev_skor": -0.051,
+    "turev_kapsam": 1.0,
     "funding": 0.0,
     "lsr": 0.5,
     "cvd_delta": -0.7,
-    "oi_delta": -1.0,
-    "liq_long": null
+    "oi_delta": 0.0,
+    "liq_long": 0.0
   }
 }
