@@ -1,32 +1,31 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (8 görüntünün BTC bölümü) ↔ grafik-cizim ölçülü yapı (smc_tespit, aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT/ETHUSDT (8 görüntü: Liquidity Heatmap + 4S/15dak türev panelleri) ↔ smc_tespit ölçülü yapı (aynı bar)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bear",
-  "yapi_olayi": "63021.00 dibinden toparlanma 63600'e — 15M MA'lar iç içe (sıkışma), fiyat MA'ların hafif üstünde; 4S MA'ların hâlâ belirgin altında",
+  "trend": "bull",
+  "yapi_olayi": "62660.10 dibinden 64084.50 tepesine toparlanma, ardından 63900 bandında konsolidasyon — yapı yönü önceki koşudan bu koşuya bear→bull DÖNDÜ (smc_tespit ölçümü de bull)",
   "seviyeler": {
     "direnc": [
-      63600,
-      63800,
+      64084,
       64000
     ],
     "destek": [
-      63300,
-      63200,
-      63021
+      63600,
+      63000,
+      62660
     ]
   },
   "gozlem": [
-    "15M heatmap: fiyat 63510.00; dip 63021.00 (07/28 03:30 civarı), sol tepe 64880.10; koyu likidite bantları ~64000 üstte, ~63300/63200 altta; 63021'den 63600'e toparlanıp 63400-63500 bandında konsolidasyon",
-    "4S panel: fiyat 63508, -2.86%; 24S menzil 63021-65690; fiyat < MA5 63795.70 < MA10 64440.14 < MA30 64506.63 (tümünün altında); funding +0.0028%; bu 4S barda likidasyon Longs 229.9K / Shorts 136.0K (küçük — flush bitti); OI 106.0K→105.4K (yüksek kaldı)",
-    "15M panel: MA5 63410.26 / MA10 63427.88 / MA30 63428.54 İÇ İÇE (sıkışma), fiyat 63508 hafif üstünde; funding şeridinde düşüş sırasında SARI (negatif) bölge oluşup tekrar pozitife döndü; bu 15M barda likidasyon yok (--/--)",
-    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 63021.00 BİREBİR (ölçüm 63021.0); panel sol tepe 64880.10 ↔ ölçüm 64876.96667 (sapma 3.13); panel ~64000 bandı ↔ ölçüm 64063.8 (63.8); panel ~63600 ↔ ölçüm 63588.0 (12); panel ~63200 ↔ ölçüm 63212.1 (12.1) — 5 bant iki bağımsız kaynakta örtüştü",
-    "Çapraz trend teyidi: görsel sıkışma-altı-bear (fiyat 4S MA'ların altında) ↔ smc_tespit trend=bear ama ADX 13.59 (trend gücü ZAYIFLADI — sıkışma) — UYUMLU"
+    "BTC 15dak heatmap: fiyat 63938.00; sol tepe 64084.50 (07/28 ~20:00), dip 62660.10 (07/28 ~17:15); 62660'tan 64084'e toparlanıp 63800-63938 bandında konsolidasyon; koyu likidite ~64000 üstte, ~63000/62800 altta",
+    "BTC 4S panel: fiyat ~63956, -1.49%; funding +0.01% (pozitif); bu 4S barda likidasyon Longs 638.7 / Shorts 79.8K (short squeeze — shorts long'un ~125 katı); OI 104.0K (yüksek/sabit)",
+    "ETH 15dak/4S: fiyat 1920.82/1921.00, -1.33%; tepe 1928.31, dip 1855.82; 1855'ten 1920'ye toparlanma; funding +0.0067% (pozitif, sarı bölgeden yeşile döndü); likidasyon Longs 20.5K / Shorts 72.0K (short squeeze); OI 2.3M",
+    "ÇAPRAZ SORGU (görsel ↔ ölçüm, aynı bar): görsel trend BULL (dipten toparlanma, fiyat MA'ların üstüne çıktı) ↔ smc_tespit trend=BULL (iki sembolde de) — UYUMLU, GÖRSEL-MEKANİK ÇELİŞKİSİ YOK",
+    "Türev teyidi: her iki sembolde funding POZİTİF + short likidasyonu baskın + OI yüksek = short-squeeze sonrası long-lehte pozisyonlanma; kline'dan bağımsız üçüncü kanal olarak yön (long) ile uyumlu"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 63.8, bant genişliği içinde). Dikkat: ADX 27.78→13.59 düştü — düşüş momentumu soğudu, 15M sıkışması var; OI yüksek kalırken funding'in negatife değip toparlanması iki yönlü gergin pozisyonlanma demek",
+  "h4_trend": "bull",
+  "celiski_notu": "Görsel-mekanik uyum TAM: görsel bull ↔ smc bull (iki sembol). Dikkat: fiyat -%1.3/-%1.5 günlük NEGATİF ama 15M yapı toparlanma içinde — kısa vade bull, gün bazında hâlâ zayıf; short-squeeze taze girişte stop-favori riskini artırır (STRATEJI.md geometri kapısı geçerli)",
   "guven": 0.5,
-  "zaman_utc": "2026-07-28 10:46",
-  "zaman_yerel": "2026-07-28 13:46-13:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:46-13:47 (UTC+3) → UTC 10:46-10:47; paket çekimi 2026-07-28 10:47:54 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-28 21:04",
+  "zaman_yerel": "2026-07-29 00:04-00:05 (cihaz, UTC+3)",
+  "damga_kaynagi": "8 ekran görüntüsü dosya adı 20260729_0004xx-000501 (cihaz UTC+3) → UTC 21:04-21:05; kline son barı 21:00 UTC ile +4-5 dk (taze, tolerans 240 dk)"
 }

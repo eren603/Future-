@@ -1,37 +1,36 @@
 {
   "sembol": "engine/girdi/eth",
-  "son_bar": 1785235500000,
-  "son_bar_utc": "2026-07-28 10:45",
+  "son_bar": 1785272400000,
+  "son_bar_utc": "2026-07-28 21:00",
   "son_kapanis": null,
-  "YON_BIAS": "SHORT",
-  "yon_skoru": -0.6482,
-  "guven_skoru": 0.2626,
-  "uzlasi": 0.6482,
+  "YON_BIAS": "LONG",
+  "yon_skoru": 0.6381,
+  "guven_skoru": 0.2715,
+  "uzlasi": 0.6381,
   "islem_kalitesi": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
   "islem_seviyeleri": {
-    "giris": 1881.72,
-    "stop": 1915.053333,
-    "hedef": 1836.72,
-    "giris_tipi": "limit",
+    "giris": 1921.12,
+    "stop": 1887.786667,
+    "hedef": 1966.12,
+    "giris_tipi": "market",
     "kaynak": "emir_plani"
   },
   "danismanlar": {
     "karar-motoru": "flat",
     "grafik-calisma": "flat",
-    "turev-akis": "short",
-    "gorsel-teyit": "short"
+    "turev-akis": "long"
   },
   "surucu": {
-    "trend": "bear",
-    "adx": 26.69,
-    "atr": 4.87371405,
-    "rejim": "trend",
-    "turev_skor": -0.2591,
-    "turev_kapsam": 0.66,
+    "trend": "bull",
+    "adx": 21.86,
+    "atr": 7.33154406,
+    "rejim": "gecis",
+    "turev_skor": 0.3965,
+    "turev_kapsam": 0.85,
     "funding": 0.0,
     "lsr": 0.5,
-    "cvd_delta": -0.7,
-    "oi_delta": null,
-    "liq_long": -0.8
+    "cvd_delta": 0.7,
+    "oi_delta": 0.4,
+    "liq_long": null
   }
 }

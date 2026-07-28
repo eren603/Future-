@@ -1,21 +1,21 @@
 {
-  "son_bar": 1785235500000,
-  "son_bar_utc": "2026-07-28 10:45",
+  "son_bar": 1785272400000,
+  "son_bar_utc": "2026-07-28 21:00",
   "karar": {
     "karar": "BEKLE",
     "yon": null,
     "zincir": 1,
-    "neden": "BEKLE: SHORT sinyali var (zincir 1) ama kenar zayıf — R=0.88 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+    "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=0.67 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
   },
   "takip": null,
-  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-27 23:30).",
+  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-28 10:45).",
   "acik_bolgeler": [
     {
       "tip": "bear",
       "ust": 1945.13,
       "alt": 1944.79,
       "ce": 1944.96,
-      "bar": 146,
+      "bar": 105,
       "zaman": 1785186900000
     },
     {
@@ -23,7 +23,7 @@
       "ust": 1943.29,
       "alt": 1943.11,
       "ce": 1943.1999999999998,
-      "bar": 147,
+      "bar": 106,
       "zaman": 1785187800000
     },
     {
@@ -31,7 +31,7 @@
       "ust": 1939.27,
       "alt": 1938.95,
       "ce": 1939.1100000000001,
-      "bar": 149,
+      "bar": 108,
       "zaman": 1785189600000
     },
     {
@@ -39,73 +39,61 @@
       "ust": 1934.0,
       "alt": 1930.37,
       "ce": 1932.185,
-      "bar": 150,
+      "bar": 109,
       "zaman": 1785190500000
     },
     {
-      "tip": "bear",
-      "ust": 1927.3,
-      "alt": 1913.72,
-      "ce": 1920.51,
-      "bar": 151,
-      "zaman": 1785191400000
+      "tip": "bull",
+      "ust": 1883.46,
+      "alt": 1878.93,
+      "ce": 1881.1950000000002,
+      "bar": 174,
+      "zaman": 1785249000000
     },
     {
-      "tip": "bear",
-      "ust": 1911.0,
-      "alt": 1893.64,
-      "ce": 1902.3200000000002,
-      "bar": 152,
-      "zaman": 1785192300000
-    },
-    {
-      "tip": "bear",
-      "ust": 1880.22,
-      "alt": 1877.47,
-      "ce": 1878.845,
-      "bar": 196,
-      "zaman": 1785231900000
+      "tip": "bull",
+      "ust": 1907.05,
+      "alt": 1902.94,
+      "ce": 1904.995,
+      "bar": 188,
+      "zaman": 1785261600000
     }
   ],
   "swing_15m_son": [
     [
-      1875.43,
-      "L"
-    ],
-    [
-      1888.58,
+      1895.82,
       "H"
     ],
     [
-      1877.46,
+      1855.82,
       "L"
     ],
     [
-      1888.08,
+      1923.79,
       "H"
     ],
     [
-      1879.01,
-      "L"
-    ],
-    [
-      1884.81,
+      1928.31,
       "H"
     ],
     [
-      1879.18,
+      1890.89,
       "L"
     ],
     [
-      1872.58,
+      1913.2,
+      "H"
+    ],
+    [
+      1923.0,
+      "H"
+    ],
+    [
+      1915.27,
       "L"
     ]
   ],
   "swing_4h_son": [
-    [
-      1858.0,
-      "L"
-    ],
     [
       1909.32,
       "H"
@@ -125,16 +113,20 @@
     [
       1865.0,
       "L"
+    ],
+    [
+      1855.82,
+      "L"
     ]
   ],
   "rejim_4h": {
     "rejim": "FLAT",
-    "fark": -5.394500000000107,
+    "fark": -6.627999999999474,
     "esik": 29.080699999999887
   },
   "donus_dizisi": {
-    "yon": "SHORT",
+    "yon": "LONG",
     "adim": 4,
-    "supurme_ucu": 1882.72
+    "supurme_ucu": 1875.79
   }
 }

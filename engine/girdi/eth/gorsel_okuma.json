@@ -1,34 +1,32 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü) ↔ grafik-cizim ölçülü yapı (smc_tespit, aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: Liquidity Heatmap 15dak+4S, türev paneli 15dak+4S) ↔ smc_tespit ölçülü yapı (aynı bar)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bear",
-  "yapi_olayi": "1865.00 dibinde tutunma — 15M MA'lar iç içe (sıkışma), fiyat MA'ların ortasında; üstte 1900-1920 yoğun likidite bloğu; funding NEGATİFE döndü",
+  "trend": "bull",
+  "yapi_olayi": "1855.82 dibinden 1928.31 tepesine toparlanma, ardından 1920 bandında konsolidasyon — önceki koşunun beklediği short-squeeze GERÇEKLEŞTİ (funding -0.0056→+0.0067 döndü, shortlar likide oldu); yapı yönü bear→bull DÖNDÜ (smc_tespit ölçümü de bull)",
   "seviyeler": {
     "direnc": [
-      1900,
-      1910,
-      1920,
-      1930
+      1928,
+      1949,
+      1982
     ],
     "destek": [
+      1900,
       1870,
-      1865,
-      1841.84
+      1855
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 1879.34, -4.55%; 24S menzil 1865.00-1977.58; MA5 1877.00 / MA10 1879.86 / MA30 1881.47 İÇ İÇE (sıkışma), fiyat ortasında; FUNDING -0.0056% NEGATİF (uzun sarı blok — kalabalık short'a geçti); bu 15M barda likidasyon yok (--/--); OI 2.3M yatay",
-    "4S panel: fiyat 1879.35; fiyat < MA5 1896.39 ve < MA30 1892.76 < MA10 1923.38; bu 4S barda likidasyon Longs 608.9K / Shorts 98.7K (küçük); tepe 1982.00, eski dip 1748.00",
-    "15M heatmap: dip 1865.00, sol tepe 1947.82; 1900-1920 arası ÇOK YOĞUN koyu likidite bloğu (üstte mıknatıs); 1930/1940 üst bantlar; fiyat 1865-1885 bandında",
-    "4S heatmap: tepe 1982.00, dip 1841.84; üst bantlar 1980/1960/1940/1920",
-    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 1865.00 BİREBİR (ölçüm 1865.0); panel 1910-1913 bloğu ↔ ölçüm 1911.0 ve 1913.72; panel 1930 ↔ ölçüm 1930.37 (0.37); panel sol tepe 1947.82 ↔ ölçüm 1948.47333 (0.65); panel 1875-1885 konsolidasyonu ↔ ölçüm kümesi 1875.43-1884.81 — bantlar örtüştü; panel 1841.84 (4S dip) ölçülü 15M listede YOK (pencere dışı; yalnız panel)",
-    "Çapraz trend teyidi: görsel bear-altı-sıkışma ↔ smc_tespit trend=bear (ADX 26.69) — UYUMLU"
+    "ETH 15dak heatmap: fiyat 1919.69; sol tepe 1928.31, dip 1855.82; 1855'ten toparlanıp 1900-1920 bandında konsolidasyon; önceki okumadaki 1900-1920 likidite bloğu MIKNATIS gibi çekti (fiyat şimdi tam orada)",
+    "ETH 15dak/4S panel: fiyat 1920.82/1921.00, -1.33%; 24S menzil 1855.82-1949.43; FUNDING +0.0067% POZİTİF (önceki -0.0056'dan döndü — sarı bloktan yeşile); bu 4S barda likidasyon Longs 20.5K / Shorts 72.0K (short squeeze, shorts ~3.5 kat); OI 2.3M (sabit/yüksek)",
+    "ETH 4S heatmap: tepe 1982.00, dip 1841.84; üst likidite bantları 1940/1960/1980 (bir sonraki mıknatıs kümesi)",
+    "ÇAPRAZ SORGU (görsel ↔ ölçüm, aynı bar): görsel trend BULL (1855 dibinden toparlanma, fiyat MA5 1918.93 / MA10 1916.93 / MA30 1907.46 üstünde) ↔ smc_tespit trend=BULL — UYUMLU, GÖRSEL-MEKANİK ÇELİŞKİSİ YOK",
+    "Türev teyidi: funding pozitife döndü + short likidasyonu baskın + OI yüksek = önceki koşunun 'short-squeeze yakıtı birikiyor' tezinin GERÇEKLEŞMESİ; BTC ile aynı yön (korelasyon)"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 0.65; 1841.84 yalnız panel). KRİTİK DEĞİŞİM: funding +0.0028'den -0.0056'ya DÖNDÜ — kalabalık short tarafında; dip 1865'te tutunma + üstte 1900-1920 likidite bloğu = short-squeeze yakıtı birikiyor. Long likidasyonlar küçüldü (flush bitti)",
+  "h4_trend": "bull",
+  "celiski_notu": "Görsel-mekanik uyum TAM: görsel bull ↔ smc bull. Dikkat: fiyat 1900-1920 yoğun likidite bloğunun İÇİNDE (mıknatıs bölgesi) — üstte 1928/1949, sonra 1982 mıknatısları var ama günlük -%1.33 negatif; taze long girişte stop-favori tabanı geçerli (STRATEJI.md geometri kapısı), üst blok içinde giriş stop-av riski taşır",
   "guven": 0.5,
-  "zaman_utc": "2026-07-28 10:47",
-  "zaman_yerel": "2026-07-28 13:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:47 (UTC+3) → UTC 10:47; paket çekimi 2026-07-28 10:47:54 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-28 21:05",
+  "zaman_yerel": "2026-07-29 00:05 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü dosya adı 20260729_000501 (cihaz saati 00:05, UTC+3) → UTC 21:05; kline son barı 21:00 UTC ile +5 dk (taze, tolerans 240 dk)"
 }
