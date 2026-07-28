@@ -69,11 +69,31 @@ def _yaz(hedef: Path, icerik, yedekle: bool = True) -> None:
     hedef.write_text(json.dumps(icerik, ensure_ascii=False), encoding="utf-8")
 
 
+SEMBOL_BICIMI = __import__("re").compile(r"[A-Z0-9]{2,20}\Z")
+
+
+def _sembol_dogrula(sembol) -> str:
+    """Sembol adı bir YOL BİLEŞENİ olur — dışarıdan gelen dize doğrulanmadan
+    kullanılamaz. Yalnız [A-Z0-9]{2,20} kabul edilir; '../', mutlak yol,
+    ayraç ve nokta REDDEDİLİR (fail-closed: şüpheli sembol depoya giremez).
+    """
+    s = str(sembol).upper()
+    if not SEMBOL_BICIMI.match(s):
+        raise SystemExit(f"HATA: geçersiz sembol adı {sembol!r} — yalnız "
+                         "A-Z0-9 (2-20 karakter) kabul edilir; yol bileşeni "
+                         "olarak kullanıldığı için reddedildi (fail-closed).")
+    return s
+
+
 def _hedefler(sembol: str, ana: str) -> tuple:
     """Sembole göre yazım kökü: ANA sembol engine/girdi'ye, diğerleri alt klasöre."""
     if sembol == ana:
         return GIRDI, HAM
-    alt = GIRDI / sembol.replace("USDT", "").lower()
+    alt = GIRDI / _sembol_dogrula(sembol).replace("USDT", "").lower()
+    # ikinci korkuluk: biçim denetimi atlansa bile hedef depo dışına çıkamaz
+    if not alt.resolve().is_relative_to(GIRDI.resolve()):
+        raise SystemExit(f"HATA: yazım hedefi engine/girdi dışına çıkıyor "
+                         f"({_kisa(alt)}) — reddedildi (fail-closed).")
     return alt, alt / "turev_ham"
 
 
@@ -83,8 +103,20 @@ def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
     if surum < 2:
         return {"semboller": [paket.get("sembol")],
                 "sonuc": {str(paket.get("sembol")): ac(paket, sembol_bekle)}}
-    semboller = paket.get("semboller") or []
-    ana = semboller[0] if semboller else None
+    semboller = [_sembol_dogrula(s) for s in (paket.get("semboller") or [])]
+    # ANA slot (engine/girdi) artık paketteki SIRAYA bırakılmıyor: paket açıkça
+    # `ana_sembol` beyan ederse o geçerlidir ve `semboller` içinde olmak
+    # ZORUNDADIR. Beyan yoksa eski davranış (ilk eleman) sürer — ama sembol
+    # adları artık doğrulanmıştır, yani ana slotu keyfi bir dize kapamaz.
+    ana = paket.get("ana_sembol")
+    if ana is not None:
+        ana = _sembol_dogrula(ana)
+        if ana not in semboller:
+            raise SystemExit(f"HATA: beyan edilen ana_sembol {ana} paketin "
+                             f"semboller listesinde yok {semboller} — "
+                             "ana slot sahibi belirsiz (fail-closed).")
+    else:
+        ana = semboller[0] if semboller else None
     veri = paket.get("veri") or {}
     sonuc = {}
     for sem in semboller:
