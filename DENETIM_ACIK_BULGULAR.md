@@ -25,25 +25,40 @@ Bir bulgu ya buradan silinir (tamir + doğrulama) ya da burada durur.
 
 ## KUYRUKTA — doğrulanmış, sırası gelmedi
 
-`karar_motoru.py:470-474` R totolojisi (T1 = giriş + 1.5×risk üretilip sonra
-"R kapısı geçildi" denmesi) · `usd_hedef.py:161-180` belgelenmiş ama hiç
-uygulanmayan 5. kapı · `self_test.py:68-73` üretim SI hafızasını silip
-`finally` ile geri yazması (SIGKILL'de kaybolur) · `self_test.py:670`
-oluşturulmayan `state_dir` · `analyze_data.py:693` sayısal zaman kolonunda
-ms/ns birim körlüğü · `verify_data.py:394` dar `except` · `turev_akis.py:186`
-likidasyonda yalnız oran, büyüklük denetlenmiyor · `setup_dogrulama.py:224`
-hesaplanan `rr_k` eşiğe hiç bağlanmıyor · `kalibrasyon.py:131` çıkış taraması
-giriş barından başlıyor · `gozlemci.py:325` kapsam denetimi sonuca değil
-anahtar varlığına bakıyor · `esik_kalibre.py:120` sıfır/negatif kapanışta
-`math.log` patlaması · `video_isle.py:110` sınırsız `max_frames`.
+`usd_hedef.py:161-180` belgelenmiş ama hiç uygulanmayan 5. kapı (stop karşı
+yapının ötesinde mi) · `analyze_data.py:693` sayısal zaman kolonunda ms/ns
+birim körlüğü (Binance kline ms, pandas ns sayar) · `turev_akis.py:186`
+likidasyonda yalnız ORAN bakılıyor, büyüklük denetlenmiyor ·
+`setup_dogrulama.py:224` hesaplanan `rr_k` yalnız rapora yazılıyor, confluence
+eşiğine hiç bağlanmıyor · `kalibrasyon.py:131` çıkış taraması giriş barının
+kendisinden başlıyor (ileriye bakış riski).
+
+## AÇIK — kapanış hakem turunda bulundu (2026-07-28)
+
+| # | Yer | Kusur | Not |
+|---|---|---|---|
+| Y2 | `paket_ac.py:122` | Yorum kodla çelişiyordu ("beyan yoksa ilk eleman sürer") | **KAPATILDI** — yorum kodla eşitlendi |
+| Y3 | `self_test.py` hafıza taşıma | Kaza sonrası `agirlik.json.oztest_yedek` diskte kalıyor ama **hiçbir kod fark etmiyor**; sistem öğrenilmiş SI ağırlığı olmadan sessizce koşmaya devam eder, `saglik.py` uyarmıyor | AÇIK — `saglik.py`'ye "yetim yedek" denetimi eklenmeli |
+| A7b | `turev_girdi` "KANITLANMADI" notu | Not `_ham_hatalari`'na yazılıyor ama **hiçbir kod okumuyor** — kayıt var, kapı yok | AÇIK — kalıcı çözüm: `veri_topla` panelleri yazarken sembolü damgalasın |
 
 ## KAPANDI — tamir + ölçümle doğrulandı
 
-`paket_ac` yol kaçışı ve ana slot · `gozlemci` DAIRESEL mührü · `iddia_denetle`
-bağıl tolerans + beyaz liste · `emir_plani` r_min tabanı · `karar_motoru`
-atomik yazım · `piramit.py` tazelik fail-OPEN, çelişki turu fail-OPEN,
-doğrulayıcı ezme, `_verifier_confirmed` köprüsü · `esik_kalibre`
-`min_side_weight` ölçek sadeleşmesi · `piramit_auto` `--sembol`, çıkış kodu,
-dar `except`, kümülatif zaman aşımı · `turev_girdi` sözlük-panel sembol
-süzgeci · `verify_data` sessiz payda değişimi + tanınmayan kural anahtarı ·
-`gozlemci` sahte MEMNUN_ETME mührü (hakem bulgusu).
+**Girdi hattı:** `paket_ac` yol kaçışı · ana slot (paketteki sıra artık ana
+yuvayı seçemez, belirsizse fail-closed red) · `None`/tip hatası sembol reddi ·
+NaN/Infinity yasağı (`main()` yolu) · `piramit_auto` `--sembol` geçilmesi,
+türev üretecinin çıkış kodu, dar `except`, kümülatif zaman aşımı bütçesi ·
+`turev_girdi` sözlük-panel sembol süzgeci.
+
+**Karar hattı:** `piramit.py` tazelik fail-OPEN · çelişki turu fail-OPEN (iki
+kol) · doğrulayıcı ezme (VE'leme) · `_verifier_confirmed` köprüsü ·
+`esik_kalibre` `min_side_weight` ölçek sadeleşmesi + `math.log(0)` çökmesi ·
+`karar_motoru` R totolojisi + atomik durum yazımı · `emir_plani` r_min tabanı.
+
+**Denetim hattı:** `gozlemci` DAIRESEL mührü · sahte MEMNUN_ETME mührü (hakem
+bulgusu) · kapsam denetimi (`verdict` varlığına bağlandı — "denetim
+ÇALIŞMADI" kaydı da artık yakalanıyor) · `iddia_denetle` bağıl tolerans +
+beyaz liste · `verify_data` sessiz payda değişimi, tanınmayan kural anahtarı,
+dar `except`.
+
+**Diğer:** `self_test` üretim hafızasını silmesi (artık taşınıyor) ·
+oluşturulmayan `state_dir` · `video_isle` sınırsız `max_frames`.

@@ -119,8 +119,8 @@ def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
     semboller = [_sembol_dogrula(s) for s in (paket.get("semboller") or [])]
     # ANA slot (engine/girdi) artık paketteki SIRAYA bırakılmıyor: paket açıkça
     # `ana_sembol` beyan ederse o geçerlidir ve `semboller` içinde olmak
-    # ZORUNDADIR. Beyan yoksa eski davranış (ilk eleman) sürer — ama sembol
-    # adları artık doğrulanmıştır, yani ana slotu keyfi bir dize kapamaz.
+    # ZORUNDADIR. Beyan yoksa depo sabiti BTCUSDT kazanır; o da listede
+    # değilse fail-closed REDDEDİLİR — paketteki SIRA ana slotu belirleyemez.
     ana = paket.get("ana_sembol")
     if ana is not None:
         ana = _sembol_dogrula(ana)

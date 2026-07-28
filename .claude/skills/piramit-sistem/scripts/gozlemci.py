@@ -327,11 +327,15 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
     # 4) rr denetimi seviye taşıyan her danışmana uygulandı mı?
     rr = k4.get("rr_denetimi") or {}
     seviyeli = set((k3.get("seviyeler") or {}))
-    # ANAHTAR VARLIĞI YETMEZ, SONUÇ denetlenir: çağıran taraf rr_denetim
-    # koşamadığında da anahtarı "VERİ YOK — denetim yapılamadı" ile
-    # dolduruyor. Varlığa bakan kapı bunu "koştu" sayıp geçiyordu.
+    # ANAHTAR VARLIĞI YETMEZ, SONUÇ denetlenir. Ölçüt `verdict` VARLIĞIDIR:
+    # rr_denetim yalnız gerçekten koştuğunda verdict üretir
+    # (TUTARLI/ŞİŞİRİLMİŞ/GEÇERSİZ). piramit.py iki ayrı başarısızlık kaydı
+    # yazıyor — "VERİ YOK — … denetim yapılamadı" (829) ve "denetim ÇALIŞMADI"
+    # (836); ikisinde de verdict yok. Önceki ölçüt ("VERİ YOK" dizgesi)
+    # ikincisini KAÇIRIYORDU: alt süreç çöktüğünde/zaman aşımına uğradığında,
+    # yani kapının en çok gerektiği anda, EKSIK_AKTARIM "TEMİZ" diyordu.
     kosan = {a for a, v in rr.items()
-             if isinstance(v, dict) and YOK not in str(v.get("durum", ""))}
+             if isinstance(v, dict) and v.get("verdict")}
     atlanan = seviyeli - kosan
     if atlanan:
         b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
