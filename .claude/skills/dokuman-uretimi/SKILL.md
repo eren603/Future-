@@ -81,7 +81,7 @@ kusurlardan türetilmiştir ve motor çıktısında `DEPO EKI` etiketiyle basıl
 |---|---|---|
 | `AYRISMA_IKI_NOKTA` | `description` düz YAML skaleri içinde `": "` geçemez | Geçerse YAML "mapping values are not allowed in this context" verir, frontmatter AYRIŞMAZ, beceri **hiç yüklenmez**. Çözüm: katlanmış blok `>-`. Bu depoda gerçekten oldu. |
 | `NAME_DIZIN_UYUSMAZ` | `name` = dizin adı | Kaynak yalnız "preserve the original name" der (`skill-creator/SKILL.md:439`); **eşitlik şartı kaynakta yoktur**. Bu depoda 22/22 beceri eşit — sözleşme buradan ölçüldü. |
-| `MOTOR_OZTEST_YOK` | `scripts/` varsa en az bir motor `--self-test` taşır ya da `scripts/self_test.py` bulunur | Denetlenemeyen "GEÇTİ" sayılmaz. |
+| `MOTOR_OZTEST_YOK` | `scripts/` varsa en az bir motor `--self-test` taşır ya da `self_test.py` adlı ayrı bir dosya bulunur | Denetlenemeyen "GEÇTİ" sayılmaz. |
 | `TETIKLEYICI_SOZLESME` | description "OTOMATİK devreye girer — slash komutu gerekmez" + "Tetikleyici kelimeler" taşır | Depo geleneği: 22 beceriden 20'si. UYARI seviyesi. |
 | `KATLANMIS_BLOK_ONER` | 200 karakterden uzun description katlanmış blokla yazılır | 22 beceriden 21'i böyle. UYARI seviyesi. |
 

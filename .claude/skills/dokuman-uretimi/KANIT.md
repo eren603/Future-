@@ -45,7 +45,7 @@ satırların birebir metinleri `<br>` ile ayrılmıştır.
 | 3 | `quick_validate.py:27-29` | `match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)`<br>`if not match:`<br>`return False, "Invalid frontmatter format"` | `scripts/beceri_dogrula.py:74`, `221-223` | BİRLEŞTİRİLMİŞ (3 satır). Aynı regex `FM_DESENI` sabitine alındı: `re.compile(r"^---\n(.*?)\n---", re.DOTALL)`; `GECERSIZ_FM_BICIM` mesajı birebir. |
 | 4 | `quick_validate.py:36-37` | `if not isinstance(frontmatter, dict):`<br>`return False, "Frontmatter must be a YAML dictionary"` | `scripts/beceri_dogrula.py:250-252` | BİRLEŞTİRİLMİŞ (2 satır). `FM_SOZLUK_DEGIL`; mesaj birebir. |
 | 5 | `quick_validate.py:38-39` | `except yaml.YAMLError as e:`<br>`return False, f"Invalid YAML in frontmatter: {e}"` | `scripts/beceri_dogrula.py:232`, `243-247` | BİRLEŞTİRİLMİŞ (2 satır). `FM_YAML_HATASI`; mesaj öneki birebir (`Invalid YAML in frontmatter: `), hata metni 200 karakterde kırpılır. |
-| 6 | `quick_validate.py:42` | `ALLOWED_PROPERTIES = {'name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility'}` | `scripts/beceri_dogrula.py:48-55` | Birebir aynı 6 anahtar; yalnız çok satıra sarıldı (küme içeriği değişmedi). |
+| 6 | `quick_validate.py:42` | `ALLOWED_PROPERTIES = {'name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility'}` | `scripts/beceri_dogrula.py:47-70` | Altı anahtar birebir `KAYNAK_ALLOWED_PROPERTIES`'te. UYGULANAN küme GENİŞLETİLMİŞTİR: `DEPO_EK_PROPERTIES = {"argument-hint", "tools"}` ile birleştirilir — gerekçe ve kanıt §5 sonundaki ÇÖZÜLDÜ notunda. Kaynak listesi daraltılmadı. |
 | 7 | `quick_validate.py:44-45` | `# Check for unexpected properties (excluding nested keys under metadata)`<br>`unexpected_keys = set(frontmatter.keys()) - ALLOWED_PROPERTIES` | `scripts/beceri_dogrula.py:264` | BİRLEŞTİRİLMİŞ (2 satır). `beklenmeyen = set(fm.keys()) - ALLOWED_PROPERTIES` — aynı küme farkı. |
 | 8 | `quick_validate.py:48-49` | `f"Unexpected key(s) in SKILL.md frontmatter: {', '.join(sorted(unexpected_keys))}. "`<br>`f"Allowed properties are: {', '.join(sorted(ALLOWED_PROPERTIES))}"` | `scripts/beceri_dogrula.py:266-272` | BİRLEŞTİRİLMİŞ (2 satır). Aynı mesaj, aynı `sorted()` sırası; f-string yerine `+` birleştirme (görev kısıtı: f-string içinde ters bölü yasak). |
 | 9 | `quick_validate.py:53-54` | `if 'name' not in frontmatter:`<br>`return False, "Missing 'name' in frontmatter"` | `scripts/beceri_dogrula.py:275-276` | BİRLEŞTİRİLMİŞ (2 satır). `EKSIK_NAME`; mesaj birebir. |
@@ -227,10 +227,26 @@ güncel hüküm için motor yeniden koşulmalıdır.
 **Yorum (gerçek değil, yorum):** 4 uzun description muhtemelen sessizce
 büyümüştür — bu tam olarak bu becerinin var olma gerekçesidir. `sema-dogrulama`
 ihlali ironiktir: şema doğrulayan beceri, kendi manifestinde yasaklı karakter
-taşıyor. `sorusturma`'nın `argument-hint` alanı Claude Code'un slash-komut
-alanıdır ve pratikte çalışıyor olabilir; kaynak listesi onu tanımıyor —
-bu bir **kaynak-ortam ayrışması** olabilir, kesin hüküm için şartname gerekir
-ve şartname **VERİ YOK** (§4/1). Düzeltme kararı bu becerinin işi değildir.
+taşıyor. `sorusturma`'nın `argument-hint` alanı için burada "kaynak-ortam ayrışması
+olabilir, kesin hüküm için şartname gerekir" denmişti. **ÇÖZÜLDÜ — şartmaneye
+gerek kalmadan, artefaktla:** `argument-hint`, resmî Anthropic deposu
+`defending-code-reference-harness`'ta en az 6 becerinin frontmatter'ında
+kullanılıyor (`triage/SKILL.md:10`, `threat-model/SKILL.md:13`,
+`vuln-scan/SKILL.md:11`, `dnr-respond/SKILL.md:10`, `quickstart/SKILL.md:10`,
+`patch/SKILL.md:11`). Yani `quick_validate.py:42` listesi `anthropics/skills`
+YAYIN doğrulayıcısının dar kümesidir, Claude Code'un ÇALIŞMA ZAMANI kuralı
+değildir. `sorusturma` bulgusu bu yüzden **YANLIŞ POZİTİFTİ**.
+
+Motorda kaynak listesi DARALTILMADI, kanıtla GENİŞLETİLDİ:
+`KAYNAK_ALLOWED_PROPERTIES` (6 anahtar, kaynaktan birebir) ve
+`DEPO_EK_PROPERTIES = {"argument-hint", "tools"}` ayrı sabitlerde tutulur;
+ikisinin birleşimi uygulanır (`beceri_dogrula.py:47-70`). Böylece hangi
+anahtarın kaynaktan hangisinin depo ekinden geldiği kodda görünür kalır.
+`tools` alanının dayanağı: `cwc-long-running-agents/.../evaluator.md:4`.
+
+⚠️ Bu bir eşik gevşetmesi DEĞİLDİR: kural "geçsin diye" değiştirilmedi,
+kaynağın kapsamı yanlış uygulandığı için kanıtla düzeltildi. Aynı koşuda
+`grafik-calisma`/`grafik-cizim` HATA'ları GEVŞETİLMEDİ ve duruyor.
 
 ---
 

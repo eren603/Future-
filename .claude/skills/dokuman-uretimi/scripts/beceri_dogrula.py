@@ -44,8 +44,8 @@ except ImportError:  # pragma: no cover - ortamda pyyaml kurulu
 # Kaynaktan BIREBIR tasinan sabitler
 # ---------------------------------------------------------------------------
 
-# quick_validate.py:42
-ALLOWED_PROPERTIES = {
+# quick_validate.py:42 — KAYNAK liste (yayin dogrulayicisinin dar kumesi)
+KAYNAK_ALLOWED_PROPERTIES = {
     "name",
     "description",
     "license",
@@ -53,6 +53,21 @@ ALLOWED_PROPERTIES = {
     "metadata",
     "compatibility",
 }
+
+# DEPO EKI (kanitla genisletildi, keyfi degil): quick_validate.py `anthropics/
+# skills` YAYIN dogrulayicisidir; Claude Code'un CALISMA ZAMANI kabul ettigi
+# alan kumesi daha genistir. Kanit — `argument-hint` resmi Anthropic
+# becerilerinde kullaniliyor:
+#   defending-code-reference-harness/.claude/skills/triage/SKILL.md:10
+#   .../threat-model/SKILL.md:13   .../vuln-scan/SKILL.md:11
+#   .../dnr-respond/SKILL.md:10    .../quickstart/SKILL.md:10
+#   .../patch/SKILL.md:11
+# `tools` ise ajan dosyalarinda gecer (cwc-long-running-agents/.../evaluator.md:4).
+# Kaynak listesini DARALTMADIK, genislettik; daraltma bu depodaki gecerli
+# becerileri haksiz dusururdu (dogrulanmis yanlis pozitif: sorusturma).
+DEPO_EK_PROPERTIES = {"argument-hint", "tools"}
+
+ALLOWED_PROPERTIES = KAYNAK_ALLOWED_PROPERTIES | DEPO_EK_PROPERTIES
 
 # quick_validate.py:65 -> re.match(r'^[a-z0-9-]+$', name)
 NAME_DESENI = re.compile(r"^[a-z0-9-]+$")
