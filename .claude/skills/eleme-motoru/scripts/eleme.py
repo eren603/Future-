@@ -383,7 +383,16 @@ def _yas_dk(damga: Any, son_bar: Any) -> Optional[float]:
 # 33 madde DEFTERE yazılır ve makineyle koşulur (LLM yok → determinist).
 # ==========================================================================
 class EmsalDenetimi:
-    def __init__(self, defter_yolu: Optional[Path] = None):
+    def __init__(self, defter_yolu: Optional[Path] = None,
+                 guven_bandi: bool = True):
+        # guven_bandi=False: "1-3 bandı = gürültü" kuralı KAPANIR, emsal
+        # denetiminin geri kalanı açık kalır. Gerekçe (piramit entegrasyonu):
+        # bu boru hattında güven zaten `sentez.py` tarafından AĞIRLIK olarak
+        # kullanılıyor; bandı burada da uygulamak aynı sinyali İKİ KEZ
+        # cezalandırır (düşük güvenli danışman hem elenir hem ağırlığı düşer)
+        # ve kurulu boşaltıp kararı sahte bir "veri yok"a çevirebilir.
+        # Kaynakta bu çakışma yoktur: orada eleme sonrası ağırlıklandırma yok.
+        self.guven_bandi = guven_bandi
         self.yol = Path(defter_yolu or VARSAYILAN_DEFTER)
         self.emsaller: List[Dict[str, Any]] = []
         self.uyarilar: List[str] = []
@@ -427,7 +436,7 @@ class EmsalDenetimi:
 
         # (a) güven bandı — claude_api_client.py:293 "1-3: Low confidence,
         #     likely false positive or noise" + findings_filter.py:283 gerekçesi
-        if guven < KONVANSIYON["guven_dusuk_ust"]:
+        if self.guven_bandi and guven < KONVANSIYON["guven_dusuk_ust"]:
             return f"Düşük güven skoru: {round(guven, 2)} (1-3 bandı: gürültü)"
 
         # (b) defterdeki makine-denetlenebilir emsaller
@@ -492,11 +501,13 @@ def guven_10(bulgu: Dict[str, Any], uyarilar: List[str]) -> float:
 # ==========================================================================
 class ElemeMotoru:
     def __init__(self, sert: bool = True, baglam_kapilari: bool = True,
-                 emsal: bool = True, defter_yolu: Optional[Path] = None):
+                 emsal: bool = True, defter_yolu: Optional[Path] = None,
+                 guven_bandi: bool = True):
         self.sert = sert
         self.baglam_kapilari = baglam_kapilari
         self.emsal_acik = emsal
-        self.emsal = EmsalDenetimi(defter_yolu) if emsal else None
+        self.emsal = (EmsalDenetimi(defter_yolu, guven_bandi=guven_bandi)
+                      if emsal else None)
 
     @staticmethod
     def _dagilim(ist: ElemeIstatistigi, gerekce: str) -> None:
@@ -757,6 +768,11 @@ def main() -> int:
         description="Eleme motoru — danışman/motor iddialarını 3 katmanda eler")
     ap.add_argument("--job", help="JSON iş dosyası: {'bulgular':[...], 'baglam':{...}}")
     ap.add_argument("--defter", help="emsal_defteri.yaml yolu (varsayılan: beceri içi)")
+    ap.add_argument("--guven-bandi-kapali", action="store_true",
+                    help="emsal katmanindaki '1-3 bandi = gurultu' kuralini "
+                         "KAPAT (emsal denetiminin geri kalani acik kalir). "
+                         "Guven zaten asagi akista agirlik olarak kullaniliyorsa "
+                         "kullan: ayni sinyali iki kez cezalandirmayi onler.")
     ap.add_argument("--self-test", action="store_true", help="öz-test koş")
     args = ap.parse_args()
 
@@ -766,7 +782,8 @@ def main() -> int:
         ap.error("--job ya da --self-test gerekli")
 
     job = json.loads(Path(args.job).expanduser().resolve().read_text(encoding="utf-8"))
-    motor = ElemeMotoru(defter_yolu=Path(args.defter) if args.defter else None)
+    motor = ElemeMotoru(defter_yolu=Path(args.defter) if args.defter else None,
+                        guven_bandi=not args.guven_bandi_kapali)
     _, sonuc, ist = motor.ele(job.get("bulgular") or [], job.get("baglam") or {})
     sonuc["istatistik"] = {
         "toplam_bulgu": ist.toplam_bulgu, "sert_elenen": ist.sert_elenen,

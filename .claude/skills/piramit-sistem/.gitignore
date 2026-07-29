@@ -6,3 +6,6 @@ state/kum_havuzu/
 state/son_rapor.json
 state/otomatik.json
 state/piramit_defter.jsonl
+# Mekanikleştirme koşu artıkları (kalıcı sicil DEĞİL — her koşuda yeniden yazılır)
+state/_zirve/
+state/_ariza/

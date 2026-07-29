@@ -276,6 +276,30 @@ geçmiş değerdir (`r_etiketi`). Grafik bir KARAR DEĞİLDİR — yön/işlem h
 yine `piramit-sistem`/`karar-kurulu` sentezinden gelir; çıktı `SendUserFile`
 ile gönderilir.
 
+Ek kural (MEKANİKLEŞTİRME — atlama artık İMKÂNSIZ, talimat değil KOD):
+Aşağıdaki katmanlar `piramit.py`'nin İÇİNDE çağrılır; elle uygulanmaları
+beklenmez ve unutulmaları mümkün değildir. Mekanizma üç parçadır:
+(1) **MOTOR SİCİLİ** — her `_kos()` çağrısı kaydı `_kos`'un kendi içinde
+tutar; çağıran taraf kaydı atlayamaz. Sicil rapora `_MOTOR_SICILI` olarak
+girer.
+(2) **ZORUNLULUK MANİFESTOSU** (`ZORUNLU_MOTOR`) — katman → o katmanda hesabı
+verilmesi zorunlu motorlar. Kapı, motorun BAŞARILI olmasını değil hesabının
+VERİLMİŞ olmasını arar: motor ya koşar ya da koşmama gerekçesi (`ATLANDI:
+<sebep>`, katmanın kendi hata yapısından — uydurma değil) sicile yazılır.
+Ne kayıt ne gerekçe varsa bu SESSİZ ATLAMA'dır ve **katman kapısı KAPANIR**.
+(3) **GÖZLEMCİ İKİNCİ AĞI** — manifestoyu `piramit.py`'den çağrı anında okur
+(kopya tutmaz) ve sicille karşılaştırır; eksik varsa EKSİK_AKTARIM ihlali.
+Manifesto okunamazsa "sicil denetimi YAPILAMADI" uyarısı düşer (fail-closed).
+Bağlanan yerler: K1 = `sema_dogrula` (görsel + likidasyon) + `katman_denetle`
++ `butunluk`; K2 = `smc_tespit` + `karar_motoru` + `turev_akis`; K3 = `eleme`
+(elenen danışman kurula GİRMEZ); K5 = `esik_kalibre` + `sentez`; ZİRVE =
+`kademe` + `bulgu_dogrula` + `rubrik` + `olcum`; ARIZA = `sorusturma`
+(kapı kapanınca kendiliğinden, duran raporun KENDİSİNDEN bulgu türeterek).
+Zirvede hesap eksikse ya da `bulgu_dogrula` bir bulguyu DOĞRULARSA işlem
+fail-closed kapanır (YÖN yine gösterilir). Şemadan geçemeyen elle okuma
+kurula GİRMEZ. Öz-test T35 mekanizmanın kendisini sınar: manifestoya var
+olmayan bir motor eklenince boru hattı DURMALIDIR.
+
 Ek kural (EKLENEN DENETİM KATMANLARI — boru hattındaki YERLERİNE bağlıdır,
 tetikleyicisiz): Bu becerileri gelişigüzel çağırma; her biri boru hattının
 belirli bir anına aittir ve o an gelmeden koşmaz:
