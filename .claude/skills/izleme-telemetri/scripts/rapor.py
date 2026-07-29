@@ -30,6 +30,7 @@ import argparse
 import json
 import statistics
 import sys
+import tempfile
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -562,16 +563,22 @@ def uret(dosya=None, out=None) -> tuple:
     return md, A
 
 
-def self_test() -> dict:
+def self_test(ornek=False) -> dict:
     """olcum --self-test verisini üret → rapor yaz → sayıları BAĞIMSIZ doğrula.
 
     Doğrulama dairesel DEĞİLDİR: beklenen sayılar `topla()` ile değil, ham
     JSONL satırları tek tek sayılarak hesaplanır ve Markdown metninde ARANIR.
+
+    Rapor zaman damgası ve ölçülen süreler her koşuda değişir; bu yüzden
+    varsayılan hedef geçici dizindir (çalışma ağacı kirlenmez). Depodaki
+    örneği tazelemek için `--ornek-yaz`.
     """
-    jsonl = ORNEK_DIZIN / "olcum_ornek.jsonl"
+    dizin = ORNEK_DIZIN if ornek else Path(tempfile.mkdtemp(prefix="izleme_rapor_ozt_"))
+    dizin.mkdir(parents=True, exist_ok=True)
+    jsonl = dizin / "olcum_ornek.jsonl"
     o_sonuc = OL.self_test(jsonl)
     OL.ayarla(jsonl)
-    md_yol = ORNEK_DIZIN / "rapor_ornek.md"
+    md_yol = dizin / "rapor_ornek.md"
     md, A = uret(jsonl, md_yol)
 
     # --- BAĞIMSIZ sayım: ham satırlardan ---
@@ -649,10 +656,13 @@ def main() -> int:
     ap.add_argument("--out", help="Markdown çıktı yolu (yoksa stdout)")
     ap.add_argument("--json", action="store_true", help="toplulaştırmayı JSON bas")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--ornek-yaz", action="store_true",
+                    help="öz-test çıktısını depodaki ornek/ dizinine yaz "
+                         "(varsayılan: geçici dizin — çalışma ağacı kirlenmez)")
     a = ap.parse_args()
 
     if a.self_test:
-        s = self_test()
+        s = self_test(ornek=a.ornek_yaz)
         print(json.dumps(s, ensure_ascii=False, indent=2))
         return 0 if s["SONUC"] == "GEÇTİ" else 1
 

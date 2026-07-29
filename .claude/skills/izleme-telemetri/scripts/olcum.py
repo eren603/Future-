@@ -43,6 +43,7 @@ import json
 import os
 import statistics
 import sys
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -438,9 +439,21 @@ def _sahte_rapor(sembol, durdu_katman=None, ihlal=None, kapsam=0.75,
     }
 
 
-def self_test(dosya=None) -> dict:
-    """Sahte koşu olayları yaz → kendi yazdığını oku → sayıları doğrula."""
-    hedef = Path(str(dosya)) if dosya else (ORNEK_DIZIN / "olcum_ornek.jsonl")
+def self_test(dosya=None, ornek=False) -> dict:
+    """Sahte koşu olayları yaz → kendi yazdığını oku → sayıları doğrula.
+
+    Ölçülen süreler ve koşu kimlikleri her koşuda DEĞİŞİR (gerçek duvar saati
+    ölçümü; sahte sabit değil). Bu yüzden öz-test varsayılan olarak geçici
+    dizine yazar — aksi hâlde her koşuş takipli `ornek/` dosyalarını değiştirip
+    çalışma ağacını kirletirdi. Depodaki örneği bilerek tazelemek için
+    `--ornek-yaz` (ya da `ornek=True`) kullanılır.
+    """
+    if dosya:
+        hedef = Path(str(dosya))
+    elif ornek:
+        hedef = ORNEK_DIZIN / "olcum_ornek.jsonl"
+    else:
+        hedef = Path(tempfile.mkdtemp(prefix="izleme_ozt_")) / "olcum_ornek.jsonl"
     hedef.parent.mkdir(parents=True, exist_ok=True)
     if hedef.exists():
         hedef.unlink()                      # öz-test tekrar edilebilir olmalı
@@ -579,13 +592,16 @@ def main() -> int:
                     metavar="ANAHTAR=DEGER", help="niteliği ekle (tekrarlanabilir)")
     ap.add_argument("--defter", action="store_true", help="metrik defterini bas")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--ornek-yaz", action="store_true",
+                    help="öz-test çıktısını depodaki ornek/ dizinine yaz "
+                         "(varsayılan: geçici dizin — çalışma ağacı kirlenmez)")
     a = ap.parse_args()
 
     if a.dosya:
         ayarla(a.dosya)
 
     if a.self_test:
-        s = self_test(a.dosya)
+        s = self_test(a.dosya, ornek=a.ornek_yaz)
         print(json.dumps(s, ensure_ascii=False, indent=2))
         return 0 if s["SONUC"] == "GEÇTİ" else 1
 

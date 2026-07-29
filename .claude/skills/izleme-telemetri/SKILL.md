@@ -114,6 +114,11 @@ python3 .claude/skills/izleme-telemetri/scripts/rapor.py --json   # toplulaştı
 ```bash
 python3 .claude/skills/izleme-telemetri/scripts/olcum.py --self-test   # 15/15
 python3 .claude/skills/izleme-telemetri/scripts/rapor.py --self-test   # 12/12
+
+# Öz-test GEÇİCİ dizine yazar: ölçülen süreler ve koşu kimlikleri her koşuda
+# değiştiği için, aksi hâlde her koşuş takipli ornek/ dosyalarını değiştirip
+# çalışma ağacını kirletirdi. Depodaki örneği bilerek tazelemek için:
+python3 .claude/skills/izleme-telemetri/scripts/rapor.py --self-test --ornek-yaz
 ```
 
 Örnek çıktılar: `ornek/olcum_ornek.jsonl`, `ornek/rapor_ornek.md`,
