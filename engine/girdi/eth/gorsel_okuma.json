@@ -1,34 +1,36 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü) ↔ grafik-cizim ölçülü yapı (smc_tespit, aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: 15M+4S heatmap, 15M+4S panel) ↔ kline uçları (aynı bar)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "trend": "bear",
-  "yapi_olayi": "1865.00 dibinde tutunma — 15M MA'lar iç içe (sıkışma), fiyat MA'ların ortasında; üstte 1900-1920 yoğun likidite bloğu; funding NEGATİFE döndü",
+  "yapi_olayi": "1928.90 tepesinden geri çekilme — fiyat 1899'da, 15M MA5 1906.47 / MA10 1908.38 / MA30 1914.38'in TÜMÜNÜN altında (kısa vade aşağı); 4S'te fiyat MA30 1897.10 üstünde ama MA5/MA10 1907 altında (orta vade kararsız)",
   "seviyeler": {
     "direnc": [
-      1900,
       1910,
       1920,
-      1930
+      1928.9,
+      1960,
+      1982
     ],
     "destek": [
-      1870,
-      1865,
+      1880,
+      1866.45,
+      1855.82,
       1841.84
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 1879.34, -4.55%; 24S menzil 1865.00-1977.58; MA5 1877.00 / MA10 1879.86 / MA30 1881.47 İÇ İÇE (sıkışma), fiyat ortasında; FUNDING -0.0056% NEGATİF (uzun sarı blok — kalabalık short'a geçti); bu 15M barda likidasyon yok (--/--); OI 2.3M yatay",
-    "4S panel: fiyat 1879.35; fiyat < MA5 1896.39 ve < MA30 1892.76 < MA10 1923.38; bu 4S barda likidasyon Longs 608.9K / Shorts 98.7K (küçük); tepe 1982.00, eski dip 1748.00",
-    "15M heatmap: dip 1865.00, sol tepe 1947.82; 1900-1920 arası ÇOK YOĞUN koyu likidite bloğu (üstte mıknatıs); 1930/1940 üst bantlar; fiyat 1865-1885 bandında",
-    "4S heatmap: tepe 1982.00, dip 1841.84; üst bantlar 1980/1960/1940/1920",
-    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 1865.00 BİREBİR (ölçüm 1865.0); panel 1910-1913 bloğu ↔ ölçüm 1911.0 ve 1913.72; panel 1930 ↔ ölçüm 1930.37 (0.37); panel sol tepe 1947.82 ↔ ölçüm 1948.47333 (0.65); panel 1875-1885 konsolidasyonu ↔ ölçüm kümesi 1875.43-1884.81 — bantlar örtüştü; panel 1841.84 (4S dip) ölçülü 15M listede YOK (pencere dışı; yalnız panel)",
-    "Çapraz trend teyidi: görsel bear-altı-sıkışma ↔ smc_tespit trend=bear (ADX 26.69) — UYUMLU"
+    "15M panel: fiyat 1899.35 (+1.09%); 24S menzil 1855.82-1928.90; fiyat MA5/MA10/MA30'un TÜMÜNÜN altında, son barlar kırmızı (tepe sonrası düşüş ivmeli); funding 0.0016% — şerit 07/28 başında SARI (negatif), sonra pozitife dönüp TEPEDEN İNCELIYOR (long iştahı soğuyor); bu pencerede likidasyon Longs 1.1M / Shorts 8.3K — LONG flush baskın; OI 2.3M yatay",
+    "4S panel: fiyat 1899.36; MA5 1907.25 / MA10 1906.56 üstte, MA30 1897.10 fiyatın hemen altında (4S MA30 test ediliyor); tepe 1982.00 (07/28), dip 1772.52 (07/14); bu 4S barda likidasyon Longs 2.1M / Shorts 581.7K (long flush 3.6×)",
+    "15M heatmap: fiyat 1899.83; tepe 1928.90, pencere dibi 1866.45; üst likidite 1920-1930 bandında; fiyat çevresi 1890-1900 karışık; alt 1880/1870 bantları",
+    "4S heatmap: fiyat 1899.45; tepe 1982.00, dip 1841.84; ÇOK YOĞUN üst likidite 1960-1980 bloğu; alt bantlar 1860-1840",
+    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S tepe 1928.90 ↔ kline son-96-bar max 1928.9 BİREBİR; panel 24S dip 1855.82 ↔ kline min 1855.82 BİREBİR; 4S tepe 1982.00 ↔ kline 4H max 1982.0 BİREBİR; panel fiyat 1899.35-1899.83 ↔ son kapanış 1898.44 (ekran anı sapması ~1-1.4, bar içi)",
+    "Görsel yön okuması: 15M tüm MA'ların altı + long-flush baskın likidasyon + funding tepeden inceliyor = kısa vade AŞAĞI; 4S MA30 1897 tam test — kırılırsa 1880/1866, tutarsa 1910/1920 likiditesi üstte mıknatıs"
   ],
-  "h4_trend": "bear",
-  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 0.65; 1841.84 yalnız panel). KRİTİK DEĞİŞİM: funding +0.0028'den -0.0056'ya DÖNDÜ — kalabalık short tarafında; dip 1865'te tutunma + üstte 1900-1920 likidite bloğu = short-squeeze yakıtı birikiyor. Long likidasyonlar küçüldü (flush bitti)",
+  "h4_trend": "range",
+  "celiski_notu": "Görsel-kline uyum TAM (3 uç seviye birebir). KRİTİK: BTC'de short likidasyonu baskınken (707.5K) ETH'de LONG likidasyonu baskın (4S 2.1M, 15M 1.1M) — ETH tepeden dönüşte zayıf bacak; funding hâlâ pozitif ama azalıyor (long kalabalığı henüz teslim olmadı = düşüş yakıtı). Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-07-28 10:47",
-  "zaman_yerel": "2026-07-28 13:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:47 (UTC+3) → UTC 10:47; paket çekimi 2026-07-28 10:47:54 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-29 03:40",
+  "zaman_yerel": "2026-07-29 06:40 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 06:40 (UTC+3) → UTC 03:40; paket çekimi 2026-07-29 03:41:24 UTC ile aynı dakikalar; son bar 2026-07-29 03:30"
 }

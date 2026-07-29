@@ -1,32 +1,34 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (8 görüntünün BTC bölümü) ↔ grafik-cizim ölçülü yapı (smc_tespit, aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (8 görüntünün BTC bölümü: 15M+4S heatmap, 15M+4S panel) ↔ kline uçları (aynı bar)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "bear",
-  "yapi_olayi": "63021.00 dibinden toparlanma 63600'e — 15M MA'lar iç içe (sıkışma), fiyat MA'ların hafif üstünde; 4S MA'ların hâlâ belirgin altında",
+  "trend": "yatay",
+  "yapi_olayi": "62660.10 dibinden V-toparlanma 64175.00'e, sonra 63700-64000 bandında konsolidasyon — 15M MA'lar iç içe (MA5 63884 / MA10 63859 / MA30 63872, sıkışma); 4S'te fiyat hâlâ MA10/MA30 altında (64175 tepesi 4S MA30 64344.71'e dokunamadı)",
   "seviyeler": {
     "direnc": [
-      63600,
-      63800,
-      64000
+      63850,
+      64000,
+      64175,
+      64200
     ],
     "destek": [
-      63300,
-      63200,
-      63021
+      63600,
+      63000,
+      62660.1
     ]
   },
   "gozlem": [
-    "15M heatmap: fiyat 63510.00; dip 63021.00 (07/28 03:30 civarı), sol tepe 64880.10; koyu likidite bantları ~64000 üstte, ~63300/63200 altta; 63021'den 63600'e toparlanıp 63400-63500 bandında konsolidasyon",
-    "4S panel: fiyat 63508, -2.86%; 24S menzil 63021-65690; fiyat < MA5 63795.70 < MA10 64440.14 < MA30 64506.63 (tümünün altında); funding +0.0028%; bu 4S barda likidasyon Longs 229.9K / Shorts 136.0K (küçük — flush bitti); OI 106.0K→105.4K (yüksek kaldı)",
-    "15M panel: MA5 63410.26 / MA10 63427.88 / MA30 63428.54 İÇ İÇE (sıkışma), fiyat 63508 hafif üstünde; funding şeridinde düşüş sırasında SARI (negatif) bölge oluşup tekrar pozitife döndü; bu 15M barda likidasyon yok (--/--)",
-    "ÇAPRAZ SORGU (panel ↔ ölçülü yapı, aynı bar): panel dip 63021.00 BİREBİR (ölçüm 63021.0); panel sol tepe 64880.10 ↔ ölçüm 64876.96667 (sapma 3.13); panel ~64000 bandı ↔ ölçüm 64063.8 (63.8); panel ~63600 ↔ ölçüm 63588.0 (12); panel ~63200 ↔ ölçüm 63212.1 (12.1) — 5 bant iki bağımsız kaynakta örtüştü",
-    "Çapraz trend teyidi: görsel sıkışma-altı-bear (fiyat 4S MA'ların altında) ↔ smc_tespit trend=bear ama ADX 13.59 (trend gücü ZAYIFLADI — sıkışma) — UYUMLU"
+    "15M heatmap: fiyat 63769.70; pencere tepesi 64175.00; koyu likidite bantları 64200 üzeri (yoğun kırmızı şerit) ve fiyatın hemen üstünde 63800-63850; alt bantlar 63000 civarı ve 62937; koyu mor OI/likidite noktaları ~63600 ve ~63850",
+    "4S heatmap: fiyat 63782.40; tepe 66924.10, dip 62660.10; üst likidite 64000-64200 bandında; altta 63500/63000 ince",
+    "4S panel: fiyat 63772 (+0.74%); 24S menzil 62660-64175; fiyat MA5 63779.14'ün dibinde, MA10 63888.34 ve MA30 64344.71 ALTINDA (4S bear yapısı kırılmadı); funding +0.01%; bu 4S barda likidasyon Longs 611.7K / Shorts 707.5K — SHORT likidasyonu baskın (toparlanma short'ları yaktı); Açık Faiz 103.3K→103.2K (07/28 tepesi ~108K'dan boşalma sonrası yatay)",
+    "15M panel: MA5 63884.03 / MA10 63859.38 / MA30 63872.39 İÇ İÇE (sıkışma), fiyat 63772 hafif ALTINDA (son barlar kırmızı, 64175'ten geri çekilme); funding şeridi 07/28 başında sarı (negatif), sonrasında kesintisiz POZİTİF ve yüksek; likidasyon Longs 67.4K / Shorts 2.5K (küçük); OI eğrisi 15M'de 07/28 15:15'ten beri AŞAĞI (düşüşte pozisyon boşalması, toparlanmada geri dolmadı)",
+    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S tepe 64175.00 ↔ kline son-96-bar max 64175.0 BİREBİR; panel dip 62660.10 ↔ kline min 62660.1 BİREBİR; 4S heatmap tepe 66924.10 ↔ 4H max 66924.1 BİREBİR; panel fiyat 63769.70-63782.40 ↔ son kapanış 63763.00 (ekran anı sapması ~7-19, bar içi)",
+    "Görsel yön okuması: 4S bear yapısı (fiyat < MA10/MA30) + 15M sıkışma + üstte 63850/64200 çift likidite tavanı; ama dipten V-toparlanma + short-likidasyon baskınlığı + pozitif funding = iki yönlü gergin denge, tek yönlü net sinyal YOK"
   ],
   "h4_trend": "bear",
-  "celiski_notu": "Görsel-mekanik uyum TAM (en büyük sapma 63.8, bant genişliği içinde). Dikkat: ADX 27.78→13.59 düştü — düşüş momentumu soğudu, 15M sıkışması var; OI yüksek kalırken funding'in negatife değip toparlanması iki yönlü gergin pozisyonlanma demek",
+  "celiski_notu": "Görsel-kline uyum TAM (3 uç seviye birebir). Dikkat: 4S barda short likidasyonu (707.5K) long'dan büyük — 62660 flush'ı sonrası toparlanma short kalabalığını yaktı; OI 15M'de toparlanmaya eşlik ETMEDİ (yeni pozisyon girmiyor, squeeze-kapanış karakteri). Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-07-28 10:46",
-  "zaman_yerel": "2026-07-28 13:46-13:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:46-13:47 (UTC+3) → UTC 10:46-10:47; paket çekimi 2026-07-28 10:47:54 UTC ile aynı dakikalar"
+  "zaman_utc": "2026-07-29 03:40",
+  "zaman_yerel": "2026-07-29 06:39-06:40 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 06:39-06:40 (UTC+3) → UTC 03:39-03:40; paket çekimi 2026-07-29 03:41:24 UTC ile aynı dakikalar; son bar 2026-07-29 03:30"
 }

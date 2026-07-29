@@ -1,9 +1,9 @@
 {
-  "liq_long": 0.6089,
-  "liq_short": 0.0987,
+  "liq_long": 2.1,
+  "liq_short": 0.5817,
   "birim": "milyon USD (CoinGlass 4S bar, Sembol Likidasyonları)",
-  "kaynak": "CoinGlass Binance ETHUSDT Perpetual 4S — Longs 608.9K / Shorts 98.7K (1865 dibi sonrası sıkışma barı; büyük flush bitti). 15M panelde son barda Longs -- / Shorts -- (yok)",
-  "zaman_utc": "2026-07-28 10:47",
-  "zaman_yerel": "2026-07-28 13:47 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 13:47 (UTC+3) → UTC 10:47; paket çekimi 2026-07-28 10:47:54 UTC ile aynı dakikalar"
+  "kaynak": "CoinGlass Binance ETHUSDT Perpetual 4S — Longs 2.1M / Shorts 581.7K (1928.90 tepesinden geri çekilmede LONG flush baskın). 15M panelde Longs 1.1M / Shorts 8.3K (son düşüş barlarında long temizliği sürüyor)",
+  "zaman_utc": "2026-07-29 03:40",
+  "zaman_yerel": "2026-07-29 06:40 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 06:40 (UTC+3) → UTC 03:40; paket çekimi 2026-07-29 03:41:24 UTC ile aynı dakikalar; son bar 2026-07-29 03:30"
 }
