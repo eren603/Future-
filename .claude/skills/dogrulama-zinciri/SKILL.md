@@ -2,22 +2,19 @@
 name: dogrulama-zinciri
 description: >-
   Doğrulama zinciri — bir piramit koşusunun KARARINI (yön iddiası, emir
-  seviyeleri, danışman duruşları, kapı hükümleri) kademeli olarak inceleyen
-  üç adımlı ikinci-göz becerisi. Bir koşu raporu üretildikten sonra, "bu karar
-  doğru mu", "kanıtı var mı", "bu bulgu gerçek mi", "ikinci göz", "değerlendir",
-  "denetle", "kararı incele", "yanlış pozitif mi" gibi bir iş çıktığında
-  OTOMATİK devreye girer — slash komutu gerekmez. Üç adım: (1) MALİYET KADEMESİ
-  — pahalı doğrulamaya girmeden ucuz ön eleme (koşu kapıda mı durdu, zorunlu
-  girdi eksik mi, yön nötr + emir yok mu, bu koşu zaten değerlendirildi mi, veri
-  ilerledi mi); (2) BULGU DOĞRULAYICI — her iddia için bağımsız çoklu-oy, HIGH
-  SIGNAL ölçütü ve yanlış-pozitif listesi, doğrulanmayan ELENİR; (3) ŞÜPHECİ
-  DEĞERLENDİRİCİ (`.claude/agents/degerlendirici.md`) — raporu AÇMADAN PASS
-  veremeyen, yalnız Read/Glob/Grep taşıyan ikinci-göz ajanı. Çalışan motorlar:
-  scripts/kademe.py, scripts/bulgu_dogrula.py (stdlib; öz-testli). Tetikleyici
-  kelimeler (TR/EN): doğrulama, doğrula, ikinci göz, değerlendirici, evaluator,
-  inceleme, review, kod incelemesi, bulgu, finding, yanlış pozitif, false
-  positive, yüksek sinyal, high signal, kademe, ön eleme, triage, maliyet, oy,
-  çoğunluk, vote, PASS, NEEDS_WORK, kanıt, evidence, denetle, audit.
+  seviyeleri, danışman duruşları, kapı hükümleri) kademeli olarak inceleyen üç
+  adımlı ikinci-göz becerisi. Bir koşu raporu üretildikten sonra, "bu karar
+  doğru mu", "kanıtı var mı", "ikinci göz", "kararı incele", "yanlış pozitif mi"
+  gibi bir iş çıktığında OTOMATİK devreye girer — slash komutu gerekmez. Üç
+  adım: (1) MALİYET KADEMESİ — pahalı doğrulamadan önce ucuz ön eleme; (2) BULGU
+  DOĞRULAYICI — her iddia için bağımsız çoklu-oy, HIGH SIGNAL ölçütü,
+  doğrulanmayan ELENİR; (3) ŞÜPHECİ DEĞERLENDİRİCİ
+  (`.claude/agents/degerlendirici.md`) — raporu AÇMADAN PASS veremeyen, yalnız
+  Read/Glob/Grep taşıyan ajan. Motorlar: scripts/kademe.py,
+  scripts/bulgu_dogrula.py (stdlib; öz-testli). Tetikleyici kelimeler (TR/EN):
+  doğrulama, doğrula, ikinci göz, değerlendirici, evaluator, inceleme, review,
+  bulgu, finding, yanlış pozitif, false positive, yüksek sinyal, high signal,
+  kademe, ön eleme, triage, PASS, NEEDS_WORK, kanıt, evidence, denetle, audit.
 ---
 
 # Doğrulama zinciri — ucuz ele, pahalı doğrula, şüpheci hüküm ver

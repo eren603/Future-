@@ -1,0 +1,258 @@
+{
+  "depo": "/home/user/Future-",
+  "denetlenen": 268,
+  "ozet": {
+    "hata": 25,
+    "denetlenemedi": 3,
+    "bilgi": 13
+  },
+  "bulgular": [
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/backtest-motoru/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/data-analysis-deep-scan/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "ACIKLAMA_UZUN",
+      "yol": ".claude/skills/dogrulama-zinciri/SKILL.md",
+      "mesaj": "description 1276 karakter, sert sinir 1024 (asan kisim kirpilir)"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/dokuman-uretimi/SKILL.md",
+      "mesaj": "SKILL.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/dokuman-uretimi/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/finansal-modelleme/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/forex-trading-expert/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/grafik-calisma/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "ACIKLAMA_UZUN",
+      "yol": ".claude/skills/grafik-calisma/SKILL.md",
+      "mesaj": "description 1243 karakter, sert sinir 1024 (asan kisim kirpilir)"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/grafik-cizim/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "ACIKLAMA_UZUN",
+      "yol": ".claude/skills/grafik-cizim/SKILL.md",
+      "mesaj": "description 1338 karakter, sert sinir 1024 (asan kisim kirpilir)"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/karar-kurulu/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/karar-motoru/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/piramit-sistem/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/portfoy-optimizasyonu/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/risk-yonetimi/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "ACIKLAMA_UZUN",
+      "yol": ".claude/skills/rubrik-kapisi/SKILL.md",
+      "mesaj": "description 1233 karakter, sert sinir 1024 (asan kisim kirpilir)"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "ACIKLAMA_ACI_PARANTEZ",
+      "yol": ".claude/skills/sema-dogrulama/SKILL.md",
+      "mesaj": "description '<' ya da '>' iceriyor"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/turev-akis/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/uzman-modu/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/video-isleme/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/guven-katmanlama/SKILL.md",
+      "mesaj": "engine/state/defter.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/izleme-telemetri/SKILL.md",
+      "mesaj": "engine/state/olcum.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_DIS_KAYNAK",
+      "yol": ".claude/skills/izleme-telemetri/SKILL.md",
+      "mesaj": "grafana/dashboards/working-dashboard.json — bu depoda olmayan bir agac; dogrulanamadi"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "REF_COZUMLENMEDI",
+      "yol": ".claude/skills/izleme-telemetri/SKILL.md",
+      "mesaj": "ornek/olcum_ornek.json -> dosya yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "REF_COZUMLENMEDI",
+      "yol": ".claude/skills/karar-kurulu/SKILL.md",
+      "mesaj": "grafik-calisma/confluence.py -> dosya yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/karar-motoru/SKILL.md",
+      "mesaj": "engine/state/defter.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/piramit-sistem/SKILL.md",
+      "mesaj": "engine/state/bar_arsivi.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/piramit-sistem/SKILL.md",
+      "mesaj": "engine/state/turev_seri.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "REF_COZUMLENMEDI",
+      "yol": ".claude/skills/piramit-sistem/SKILL.md",
+      "mesaj": "karar-kurulu/sentez.py -> dosya yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/piramit-sistem/SKILL.md",
+      "mesaj": "state/agirlik.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_DIS_KAYNAK",
+      "yol": ".claude/skills/rubrik-kapisi/SKILL.md",
+      "mesaj": "k12-lesson-planning/rubrics/shared.csv — bu depoda olmayan bir agac; dogrulanamadi"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_DIS_KAYNAK",
+      "yol": ".claude/skills/sema-dogrulama/SKILL.md",
+      "mesaj": "managed-agent-cookbooks/gl-reconciler/subagents/reader.yaml — bu depoda olmayan bir agac; dogrulanamadi"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "REF_COZUMLENMEDI",
+      "yol": ".claude/skills/sema-dogrulama/SKILL.md",
+      "mesaj": "scripts/validate.py -> dosya yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/sorusturma/SKILL.md",
+      "mesaj": "engine/state/defter.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/sorusturma/SKILL.md",
+      "mesaj": "state/piramit_defter.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/sorusturma/SKILL.md",
+      "mesaj": "state/son_rapor.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "KANCA_YORUMLAYICI",
+      "yol": ".claude/hooks/piramit_auto.py",
+      "mesaj": "+x yok ama yorumlayici ile cagriliyor — sorun degil"
+    },
+    {
+      "seviye": "DENETLENEMEDI",
+      "kod": "OZTEST_YASAK",
+      "yol": ".claude/skills/piramit-sistem/scripts/piramit.py",
+      "mesaj": "boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)"
+    },
+    {
+      "seviye": "DENETLENEMEDI",
+      "kod": "OZTEST_YASAK",
+      "yol": ".claude/skills/piramit-sistem/scripts/saglik.py",
+      "mesaj": "boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)"
+    },
+    {
+      "seviye": "DENETLENEMEDI",
+      "kod": "OZTEST_YASAK",
+      "yol": ".claude/skills/piramit-sistem/scripts/self_test.py",
+      "mesaj": "boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)"
+    }
+  ],
+  "cikis_kodu": 1
+}

@@ -9,11 +9,11 @@ description: >-
   girmeden ÖNCE doğrulanır. Şema korkulukları: maxLength, pattern, enum,
   additionalProperties:false, maxItems, required, minimum/maximum. Çalışan motor
   scripts/sema_dogrula.py — stdlib-only (jsonschema BU DEPODA KURULU DEĞİL);
-  geçerliyse exit 0 + "OK", geçersizse exit 1 + stderr'e "INVALID: <mesaj> at
-  <yol>". Tetikleyici kelimeler (TR/EN): şema, sema, doğrula, validate, schema,
-  JSON doğrulama, girdi denetimi, prompt injection, enjeksiyon, untrusted, elle
-  girdi, panel okuması, görsel okuma, likidasyon dosyası, zorunlu girdi
-  kontrolü.
+  geçerliyse exit 0 + "OK", geçersizse exit 1 + stderr'e INVALID satırı (mesaj +
+  JSON yolu). Tetikleyici kelimeler (TR/EN): şema, sema, doğrula, validate,
+  schema, JSON doğrulama, girdi denetimi, prompt injection, enjeksiyon,
+  untrusted, elle girdi, panel okuması, görsel okuma, likidasyon dosyası,
+  zorunlu girdi kontrolü.
 ---
 
 # sema-dogrulama — untrusted girdi kapısı
@@ -75,7 +75,8 @@ python3 .claude/skills/sema-dogrulama/scripts/sema_dogrula.py \
 python3 .claude/skills/sema-dogrulama/scripts/sema_dogrula.py --self-test
 ```
 
-Çıkış kodları — kaynak `scripts/validate.py:5` sözleşmesi:
+Çıkış kodları — kaynak sözleşmesi
+(`financial-services/scripts/validate.py:5`, bu depoda DEĞİL — üst kaynak):
 `Exits 0 on valid, 1 on invalid (message to stderr)`; argüman sayısı yanlışsa
 `__doc__` stderr'e basılır ve **2** döner.
 

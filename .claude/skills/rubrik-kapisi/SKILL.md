@@ -4,20 +4,17 @@ description: >-
   Rubrik kapısı — "iş bitti mi / koşu kaliteli mi" sorusunun NOTLANABİLİR
   cevabı. Bir piramit koşusu (piramit.py raporu) üretildikten sonra ya da bir
   soru "bu koşu kaliteli mi", "iş bitti mi", "kaçıncı kriter düştü", "koşuyu
-  puanla", "rubrik", "kalite notu", "checklist", "kabul kriteri", "değerlendirme
-  ölçütü", "eksik ne kaldı" ile ilgili olduğunda OTOMATİK devreye girer — slash
+  puanla", "eksik ne kaldı" ile ilgili olduğunda OTOMATİK devreye girer — slash
   komutu gerekmez. Koşuyu 39 kriterle (30 çekirdek + 9 emir kriteri) tek tek
-  notlar: GEÇTİ / DÜŞTÜ / ATLANDI. Koşullu kriter, koşulu sağlanmazsa ATLANIR —
-  DÜŞMÜŞ SAYILMAZ. BİRİNCİL çıktı kriter-başına geçme oranıdır; toplam skor
-  ikincildir ve maskeleme uyarısıyla verilir. Çalışan motor: scripts/rubrik.py
-  (stdlib; öz-test: --self-test, 3 sahte senaryo + depodaki GERÇEK koşu
-  raporları). Rubrikler: rubrikler/kosu_ortak.csv, rubrikler/emir.csv (kaynak
-  şemasıyla birebir 6 sütun: ID, Bucket, Criterion, What pass requires, Notes,
-  Conditional). Tetikleyici kelimeler (TR/EN): rubrik, rubric, kriter, criterion,
-  puanla, score, not ver, kalite, quality gate, kabul kriteri, checklist,
-  değerlendirme, eval, koşu kalitesi, iş bitti mi, definition of done, geçme
-  oranı, pass rate, denetim notu.
-  ⚠️ Bu bir KOŞU KALİTESİ notudur; piyasa kararı/canlı emir DEĞİLDİR.
+  notlar: GEÇTİ / DÜŞTÜ / ATLANDI. Koşulu sağlanmayan kriter ATLANIR — DÜŞMÜŞ
+  SAYILMAZ. BİRİNCİL çıktı kriter-başına geçme oranıdır; toplam skor ikincildir
+  ve maskeleme uyarısıyla verilir. Çalışan motor: scripts/rubrik.py (stdlib;
+  öz-test: --self-test, 3 sahte senaryo + GERÇEK koşu raporları). Rubrikler:
+  rubrikler/kosu_ortak.csv, rubrikler/emir.csv (kaynak şemasıyla birebir 6
+  sütun). Tetikleyici kelimeler (TR/EN): rubrik, rubric, kriter, criterion,
+  puanla, score, not ver, kalite, kabul kriteri, checklist, koşu kalitesi, iş
+  bitti mi, definition of done, geçme oranı, pass rate. ⚠️ Bu bir KOŞU KALİTESİ
+  notudur; piyasa kararı/canlı emir DEĞİLDİR.
 ---
 
 # Rubrik Kapısı — koşu kalitesinin notlanabilir cevabı

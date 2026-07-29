@@ -1,0 +1,26 @@
+OZ-TEST — butunluk.py
+  [GECTI] temiz agac (negatif kontrol) — temiz beklendi, bulunan: yok
+  [GECTI] gecersiz YAML frontmatter — beklenen FRONTMATTER, bulunan: FRONTMATTER
+  [GECTI] frontmatter kapanmamis — beklenen FRONTMATTER, bulunan: FRONTMATTER
+  [GECTI] description 1024'u asiyor — beklenen ACIKLAMA_UZUN, bulunan: ACIKLAMA_UZUN
+  [GECTI] description tam 1024 (sinir — hata OLMAMALI) — temiz beklendi, bulunan: yok
+  [GECTI] name dizin adiyla uyusmuyor — beklenen AD_UYUSMAZ, bulunan: AD_UYUSMAZ
+  [GECTI] name alani yok — beklenen FRONTMATTER, bulunan: FRONTMATTER
+  [GECTI] var olmayan referans dosya — beklenen REF_COZUMLENMEDI, bulunan: REF_COZUMLENMEDI
+  [GECTI] KANIT.md eksik — beklenen EKSIK_DOSYA, bulunan: EKSIK_DOSYA
+  [GECTI] derlenmeyen Python — beklenen DERLENMEDI, bulunan: DERLENMEDI
+  [GECTI] settings.json gecersiz JSON — beklenen JSON_AYRISTIRMA, bulunan: JSON_AYRISTIRMA
+  [GECTI] kanca dosyasi diskte yok — beklenen KANCA_DOSYA_YOK, bulunan: KANCA_DOSYA_YOK
+  [GECTI] kanca +x degil (dogrudan cagriliyor) — beklenen KANCA_CALISTIRILAMAZ, bulunan: KANCA_CALISTIRILAMAZ
+  [GECTI] kanca +x degil ama python3 ile cagriliyor (hata OLMAMALI) — temiz beklendi, bulunan: yok
+  [GECTI] ajan frontmatter gecersiz — beklenen AJAN_FRONTMATTER, bulunan: AJAN_FRONTMATTER
+  [GECTI] ajan adi dosya adiyla uyusmuyor — beklenen AJAN_AD_UYUSMAZ, bulunan: AJAN_AD_UYUSMAZ
+  [GECTI] bozuk CSV sutun sayisi — beklenen CSV_SUTUN, bulunan: CSV_SUTUN
+  [GECTI] bozuk YAML veri dosyasi — beklenen YAML_AYRISTIRMA, bulunan: YAML_AYRISTIRMA
+  [GECTI] oz-test yolu yok — beklenen OZTEST_YOK, bulunan: OZTEST_YOK
+  [GECTI] oz-test exit 0 vermiyor — beklenen OZTEST_DUSTU, bulunan: OZTEST_DUSTU
+  [GECTI] SKILL.md yok — beklenen EKSIK_DOSYA, bulunan: EKSIK_DOSYA
+  [GECTI] UTF-8 BOM'lu SKILL.md — beklenen KODLAMA, bulunan: KODLAMA
+  [GECTI] settings.json yok — beklenen SETTINGS_YOK, bulunan: SETTINGS_YOK
+
+23 vaka: 23 gecti, 0 dustu.

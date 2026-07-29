@@ -1,0 +1,48 @@
+--- HATA (25) ---
+  x [EKSIK_DOSYA] .claude/skills/backtest-motoru/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/data-analysis-deep-scan/KANIT.md: KANIT.md yok
+  x [ACIKLAMA_UZUN] .claude/skills/dogrulama-zinciri/SKILL.md: description 1276 karakter, sert sinir 1024 (asan kisim kirpilir)
+  x [EKSIK_DOSYA] .claude/skills/dokuman-uretimi/SKILL.md: SKILL.md yok
+  x [EKSIK_DOSYA] .claude/skills/dokuman-uretimi/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/finansal-modelleme/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/forex-trading-expert/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/grafik-calisma/KANIT.md: KANIT.md yok
+  x [ACIKLAMA_UZUN] .claude/skills/grafik-calisma/SKILL.md: description 1243 karakter, sert sinir 1024 (asan kisim kirpilir)
+  x [EKSIK_DOSYA] .claude/skills/grafik-cizim/KANIT.md: KANIT.md yok
+  x [ACIKLAMA_UZUN] .claude/skills/grafik-cizim/SKILL.md: description 1338 karakter, sert sinir 1024 (asan kisim kirpilir)
+  x [EKSIK_DOSYA] .claude/skills/karar-kurulu/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/karar-motoru/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/piramit-sistem/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/portfoy-optimizasyonu/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/risk-yonetimi/KANIT.md: KANIT.md yok
+  x [ACIKLAMA_UZUN] .claude/skills/rubrik-kapisi/SKILL.md: description 1233 karakter, sert sinir 1024 (asan kisim kirpilir)
+  x [ACIKLAMA_ACI_PARANTEZ] .claude/skills/sema-dogrulama/SKILL.md: description '<' ya da '>' iceriyor
+  x [EKSIK_DOSYA] .claude/skills/turev-akis/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/uzman-modu/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/video-isleme/KANIT.md: KANIT.md yok
+  x [REF_COZUMLENMEDI] .claude/skills/izleme-telemetri/SKILL.md: ornek/olcum_ornek.json -> dosya yok
+  x [REF_COZUMLENMEDI] .claude/skills/karar-kurulu/SKILL.md: grafik-calisma/confluence.py -> dosya yok
+  x [REF_COZUMLENMEDI] .claude/skills/piramit-sistem/SKILL.md: karar-kurulu/sentez.py -> dosya yok
+  x [REF_COZUMLENMEDI] .claude/skills/sema-dogrulama/SKILL.md: scripts/validate.py -> dosya yok
+
+--- DENETLENEMEDI (3) ---
+  ? [OZTEST_YASAK] .claude/skills/piramit-sistem/scripts/piramit.py: boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)
+  ? [OZTEST_YASAK] .claude/skills/piramit-sistem/scripts/saglik.py: boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)
+  ? [OZTEST_YASAK] .claude/skills/piramit-sistem/scripts/self_test.py: boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)
+
+--- BILGI (13) ---
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/guven-katmanlama/SKILL.md: engine/state/defter.json — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/izleme-telemetri/SKILL.md: engine/state/olcum.json — kosuda uretilir, depoda yok
+  i [REF_DIS_KAYNAK] .claude/skills/izleme-telemetri/SKILL.md: grafana/dashboards/working-dashboard.json — bu depoda olmayan bir agac; dogrulanamadi
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/karar-motoru/SKILL.md: engine/state/defter.json — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/piramit-sistem/SKILL.md: engine/state/bar_arsivi.json — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/piramit-sistem/SKILL.md: engine/state/turev_seri.json — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/piramit-sistem/SKILL.md: state/agirlik.json — kosuda uretilir, depoda yok
+  i [REF_DIS_KAYNAK] .claude/skills/rubrik-kapisi/SKILL.md: k12-lesson-planning/rubrics/shared.csv — bu depoda olmayan bir agac; dogrulanamadi
+  i [REF_DIS_KAYNAK] .claude/skills/sema-dogrulama/SKILL.md: managed-agent-cookbooks/gl-reconciler/subagents/reader.yaml — bu depoda olmayan bir agac; dogrulanamadi
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/sorusturma/SKILL.md: engine/state/defter.json — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/sorusturma/SKILL.md: state/piramit_defter.json — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/sorusturma/SKILL.md: state/son_rapor.json — kosuda uretilir, depoda yok
+  i [KANCA_YORUMLAYICI] .claude/hooks/piramit_auto.py: +x yok ama yorumlayici ile cagriliyor — sorun degil
+
+DUSTU — 25 hata, 3 denetlenemedi, 13 bilgi; 269 denetim yapildi.
