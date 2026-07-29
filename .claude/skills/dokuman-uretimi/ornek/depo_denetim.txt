@@ -1,0 +1,38 @@
+OK    backtest-motoru            hata=0 uyari=0
+OK    butunluk-denetimi          hata=0 uyari=0
+OK    data-analysis-deep-scan    hata=0 uyari=2
+        [UYARI/DEPO EKI] TETIKLEYICI_SOZLESME (kaynakta YOK — KANIT.md D4)
+            depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez
+        [UYARI/DEPO EKI] KATLANMIS_BLOK_ONER (kaynakta YOK — KANIT.md D5)
+            uzun description tek satirda; depo geleneği katlanmis blok (description: >-) — 22 beceriden 21'i boyle.
+OK    dogrulama-zinciri          hata=0 uyari=0
+OK    dokuman-uretimi            hata=0 uyari=0
+OK    eleme-motoru               hata=0 uyari=0
+OK    finansal-modelleme         hata=0 uyari=0
+OK    forex-trading-expert       hata=0 uyari=1
+        [UYARI/DEPO EKI] TETIKLEYICI_SOZLESME (kaynakta YOK — KANIT.md D4)
+            depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez
+FAIL  grafik-calisma             hata=1 uyari=0
+        [HATA/KAYNAK] DESC_COK_UZUN (quick_validate.py:83-84)
+            Description is too long (1243 characters). Maximum is 1024 characters.
+FAIL  grafik-cizim               hata=1 uyari=0
+        [HATA/KAYNAK] DESC_COK_UZUN (quick_validate.py:83-84)
+            Description is too long (1338 characters). Maximum is 1024 characters.
+OK    guven-katmanlama           hata=0 uyari=0
+OK    izleme-telemetri           hata=0 uyari=0
+OK    karar-kurulu               hata=0 uyari=0
+OK    karar-motoru               hata=0 uyari=0
+OK    piramit-sistem             hata=0 uyari=0
+OK    portfoy-optimizasyonu      hata=0 uyari=0
+OK    risk-yonetimi              hata=0 uyari=0
+OK    rubrik-kapisi              hata=0 uyari=0
+OK    sema-dogrulama             hata=0 uyari=0
+FAIL  sorusturma                 hata=1 uyari=0
+        [HATA/KAYNAK] BEKLENMEYEN_ANAHTAR (quick_validate.py:44-50)
+            Unexpected key(s) in SKILL.md frontmatter: argument-hint. Allowed properties are: allowed-tools, compatibility, description, license, metadata, name
+OK    turev-akis                 hata=0 uyari=0
+OK    uzman-modu                 hata=0 uyari=0
+OK    video-isleme               hata=0 uyari=0
+
+TOPLAM: 23 beceri, 3 HATA, 3 UYARI
+Cikis kodu: 1 (fail-closed)

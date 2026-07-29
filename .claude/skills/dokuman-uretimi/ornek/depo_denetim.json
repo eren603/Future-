@@ -1,0 +1,233 @@
+[
+  {
+    "beceri": "backtest-motoru",
+    "yol": ".claude/skills/backtest-motoru",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "butunluk-denetimi",
+    "yol": ".claude/skills/butunluk-denetimi",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "data-analysis-deep-scan",
+    "yol": ".claude/skills/data-analysis-deep-scan",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 2,
+    "bulgular": [
+      {
+        "kod": "TETIKLEYICI_SOZLESME",
+        "seviye": "UYARI",
+        "etiket": "DEPO EKI",
+        "kaynak": "kaynakta YOK — KANIT.md D4",
+        "mesaj": "depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez"
+      },
+      {
+        "kod": "KATLANMIS_BLOK_ONER",
+        "seviye": "UYARI",
+        "etiket": "DEPO EKI",
+        "kaynak": "kaynakta YOK — KANIT.md D5",
+        "mesaj": "uzun description tek satirda; depo geleneği katlanmis blok (description: >-) — 22 beceriden 21'i boyle."
+      }
+    ]
+  },
+  {
+    "beceri": "dogrulama-zinciri",
+    "yol": ".claude/skills/dogrulama-zinciri",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "dokuman-uretimi",
+    "yol": ".claude/skills/dokuman-uretimi",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "eleme-motoru",
+    "yol": ".claude/skills/eleme-motoru",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "finansal-modelleme",
+    "yol": ".claude/skills/finansal-modelleme",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "forex-trading-expert",
+    "yol": ".claude/skills/forex-trading-expert",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 1,
+    "bulgular": [
+      {
+        "kod": "TETIKLEYICI_SOZLESME",
+        "seviye": "UYARI",
+        "etiket": "DEPO EKI",
+        "kaynak": "kaynakta YOK — KANIT.md D4",
+        "mesaj": "depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez"
+      }
+    ]
+  },
+  {
+    "beceri": "grafik-calisma",
+    "yol": ".claude/skills/grafik-calisma",
+    "sonuc": "HATALI",
+    "hata_sayisi": 1,
+    "uyari_sayisi": 0,
+    "bulgular": [
+      {
+        "kod": "DESC_COK_UZUN",
+        "seviye": "HATA",
+        "etiket": "KAYNAK",
+        "kaynak": "quick_validate.py:83-84",
+        "mesaj": "Description is too long (1243 characters). Maximum is 1024 characters."
+      }
+    ]
+  },
+  {
+    "beceri": "grafik-cizim",
+    "yol": ".claude/skills/grafik-cizim",
+    "sonuc": "HATALI",
+    "hata_sayisi": 1,
+    "uyari_sayisi": 0,
+    "bulgular": [
+      {
+        "kod": "DESC_COK_UZUN",
+        "seviye": "HATA",
+        "etiket": "KAYNAK",
+        "kaynak": "quick_validate.py:83-84",
+        "mesaj": "Description is too long (1338 characters). Maximum is 1024 characters."
+      }
+    ]
+  },
+  {
+    "beceri": "guven-katmanlama",
+    "yol": ".claude/skills/guven-katmanlama",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "izleme-telemetri",
+    "yol": ".claude/skills/izleme-telemetri",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "karar-kurulu",
+    "yol": ".claude/skills/karar-kurulu",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "karar-motoru",
+    "yol": ".claude/skills/karar-motoru",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "piramit-sistem",
+    "yol": ".claude/skills/piramit-sistem",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "portfoy-optimizasyonu",
+    "yol": ".claude/skills/portfoy-optimizasyonu",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "risk-yonetimi",
+    "yol": ".claude/skills/risk-yonetimi",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "rubrik-kapisi",
+    "yol": ".claude/skills/rubrik-kapisi",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "sema-dogrulama",
+    "yol": ".claude/skills/sema-dogrulama",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "sorusturma",
+    "yol": ".claude/skills/sorusturma",
+    "sonuc": "HATALI",
+    "hata_sayisi": 1,
+    "uyari_sayisi": 0,
+    "bulgular": [
+      {
+        "kod": "BEKLENMEYEN_ANAHTAR",
+        "seviye": "HATA",
+        "etiket": "KAYNAK",
+        "kaynak": "quick_validate.py:44-50",
+        "mesaj": "Unexpected key(s) in SKILL.md frontmatter: argument-hint. Allowed properties are: allowed-tools, compatibility, description, license, metadata, name"
+      }
+    ]
+  },
+  {
+    "beceri": "turev-akis",
+    "yol": ".claude/skills/turev-akis",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "uzman-modu",
+    "yol": ".claude/skills/uzman-modu",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  },
+  {
+    "beceri": "video-isleme",
+    "yol": ".claude/skills/video-isleme",
+    "sonuc": "TEMIZ",
+    "hata_sayisi": 0,
+    "uyari_sayisi": 0,
+    "bulgular": []
+  }
+]
