@@ -1,0 +1,421 @@
+{
+  "sembol": "TEST-KOSULLU",
+  "koşu_durumu": "TAMAM — piramidin tepesine ulaşıldı",
+  "kriterler": [
+    {
+      "ID": "G1",
+      "Bucket": "G — Girdi",
+      "Criterion": "Fiyat kanalı ölçüldü (K1 kapısı)",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "gecti=True, m15_bar=180, h4_bar=150, ohlcv profili=yok"
+    },
+    {
+      "ID": "G2",
+      "Bucket": "G — Girdi",
+      "Criterion": "K1 çıkarım yapmadı (taban katman yalnız ölçer)",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "K1'de çıkarım alanı: yok (gozlemci.py:105 ile aynı liste)"
+    },
+    {
+      "ID": "G3",
+      "Bucket": "G — Girdi",
+      "Criterion": "Zorunlu girdilerin İKİSİ de geldi",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "DÜŞTÜ",
+      "kanit": "zorunlu_girdiler=['likidasyon'], zorunlu_eksik=1 madde"
+    },
+    {
+      "ID": "G4",
+      "Bucket": "G — Girdi",
+      "Criterion": "Elle gelen girdi TAZE ve damgalı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "1 tazelik satırı, bayat/damgasız: yok (tolerans 240 dk)"
+    },
+    {
+      "ID": "G5",
+      "Bucket": "G — Girdi",
+      "Criterion": "Eksik kanal sessizce düşmedi",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "gerekçesiz düşen kanal: yok (1 gerekçe)"
+    },
+    {
+      "ID": "G6",
+      "Bucket": "G — Girdi",
+      "Criterion": "HESAP VERME — önceki kararın akıbeti ölçüldü",
+      "Conditional": "onceki-kosu-kaydi-var",
+      "rubrik": "kosu_ortak.csv",
+      "kosul_kaniti": "k1.onceki_kayit_var=False",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (onceki-kosu-kaydi-var): k1.onceki_kayit_var=False"
+    },
+    {
+      "ID": "KP1",
+      "Bucket": "KP — Kapı",
+      "Criterion": "K2 çoklu motor kapısı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "motor_sayisi=4 (kapı >= 2), gecti=True"
+    },
+    {
+      "ID": "KP2",
+      "Bucket": "KP — Kapı",
+      "Criterion": "K3 danışman kurulu kapısı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "danışman=2 (kapı >= 2): ['karar-motoru', 'grafik-calisma']"
+    },
+    {
+      "ID": "KP3",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Motor çıktısı şema derinliğini karşıladı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "4 şemalı motor denetlendi; eksik alan: yok"
+    },
+    {
+      "ID": "KP4",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Sessiz kayıp yok — koşan motor ya kurulda ya gerekçeli dışarıda",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "gerekçesiz düşen motor: yok; eksik gerekçeli hata kaydı: 0"
+    },
+    {
+      "ID": "KP5",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Karar eşikleri veriden türetildi ve AYNEN uygulandı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "eşik türetilemedi; kaynak etiketi: KALİBRE EDİLEMEDİ (örneklem küçük) → sentez STATİK KORKULUK kullanır (etiketli)"
+    },
+    {
+      "ID": "KP6",
+      "Bucket": "KP — Kapı",
+      "Criterion": "İşlem kalitesi kapısı fail-closed işledi",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "hüküm=TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE; engel gerekçesi=0 madde; ozet=var"
+    },
+    {
+      "ID": "D1",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Doğrulanmamış görüş tam ağırlık almadı (fail-closed)",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "2 doğrulanmamış danışman, penaltı=0.25; kural dışı: yok"
+    },
+    {
+      "ID": "D2",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Doğrulama seçici — herkes onaylanmadı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "çürütme=['karar-motoru', 'grafik-calisma'], verifier'da kapsanmayan=yok, onay=[]"
+    },
+    {
+      "ID": "D3",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Şişirilmiş-R denetimi her seviyeye uygulandı",
+      "Conditional": "seviye-uretildi",
+      "rubrik": "kosu_ortak.csv",
+      "kosul_kaniti": "k3.seviyeler=boş",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (seviye-uretildi): k3.seviyeler=boş"
+    },
+    {
+      "ID": "D4",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Tünel görüşü yok — en az iki kanıt ailesi doğrulandı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "DÜŞTÜ",
+      "kanit": "onaylı danışman=yok → aile=yok (gerek >= 2)"
+    },
+    {
+      "ID": "D5",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Dairesel doğrulama yok",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "2 doğrulama gerekçesi; dairesel: yok"
+    },
+    {
+      "ID": "D6",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Çelişki turu koştu ve hükmü uygulandı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "ÇELİŞKİ TURU: gerekmedi — doğrulanmış danışman yok"
+    },
+    {
+      "ID": "D7",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Görsel okuma mekanik ölçümle karşılıklı teyide bağlandı",
+      "Conditional": "gorsel-okuma-var",
+      "rubrik": "kosu_ortak.csv",
+      "kosul_kaniti": "k1.zorunlu_girdiler=['likidasyon']",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (gorsel-okuma-var): k1.zorunlu_girdiler=['likidasyon']"
+    },
+    {
+      "ID": "D8",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Türev kanalı KAPSAMIYLA birlikte raporlandı",
+      "Conditional": "turev-motoru-kostu",
+      "rubrik": "kosu_ortak.csv",
+      "kosul_kaniti": "turev-akis motor çıktısı VERİ YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (turev-motoru-kostu): turev-akis motor çıktısı VERİ YOK"
+    },
+    {
+      "ID": "D9",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Çapraz-varlık riski ölçüldü ve risk çarpanına çevrildi",
+      "Conditional": "korelasyon-beyan-edildi",
+      "rubrik": "kosu_ortak.csv",
+      "kosul_kaniti": "_job.korelasyon=beyan yok",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (korelasyon-beyan-edildi): _job.korelasyon=beyan yok"
+    },
+    {
+      "ID": "Ç1",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "İki satır sözleşmesi (YÖN + İŞLEM KALİTESİ)",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "YON_BIAS=NÖTR; 1_YON=dolu, 2_ISLEM_KALITESI=dolu"
+    },
+    {
+      "ID": "Ç2",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "YÖN mekanik türedi (beklentiye göre ayarlanmadı)",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "yon_skoru=0.0 → beklenen yön=NÖTR, basılan=NÖTR"
+    },
+    {
+      "ID": "Ç3",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Çıktı hikâye değil EMİR",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "EMİR YOK; gerekçe=var (yön NÖTR — yönsüz kurulumda giriş/stop tanımsız)"
+    },
+    {
+      "ID": "Ç4",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Geçersizlik koşulu taşındı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "gecersizlik=VERİ YOK"
+    },
+    {
+      "ID": "Ç5",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Zorunlu girdi eksiği en üstte VE çelişkiye taşınmış",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "1 zorunlu eksik; K4 çelişkilerine taşınmayan: yok"
+    },
+    {
+      "ID": "Ç6",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Gözlemci mührü uygulandı",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "mühür yok; kritik ihlal=0; özet=22 denetim, 0 ihlal, 2 uyarı"
+    },
+    {
+      "ID": "Ç7",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "KIYAS koştu (eski veri → yeni veri)",
+      "Conditional": "onceki-kosu-kaydi-var",
+      "rubrik": "kosu_ortak.csv",
+      "kosul_kaniti": "k1.onceki_kayit_var=False",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (onceki-kosu-kaydi-var): k1.onceki_kayit_var=False"
+    },
+    {
+      "ID": "Ç8",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Zirvedeki her sayının alt katmanda kaynağı var",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "zirvede 2 sayı denetlendi; alt katmanda karşılığı olmayan: yok"
+    },
+    {
+      "ID": "Ç9",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Kalibrasyon ölçülmüş defterden ve sınırları içinde",
+      "Conditional": "",
+      "rubrik": "kosu_ortak.csv",
+      "durum": "GEÇTİ",
+      "kanit": "1 motor defteri: karar-motoru(n=0→1.0) | kural dışı: yok"
+    },
+    {
+      "ID": "E1",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Emir biçimi sözleşmeye uygun",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E2",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Emir yönü kararın yönüyle aynı",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E3",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Her aday rr_denetim'den TUTARLI geçti",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E4",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Her adayın R'si R_min kapısını geçti",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E5",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Seviyeler ÖLÇÜLEN yapıdan (uydurma/yuvarlak seviye yok)",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E6",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "MARKET yalnız fiyat giriş bölgesindeyken verildi",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E7",
+      "Bucket": "Ç — Çıktı",
+      "Criterion": "Her adayda geçersizlik cümlesi var",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E8",
+      "Bucket": "D — Doğrulama",
+      "Criterion": "Emir gözlemci mührüyle çelişmiyor",
+      "Conditional": "emir-dogdu",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK"
+    },
+    {
+      "ID": "E9",
+      "Bucket": "KP — Kapı",
+      "Criterion": "Sabit-USDT profili beyan edildiyse 5 kapıdan geçti",
+      "Conditional": "emir-dogdu + usd-profil-beyan",
+      "rubrik": "emir.csv",
+      "kosul_kaniti": "EMIR=EMİR YOK; _job.usd_profil=beyan yok",
+      "durum": "ATLANDI",
+      "kanit": "koşul sağlanmadı (emir-dogdu + usd-profil-beyan): EMIR=EMİR YOK; _job.usd_profil=beyan yok"
+    }
+  ],
+  "kova_ozeti": {
+    "G — Girdi": {
+      "GEÇTİ": 4,
+      "DÜŞTÜ": 1,
+      "ATLANDI": 1,
+      "PUANLANMADI": 0,
+      "gecme_orani": 0.8,
+      "dusen_kriterler": [
+        "G3"
+      ]
+    },
+    "KP — Kapı": {
+      "GEÇTİ": 6,
+      "DÜŞTÜ": 0,
+      "ATLANDI": 4,
+      "PUANLANMADI": 0,
+      "gecme_orani": 1.0,
+      "dusen_kriterler": []
+    },
+    "D — Doğrulama": {
+      "GEÇTİ": 4,
+      "DÜŞTÜ": 1,
+      "ATLANDI": 5,
+      "PUANLANMADI": 0,
+      "gecme_orani": 0.8,
+      "dusen_kriterler": [
+        "D4"
+      ]
+    },
+    "Ç — Çıktı": {
+      "GEÇTİ": 8,
+      "DÜŞTÜ": 0,
+      "ATLANDI": 5,
+      "PUANLANMADI": 0,
+      "gecme_orani": 1.0,
+      "dusen_kriterler": []
+    }
+  },
+  "toplam": {
+    "GEÇTİ": 22,
+    "DÜŞTÜ": 2,
+    "ATLANDI": 15,
+    "PUANLANMADI": 0,
+    "puanlanan": 24,
+    "gecme_orani": 0.9167,
+    "uyari": "İKİNCİL ÖLÇÜM — toplam geçme oranı anlamlı boşlukları maskeleyebilir; kriter-başına dökümü okumadan karar verme."
+  },
+  "not": "BİRİNCİL ÖLÇÜM kriter-başına geçme oranıdır. Kaynak rubrik sözleşmesi: \"aggregate pass rates can mask meaningful gaps\" — toplam skor tek başına sunulmaz. Koşulu sağlanmayan kriter ATLANDI'dır, DÜŞMÜŞ SAYILMAZ.",
+  "uyari": "Bu bir KOŞU KALİTESİ notudur; piyasa yönü/kararı değildir. Canlı/otomatik emir DAHİL DEĞİL."
+}

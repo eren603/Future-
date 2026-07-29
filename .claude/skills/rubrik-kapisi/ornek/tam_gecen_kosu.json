@@ -1,0 +1,473 @@
+{
+  "sistem": "PİRAMİT",
+  "soru": "öz-test",
+  "sembol": "TEST-TAM",
+  "katmanlar": [
+    {
+      "katman": "K1-LLM",
+      "rol": "ham veri + bütünlük denetimi (çıkarım yok)",
+      "kanallar": {
+        "m15": "/veri/m15.json",
+        "h4": "/veri/h4.json",
+        "ohlcv_csv": "VERİ YOK",
+        "returns_csv": "VERİ YOK",
+        "video": "VERİ YOK"
+      },
+      "olcumler": {
+        "m15_bar": 200,
+        "m15_son_bar": 1785000000000,
+        "h4_bar": 200
+      },
+      "profil": null,
+      "veri_sozlesmesi": null,
+      "video": null,
+      "eksikler": [
+        "ohlcv_csv: VERİ YOK",
+        "returns_csv: VERİ YOK",
+        "video: VERİ YOK"
+      ],
+      "zorunlu_girdiler": {
+        "likidasyon": {
+          "liq_long": 12.4,
+          "liq_short": 31.9,
+          "tazelik": "likidasyon: taze (son bara göre 12 dk)"
+        },
+        "gorsel": {
+          "trend": "bear",
+          "guven": 0.5,
+          "tazelik": "görsel okuma: taze (son bara göre 12 dk)"
+        }
+      },
+      "zorunlu_eksik": [],
+      "zorunlu_tazelik": [
+        "likidasyon: taze (son bara göre 12 dk)",
+        "görsel okuma: taze (son bara göre 12 dk)"
+      ],
+      "onceki_karar_akibeti": {
+        "durum": "ÖLÇÜLDÜ",
+        "sonuc": "HEDEF",
+        "gercek_r": 1.8,
+        "onceki_yon": "SHORT",
+        "verilen_seviyeler": {
+          "giris": 64500.0,
+          "stop": 64800.0,
+          "hedef": 63900.0
+        }
+      },
+      "onceki_kayit_var": true,
+      "gecti": true,
+      "kapi": "K1 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K2-AI-AJAN",
+      "motor_sonuclari": {
+        "karar-motoru": {
+          "karar": {
+            "karar": "SHORT",
+            "zincir": 2,
+            "r": 1.1
+          },
+          "son_bar_utc": "2026-07-28 10:45",
+          "rejim_4h": {
+            "rejim": "TREND"
+          }
+        },
+        "smc_tespit": {
+          "trend": "bear",
+          "atr": 103.55,
+          "rejim": {
+            "durum": "trend",
+            "adx": 27.1
+          }
+        },
+        "grafik-calisma": {
+          "KARAR": "SHORT",
+          "confluence_skoru": 0.85,
+          "kapi_gerekceleri": [],
+          "giris_orta": 63990.7,
+          "gecersizlik_sl": 64234.1,
+          "hedefler": [
+            63461.2
+          ],
+          "atr_kullanildi": 103.55
+        },
+        "setup_dogrulama": {
+          "SONUC": "EDGE VAR",
+          "sinyal_izni": true,
+          "gerekce": "12 işlem, Wilson alt sınırı 0.55"
+        },
+        "smc_tespit_h4": {
+          "trend": "bear",
+          "atr": 608.01,
+          "likidite": [
+            {
+              "price": 63461.2
+            }
+          ]
+        },
+        "korelasyon": {
+          "korelasyon": 0.8939,
+          "beta": 1.12,
+          "gozlem": 200,
+          "HUKUM": "KOPYA POZİSYON",
+          "toplam_risk_carpani": 2.0,
+          "cift": "BTC ↔ ETH"
+        },
+        "turev-akis": {
+          "rapor": {
+            "kapsam": 1.0,
+            "yon_skoru": -0.41
+          },
+          "danisman": {
+            "name": "turev-akis",
+            "stance": "short",
+            "confidence": 0.4,
+            "_verifier_confirmed": true
+          }
+        }
+      },
+      "hatalar": [],
+      "motor_sayisi": 7,
+      "gecti": true,
+      "kapi": "K2 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K3-COKLU-AJAN",
+      "danismanlar": [
+        {
+          "name": "karar-motoru",
+          "stance": "short",
+          "confidence": 0.6,
+          "_ham_confidence": 0.6,
+          "_agirlik": 1.0,
+          "evidence": "SHORT zincir 2"
+        },
+        {
+          "name": "grafik-calisma",
+          "stance": "short",
+          "confidence": 0.85,
+          "_ham_confidence": 0.85,
+          "_agirlik": 1.0,
+          "evidence": "confluence 0.85"
+        },
+        {
+          "name": "turev-akis",
+          "stance": "short",
+          "confidence": 0.4,
+          "_ham_confidence": 0.4,
+          "_agirlik": 1.0,
+          "evidence": "kapsam 1.0"
+        },
+        {
+          "name": "gorsel-teyit",
+          "stance": "short",
+          "confidence": 0.5,
+          "_ham_confidence": 0.5,
+          "_agirlik": 1.0,
+          "evidence": "görsel bear"
+        }
+      ],
+      "seviyeler": {
+        "grafik-calisma": {
+          "yon": "short",
+          "entry": 63990.7,
+          "stop": 64234.1,
+          "target": 63461.2,
+          "atr": 103.55,
+          "kaynak": "confluence.py (tek-kaynak çıktı)"
+        }
+      },
+      "agirlik_kaynagi": {
+        "agirliklar": {},
+        "kaynak": "agirlik.json"
+      },
+      "notlar": [
+        "gorsel-teyit güveni 0.5 tavanıyla sınırlandı"
+      ],
+      "gecti": true,
+      "kapi": "K3 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K4-AGI",
+      "verifier": {
+        "karar-motoru": {
+          "confirmed": false,
+          "reason": "R=1.10 < R_MIN=1.35"
+        },
+        "grafik-calisma": {
+          "confirmed": true,
+          "reason": "setup_dogrulama EDGE VAR"
+        },
+        "turev-akis": {
+          "confirmed": true,
+          "reason": "kapsam 1.0 ≥ 0.5"
+        },
+        "gorsel-teyit": {
+          "confirmed": true,
+          "reason": "mekanik smc_tespit trend=bear vs görsel okuma trend=bear — UYUMLU"
+        }
+      },
+      "dogrulama_gerekceleri": {
+        "karar-motoru": "R=1.10 vs R_MIN=1.35",
+        "grafik-calisma": "setup_dogrulama: EDGE VAR — 12 işlem",
+        "turev-akis": "kapsam 1.0 ≥ eşik 0.5",
+        "gorsel-teyit": "mekanik smc_tespit trend=bear vs görsel okuma trend=bear"
+      },
+      "rr_denetimi": {
+        "grafik-calisma": {
+          "verdict": "TUTARLI",
+          "R_rapor": 2.18,
+          "R_gercekci": 2.18,
+          "stop_atr": 2.35
+        }
+      },
+      "celiskiler": [
+        "KORELASYON RİSKİ: BTC ↔ ETH ρ=0.8939 → KOPYA POZİSYON; toplam risk ×2.0",
+        "MTF bağlam: karar-motoru rejim=TREND | smc HTF=bear"
+      ],
+      "mercekler": {},
+      "baglanmayan_mercekler": [],
+      "gecti": true,
+      "kapi": "K4 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K5-SI",
+      "sentez": {
+        "YON_BIAS": "SHORT",
+        "KARAR": "SHORT",
+        "guven_skoru": 0.4212,
+        "yon_skoru": -0.7431,
+        "uzlasi": 0.8123,
+        "esikler": {
+          "score": 0.3,
+          "min_agreement": 0.55,
+          "min_side_weight": 0.5,
+          "refute_penalty": 0.25
+        },
+        "danisman_ozeti": [
+          {
+            "ad": "karar-motoru",
+            "yon": "short",
+            "guven": 0.6,
+            "dogrulandi": false,
+            "etkin_agirlik": 0.15,
+            "kanit": "SHORT (zincir 2, R=1.10)",
+            "curutme": "R=1.10 < R_MIN=1.35"
+          },
+          {
+            "ad": "grafik-calisma",
+            "yon": "short",
+            "guven": 0.85,
+            "dogrulandi": true,
+            "etkin_agirlik": 0.85,
+            "kanit": "confluence=0.85",
+            "curutme": null
+          },
+          {
+            "ad": "turev-akis",
+            "yon": "short",
+            "guven": 0.4,
+            "dogrulandi": true,
+            "etkin_agirlik": 0.4,
+            "kanit": "kapsam 1.0",
+            "curutme": null
+          },
+          {
+            "ad": "gorsel-teyit",
+            "yon": "short",
+            "guven": 0.5,
+            "dogrulandi": true,
+            "etkin_agirlik": 0.5,
+            "kanit": "görsel okuma bear",
+            "curutme": null
+          }
+        ]
+      },
+      "esik_kalibrasyonu": {
+        "esikler": {
+          "score": 0.3,
+          "min_agreement": 0.55,
+          "min_side_weight": 0.5
+        },
+        "kaynak": "VERİDEN TÜRETİLDİ: bootstrap gürültü tabanı"
+      },
+      "celiski_turu": {
+        "kostu": true,
+        "yon_ilk": "SHORT",
+        "yon_dogrulanmis_kurul": "SHORT",
+        "yon_dayaniksiz": false,
+        "hukum": "ÇELİŞKİ TURU: yön DAYANIKLI"
+      },
+      "emir_plani": {
+        "EMIR": "LIMIT SHORT @63990.7 | stop 64234.1 | T1 63461.2 | R 2.18",
+        "birincil": {
+          "emir_tipi": "LIMIT",
+          "yon": "SHORT",
+          "giris": 63990.7,
+          "stop": 64234.1,
+          "hedef": 63461.2,
+          "R": 2.18,
+          "rr_denetim": "TUTARLI",
+          "risk_puan": 243.4,
+          "giris_gerekcesi": "4H teyitli swing direnci",
+          "stop_gerekcesi": "girişin üstündeki EN YAKIN teyitli swing (yapı stopu)",
+          "hedef_gerekcesi": "yön tarafındaki ilk teyitli likidite",
+          "gecersizlik": "64234.1 ötesinde 15M gövde kapanışı → kurulum iptal"
+        },
+        "adaylar": [
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "SHORT",
+            "giris": 63990.7,
+            "stop": 64234.1,
+            "hedef": 63461.2,
+            "R": 2.18,
+            "rr_denetim": "TUTARLI",
+            "risk_puan": 243.4,
+            "giris_gerekcesi": "4H teyitli swing direnci",
+            "stop_gerekcesi": "girişin üstündeki EN YAKIN teyitli swing (yapı stopu)",
+            "hedef_gerekcesi": "yön tarafındaki ilk teyitli likidite",
+            "gecersizlik": "64234.1 ötesinde 15M gövde kapanışı → kurulum iptal"
+          }
+        ],
+        "yon": "SHORT",
+        "fiyat": 63511.1,
+        "red_nedenleri": [],
+        "yapi_ozeti": {
+          "son_kapanis": 63511.1,
+          "atr15": 103.55,
+          "atr4h": 608.01,
+          "bar15": 200,
+          "bar4h": 200
+        }
+      },
+      "islem_kalitesi": {
+        "hukum": "TEMİZ GİRİŞ VAR",
+        "ozet": "TEMİZ GİRİŞ VAR (grafik-calisma): giriş 63990.7, stop 64234.1",
+        "adaylar": [
+          {
+            "motor": "grafik-calisma",
+            "yon": "short",
+            "entry": 63990.7,
+            "stop": 64234.1,
+            "target": 63461.2,
+            "atr": 103.55,
+            "kaynak": "confluence.py (tek-kaynak çıktı)",
+            "R_gercekci": 2.18,
+            "rr_verdict": "TUTARLI"
+          }
+        ],
+        "engeller": [],
+        "seviyeler": {
+          "grafik-calisma": {
+            "yon": "short",
+            "entry": 63990.7,
+            "stop": 64234.1,
+            "target": 63461.2,
+            "atr": 103.55,
+            "kaynak": "confluence.py (tek-kaynak çıktı)"
+          }
+        },
+        "rr_denetimi": {
+          "grafik-calisma": {
+            "verdict": "TUTARLI",
+            "R_rapor": 2.18,
+            "R_gercekci": 2.18,
+            "stop_atr": 2.35
+          }
+        }
+      },
+      "kalibrasyon": {
+        "ayrinti": {
+          "karar-motoru": {
+            "n": 3,
+            "wins": 2,
+            "kaynak": "/engine/state/defter.jsonl",
+            "wilson_lo": 0.29,
+            "agirlik": 1.0,
+            "durum": "VERİ YOK — ölçülmüş sonuç 3 < n_taban 10; ağırlık DEĞİŞTİRİLMEDİ"
+          }
+        }
+      },
+      "gecti": true,
+      "kapi": "K5 kapısı GEÇİLDİ"
+    }
+  ],
+  "ZIRVE": {
+    "YON_BIAS": "SHORT",
+    "ISLEM_KALITESI": "TEMİZ GİRİŞ VAR",
+    "sentez_karari": "SHORT",
+    "guven_skoru": 0.4212,
+    "yon_skoru": -0.7431,
+    "uzlasi": 0.8123,
+    "muhalefet": [],
+    "kapi_gerekceleri": [],
+    "gecersizlik": "4H kapanış 64500 üstü → kurulum iptal",
+    "seviyeler": {
+      "grafik-calisma": {
+        "yon": "short",
+        "entry": 63990.7,
+        "stop": 64234.1,
+        "target": 63461.2,
+        "atr": 103.55,
+        "kaynak": "confluence.py (tek-kaynak çıktı)"
+      }
+    },
+    "ulasilan_katman": "K5-SI (zirve)",
+    "ZORUNLU_EKSIK": [],
+    "zorunlu_girdiler": [
+      "likidasyon",
+      "gorsel"
+    ],
+    "EMIR": "LIMIT SHORT @63990.7 | stop 64234.1 | T1 63461.2 | R 2.18",
+    "EMIR_GEREKCE": "",
+    "emir_adaylari": [
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "SHORT",
+        "giris": 63990.7,
+        "stop": 64234.1,
+        "hedef": 63461.2,
+        "R": 2.18,
+        "rr_denetim": "TUTARLI",
+        "risk_puan": 243.4,
+        "giris_gerekcesi": "4H teyitli swing direnci",
+        "stop_gerekcesi": "girişin üstündeki EN YAKIN teyitli swing (yapı stopu)",
+        "hedef_gerekcesi": "yön tarafındaki ilk teyitli likidite",
+        "gecersizlik": "64234.1 ötesinde 15M gövde kapanışı → kurulum iptal"
+      }
+    ],
+    "emir_red_nedenleri": [],
+    "CELISKI_TURU": "ÇELİŞKİ TURU: yön DAYANIKLI",
+    "iki_satir": {
+      "1_YON": "YÖN (bias): SHORT — ağırlıklı yön skoru -0.7431",
+      "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: TEMİZ GİRİŞ VAR"
+    }
+  },
+  "_job": {
+    "korelasyon": {
+      "a": "m15.json",
+      "b": "eth/m15.json"
+    }
+  },
+  "KIYAS": {
+    "durum": "KIYASLANDI",
+    "YON_DEGISIMI": {
+      "onceki": "SHORT",
+      "yeni": "SHORT",
+      "etiket": "DEVAM",
+      "skor_yeni": -0.7431
+    },
+    "onemli_degisimler": [
+      "ADX: 21.0 → 27.1 (+6.1)"
+    ]
+  },
+  "DENETIM": {
+    "ozet": "26 denetim, 0 ihlal, 0 uyarı",
+    "ihlal": [],
+    "uyari": [],
+    "kritik_ihlal": [],
+    "muhurlendi": false
+  },
+  "durum": "TAMAM — piramidin tepesine ulaşıldı"
+}

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+# Koşu artığı: kontrol noktası durumu (kaynak: "./.triage-state/ is scratch —
+# add to .gitignore")
+.sorusturma-state/
+ornek/.sorusturma-state/
+ornek/_deneme/

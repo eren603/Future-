@@ -1,0 +1,43 @@
+$ python3 .claude/skills/dogrulama-zinciri/scripts/kademe.py --rapor .claude/skills/piramit-sistem/state/son_rapor.json --kok /home/user/Future- --ozet
+====================================================================
+MALİYET KADEMESİ — ön eleme
+====================================================================
+✔ [ucuz  ] kapali           code-review.md:15
+     durum='TAMAM — piramidin tepesine ulaşıldı'; ZIRVE.iki_satir=var
+✔ [ucuz  ] taslak           code-review.md:16
+     ZORUNLU_EKSIK=[]
+✔ [ucuz  ] onemsiz          code-review.md:17
+     YON_BIAS='SHORT'; EMIR='LIMIT SHORT @63990.7 | stop 64234.1 | T1 63461.2 | R 2.18'; muhurlendi=False
+✔ [ucuz  ] zaten_yapildi    code-review.md:18
+     parmak_izi=sha256:90cdd6816af2b2e0; defter_kayit=0
+✔ [ucuz  ] veri_ayni        depo eki — CLAUDE.md: 'engine/girdi/ verisi DEĞİŞMİŞSE boru hattını koşar'
+     yeni_son_bar=1785235500000; defterdeki_son_bar=None
+--------------------------------------------------------------------
+KARAR: DEVAM
+Sözleşme yolları (1, içerik okunmadı):
+   • /home/user/Future-/CLAUDE.md
+Özet: engine/girdi | SHORT | NÖTR-BEKLE | LIMIT SHORT @63990.7 | stop 64234.1 | T1 63461.2 | R
+       denetim: 25 denetim, 0 ihlal, 2 uyarı
+SONRAKİ: pahalı kademe: bulgu_dogrula.py --rapor <rapor> --oy 3   (code-review.md:35,38,55)
+Maliyet: ucuz=6 orta=1 pahali=0
+====================================================================
+⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.
+EXIT=0
+
+$ python3 .claude/skills/dogrulama-zinciri/scripts/bulgu_dogrula.py --rapor .claude/skills/piramit-sistem/state/son_rapor.json --oy 3 --ozet --ayrinti
+====================================================================
+BULGU DOĞRULAYICI — bulgu başına bağımsız oy
+====================================================================
+aday: 3 | doğrulanan: 0 | elenen: 3
+oy kuralı: --oy 3; çoğunluk (evet > n/2); KANIT_YOK aleyhe; n<2 RED
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+ELENEN ADAYLAR (code-review.md:57 — doğrulanmayan atılır):
+   ✖ STOP_AVI_RISKI           HIGH_SIGNAL      :48 Potential issues that depend on specific inputs or state
+   ✖ TUNEL_TEK_AILE           YANLIS_POZITIF   :84 Issues that a linter will catch (do not run the linter t
+   ✖ SISIRILMIS_R_ADAYI       YANLIS_POZITIF   :86 Issues mentioned in CLAUDE.md but explicitly silenced in
+--------------------------------------------------------------------
+Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi.
+====================================================================
+⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.
+EXIT=0
