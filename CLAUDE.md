@@ -51,6 +51,15 @@ beceriyi uygula.
 | Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
 | Tam analiz / tam boru hattı: 15M+4H kline (+ varsa türev paneli), "bütün motorları çalıştır", "en alttan en üste", çok katmanlı değerlendirme | `piramit-sistem` (**VARSAYILAN YOL** — K1→K5, `scripts/piramit.py`) |
 | Ciddi analiz/karar/değerlendirme, "uzman gibi bak", derin inceleme, profesyonel görüş, strateji, çok-adımlı muhakeme | `uzman-modu` (ÜST-AKIL DİSİPLİNİ) |
+| Elle/panel/görsel okumadan üretilmiş bir girdi dosyası motora girecekse; şema, doğrulama, enjeksiyon, untrusted girdi | `sema-dogrulama` (GİRDİ KAPISI — koşudan ÖNCE) |
+| Güvenilmez girdiyi (panel metni, ekran görüntüsü, elle likidasyon) okuyan bileşenin yazma yetkisi; izolasyon, karantina, allowlist, devir/handoff | `guven-katmanlama` (GİRDİ KAPISI — koşudan ÖNCE) |
+| Danışman/motor iddiası sentezden önce elenecekse; yanlış pozitif, gürültü, emsal, sinyal kalitesi | `eleme-motoru` (KOŞU İÇİ — `sentez.py`'den ÖNCE) |
+| "Bu karar doğru mu", ikinci göz, bulgu doğrulama, PASS/NEEDS_WORK, ön eleme/triage | `dogrulama-zinciri` (KARAR SONRASI — çıktıdan ÖNCE) |
+| "Bu koşu kaliteli mi", iş bitti mi, kriter, rubrik, kalite notu, geçme oranı | `rubrik-kapisi` (KARAR SONRASI — çıktıdan ÖNCE) |
+| Boru hattı ARIZASI: kapıda durdu, gözlemci ihlali, sicil ezildi, "nerede bozuldu", kök neden, postmortem | `sorusturma` (ARIZA HÂLİNDE) |
+| "Koşu ne kadar sürdü", hangi katman yavaş, hangi kapı düştü, determinizm, telemetri, metrik | `izleme-telemetri` (BAKIM — koşu dışı) |
+| "Beceriler sağlam mı", SKILL.md geçerli mi, referans kopmuş mu, öz-test geçiyor mu, depo denetimi | `butunluk-denetimi` (BAKIM — koşu dışı) |
+| Yeni beceri yazma/düzeltme, SKILL.md şablonu, frontmatter, "beceri yüklenmiyor", description sınırı | `dokuman-uretimi` (BAKIM — koşu dışı) |
 
 Ek kural (üst-akıl): Ciddi/analitik her soruda `uzman-modu` arka planda
 uygulanır — rol + niyet + tam bağlam + çok-mercekli muhakeme + araçla üretim +
@@ -266,6 +275,38 @@ raporun `uyarilar` alanına gerekçesiyle yazılır. Sunulan R, `rr_denetim`den
 geçmiş değerdir (`r_etiketi`). Grafik bir KARAR DEĞİLDİR — yön/işlem hükmü
 yine `piramit-sistem`/`karar-kurulu` sentezinden gelir; çıktı `SendUserFile`
 ile gönderilir.
+
+Ek kural (EKLENEN DENETİM KATMANLARI — boru hattındaki YERLERİNE bağlıdır,
+tetikleyicisiz): Bu becerileri gelişigüzel çağırma; her biri boru hattının
+belirli bir anına aittir ve o an gelmeden koşmaz:
+1. **Koşudan ÖNCE (girdi kapısı):** zorunlu girdiler (`gorsel_okuma.json`,
+   `turev_ham/likidasyon.json`) boru hattına girmeden `sema-dogrulama`'dan
+   geçer — geçersizse girdi EKSİK sayılır, koşu uydurma veriyle sürmez.
+   Güvenilmez girdiyi okuyan bileşenin motor siciline yazamadığı
+   `guven-katmanlama` ile mekanik doğrulanır.
+2. **Koşu içi, sentezden ÖNCE:** danışman/motor iddiaları `sentez.py`'ye
+   girmeden `eleme-motoru`'nun üç katmanından geçer (sert kural → bağlam
+   kapısı → emsal). Elenen iddia kurula GİRMEZ; eleme gerekçesi gizlenmez.
+3. **Karar sonrası, kullanıcıya YAZILMADAN ÖNCE:** `dogrulama-zinciri`
+   kararı ucuzdan pahalıya inceler (kademe → bulgu doğrulayıcı → şüpheci
+   `degerlendirici` ajanı). `rubrik-kapisi` koşuyu 39 kriterle notlar;
+   BİRİNCİL ölçüm kriter-başına geçme oranıdır, toplam skor ikincildir.
+   Bu iki adım kararın YÖNÜNÜ değiştirmez; İŞLEM KALİTESİ hükmünü besler.
+4. **Arıza hâlinde:** boru hattı bir kapıda durduysa, gözlemci ihlali
+   çıktıysa ya da akıbet ölçümü kararla tutarsızsa `sorusturma` koşar —
+   yalnız ARTEFAKT okur, boru hattını KOŞTURMAZ, sicili DEĞİŞTİRMEZ
+   (yeniden koşmak `engine/state`+`hafiza`'yı kirletir = soruşturma kendi
+   kanıtını bozar).
+5. **Bakım (koşu dışı, karar üretmez):** `izleme-telemetri` boru hattının
+   kendisini ölçer; `butunluk-denetimi` beceri/kanca/ajan bütünlüğünü
+   denetler (kendisi dahil, muafiyet yok); `dokuman-uretimi` yeni/düzeltilen
+   SKILL.md'nin resmî şartname disiplinine uymasını sağlar.
+Kancalar bu katmanları mekanikleştirir: `kanit_sicili.sh` (hangi kanıt
+okundu), `kanit_kapisi.sh` (kanıt okunmadan karar dosyası yazılamaz),
+`acil_durdur.sh` (AGENT_STOP varken araç çağrısı durur), `yonlendir.sh`
+(koşu ortasında yönlendirme). ⚠️ Bu katmanlar karar-desteğin DENETİMİDİR;
+yön hükmü yine `piramit-sistem`/`karar-kurulu` sentezinden gelir ve
+canlı/otomatik emir DAHİL DEĞİLDİR.
 
 Kurallar:
 1. Soru birden fazla kategoriye giriyorsa ilgili becerilerin **hepsini** birlikte
