@@ -265,3 +265,48 @@ tazelemek AYRI bayraktır: `--ornek-tazele`.
 **Dairesellik uyarısı:** öz-testin "geçti" demesi, kuralların kaynağa
 uygunluğunu KANITLAMAZ — yalnız motorun kendi kurallarını uyguladığını
 gösterir. Kaynağa uygunluğun kanıtı §1 tablosudur ve **elle** doğrulanır.
+
+## DÜZELTME — 1024 sınırı YANLIŞ SINIFLANDIRILMIŞTI (sonradan eklendi)
+
+Bu belgenin ilk sürümü `1024`'ü **çalışma zamanı sert sınırı** gibi ele aldı ve
+motor onu **HATA** olarak raporladı. **Bu yanlıştı.** Düzeltme, kaynağa yeniden
+bakılarak değil, kaynağın KAPSAMI sınanarak yapıldı:
+
+**Şüphenin çıkış noktası (dairesellik uyarısı):** aynı dosyanın
+(`quick_validate.py:42`) `ALLOWED_PROPERTIES` kümesi `argument-hint`i dışlıyor,
+oysa `argument-hint` resmî Anthropic becerilerinde (triage, threat-model,
+vuln-scan, dnr-respond, quickstart, patch, dnr-hunt) kullanılıyor ve çalışıyor.
+Yani bu dosya `anthropics/skills` **YAYIN** doğrulayıcısıdır, Claude Code'un
+çalışma zamanı sözleşmesi değil. `1024`'ün de aynı kategoriden olup olmadığı
+sınanmadan "sert sınır" sayılamazdı — sayılmıştı, hata buydu.
+
+**Bağımsız kanıt (üç yoldan):**
+
+| kanıt | yöntem | sonuç |
+|---|---|---|
+| `anthropics/claude-code` issue **#47627** | WebFetch ile açıldı, başlığı ve içeriği doğrulandı | Sürüm **2.1.105** beceri listeleme sınırını **250 → 1536** yükseltti ve kırpma için başlangıç uyarısı ekledi |
+| `anthropics/claude-code` issue **#64606** | WebFetch ile açıldı, doğrulandı | `skillListingBudgetFraction = 0.01`; `200000 * 4 * 0.01 = 8000` — TOPLAM aşılırsa açıklamalar tek tek kırpılmaz, **tamamen düşürülür**, sessizce |
+| 234 resmî/üçüncü-parti beceri | diskten ölçüldü | 1024'ü aşan **1** dosya (`a-skills/skills/claude-api/SKILL.md`, 1068) ve o da **kendi deposundaki doğrulayıcıyı geçmiyor** → kural CI'da uygulanmıyor. Medyan **284** karakter |
+
+**Motordaki karşılığı — iki sınır ayrı sabitte, ayrı seviyede:**
+
+| sabit | değer | seviye | kaynak |
+|---|---|---|---|
+| `YAYIN_ACIKLAMA` / `DESC_YAYIN_MAKS` | 1024 | **UYARI** | `quick_validate.py:83-84` (yayın sözleşmesi) |
+| `CALISMA_ZAMANI_ACIKLAMA` / `DESC_MAKS` | 1536 | **HATA** | issue #47627 (gerçekten kırpar) |
+| `TOPLAM_ACIKLAMA_BUTCESI` / `DESC_TOPLAM_BUTCE` | 8000 | **UYARI** | issue #64606 (toplam, sessiz düşürme) |
+
+**Neden bütçe HATA değil UYARI:** sayı bir **hata bildiriminden** gelir,
+şartnameden değil. HATA demek, ölçülmemiş bir kesinlik iddiası olurdu. Ölçülen
+değer her koşuda raporlanır (aşılmasa da), böylece sessizce kaybolmaz.
+
+**Öz-testte gerileme koruması:** 1024–1536 arası bir description için vaka
+artık HEM `DESC_YAYIN_SINIRI`/`ACIKLAMA_YAYIN_SINIRI` uyarısının çıkmasını HEM
+de eski HATA kodunun çıkmamasını sınar. Ayrıca toplam bütçe için, hiçbir
+becerinin tek başına sınırı aşmadığı ama toplamın aştığı ayrı bir vaka var —
+dosya dosya bakan bir denetimin göremeyeceği arıza türü budur.
+
+**Ölçülen gerçek durum (bu depo):** toplam 19.964 karakter / bütçe 8.000 =
+**%250**. Önceki 14 beceri tek başına 11.093 (%139) idi; bu oturumda eklenen 9
+beceri 8.871 ekledi. Kullanıcı bu riski **bilerek kabul etti**; açıklamalar
+kısaltılmadı, bulgu yalnız raporlanır.

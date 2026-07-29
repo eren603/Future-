@@ -1,10 +1,13 @@
 {
   "depo": "/home/user/Future-",
-  "denetlenen": 268,
+  "denetlenen": 271,
   "ozet": {
-    "hata": 25,
+    "hata": 15,
     "denetlenemedi": 3,
-    "bilgi": 13
+    "uyari": 3,
+    "bilgi": 8,
+    "aciklama_toplami": 19964,
+    "aciklama_butcesi": 8000
   },
   "bulgular": [
     {
@@ -17,24 +20,6 @@
       "seviye": "HATA",
       "kod": "EKSIK_DOSYA",
       "yol": ".claude/skills/data-analysis-deep-scan/KANIT.md",
-      "mesaj": "KANIT.md yok"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "ACIKLAMA_UZUN",
-      "yol": ".claude/skills/dogrulama-zinciri/SKILL.md",
-      "mesaj": "description 1276 karakter, sert sinir 1024 (asan kisim kirpilir)"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "EKSIK_DOSYA",
-      "yol": ".claude/skills/dokuman-uretimi/SKILL.md",
-      "mesaj": "SKILL.md yok"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "EKSIK_DOSYA",
-      "yol": ".claude/skills/dokuman-uretimi/KANIT.md",
       "mesaj": "KANIT.md yok"
     },
     {
@@ -56,10 +41,10 @@
       "mesaj": "KANIT.md yok"
     },
     {
-      "seviye": "HATA",
-      "kod": "ACIKLAMA_UZUN",
+      "seviye": "UYARI",
+      "kod": "ACIKLAMA_YAYIN_SINIRI",
       "yol": ".claude/skills/grafik-calisma/SKILL.md",
-      "mesaj": "description 1243 karakter, sert sinir 1024 (asan kisim kirpilir)"
+      "mesaj": "description 1243 karakter, yayin siniri 1024 (anthropics/skills quick_validate.py:82-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz yayin sozlesmesi ihlali"
     },
     {
       "seviye": "HATA",
@@ -68,10 +53,10 @@
       "mesaj": "KANIT.md yok"
     },
     {
-      "seviye": "HATA",
-      "kod": "ACIKLAMA_UZUN",
+      "seviye": "UYARI",
+      "kod": "ACIKLAMA_YAYIN_SINIRI",
       "yol": ".claude/skills/grafik-cizim/SKILL.md",
-      "mesaj": "description 1338 karakter, sert sinir 1024 (asan kisim kirpilir)"
+      "mesaj": "description 1338 karakter, yayin siniri 1024 (anthropics/skills quick_validate.py:82-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz yayin sozlesmesi ihlali"
     },
     {
       "seviye": "HATA",
@@ -105,18 +90,6 @@
     },
     {
       "seviye": "HATA",
-      "kod": "ACIKLAMA_UZUN",
-      "yol": ".claude/skills/rubrik-kapisi/SKILL.md",
-      "mesaj": "description 1233 karakter, sert sinir 1024 (asan kisim kirpilir)"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "ACIKLAMA_ACI_PARANTEZ",
-      "yol": ".claude/skills/sema-dogrulama/SKILL.md",
-      "mesaj": "description '<' ya da '>' iceriyor"
-    },
-    {
-      "seviye": "HATA",
       "kod": "EKSIK_DOSYA",
       "yol": ".claude/skills/turev-akis/KANIT.md",
       "mesaj": "KANIT.md yok"
@@ -134,52 +107,22 @@
       "mesaj": "KANIT.md yok"
     },
     {
-      "seviye": "BILGI",
-      "kod": "REF_KOSU_ARTEFAKTI",
-      "yol": ".claude/skills/guven-katmanlama/SKILL.md",
-      "mesaj": "engine/state/defter.json — kosuda uretilir, depoda yok"
+      "seviye": "UYARI",
+      "kod": "ACIKLAMA_BUTCESI_ASILDI",
+      "yol": ".claude/skills",
+      "mesaj": "toplam description 19964 karakter / butce 8000 (250%) — asilirsa aciklamalar TEK TEK kirpilmaz, TAMAMEN dusurulur (geriye yalniz isimler kalir) ve bu SESSIZ olur. Kaynak: anthropics/claude-code issue #64606 (200000*4*0.01=8000). UYARI seviyesi bilerek secildi: sayi bir hata bildiriminden gelir, sartnameden degil — HATA demek olculmemis bir kesinlik iddiasi olurdu"
     },
     {
       "seviye": "BILGI",
       "kod": "REF_KOSU_ARTEFAKTI",
       "yol": ".claude/skills/izleme-telemetri/SKILL.md",
-      "mesaj": "engine/state/olcum.json — kosuda uretilir, depoda yok"
+      "mesaj": "engine/state/olcum.jsonl — kosuda uretilir, depoda yok"
     },
     {
       "seviye": "BILGI",
       "kod": "REF_DIS_KAYNAK",
       "yol": ".claude/skills/izleme-telemetri/SKILL.md",
       "mesaj": "grafana/dashboards/working-dashboard.json — bu depoda olmayan bir agac; dogrulanamadi"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "REF_COZUMLENMEDI",
-      "yol": ".claude/skills/izleme-telemetri/SKILL.md",
-      "mesaj": "ornek/olcum_ornek.json -> dosya yok"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "REF_COZUMLENMEDI",
-      "yol": ".claude/skills/karar-kurulu/SKILL.md",
-      "mesaj": "grafik-calisma/confluence.py -> dosya yok"
-    },
-    {
-      "seviye": "BILGI",
-      "kod": "REF_KOSU_ARTEFAKTI",
-      "yol": ".claude/skills/karar-motoru/SKILL.md",
-      "mesaj": "engine/state/defter.json — kosuda uretilir, depoda yok"
-    },
-    {
-      "seviye": "BILGI",
-      "kod": "REF_KOSU_ARTEFAKTI",
-      "yol": ".claude/skills/piramit-sistem/SKILL.md",
-      "mesaj": "engine/state/bar_arsivi.json — kosuda uretilir, depoda yok"
-    },
-    {
-      "seviye": "BILGI",
-      "kod": "REF_KOSU_ARTEFAKTI",
-      "yol": ".claude/skills/piramit-sistem/SKILL.md",
-      "mesaj": "engine/state/turev_seri.json — kosuda uretilir, depoda yok"
     },
     {
       "seviye": "HATA",
@@ -203,25 +146,13 @@
       "seviye": "BILGI",
       "kod": "REF_DIS_KAYNAK",
       "yol": ".claude/skills/sema-dogrulama/SKILL.md",
-      "mesaj": "managed-agent-cookbooks/gl-reconciler/subagents/reader.yaml — bu depoda olmayan bir agac; dogrulanamadi"
-    },
-    {
-      "seviye": "HATA",
-      "kod": "REF_COZUMLENMEDI",
-      "yol": ".claude/skills/sema-dogrulama/SKILL.md",
-      "mesaj": "scripts/validate.py -> dosya yok"
+      "mesaj": "financial-services/scripts/validate.py — bu depoda olmayan bir agac; dogrulanamadi"
     },
     {
       "seviye": "BILGI",
       "kod": "REF_KOSU_ARTEFAKTI",
       "yol": ".claude/skills/sorusturma/SKILL.md",
-      "mesaj": "engine/state/defter.json — kosuda uretilir, depoda yok"
-    },
-    {
-      "seviye": "BILGI",
-      "kod": "REF_KOSU_ARTEFAKTI",
-      "yol": ".claude/skills/sorusturma/SKILL.md",
-      "mesaj": "state/piramit_defter.json — kosuda uretilir, depoda yok"
+      "mesaj": "state/piramit_defter.jsonl — kosuda uretilir, depoda yok"
     },
     {
       "seviye": "BILGI",

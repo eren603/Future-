@@ -12,12 +12,12 @@ OK    finansal-modelleme         hata=0 uyari=0
 OK    forex-trading-expert       hata=0 uyari=1
         [UYARI/DEPO EKI] TETIKLEYICI_SOZLESME (kaynakta YOK — KANIT.md D4)
             depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez
-FAIL  grafik-calisma             hata=1 uyari=0
-        [HATA/KAYNAK] DESC_COK_UZUN (quick_validate.py:83-84)
-            Description is too long (1243 characters). Maximum is 1024 characters.
-FAIL  grafik-cizim               hata=1 uyari=0
-        [HATA/KAYNAK] DESC_COK_UZUN (quick_validate.py:83-84)
-            Description is too long (1338 characters). Maximum is 1024 characters.
+OK    grafik-calisma             hata=0 uyari=1
+        [UYARI/KAYNAK] DESC_YAYIN_SINIRI (quick_validate.py:83-84 — yayin siniri 1024)
+            Description 1243 karakter, yayin siniri 1024 (quick_validate.py:83-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz anthropics/skills yayin sozlesmesi ihlali.
+OK    grafik-cizim               hata=0 uyari=1
+        [UYARI/KAYNAK] DESC_YAYIN_SINIRI (quick_validate.py:83-84 — yayin siniri 1024)
+            Description 1338 karakter, yayin siniri 1024 (quick_validate.py:83-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz anthropics/skills yayin sozlesmesi ihlali.
 OK    guven-katmanlama           hata=0 uyari=0
 OK    izleme-telemetri           hata=0 uyari=0
 OK    karar-kurulu               hata=0 uyari=0
@@ -27,12 +27,15 @@ OK    portfoy-optimizasyonu      hata=0 uyari=0
 OK    risk-yonetimi              hata=0 uyari=0
 OK    rubrik-kapisi              hata=0 uyari=0
 OK    sema-dogrulama             hata=0 uyari=0
-FAIL  sorusturma                 hata=1 uyari=0
-        [HATA/KAYNAK] BEKLENMEYEN_ANAHTAR (quick_validate.py:44-50)
-            Unexpected key(s) in SKILL.md frontmatter: argument-hint. Allowed properties are: allowed-tools, compatibility, description, license, metadata, name
+OK    sorusturma                 hata=0 uyari=0
 OK    turev-akis                 hata=0 uyari=0
 OK    uzman-modu                 hata=0 uyari=0
 OK    video-isleme               hata=0 uyari=0
 
-TOPLAM: 23 beceri, 3 HATA, 3 UYARI
-Cikis kodu: 1 (fail-closed)
+ACIKLAMA BUTCESI: toplam 19964 karakter / butce 8000 (250%)
+        [UYARI/KAYNAK] DESC_BUTCE_ASILDI (claude-code issue #64606 — 200000*4*0.01=8000)
+            Butce asildi: aciklamalar TEK TEK kirpilmaz, TAMAMEN dusurulur (geriye yalniz beceri isimleri kalir), SESSIZCE.
+            UYARI seviyesi bilerek: sayi bir hata bildiriminden gelir, sartnameden degil — HATA demek olculmemis kesinlik olurdu.
+
+TOPLAM: 23 beceri, 0 HATA, 6 UYARI
+Cikis kodu: 0

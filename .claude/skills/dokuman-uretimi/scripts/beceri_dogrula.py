@@ -75,9 +75,29 @@ NAME_DESENI = re.compile(r"^[a-z0-9-]+$")
 # quick_validate.py:70-71 -> "Maximum is 64 characters."
 NAME_MAKS = 64
 
-# quick_validate.py:83-84 -> "Maximum is 1024 characters."
-# improve_description.py:132 -> "There is a hard limit of 1024 characters"
-DESC_MAKS = 1024
+# --- description: IKI AYRI SINIR, IKI AYRI KAYNAK ---------------------------
+# DUZELTME (ilk surumde YANLISTI): 1024 Claude Code'un calisma zamani kurali
+# DEGILDIR. `quick_validate.py` `anthropics/skills` YAYIN dogrulayicisidir —
+# ayni dosyanin ALLOWED_PROPERTIES kumesi de calisma zamanindan dardir
+# (bkz. bu dosyadaki DEPO_EK_PROPERTIES gerekcesi). Ayni supheyle 1024 de
+# sinandi ve YAYIN tarafi cikti.
+#
+# [YAYIN — UYARI] quick_validate.py:83-84 "Maximum is 1024 characters."
+# improve_description.py:132 "There is a hard limit of 1024 characters".
+# Amprik teyit: 234 resmi/ucuncu-parti beceri olculdu; 1024'u asan YALNIZ 1
+# tane (a-skills/skills/claude-api/SKILL.md, 1068) ve o da kendi deposundaki
+# dogrulayiciyi gecmiyor -> kural CI'da uygulanmiyor. Medyan 284 karakter.
+DESC_YAYIN_MAKS = 1024
+# [CALISMA ZAMANI — HATA] Beceri listesinde description bu sinirdan sonra
+# KIRPILIR. Kaynak: anthropics/claude-code issue #47627 (dogrulandi): surum
+# 2.1.105 listeleme sinirini 250 -> 1536 yukseltti + kirpma uyarisi ekledi.
+DESC_MAKS = 1536
+# [TOPLAM BUTCE — UYARI] Tum becerilerin description toplami bu esigi asarsa
+# aciklamalar tek tek kirpilmaz, TAMAMEN dusurulur (geriye yalniz isimler
+# kalir), SESSIZCE. Kaynak: anthropics/claude-code issue #64606 (dogrulandi):
+# 200000 * 4 * 0.01 = 8000. Sayi HATA BILDIRIMINDEN gelir, sartnameden degil —
+# bu yuzden HATA degil UYARI.
+DESC_TOPLAM_BUTCE = 8000
 
 # quick_validate.py:91-92 -> "Maximum is 500 characters."
 COMPAT_MAKS = 500
@@ -114,7 +134,9 @@ KURAL_KAYNAGI = {
     "NAME_COK_UZUN": ("KAYNAK", "quick_validate.py:70-71"),
     "DESC_METIN_DEGIL": ("KAYNAK", "quick_validate.py:75-76"),
     "DESC_ACI_PARANTEZ": ("KAYNAK", "quick_validate.py:80-81"),
-    "DESC_COK_UZUN": ("KAYNAK", "quick_validate.py:83-84"),
+    "DESC_COK_UZUN": ("KAYNAK", "claude-code issue #47627 — calisma zamani 1536"),
+    "DESC_YAYIN_SINIRI": ("KAYNAK", "quick_validate.py:83-84 — yayin siniri 1024"),
+    "DESC_BUTCE_ASILDI": ("KAYNAK", "claude-code issue #64606 — toplam ~8000"),
     "COMPAT_METIN_DEGIL": ("KAYNAK", "quick_validate.py:89-90"),
     "COMPAT_COK_UZUN": ("KAYNAK", "quick_validate.py:91-92"),
     "DESC_COK_KELIME": ("KAYNAK", "improve_description.py:132"),
@@ -347,12 +369,21 @@ def dogrula(beceri_yolu) -> list[Bulgu]:
             bulgular.append(Bulgu(
                 "DESC_ACI_PARANTEZ", HATA,
                 "Description cannot contain angle brackets (< or >)"))
-        # KAYNAK quick_validate.py:83-84
+        # CALISMA ZAMANI siniri (issue #47627): burasi gercekten KIRPAR.
         if len(description) > DESC_MAKS:
             bulgular.append(Bulgu(
                 "DESC_COK_UZUN", HATA,
                 "Description is too long (" + str(len(description))
-                + " characters). Maximum is " + str(DESC_MAKS) + " characters."))
+                + " characters). Maximum is " + str(DESC_MAKS) + " characters."
+                + " (calisma zamani listeleme siniri — asan kisim KIRPILIR)"))
+        # YAYIN siniri (quick_validate.py:83-84): calisma zamaninda kirpmaz.
+        elif len(description) > DESC_YAYIN_MAKS:
+            bulgular.append(Bulgu(
+                "DESC_YAYIN_SINIRI", UYARI,
+                "Description " + str(len(description)) + " karakter, yayin siniri "
+                + str(DESC_YAYIN_MAKS) + " (quick_validate.py:83-84). Calisma "
+                + "zamaninda KIRPILMAZ (" + str(DESC_MAKS) + " altinda); yalniz "
+                + "anthropics/skills yayin sozlesmesi ihlali."))
         # KAYNAK improve_description.py:132 (yumusak — "about 100-200 words")
         kelime = _kelime_say(description)
         if kelime > DESC_KELIME_ONERI:
@@ -423,6 +454,21 @@ def dogrula(beceri_yolu) -> list[Bulgu]:
 # Raporlama
 # ---------------------------------------------------------------------------
 
+def _desc_uzunluk(beceri_yolu) -> int:
+    """Bu becerinin description uzunlugu (butce toplami icin). Okunamazsa 0."""
+    try:
+        metin = (Path(beceri_yolu) / "SKILL.md").read_text(encoding="utf-8")
+        esl = FM_DESENI.match(metin)
+        if not esl:
+            return 0
+        meta = yaml.safe_load(esl.group(1))
+        if isinstance(meta, dict) and isinstance(meta.get("description"), str):
+            return len(meta["description"].strip())
+    except Exception:
+        return 0
+    return 0
+
+
 def rapor_sozluk(beceri_yolu, bulgular: list[Bulgu]) -> dict:
     hatalar = [b for b in bulgular if b.seviye == HATA]
     return {
@@ -431,6 +477,7 @@ def rapor_sozluk(beceri_yolu, bulgular: list[Bulgu]) -> dict:
         "sonuc": "TEMIZ" if not hatalar else "HATALI",
         "hata_sayisi": len(hatalar),
         "uyari_sayisi": len(bulgular) - len(hatalar),
+        "desc_uzunluk": _desc_uzunluk(beceri_yolu),
         "bulgular": [b.sozluk() for b in bulgular],
     }
 
@@ -452,6 +499,28 @@ def rapor_metin(raporlar: list[dict]) -> str:
                 "        [" + b["seviye"] + "/" + b["etiket"] + "] "
                 + b["kod"] + " (" + b["kaynak"] + ")")
             satirlar.append("            " + b["mesaj"])
+    # --- TOPLAM ACIKLAMA BUTCESI ------------------------------------------
+    # Beceri BASINA sinir gecilmese bile TOPLAM butce asilirsa aciklamalar tek
+    # tek kirpilmaz, TAMAMEN dusurulur (geriye yalniz isimler kalir) ve bu
+    # SESSIZ olur. Yani her beceri tek basina "TEMIZ" gorunurken yonlendirme
+    # topluca kaybolabilir — dosya dosya bakan bir denetim bunu goremez.
+    desc_toplam = sum(int(r.get("desc_uzunluk") or 0) for r in raporlar)
+    oran = (100.0 * desc_toplam / DESC_TOPLAM_BUTCE) if DESC_TOPLAM_BUTCE else 0.0
+    satirlar.append("")
+    satirlar.append(
+        "ACIKLAMA BUTCESI: toplam " + str(desc_toplam) + " karakter / butce "
+        + str(DESC_TOPLAM_BUTCE) + " (" + ("%.0f" % oran) + "%)")
+    if desc_toplam > DESC_TOPLAM_BUTCE:
+        toplam_uyari += 1
+        satirlar.append(
+            "        [UYARI/KAYNAK] DESC_BUTCE_ASILDI "
+            "(claude-code issue #64606 — 200000*4*0.01=8000)")
+        satirlar.append(
+            "            Butce asildi: aciklamalar TEK TEK kirpilmaz, TAMAMEN "
+            "dusurulur (geriye yalniz beceri isimleri kalir), SESSIZCE.")
+        satirlar.append(
+            "            UYARI seviyesi bilerek: sayi bir hata bildiriminden "
+            "gelir, sartnameden degil — HATA demek olculmemis kesinlik olurdu.")
     satirlar.append("")
     satirlar.append(
         "TOPLAM: " + str(len(raporlar)) + " beceri, "
@@ -551,11 +620,24 @@ def self_test() -> int:
         vakalar.append(("iki-nokta-ayrismiyor", d,
                         {"AYRISMA_IKI_NOKTA", "FM_YAML_HATASI"}, set()))
 
-        # 2 — 1024'u asan description
-        uzun = sozlesme + " " + ("uzatma " * 200)
+        # 2 — CALISMA ZAMANI sinirini (1536) asan description -> HATA
+        uzun = sozlesme + " " + ("uzatma " * 300)
+        assert len(uzun) > DESC_MAKS, "vaka kurulumu 1536'yi asmiyor"
         d = _beceri_kur(gecici, "uzun-desc",
                         _fm("uzun-desc", _katlanmis(uzun)), MOTOR_OZTESTLI)
-        vakalar.append(("description-1024-asiyor", d, {"DESC_COK_UZUN"}, set()))
+        vakalar.append(("description-1536-asiyor", d, {"DESC_COK_UZUN"}, set()))
+
+        # 2b — GERILEME KORUMASI: 1024-1536 arasi ESKIDEN yanlislikla HATA idi.
+        # Artik HATA OLMAMALI; yalniz DESC_YAYIN_SINIRI uyarisi cikmali.
+        orta = sozlesme + " " + ("uzatma " * 130)
+        assert DESC_YAYIN_MAKS < len(orta) <= DESC_MAKS, (
+            "vaka kurulumu 1024-1536 araliginda degil: " + str(len(orta)))
+        d = _beceri_kur(gecici, "yayin-siniri",
+                        _fm("yayin-siniri", _katlanmis(orta)), MOTOR_OZTESTLI)
+        # UYARI cikmali (beklenen), eski HATA kodu cikmamali (beklenmeyen):
+        # ikisi birlikte hem kuralin calistigini hem gerilemedigini sinar.
+        vakalar.append(("description-1024-1536-arasi-HATA-DEGIL", d,
+                        {"DESC_YAYIN_SINIRI"}, {"DESC_COK_UZUN"}))
 
         # 3 — name != dizin adi
         d = _beceri_kur(gecici, "dizin-adi",

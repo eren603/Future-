@@ -40,10 +40,33 @@ except ImportError:  # pragma: no cover
     sys.exit(3)
 
 # --- sabitler ----------------------------------------------------------------
-# [KAYNAK] quick_validate.py:82-84 "Check description length (max 1024 characters
-# per spec)" + improve_description.py:132 "There is a hard limit of 1024
-# characters - descriptions over that will be truncated".
-AZAMI_ACIKLAMA = 1024
+# --- description sinirlari: IKI AYRI SINIR, IKI AYRI KAYNAK ------------------
+# DUZELTME (bu deponun ilk surumunde YANLISTI): 1024 sayisi Claude Code'un
+# calisma zamani kurali DEGILDIR. `quick_validate.py` `anthropics/skills`
+# YAYIN dogrulayicisidir; ayni dosyanin ALLOWED_PROPERTIES kumesi de calisma
+# zamanindan dardir (`argument-hint` resmi Anthropic becerilerinde kullaniliyor
+# ama o listede yok). Ayni supheyle 1024 de sinandi ve YAYIN tarafi cikti.
+#
+# [YAYIN KURALI — UYARI] quick_validate.py:82-84 "Check description length
+# (max 1024 characters per spec)" + improve_description.py:132 "There is a hard
+# limit of 1024 characters - descriptions over that will be truncated".
+# Amprik teyit: 234 resmi/ucuncu-parti beceri olculdu, 1024'u asan YALNIZ 1
+# tane ve o da kendi deposundaki dogrulayiciyi gecmiyor
+# (a-skills/skills/claude-api/SKILL.md, 1068) -> kural CI'da uygulanmiyor.
+YAYIN_ACIKLAMA = 1024
+# [CALISMA ZAMANI — HATA] Beceri listesinde description bu sinirdan sonra
+# kirpilir. Kaynak: anthropics/claude-code issue #47627 (dogrulandi, WebFetch
+# ile acilip basligi ve icerigi teyit edildi): surum 2.1.105 listeleme sinirini
+# 250 -> 1536 yukseltti ve kirpma icin baslangic uyarisi ekledi.
+CALISMA_ZAMANI_ACIKLAMA = 1536
+# [TOPLAM BUTCE — UYARI] Tum becerilerin description toplami bu esigi asarsa
+# aciklamalar TEK TEK kirpilmaz, TAMAMEN dusurulur (geriye yalniz isimler
+# kalir) ve bu SESSIZ olur. Kaynak: anthropics/claude-code issue #64606
+# (dogrulandi): budget = contextWindow * bytesPerToken *
+# skillListingBudgetFraction = 200000 * 4 * 0.01 = 8000.
+# NOT: bu sayi bir HATA BILDIRIMINDEN gelir, sartnameden degil; bu yuzden
+# HATA degil UYARI'dir ve olculen deger her koste raporlanir.
+TOPLAM_ACIKLAMA_BUTCESI = 8000
 # [KAYNAK] quick_validate.py:68-69 "Check name length (max 64 characters per spec)".
 AZAMI_AD = 64
 # [KAYNAK] quick_validate.py:64 kebab-case deseni.
@@ -80,6 +103,9 @@ ATLA_DIZIN = {".git", "node_modules", "__pycache__", ".venv", "venv"}
 
 HATA = "HATA"
 DENETLENEMEDI = "DENETLENEMEDI"
+# UYARI: kural GERCEK ama bu ortamda ARIZA URETMIYOR (ornegin yayin sozlesmesi
+# ihlali). Cikis kodunu ETKILEMEZ — HATA ile karistirilmamasi icin ayri seviye.
+UYARI = "UYARI"
 BILGI = "BILGI"
 
 
@@ -91,6 +117,8 @@ class Denetci:
         self.depo = Path(depo).resolve()
         self.bulgular: list[dict] = []
         self.denetlenen = 0
+        # Butun becerilerin description uzunlugu toplami (butce denetimi icin).
+        self.aciklama_toplami = 0
 
     # check.py:64-65 `rel()` karsiligi.
     def rel(self, p) -> str:
@@ -110,6 +138,9 @@ class Denetci:
     def denetlenemedi(self, kod, yol, mesaj):
         self.ekle(DENETLENEMEDI, kod, yol, mesaj)
 
+    def uyari(self, kod, yol, mesaj):
+        self.ekle(UYARI, kod, yol, mesaj)
+
     def bilgi(self, kod, yol, mesaj):
         self.ekle(BILGI, kod, yol, mesaj)
 
@@ -117,7 +148,18 @@ class Denetci:
         return sum(1 for b in self.bulgular if b["seviye"] == seviye)
 
     def kodlar(self) -> set:
-        return {b["kod"] for b in self.bulgular if b["seviye"] != BILGI}
+        """DUSUREN kodlar: HATA + DENETLENEMEDI.
+
+        UYARI ve BILGI disaridadir — ikisi de cikis kodunu etkilemez, bu yuzden
+        "temiz mi" sorusunun cevabina karismamalari gerekir. UYARI'yi ayrica
+        sinamak icin `uyari_kodlari()` var; oz-test ikisini AYRI dogrular ki
+        bir uyarinin sessizce kaybolmasi da testi dusursun.
+        """
+        return {b["kod"] for b in self.bulgular
+                if b["seviye"] in (HATA, DENETLENEMEDI)}
+
+    def uyari_kodlari(self) -> set:
+        return {b["kod"] for b in self.bulgular if b["seviye"] == UYARI}
 
 
 # --- yardimcilar -------------------------------------------------------------
@@ -218,12 +260,23 @@ def denet_beceriler(d: Denetci) -> None:
         ac = meta.get("description")
         if isinstance(ac, str):
             n = len(ac.strip())
-            if n > AZAMI_ACIKLAMA:
+            d.aciklama_toplami += n
+            if n > CALISMA_ZAMANI_ACIKLAMA:
                 d.hata(
                     "ACIKLAMA_UZUN",
                     sm,
-                    f"description {n} karakter, sert sinir {AZAMI_ACIKLAMA} "
-                    f"(asan kisim kirpilir)",
+                    f"description {n} karakter, calisma zamani listeleme siniri "
+                    f"{CALISMA_ZAMANI_ACIKLAMA} (asan kisim KIRPILIR) "
+                    f"[issue #47627]",
+                )
+            elif n > YAYIN_ACIKLAMA:
+                d.uyari(
+                    "ACIKLAMA_YAYIN_SINIRI",
+                    sm,
+                    f"description {n} karakter, yayin siniri {YAYIN_ACIKLAMA} "
+                    f"(anthropics/skills quick_validate.py:82-84). Calisma "
+                    f"zamaninda KIRPILMAZ ({CALISMA_ZAMANI_ACIKLAMA} altinda); "
+                    f"yalniz yayin sozlesmesi ihlali",
                 )
             if "<" in ac or ">" in ac:
                 d.hata("ACIKLAMA_ACI_PARANTEZ", sm, "description '<' ya da '>' iceriyor")
@@ -523,9 +576,37 @@ def denet_oztestler(d: Denetci, kos: bool) -> None:
 
 
 # --- calistirici -------------------------------------------------------------
+def denet_aciklama_butcesi(d: Denetci) -> None:
+    """Tum becerilerin description TOPLAMINI butceye karsi olcer.
+
+    Neden ayri bir denetim: beceri BASINA sinir (1536) gecilmese bile TOPLAM
+    butce asilirsa aciklamalar tek tek kirpilmaz — TAMAMEN dusurulur ve geriye
+    yalniz beceri ISIMLERI kalir. Yani her beceri tek basina "temiz" gorunurken
+    yonlendirme topluca kaybolabilir; bu, dosya dosya bakan bir denetimin
+    goremeyecegi bir ariza turudur.
+    """
+    d.denetlenen += 1
+    top = d.aciklama_toplami
+    butce = TOPLAM_ACIKLAMA_BUTCESI
+    oran = (100.0 * top / butce) if butce else 0.0
+    yol = d.depo / ".claude" / "skills"
+    olcum = "toplam description %d karakter / butce %d (%.0f%%)" % (top, butce, oran)
+    if top > butce:
+        d.uyari(
+            "ACIKLAMA_BUTCESI_ASILDI", yol,
+            olcum + " — asilirsa aciklamalar TEK TEK kirpilmaz, TAMAMEN "
+            "dusurulur (geriye yalniz isimler kalir) ve bu SESSIZ olur. "
+            "Kaynak: anthropics/claude-code issue #64606 (200000*4*0.01=8000). "
+            "UYARI seviyesi bilerek secildi: sayi bir hata bildiriminden gelir, "
+            "sartnameden degil — HATA demek olculmemis bir kesinlik iddiasi olurdu")
+    else:
+        d.bilgi("ACIKLAMA_BUTCESI", yol, olcum)
+
+
 def denetle(depo: Path, oztest_kos: bool = True) -> Denetci:
     d = Denetci(depo)
     denet_beceriler(d)
+    denet_aciklama_butcesi(d)   # denet_beceriler'den SONRA: toplami o doldurur
     denet_referanslar(d)
     denet_settings(d)
     denet_ajanlar(d)
@@ -540,7 +621,7 @@ def rapor_metin(d: Denetci) -> str:
     hata_n = d.say(HATA)
     dn_n = d.say(DENETLENEMEDI)
     bilgi_n = d.say(BILGI)
-    for seviye, im in ((HATA, "x"), (DENETLENEMEDI, "?"), (BILGI, "i")):
+    for seviye, im in ((HATA, "x"), (DENETLENEMEDI, "?"), (UYARI, "!"), (BILGI, "i")):
         grup = [b for b in d.bulgular if b["seviye"] == seviye]
         if not grup:
             continue
@@ -548,15 +629,19 @@ def rapor_metin(d: Denetci) -> str:
         for b in grup:
             s.append(f"  {im} [{b['kod']}] {b['yol']}: {b['mesaj']}")
         s.append("")
+    uyari_n = d.say(UYARI)
     if hata_n or dn_n:
         # check.py:215 rapor cumlesinin karsiligi.
         s.append(
-            f"DUSTU — {hata_n} hata, {dn_n} denetlenemedi, {bilgi_n} bilgi; "
-            f"{d.denetlenen} denetim yapildi."
+            f"DUSTU — {hata_n} hata, {dn_n} denetlenemedi, {uyari_n} uyari, "
+            f"{bilgi_n} bilgi; {d.denetlenen} denetim yapildi."
         )
     else:
         # check.py:219 karsiligi.
-        s.append(f"TAMAM — {d.denetlenen} denetim yapildi, 0 hata, {bilgi_n} bilgi.")
+        s.append(
+            f"TAMAM — {d.denetlenen} denetim yapildi, 0 hata, "
+            f"{uyari_n} uyari, {bilgi_n} bilgi."
+        )
     return "\n".join(s)
 
 
@@ -599,9 +684,11 @@ def _temiz_agac(kok: Path):
 def self_test() -> int:
     vakalar = []  # (ad, beklenen_kod, kurucu)
 
-    def vaka(ad, kod):
+    def vaka(ad, kod, uyari=None):
+        """kod = beklenen DUSUREN kod (None = dusuren kod OLMAMALI).
+        uyari = beklenen UYARI kodu (None = uyari beklenmiyor, varsa DUSER)."""
         def sar(fn):
-            vakalar.append((ad, kod, fn))
+            vakalar.append((ad, kod, uyari, fn))
             return fn
         return sar
 
@@ -623,16 +710,43 @@ def self_test() -> int:
         (bd / "SKILL.md").write_text("---\nname: kapanmamis\n", encoding="utf-8")
         (bd / "KANIT.md").write_text("# K\n", encoding="utf-8")
 
-    @vaka("description 1024'u asiyor", "ACIKLAMA_UZUN")
+    @vaka("description calisma zamani sinirini (1536) asiyor", "ACIKLAMA_UZUN")
     def _(kok):
         _temiz_agac(kok)
-        _sahte_beceri(kok, "uzun-aciklama", "A" * (AZAMI_ACIKLAMA + 1))
+        _sahte_beceri(kok, "uzun-aciklama", "A" * (CALISMA_ZAMANI_ACIKLAMA + 1))
 
-    @vaka("description tam 1024 (sinir — hata OLMAMALI)", None)
+    @vaka("description tam 1536 (sinir — HATA OLMAMALI)", None,
+          uyari="ACIKLAMA_YAYIN_SINIRI")
     def _(kok):
         _temiz_agac(kok)
-        _sahte_beceri(kok, "sinir-aciklama", "A" * AZAMI_ACIKLAMA,
+        _sahte_beceri(kok, "sinir-aciklama", "A" * CALISMA_ZAMANI_ACIKLAMA,
                       govde="Motor: scripts/motor.py")
+
+    # Gerileme korumasi: 1024-1536 arasi ESKIDEN yanlislikla HATA idi.
+    # Artik HATA OLMAMALI; yalniz yayin-siniri UYARIsi verilmeli.
+    @vaka("description 1024 ile 1536 arasi (yayin ihlali, HATA DEGIL)", None,
+          uyari="ACIKLAMA_YAYIN_SINIRI")
+    def _(kok):
+        _temiz_agac(kok)
+        _sahte_beceri(kok, "yayin-siniri-asan", "A" * (YAYIN_ACIKLAMA + 100),
+                      govde="Motor: scripts/motor.py")
+
+    @vaka("description tam 1024 (yayin siniri — UYARI DA OLMAMALI)", None)
+    def _(kok):
+        _temiz_agac(kok)
+        _sahte_beceri(kok, "yayin-siniri-tam", "A" * YAYIN_ACIKLAMA,
+                      govde="Motor: scripts/motor.py")
+
+    # Toplam butce: tek basina hicbir beceri sinirini asmasa bile TOPLAM asilir.
+    @vaka("toplam aciklama butcesi asildi (UYARI, HATA DEGIL)", None,
+          uyari="ACIKLAMA_BUTCESI_ASILDI")
+    def _(kok):
+        _temiz_agac(kok)
+        # 8 beceri x 1000 karakter = 8000+; her biri 1536'nin ve 1024'un ALTINDA
+        # ki uyari YALNIZ toplam butceden gelsin (yayin-siniri uyarisi karismasin).
+        for i in range(9):
+            _sahte_beceri(kok, "butce-%d" % i, "A" * 1000,
+                          govde="Motor: scripts/motor.py")
 
     @vaka("name dizin adiyla uyusmuyor", "AD_UYUSMAZ")
     def _(kok):
@@ -764,18 +878,33 @@ def self_test() -> int:
 
     gecen = dusen = 0
     satirlar = []
-    for ad, beklenen, kurucu in vakalar:
+    for ad, beklenen, beklenen_uyari, kurucu in vakalar:
         gecici = Path(tempfile.mkdtemp(prefix="butunluk_oztest_"))
         try:
             kurucu(gecici)
             d = denetle(gecici, oztest_kos=True)
             kodlar = d.kodlar()
+            uyarilar = d.uyari_kodlari()
+            bulunan = (", ".join(sorted(kodlar)) or "yok")
             if beklenen is None:
                 ok = not kodlar
-                ayrinti = "temiz beklendi, bulunan: " + (", ".join(sorted(kodlar)) or "yok")
+                ayrinti = "dusuren kod beklenmedi, bulunan: " + bulunan
             else:
                 ok = beklenen in kodlar
-                ayrinti = f"beklenen {beklenen}, bulunan: " + (", ".join(sorted(kodlar)) or "yok")
+                ayrinti = f"beklenen {beklenen}, bulunan: " + bulunan
+            # UYARI beklentisi AYRI dogrulanir: beklenen uyari cikmazsa da,
+            # beklenmeyen uyari cikarsa da vaka DUSER (uyari sessizce kaybolmasin).
+            if beklenen_uyari is None:
+                if uyarilar:
+                    ok = False
+                    ayrinti += " | beklenmeyen UYARI: " + ", ".join(sorted(uyarilar))
+            else:
+                if beklenen_uyari not in uyarilar:
+                    ok = False
+                    ayrinti += (" | beklenen UYARI %s YOK, bulunan: %s"
+                                % (beklenen_uyari, ", ".join(sorted(uyarilar)) or "yok"))
+                else:
+                    ayrinti += " | UYARI %s dogrulandi" % beklenen_uyari
             satirlar.append(f"  [{'GECTI' if ok else 'DUSTU'}] {ad} — {ayrinti}")
             gecen += ok
             dusen += (not ok)
@@ -813,7 +942,13 @@ def main() -> int:
             "ozet": {
                 "hata": d.say(HATA),
                 "denetlenemedi": d.say(DENETLENEMEDI),
+                # UYARI ozete AYRICA yazilir: cikis kodunu etkilemedigi icin
+                # ozetten dusurulurse JSON raporu okuyan taraf uyarilari HIC
+                # gormez — sessiz kayip olur (bu depoda yasak).
+                "uyari": d.say(UYARI),
                 "bilgi": d.say(BILGI),
+                "aciklama_toplami": d.aciklama_toplami,
+                "aciklama_butcesi": TOPLAM_ACIKLAMA_BUTCESI,
             },
             "bulgular": d.bulgular,
             "cikis_kodu": cikis_kodu(d),

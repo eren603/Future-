@@ -1,6 +1,7 @@
 ok    gecerli-beceri-temiz           kodlar=-
 ok    iki-nokta-ayrismiyor           kodlar=AYRISMA_IKI_NOKTA,FM_YAML_HATASI
-ok    description-1024-asiyor        kodlar=DESC_COK_KELIME,DESC_COK_UZUN
+ok    description-1536-asiyor        kodlar=DESC_COK_KELIME,DESC_COK_UZUN
+ok    description-1024-1536-arasi-HATA-DEGIL kodlar=DESC_YAYIN_SINIRI
 ok    name-dizin-uyusmaz             kodlar=NAME_DIZIN_UYUSMAZ
 ok    description-eksik              kodlar=EKSIK_DESCRIPTION
 ok    name-gecersiz-karakter         kodlar=NAME_KEBAB_DEGIL
@@ -19,5 +20,4 @@ ok    name-eksik                     kodlar=EKSIK_NAME
 ok    tetikleyici-sozlesme-uyari     kodlar=TETIKLEYICI_SOZLESME
 ok    kendi-SKILL.md-kendi-dogrulayicisindan-gecmeli uyari=0
 
-OZ-TEST: 20 vaka, 20 gecti, 0 dustu
-exit=0
+OZ-TEST: 21 vaka, 21 gecti, 0 dustu
