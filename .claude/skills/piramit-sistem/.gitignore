@@ -6,3 +6,5 @@ state/kum_havuzu/
 state/son_rapor.json
 state/otomatik.json
 state/piramit_defter.jsonl
+state/kum_havuzu_eth/
+state/son_rapor_eth.json
