@@ -106,19 +106,56 @@ def test_fvg_mitigasyon():
 
 
 def test_zincir1_kapisi_fail_closed():
-    """DEĞİŞMEZ: mitigasyon kapısı sinyal AÇAMAZ, yalnız kapatabilir.
+    """DEĞİŞMEZ: 4/4 dizi mitige ise karar BEKLE'dir, alt zincire DEVREDİLMEZ.
 
     Gözlemci bunun ihlal edildiğini ölçtü: kapı zincir-1'i düşürünce karar alt
-    zincire devroluyor ve BEKLE'ler market sinyaline dönüyordu (fail-OPEN).
-    Kapı artık 4/4+mitige durumunda doğrudan BEKLE veriyor. Bu test o değişmezi
-    gerçek girdi verisiyle kilitler — devretme geri gelirse KIRILIR."""
+    zincire devroluyor ve BEKLE'ler zincir-2 market sinyaline dönüyordu
+    (fail-OPEN). Bu test SABİT fixture kullanır — canlı `girdi/` dosyalarına
+    bağlı DEĞİLDİR (o dosyaların üzerine her yeni pakette yazılır; değişmez
+    testi değişken girdiye çivilemek yanlış-kırmızı/sessiz-yeşil üretir)."""
+    # decide()'ın çalışabileceği en küçük sentetik zemin (deterministik)
+    b15 = [mk(i * 900000, 100, 100.4, 99.6, 100) for i in range(km.MIN_M15 + 20)]
+    b4 = [mk(i * 14400000, 100, 100.4, 99.6, 100) for i in range(km.MIN_H4 + 5)]
+    # 4/4 tamamlanmış, FVG'si MİTİGE bir dönüş dizisi enjekte edilir
+    sahte_rev = {"yon": "LONG", "adim": 4, "supurme_ucu": 98.0, "seviye": 99.0,
+                 "supurme_bar": 5, "disp_bar": 8, "bos_bar": 10, "bos_seviye": 101.0,
+                 "fvg": {"tip": "bull", "ust": 103.0, "alt": 101.0, "ce": 102.0, "bar": 8}}
+    o_rev, o_mit = km.detect_reversal, km.fvg_mitige
+    try:
+        km.detect_reversal = lambda *a, **k: dict(sahte_rev)
+        # (a) MİTİGE → BEKLE, zincir 1, alt zincire devretmek YASAK
+        km.fvg_mitige = lambda *a, **k: True
+        k_mit, _ = km.decide(b15, b4)
+        check("zincir1-kapi-bekle", k_mit["karar"] == "BEKLE",
+              "4/4+mitige BEKLE olmalı: %r" % (k_mit.get("karar"),))
+        check("zincir1-kapi-devretmez", k_mit.get("zincir") == 1,
+              "karar alt zincire DEVREDİLMEMELİ (zincir=%r)" % (k_mit.get("zincir"),))
+        check("zincir1-kapi-gerekce", "mitige" in k_mit.get("neden", "").lower(),
+              "gerekçe mitigasyonu söylemeli: %r" % (k_mit.get("neden", "")[:80],))
+        # (b) MİTİGE DEĞİL → aynı dizi zincir-1'e girebilmeli (kapı her şeyi kesmez)
+        km.fvg_mitige = lambda *a, **k: False
+        k_tmz, _ = km.decide(b15, b4)
+        check("zincir1-kapi-temizi-gecirir",
+              k_tmz.get("zincir") == 1 and k_tmz.get("neden") != k_mit.get("neden"),
+              "mitige olmayan 4/4 aynı BEKLE gerekçesini almamalı: %r" %
+              (k_tmz.get("neden", "")[:80],))
+    finally:
+        km.detect_reversal, km.fvg_mitige = o_rev, o_mit
+
+
+def test_zincir1_kapisi_gercek_veri():
+    """Ek ölçüm: canlı girdi varsa kapının sinyal AÇMADIĞI orada da sınanır.
+
+    Veri yoksa ya da veride 4/4+mitige deseni yoksa ÖLÇÜM YOK denir — sessizce
+    yeşil sayılmaz. Değişmezin kendisi yukarıdaki sabit fixture'da kilitlidir."""
     base = os.path.dirname(os.path.abspath(__file__))
     setler = [(os.path.join(base, "girdi", "m15.json"), os.path.join(base, "girdi", "h4.json")),
               (os.path.join(base, "girdi", "eth", "m15.json"),
                os.path.join(base, "girdi", "eth", "h4.json"))]
     setler = [(a, b) for a, b in setler if os.path.exists(a) and os.path.exists(b)]
     if not setler:
-        check("zincir1-kapi-fail-closed", True, "ATLANDI (girdi verisi yok)")
+        print("[  - ] zincir1-kapi-gercek-veri ÖLÇÜM YOK (girdi/ verisi yok — "
+              "değişmez sabit fixture'da sınandı)")
         return
     orij = km.fvg_mitige
     acti, kapatti, pencere = [], 0, 0
@@ -141,11 +178,12 @@ def test_zincir1_kapisi_fail_closed():
                     kapatti += 1
     finally:
         km.fvg_mitige = orij
-    check("zincir1-kapi-fail-closed", not acti,
+    check("zincir1-kapi-gercek-veri", not acti,
           "%d pencere: kapattı=%d AÇTI=%d %s" %
           (pencere, kapatti, len(acti), acti[:3] if acti else ""))
-    check("zincir1-kapi-etkili", kapatti > 0,
-          "kapı hiç kurulum düşürmüyorsa ölçüm anlamsız (kapattı=%d)" % kapatti)
+    if kapatti == 0:
+        print("[  - ] zincir1-kapi-etkili ÖLÇÜM YOK (bu veri paketinde 4/4+mitige "
+              "deseni yok — kapının etkisi ölçülemedi, HATA DEĞİL)")
 
 
 def _with_mit(deger, fn):
@@ -295,6 +333,7 @@ if __name__ == "__main__":
     test_fvg()
     test_fvg_mitigasyon()
     test_zincir1_kapisi_fail_closed()
+    test_zincir1_kapisi_gercek_veri()
     test_outcome_label()
     test_end_to_end()
     print("-" * 50)

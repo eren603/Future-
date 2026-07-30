@@ -363,9 +363,11 @@ def _varsayimlar(p: dict, r_min: float, profil_var: bool) -> list:
         # doğrudan belirlediği için etiketsiz bırakılırsa gizli eşik olur.
         (f"'açık FVG' eşiği = karar_motoru.FVG_MITIGASYON {KM.FVG_MITIGASYON} "
          "(bölgenin bu oranı tükenince mitige sayılır; KALİBRE EDİLMEMİŞ "
-         "tasarım varsayımı — consequent encroachment konvansiyonu). Giriş "
-         "fiyatı da bölge orta noktasıdır; eşik onunla hizalıdır. Bu değer "
-         "aday havuzunu doğrudan daraltır/genişletir"),
+         "tasarım varsayımı — consequent encroachment konvansiyonu). Bu değer "
+         "open_fvgs üzerinden aday havuzunu doğrudan daraltır/genişletir. "
+         "NOT: bu modülde giriş adayı bölgenin KENARIDIR (alt/üst), orta "
+         "noktası değil — 'giriş=ce' hizalaması karar_motoru.decide için "
+         "geçerlidir, buradaki adaylar için değil"),
         "hedef yön tarafındaki İLK teyitli likidite; yoksa aday düşer "
         "(R-katı uydurma hedef üretilmez)",
     ]

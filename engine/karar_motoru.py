@@ -533,9 +533,10 @@ def decide(bars15, bars4h):
     # (1) tamamlanmış dönüş dizisi
     # Zincir-1'in FVG'si leaves_fvg'den gelir (open_fvgs taramasının dışında),
     # bu yüzden mitigasyon kapısı BURADA uygulanır: girişi (ce) zaten geçilmiş
-    # bölge taze kurulum sayılamaz → aday düşer, alt zincirlere devredilir.
-    # adim DEĞİŞTİRİLMEZ (dizi gerçekten 4/4 tamamlandı) — yalnız bayrak konur,
-    # yoksa çıktı olmayan bir durumu rapor eder.
+    # bölge taze kurulum sayılamaz → aday düşer ve karar BEKLE olur; alt
+    # zincirlere DEVREDİLMEZ (devretmek ölçümde sinyali artırıyordu — aşağıdaki
+    # fail-closed dalına bak). adim DEĞİŞTİRİLMEZ (dizi gerçekten 4/4 tamamlandı)
+    # — yalnız bayrak konur, yoksa çıktı olmayan bir durumu rapor eder.
     rev_mitige = bool(rev and rev.get("fvg") and fvg_mitige(bars15, rev["fvg"]))
     if rev is not None:
         rev["fvg_mitige"] = rev_mitige
