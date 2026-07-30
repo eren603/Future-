@@ -302,10 +302,26 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
     onayli = [a for a, v in ver.items() if v.get("confirmed")]
     curutulen = [a for a, v in ver.items() if v.get("confirmed") is False]
     kapsanmayan = [a for a in dan if a not in ver]
-    if dan and len(onayli) == len(dan) and not curutulen:
+    # BOŞ VERIFIER = B1'in tarif ettiği "doğrulama boş/None iken fail-OPEN" hali.
+    # Ama danışman kendi kapsamını doğrulamış olabilir (_verifier_confirmed köprüsü,
+    # ver'de görünmez) — bu durumda mühür YANLIŞ olur. Yalnız HİÇBİR doğrulama
+    # (ne ver ne self) yokken İHLAL: yönlü karar sıfır kanıtla üretilmiş demektir.
+    self_dogrulanan = [a for a, d in dan.items()
+                       if d.get("_verifier_confirmed") is True]
+    if dan and not ver and not self_dogrulanan:
+        b.append(_bulgu("MEMNUN_ETME", "İHLAL",
+                        f"hiçbir danışman ({sorted(dan)}) doğrulamadan geçmedi — "
+                        "verifier BOŞ ve hiçbir motor kendi kapsamını doğrulamadı "
+                        "(fail-OPEN: yönlü karar sıfır doğrulanmış kanıtla üretilir)"))
+    elif dan and len(onayli) == len(dan) and not curutulen:
+        # Bu, her danışmanın AÇIK verifier girdisiyle (dış değerlendirme) onaylandığı
+        # GERÇEK uzlaşıdır — self-verify köprüsü değil, rubber-stamp değil. Mühür
+        # YAPILMAZ (meşru güçlü-uzlaşı koşusu yanlışlıkla mühürlenmesin); asıl
+        # fail-OPEN (verifier BOŞ) yukarıdaki İHLAL dalında zaten mühürlenir.
         b.append(_bulgu("MEMNUN_ETME", "UYARI",
-                        f"tüm danışmanlar ({onayli}) onaylandı, hiç çürütme yok — "
-                        "doğrulama fail-OPEN olabilir"))
+                        f"tüm danışmanlar ({onayli}) DIŞ doğrulayıcıyla onaylandı, "
+                        "hiç çürütme yok — güçlü uzlaşı (mühür yok); yine de tek yönlü "
+                        "teyide dikkat"))
     else:
         b.append(_bulgu("MEMNUN_ETME", "TEMİZ",
                         f"doğrulama seçici: {len(onayli)} onay, {len(curutulen)} çürütme "
@@ -369,12 +385,24 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
                             f"üretmedi: {(usd or {}).get('durum', YOK)}"))
         else:
             kaynak = (usd.get("_girdi_kaynagi") or {})
-            atr_alt = _sayilar((k2 or {}).get("motor_sonuclari", {}).get("smc_tespit_h4"))
-            atr_ust = _sayilar({"a": (usd.get("cevrim") or {}).get("stop_atr_kat")})
-            b.append(_bulgu("UYDURMA", "TEMİZ" if kaynak else "UYARI",
+            # İZLENEBİLİRLİK (B4): usd_hedef'in kullandığı kurulum ATR'si gerçekten
+            # k2 smc_tespit_h4 çıktısındaki ATR mi? (eskiden atr_alt/atr_ust
+            # hesaplanıp HİÇ karşılaştırılmıyordu — ölü denetim). ATR sayısı k2'de
+            # yoksa kaynak beyanı doğrulanamaz → UYARI.
+            h4_sayilar = _sayilar((k2 or {}).get("motor_sonuclari", {}).get("smc_tespit_h4"))
+            usd_atr = (usd.get("cevrim") or {}).get("atr_kurulum")
+            if usd_atr is None:
+                usd_atr = (usd.get("_girdi_kaynagi") or {}).get("atr_kurulum_deger")
+            atr_izlenebilir = (usd_atr is None
+                               or any(abs(float(usd_atr) - x) <= 1e-6 for x in h4_sayilar))
+            b.append(_bulgu("UYDURMA",
+                            "TEMİZ" if (kaynak and atr_izlenebilir) else "UYARI",
                             (f"sabit-USDT girdileri kaynaklı: {kaynak}"
-                             if kaynak else "girdi kaynağı beyan edilmemiş") +
-                            f" | hüküm={usd.get('HUKUM')}, düşen kapı="
+                             if kaynak else "girdi kaynağı beyan edilmemiş")
+                            + (f" | ATR izlenebilir (k2 smc_tespit_h4'te var)"
+                               if atr_izlenebilir else
+                               f" | UYARI: usd ATR={usd_atr} k2 smc_tespit_h4 sayılarında YOK")
+                            + f" | hüküm={usd.get('HUKUM')}, düşen kapı="
                             f"{usd.get('dusen_kapilar')}"))
     # 0b) EŞİK KALİBRASYONU: kalibre edilen eşik ile sentezin UYGULADIĞI eşik
     # aynı mı? Ayrılırsa karar, raporlanandan başka bir kapıdan geçmiş olur

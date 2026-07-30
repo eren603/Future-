@@ -14,7 +14,9 @@ giriş) GEÇMİŞ veride mekanik simüle eder. Sabit eşik yerine (varsayılan m
   3) Bootstrap %95 CI: beklentinin alt sınırı > 0 olmalı.
   4) Yarı-dönem tutarlılık: iki yarının beklentisi de > 0 (drift/rejim kontrolü).
   5) Dinamik R:R önerisi: gereken min R:R = (1-wr_lo)/wr_lo (Wilson kötümser
-     kazanma oranından) → confluence eşiği olarak KULLANILIR.
+     kazanma oranından) → rapora `confluence_thresholds.min_rr` olarak ÖNERİLİR
+     (çağıran smc_tespit/confluence job'ına bağlamalıdır; bu motor kendisi
+     uygulamaz).
 
 Kapılar (fail-closed, kalibre mod):
   - işlem < n_taban                → VERİ YETERSİZ (sinyal izni YOK)
@@ -135,8 +137,9 @@ def _sim_pass(df, events, atr_arr, p, atr_mult: float):
 
         entry = float(z_hi)
         a = atr_arr[entry_i]
-        if not np.isfinite(a) or a <= 0:
-            a = 0.02 * entry
+        atr_fb = not (np.isfinite(a) and a > 0)
+        if atr_fb:
+            a = 0.02 * entry          # ATR-fallback (etiketlenir; gizli sabit değil)
         is_long = d == "bull"
         sl = s_price - atr_mult * a if is_long else s_price + atr_mult * a
         tp_risk = (entry - sl) if is_long else (sl - entry)
@@ -152,7 +155,8 @@ def _sim_pass(df, events, atr_arr, p, atr_mult: float):
         trades.append({"entry_i": int(entry_i),
                        "dir": "long" if is_long else "short",
                        "R": round(float(outcome - cost_r), 4),
-                       "mae_atr": round(float(mae_price / a), 4)})
+                       "mae_atr": round(float(mae_price / a), 4),
+                       "atr_fallback": bool(atr_fb)})
         busy_until = exit_i
 
     trades.sort(key=lambda t: t["entry_i"])
@@ -265,11 +269,25 @@ def simulate(job: dict) -> dict:
         varsayimlar = [f"LEGACY statik eşikler: min_trades={n_taban}, MC p>=0.6, "
                        "PF>1 — TASARIM VARSAYIMI (kalibre mod önerilir)"]
 
+    # ATR-fallback sayısı ETİKETLENİR (B5): ATR'siz barlarda SL/MAE ölçeği gizli
+    # 0.02×entry sabitine düşüyordu; kaç işlemde kullanıldığı varsayımlara yazılır.
+    atr_fb_n = sum(1 for t in trades if t.get("atr_fallback"))
+    if atr_fb_n:
+        varsayimlar = list(varsayimlar) + [
+            f"0.02×entry ATR-fallback {atr_fb_n} işlemde kullanıldı (ATR ölçülemedi "
+            "— etiketli varsayım; R ve mae_atr bu ölçekten türedi)"]
+    # ÖNERİLEN min_rr rapora AÇIKÇA confluence eşiği olarak yazılır (B4): eskiden
+    # yalnız kalibrasyon altına gömülüp hiçbir tüketici bulmuyordu (docstring
+    # 'KULLANILIR' diyordu ama çağıran bağlamıyordu → ÖNERİLİR, çağıran bağlamalı).
+    _rr_k = (kal_info or {}).get("onerilen_min_rr") if isinstance(kal_info, dict) else None
     rapor.update({
         "SONUC": verdict,
         "sinyal_izni": verdict == "EDGE KANITLI (geçmiş veride)",
         "gerekce": neden,
         "kalibrasyon": (kal_info or None),
+        "confluence_thresholds": ({"min_rr": _rr_k} if _rr_k is not None else None),
+        "thresholds_kaynak": ("kalibrasyon (veri-türevi, setup_dogrulama) — "
+                              "ÇAĞIRAN smc_tespit/confluence job'ına bağlamalı"),
         "esik_kaynagi": ("veri-türevi (her koşuda bu veriyle yeniden kalibre)"
                          if kalibre else "statik varsayım (legacy)"),
         "varsayimlar": varsayimlar,

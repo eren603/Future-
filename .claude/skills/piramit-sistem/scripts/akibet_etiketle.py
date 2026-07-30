@@ -69,6 +69,7 @@ class EtiketError(Exception):
 def bar_yukle(yollar: list) -> list:
     """Verilen kaynaklardan barları birleştir: zaman damgasına göre tekil+sıralı."""
     havuz = {}
+    atlanan = 0                       # bozuk/eksik satır sayacı (B3: sessiz kayıp yok)
     for y in yollar:
         p = Path(y)
         if not p.exists():
@@ -84,10 +85,14 @@ def bar_yukle(yollar: list) -> list:
                                           float(d["l"]), float(d["c"]),
                                           float(d.get("v", 0.0)))
                 except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                    atlanan += 1      # arşiv kısmi bozulursa havuz sessizce küçülmesin
                     continue
         else:
             for b in km.parse_klines(str(p)):
                 havuz[int(b.t)] = (b.o, b.h, b.l, b.c, b.v)
+    if atlanan:
+        sys.stderr.write(f"[akibet_etiketle] bar_yukle: {atlanan} bozuk/eksik "
+                         "satır atlandı (arşiv kısmi bozuk olabilir).\n")
     return [(t, *havuz[t]) for t in sorted(havuz)]
 
 
@@ -190,6 +195,16 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
         _, o, h, l, c, _v = barlar[k]
         stop_vuruldu = (h >= stop) if s < 0 else (l <= stop)
         hedef_vuruldu = (l <= t1) if s < 0 else (h >= t1)
+        # LIMIT dolum barında (k==f, market değil) HEDEF yalnız dolum AÇILIŞTA
+        # gerçekleştiyse kredilenir (B1): bar giriş fiyatında/ötesinde açıldıysa
+        # dolum ilk tiktedir → sonraki tüm hareket (hedef dahil) KANITLI sonradır.
+        # Fitille-dolumda (açılış giriş dışı, wick ile dokunur) bar-içi sıra
+        # kanıtsız — fiyat önce hedefe gidip sonra girişe dönmüş olabilir → hedef
+        # ertelenir. Stop yine değerlendirilir (aleyhte kenar, muhafazakâr).
+        if k == f and not market:
+            dolum_acilista = (o >= giris) if s < 0 else (o <= giris)
+            if not dolum_acilista:
+                hedef_vuruldu = False
         if stop_vuruldu:                  # aynı barda ikisi de → STOP (muhafazakâr)
             cikis, kod = stop, "STOP"
         elif hedef_vuruldu:

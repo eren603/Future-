@@ -33,13 +33,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 YOK = "VERİ YOK"
-SERI_N = 24          # OI/fiyat serisinde tutulacak azami anlık görüntü
+SERI_N = 24          # OI/fiyat serisinde tutulacak azami anlık görüntü (KULLANIM)
+SERI_TAVAN = 500     # turev_seri.jsonl dosya satır tavanı (DOSYA BÜYÜMESİ sınırı)
 CVD_N = 24           # CVD serisinde tutulacak azami bar
 
 
@@ -101,7 +103,20 @@ def snapshot_ekle(seri: Path, kayit: dict) -> dict:
                             "oi": _f(kayit["oi"]),
                             "kaynak": kayit.get("kaynak", YOK)},
                            ensure_ascii=False) + "\n")
-    return {"eklendi": True, "toplam": len(mevcut) + 1}
+    # DOSYA BÜYÜMESİ SINIRI (S8): seri yalnız eklemeyle büyüyordu; hiçbir zaman
+    # kırpılmıyordu (SERI_N yalnız KULLANILAN nokta sayısını sınırlar, dosyayı
+    # değil). Tavanı aşınca son SERI_TAVAN satıra atomik yeniden yaz.
+    toplam = len(mevcut) + 1
+    if toplam > SERI_TAVAN:
+        try:
+            satirlar = seri.read_text(encoding="utf-8").splitlines()[-SERI_TAVAN:]
+            tmp = seri.with_suffix(seri.suffix + ".tmp")
+            tmp.write_text("\n".join(satirlar) + "\n", encoding="utf-8")
+            os.replace(tmp, seri)
+            toplam = SERI_TAVAN
+        except OSError:
+            pass
+    return {"eklendi": True, "toplam": toplam}
 
 
 def snapshot_oku(seri: Path) -> list:
@@ -186,14 +201,30 @@ def ham_oku(dizin: Path, sembol: str) -> dict:
                 hatalar.append(f"{dosya}: {sembol} bulunamadı → atlandı")
                 continue
         if isinstance(d, list) and d:
+            # eleman tipi denetimi (S1): sözlük-olmayan elemanlı liste (ör. [1,2,3])
+            # d[0].get() ile AttributeError fırlatıp motoru çökertirdi (try yalnız
+            # json.loads'ı sarıyor).
+            if not isinstance(d[0], dict):
+                hatalar.append(f"{dosya}: liste elemanları sözlük değil → atlandı")
+                continue
             sym = str(d[0].get("symbol", sembol))
             if sym != sembol:
                 hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
                                "(yanlış sembol karara giremez)")
                 continue
-            ts = d[-1].get("timestamp")
+            ts = d[-1].get("timestamp") if isinstance(d[-1], dict) else None
+        elif isinstance(d, dict):
+            # tek-sembol SÖZLÜK yanıtı da sembol denetlenir (S1): premiumIndex
+            # funding dict'inde 'symbol' alanı var ama eskiden hiç kontrol
+            # edilmeden kabul ediliyordu — yanlış sembol funding kanalına sızardı.
+            sym = str(d.get("symbol", sembol))
+            if d.get("symbol") is not None and sym != sembol:
+                hatalar.append(f"{dosya}: sembol {sym} ≠ {sembol} → atlandı "
+                               "(yanlış sembol karara giremez)")
+                continue
+            ts = d.get("time")
         else:
-            ts = (d or {}).get("time")
+            ts = None
         veri[ad] = d
         if isinstance(ts, (int, float)):
             yas[ad] = int(ts)
@@ -263,11 +294,13 @@ def uret(m15: Path | None, seri: Path | None, ek: dict, http: dict | None,
     # ham (elle yapıştırılan) kanallar HTTP ile aynı işleyiciden geçer;
     # çakışırsa ham öncelikli (kullanıcı bilerek yapıştırdı)
     hamp = http_isle(ham) if ham else {}
-    if ham and (ham.get("veri") or {}).get("likidasyon"):
-        lk = ham["veri"]["likidasyon"]
+    # likidasyon içeriği DIŞARIDAN (elle yapıştırma) gelir → tip denetlenir (S1):
+    # sözlük değilse (ör. liste) lk.get() AttributeError fırlatırdı.
+    _lk = (ham.get("veri") or {}).get("likidasyon") if ham else None
+    if isinstance(_lk, dict):
         for k in ("liq_long", "liq_short"):
-            if _f(lk.get(k)) is not None and _f(ek.get(k)) is None:
-                ek[k] = _f(lk[k])
+            if _f(_lk.get(k)) is not None and _f(ek.get(k)) is None:
+                ek[k] = _f(_lk[k])
 
     # --- CVD (çevrimdışı) ---
     if m15 is not None:
@@ -357,17 +390,22 @@ def main(argv=None) -> int:
         print(json.dumps(snapshot_ekle(Path(a.seri), kayit), ensure_ascii=False, indent=2))
         return 0
 
-    ek = {}
+    ek, ek_hata = {}, None
     if a.ek:
         p = Path(a.ek)
         try:
             ek = json.loads(p.read_text(encoding="utf-8")) if p.exists() else json.loads(a.ek)
-        except (OSError, json.JSONDecodeError):
-            ek = {}
+        except (OSError, json.JSONDecodeError) as e:
+            # --ek çözümlenemezse SESSİZCE ek={} bırakma (B3): kullanıcı funding/
+            # taker/likidasyon girdiğini sanır, çıktı 'VERİ YOK' der (sessiz kayıp).
+            ek, ek_hata = {}, f"--ek çözümlenemedi ({type(e).__name__}): {e}"
     http = http_kanallar(a.sembol) if a.http else None
     ham = ham_oku(Path(a.ham), a.sembol) if a.ham else None
     job = uret(Path(a.m15) if a.m15 else None,
                Path(a.seri) if a.seri else None, ek, http, ham)
+    if ek_hata:
+        job.setdefault("_uyarilar", []).append(ek_hata)
+        job.setdefault("_eksikler", []).append("elle --ek girdisi (çözümlenemedi)")
     if ham:
         uy = yas_kontrol(ham.get("yas", {}), Path(a.m15) if a.m15 else None)
         if ham["hatalar"]:

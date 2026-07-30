@@ -55,6 +55,20 @@ def test_atr_zorunlu():
         pass
 
 
+def test_nan_reddedilir():
+    # NaN ATR `atr <= 0` denetimini geçerdi ve şişirilmiş-R panzehirini deviren
+    # sessiz TUTARLI üretirdi → artık reddedilmeli (S1).
+    nan = float("nan")
+    for kotu in ({"atr": nan}, {"stop": float("inf")}, {"entry": nan}):
+        job = {"yon": "short", "entry": 65000, "stop": 65200, "target": 64800, "atr": ATR}
+        job.update(kotu)
+        try:
+            rr.denetle(job)
+            assert False, f"NaN/inf hata vermeliydi: {kotu}"
+        except rr.RRError:
+            pass
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

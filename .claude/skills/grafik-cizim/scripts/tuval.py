@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import math
+import re
 
 # ---------------------------------------------------------------- temalar
 TEMALAR = {
@@ -49,6 +50,16 @@ def kacir(s) -> str:
     """XML kaçışı."""
     return (str(s).replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+_OZ_GUVENLI = re.compile(r"[^#a-zA-Z0-9 .,()%-]")
+
+
+def _oz(v) -> str:
+    """Öznitelik değeri güvenli süzgeci (S1): renk/kesik gibi job'dan gelen
+    değerlerdeki `"` ya da SVG-kırıcı/enjeksiyon karakterlerini AT. cizgi/kutu
+    bu değerleri kaçışsız gömdüğü için gereklidir."""
+    return _OZ_GUVENLI.sub("", str(v))
 
 
 def _guzel_adim(aralik: float, hedef: int = 8) -> float:
@@ -254,10 +265,10 @@ class Tuval:
     # ---------------- ilkel çizimler (araclar.py bunları kullanır)
     def cizgi(self, x1, y1, x2, y2, renk, kalinlik=1.4, kesik=None, saydam=1.0,
               ok=False) -> str:
-        d = f' stroke-dasharray="{kesik}"' if kesik else ""
+        d = f' stroke-dasharray="{_oz(kesik)}"' if kesik else ""
         m = ' marker-end="url(#ok)"' if ok else ""
         return (f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
-                f'stroke="{renk}" stroke-width="{kalinlik}" stroke-opacity="{saydam}"'
+                f'stroke="{_oz(renk)}" stroke-width="{kalinlik}" stroke-opacity="{saydam}"'
                 f'{d}{m} stroke-linecap="round"/>')
 
     def kutu(self, x1, y1, x2, y2, dolgu=None, kenar=None, dolgu_saydam=0.16,
@@ -266,11 +277,11 @@ class Tuval:
         y1, y2 = sorted((y1, y2))
         p = [f'<rect x="{x1:.1f}" y="{y1:.1f}" width="{max(0.5, x2 - x1):.1f}" '
              f'height="{max(0.5, y2 - y1):.1f}" rx="{kose}"']
-        p.append(f'fill="{dolgu}" fill-opacity="{dolgu_saydam}"' if dolgu else 'fill="none"')
+        p.append(f'fill="{_oz(dolgu)}" fill-opacity="{dolgu_saydam}"' if dolgu else 'fill="none"')
         if kenar:
-            p.append(f'stroke="{kenar}" stroke-width="{kalinlik}"')
+            p.append(f'stroke="{_oz(kenar)}" stroke-width="{kalinlik}"')
             if kesik:
-                p.append(f'stroke-dasharray="{kesik}"')
+                p.append(f'stroke-dasharray="{_oz(kesik)}"')
         return " ".join(p) + "/>"
 
     def yazi(self, x, y, metin, renk=None, boyut=12, hiza="start", kalin=False,

@@ -276,9 +276,14 @@ def bootstrap_taban(rows: list, alpha: float, n_boot: int, seed: int) -> dict:
                    sayısı arttıkça mutlak toplam büyüdüğü için kapı kendiliğinden
                    gevşiyordu (4 danışmanda toplam ~2.2 iken eşik 0.60).
     """
+    # Kapı YÖNLÜ danışman sayar (B1): flat danışmanlar null dağılımını
+    # dejenere olmaktan kurtarmaz (signflip_tani da yalnız dir!=0 sayar).
+    # Eskiden len(rows) tümünü sayıyordu → "1 yönlü + 1 flat" dejenere kurul geçiyordu.
+    yonlu_n = len([r for r in rows if r.get("dir", 0) != 0])
+    if yonlu_n < KONVANSIYON["min_yonlu_danisman"]:
+        return {"durum": f"{YOK} — {yonlu_n} yönlü danışman < "
+                f"{KONVANSIYON['min_yonlu_danisman']} (flat sayılmaz)"}
     n = len(rows)
-    if n < KONVANSIYON["min_yonlu_danisman"]:
-        return {"durum": f"{YOK} — {n} danışman < {KONVANSIYON['min_yonlu_danisman']}"}
     rnd = _rng(seed)
     skorlar = []
     for _ in range(n_boot):
@@ -358,11 +363,15 @@ def esikler(job: dict) -> dict:
     son, ayrinti = {}, {}
     for ad in ("score", "min_agreement", "min_side_weight"):
         ham = taban[ad] * s
-        kirpik = min(max(ham, p["alt"][ad]), p["ust"][ad])
+        # ALT SINIR = STATİK korkuluk (S7): kalibrasyon yalnız SIKILAŞTIRABİLİR,
+        # statik fail-closed değerinin ALTINA inemez. Eskiden alt sınır `alt`
+        # (0.05/0.40/0.30) idi — statiğin (0.15/0.55/0.60) ALTINDA — ve veriden
+        # türetme, yerine geçtiği korkuluğu GEVŞETEBİLİYORDU (sözleşme ihlali).
+        kirpik = min(max(ham, statik[ad]), p["ust"][ad])
         son[ad] = round(kirpik, 4)
         ayrinti[ad] = {"null_taban": taban[ad], "sertlik": round(s, 4),
                        "ham": round(ham, 4), "son": round(kirpik, 4),
-                       "korkuluk": [p["alt"][ad], p["ust"][ad]],
+                       "korkuluk": [statik[ad], p["ust"][ad]],
                        "kirpildi": abs(kirpik - ham) > 1e-9,
                        "statik_karsiligi": statik[ad],
                        "degisim_statige_gore": round(kirpik - statik[ad], 4)}

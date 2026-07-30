@@ -60,7 +60,7 @@ def rapor_sayilari(nesne, kume=None) -> set:
     return kume
 
 
-def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
+def denetle(metin: str, rapor: dict, tolerans: float = 0.0) -> dict:
     kaynak = rapor_sayilari(rapor)
     zaman_sayisi = len(ZAMAN.findall(metin))
     metin = ZAMAN.sub(lambda m: "#" * len(m.group()), metin)   # zaman maskele
@@ -74,10 +74,26 @@ def denetle(metin: str, rapor: dict, tolerans: float = 0.005) -> dict:
         except ValueError:
             continue
         baglam = metin[max(0, m.start() - 45):m.end() + 25].replace("\n", " ")
-        if v in YAPISAL:
+        # YAPISAL atlama BAĞLAMA DUYARLIDIR (S7): 0-5/10/100 katman/liste numarası
+        # olabilir AMA piyasa iddiası da olabilir ('R=3', '10x kaldıraç', 'hedef 100',
+        # '5R'). Bağlam bir R/kaldıraç/fiyat/hedef göstergesi içeriyorsa yapısal
+        # sayılmaz → kaynak aranır (yoksa KAYNAKSIZ).
+        piyasa_baglami = re.search(r"(?i)\b(R|kaldıra[çc]|leverage|hedef|target|"
+                                   r"stop|giri[şs]|entry|fiyat|price)\b|[x×@]",
+                                   baglam) is not None
+        if v in YAPISAL and not piyasa_baglami:
             yapisal.append({"deger": v, "baglam": baglam})
             continue
-        if v in kaynak or any(abs(v - k) <= tolerans * max(1.0, abs(k))
+        # Yuvarlama payı yazılan sayının HASSASİYETİNDEN türetilir (S7). Eskiden
+        # tolerans %0.5 GÖRELİ idi: BTC ölçeğinde (~65000) ±~326 puanlık her
+        # uydurma seviye "bulundu" sayılıyordu — uydurma-sayı korkuluğu tam
+        # korumakla yükümlü olduğu fiyat ölçeğinde deliniyordu. Artık pay yalnız
+        # biçim/yuvarlama farkını kapatır (0.5 × son basamak); göreli `tolerans`
+        # varsayılan KAPALI (0.0), yalnız açık çağrıyla ve etiketle açılır.
+        nokta = ham.replace(",", ".")
+        ond = len(nokta.split(".")[1]) if "." in nokta else 0
+        eps = 0.5 * (10 ** (-ond))
+        if v in kaynak or any(abs(v - k) <= eps + tolerans * abs(k)
                               for k in kaynak):
             bulundu.append(v)
         else:

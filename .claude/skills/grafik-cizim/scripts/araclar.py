@@ -476,7 +476,10 @@ def _pozisyon_ciz(t, s, yon):
                       t.t["vurgu"]),
     ]
     if rr is not None:
-        etk = s.get("r_etiketi") or f"R:R {rr:.2f}"
+        # r_etiketi rr_denetim'den geçmiş DEĞERDİR (çizim sözleşmesi). Yoksa ham
+        # oran '(denetimsiz)' etiketiyle basılır (S7): şişirilmiş (dar-stop+uzak-
+        # hedef) bir R yapay değeri denetimsiz "R:R" gibi sunulmasın.
+        etk = s.get("r_etiketi") or f"R:R {rr:.2f} (denetimsiz)"
         p.append(t.etiket_kutu(ok_x, (yg + yh) / 2, etk, t.t["vurgu"], hiza="middle"))
     for f, r in ((giris, t.t["vurgu"]), (stop, zarar_renk), (hedef, kar_renk)):
         if s.get("fiyat_etiketi", True):

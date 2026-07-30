@@ -67,10 +67,21 @@ def olc(yol_a: Path, yol_b: Path, ad_a: str, ad_b: str, p: dict) -> dict:
     if len(ortak) < p["min_gozlem"] + 1:
         raise KorelasyonError(f"{YOK} — hizalı bar {len(ortak)} < "
                               f"{p['min_gozlem'] + 1} (korelasyon kurulamaz)")
-    ra = _log_getiri([A[t] for t in ortak])
-    rb = _log_getiri([B[t] for t in ortak])
-    n = min(len(ra), len(rb))
-    ra, rb = ra[-n:], rb[-n:]
+    # Getiriler ÇİFTLER üzerinden hesaplanır (S1): ardışık iki ortak barda HER
+    # İKİ seri de pozitifse (ra_i, rb_i) BİRLİKTE üretilir. Eskiden her seri
+    # bağımsız süzülüp kuyruk kesiliyordu; bir seride tek bozuk kapanış tüm
+    # çiftleri bir bar kaydırıyor ve ρ/beta YANLIŞ eşleşmiş barlardan çıkıyordu.
+    ca = [A[t] for t in ortak]
+    cb = [B[t] for t in ortak]
+    ra, rb = [], []
+    for i in range(1, len(ortak)):
+        if ca[i - 1] > 0 and ca[i] > 0 and cb[i - 1] > 0 and cb[i] > 0:
+            ra.append(math.log(ca[i] / ca[i - 1]))
+            rb.append(math.log(cb[i] / cb[i - 1]))
+    n = len(ra)
+    if n < p["min_gozlem"]:
+        raise KorelasyonError(f"{YOK} — hizalı getiri çifti {n} < {p['min_gozlem']} "
+                              "(pozitif-çift korelasyon kurulamaz)")
 
     rho = _pearson(ra, rb)
     # beta: b = cov(b,a)/var(a)  (a = BTC referans)

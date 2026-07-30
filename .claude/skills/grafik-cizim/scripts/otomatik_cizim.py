@@ -195,7 +195,13 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
             uyari.append(f"emir dosyası okunamadı: {e}")
             emir = None
     if isinstance(emir, dict):
+        # emir_plani şema normalizasyonu (B8): tam çıktıda seviyeler 'birincil'
+        # altındadır ve R anahtarı BÜYÜKtür ('R'). Eskiden g/st/hd=None → kutu
+        # hiç çizilmezdi; r okunmayınca R etiketi düşerdi.
+        if isinstance(emir.get("birincil"), dict):
+            emir = emir["birincil"]
         g, st, hd = emir.get("giris"), emir.get("stop"), emir.get("hedef", emir.get("t1"))
+        r_deg = emir.get("r", emir.get("R"))
         if None in (g, st, hd):
             uyari.append("emir kutusu: giriş/stop/hedef eksik — çizilmedi (VERİ YOK)")
         else:
@@ -204,8 +210,8 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
             spec = {"arac": f"{yon}_pozisyon", "giris": float(g), "stop": float(st),
                     "hedef": float(hd), "bar_baslangic": emir.get("bar", n - 1),
                     "uzunluk_bar": int(emir.get("uzunluk_bar", 25))}
-            if emir.get("r") is not None:
-                spec["r_etiketi"] = f"R {float(emir['r']):.2f}"
+            if r_deg is not None:
+                spec["r_etiketi"] = f"R {float(r_deg):.2f}"
             ciz.append(spec)
 
     # --- ölçülen değerlerle bilgi paneli
@@ -227,7 +233,10 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
             {"ad": "Açık FVG", "deger": str(len([x for x in (out.get("acik_fvgler") or [])
                                                  if not x.get("dolu")]))},
             {"ad": "Likidite havuzu", "deger": str(len(out.get("likidite") or []))},
-            {"ad": "Son fiyat", "deger": f"{son:,.2f}".replace(",", ".")},
+            # TR biçim (B5): 65123.45 → "65.123,45". Eski `replace(",",".")` iki
+            # noktalı '65.123.45' üretiyordu (binlik VE ondalık nokta) — takas gerekir.
+            {"ad": "Son fiyat",
+             "deger": f"{son:,.2f}".replace(",", "\x00").replace(".", ",").replace("\x00", ".")},
         ]
         ciz.append({"arac": "bilgi_paneli", "baslik": cfg.get("panel_baslik", "ÖLÇÜLEN YAPI"),
                     "satirlar": satir, "konum": cfg.get("panel_konum", "oto"),

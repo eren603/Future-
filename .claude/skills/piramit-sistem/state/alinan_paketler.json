@@ -15,5 +15,12 @@
   "son": {
     "dosya": "/root/.claude/uploads/f01690ea-251d-58a2-9ef0-0ca3fea3a3cb/6f79f38f-piramit_veri_BTC_ETH_20260729_0341.json",
     "sha": "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3"
+  },
+  "stat": {
+    "/root/.claude/uploads/f01690ea-251d-58a2-9ef0-0ca3fea3a3cb/6f79f38f-piramit_veri_BTC_ETH_20260729_0341.json": [
+      1785296542.7227147,
+      141027,
+      "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3"
+    ]
   }
 }

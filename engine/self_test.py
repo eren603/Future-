@@ -134,11 +134,16 @@ def run_engine(m15, h4, state_dir, workdir):
         json.dump(m15, f)
     with open(p4, "w") as f:
         json.dump(h4, f)
-    r = subprocess.run(
-        [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      "karar_motoru.py"),
-         "--m15", p15, "--h4", p4, "--state-dir", state_dir],
-        capture_output=True, text=True)
+    # timeout (S3): motor takılırsa öz-test süresiz asılı kalmasın (sabit argüman
+    # listesi + shell=False → enjeksiyon yok; eksik olan yalnız zaman sınırıydı).
+    try:
+        r = subprocess.run(
+            [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                          "karar_motoru.py"),
+             "--m15", p15, "--h4", p4, "--state-dir", state_dir],
+            capture_output=True, text=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        return 124, "TIMEOUT: karar_motoru 120 sn içinde bitmedi"
     return r.returncode, r.stdout
 
 

@@ -83,6 +83,12 @@ def akibet_olc(onceki: dict, barlar: list, p: dict | None = None) -> dict:
              "iptal": _f(sev.get("iptal")) or _f(sev.get("stop"))}
     if karar["stop"] is None or karar["t1"] is None:
         return {"durum": f"{YOK} — stop/hedef eksik, akıbet ölçülemez"}
+    # karar_zamani AE.simule_et içinde int()'e verilir (S1): kayıtta son_bar yok
+    # ya da 'VERİ YOK' dizgesiyse TypeError/ValueError fırlar ve kıyas motoru
+    # komple çökerdi (HESAP VERME raporu hiç üretilmezdi) — önce koru.
+    if not isinstance(karar_zamani, (int, float)):
+        return {"durum": f"{YOK} — önceki koşunun karar barı (son_bar) kayıtta "
+                         "yok/sayısal değil, akıbet ölçülemez"}
 
     s = AE.simule_et(karar, karar_zamani, barlar, p)
     return {

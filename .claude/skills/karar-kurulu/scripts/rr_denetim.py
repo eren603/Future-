@@ -27,6 +27,7 @@ Girdi JSON:
 from __future__ import annotations
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -48,6 +49,11 @@ def denetle(job: dict) -> dict:
         atr = float(job["atr"])
     except (KeyError, TypeError, ValueError) as e:
         raise RRError(f"entry/stop/target/atr sayısal gerekli: {e}")
+    # NaN/inf denetimi (S1): NaN için `atr <= 0` False'tur → NaN ATR kapıdan
+    # geçer, tüm ATR-ölçek karşılaştırmaları (NaN < eşik) False olur, verdict
+    # daima TUTARLI kalır ve şişirilmiş-R panzehiri sessizce DEVRE DIŞI olurdu.
+    if not all(math.isfinite(x) for x in (entry, stop, target, atr)):
+        raise RRError("entry/stop/target/atr sonlu (NaN/inf değil) olmalı")
     if atr <= 0:
         raise RRError("atr > 0 olmalı")
     e = {**ESIK, **(job.get("esikler") or {})}

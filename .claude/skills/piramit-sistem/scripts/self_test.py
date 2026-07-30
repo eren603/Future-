@@ -577,12 +577,19 @@ def main() -> int:
         Ks = {k["katman"]: k for k in sahte["katmanlar"]}
         del Ks["K2-AI-AJAN"]["motor_sonuclari"]["korelasyon"]
         d_ihlal = GZ.denetle(sahte)
+        # usd_hedef BORU HATTINDA olmalı ve SONUÇ ÜRETMELİ. "Sonuç" = HUKUM
+        # (yön varsa UYGUN/UYGUN DEĞİL) YA DA durum (yön NÖTR ise meşru "VERİ YOK").
+        # Fixture GERÇEK engine/girdi verisini kullanır; veri NÖTR olduğunda usd'nin
+        # HUKUM ÜRETMESİNİ beklemek veri-bağımlı kırılganlıktı (T25 canlı veri NÖTR
+        # olunca kırılıyordu). Doğru sözleşme: motor bağlı ve bir hüküm/durum döndürüyor.
+        usd_sonuc = isinstance(usd, dict) and (usd.get("HUKUM") or usd.get("durum"))
         kontrol("T25 korelasyon+usd_hedef boru hattında ve gözlemci kapsamında",
                 isinstance(kor, dict) and kor.get("HUKUM") == "KOPYA POZİSYON"
-                and isinstance(usd, dict) and usd.get("HUKUM")
+                and bool(usd_sonuc)
                 and k2_beyan and k5_usd and kor_celiski
                 and any("sessizce atlandı" in x for x in d_ihlal["kritik_ihlal"]),
-                f"korelasyon={kor.get('HUKUM') if kor else None}, usd={usd.get('HUKUM') if usd else None}, "
+                f"korelasyon={kor.get('HUKUM') if kor else None}, "
+                f"usd={usd.get('HUKUM') or usd.get('durum') if usd else None}, "
                 f"K2 beyan denetimi={k2_beyan}, K5 usd denetimi={k5_usd}, "
                 f"K4 çelişki={kor_celiski}, atlama yakalandı="
                 f"{bool(d_ihlal['kritik_ihlal'])}")
@@ -645,6 +652,17 @@ def main() -> int:
         # okuma da kanıtsızdır (fail-closed). Kusur 2026-07-25'te bulundu.
         z_dir = tmp / "zorunlu"
         (z_dir / "turev_ham").mkdir(parents=True, exist_ok=True)
+        # İZOLASYON KORKULUĞU (S6): T28 üç boru hattı koşusu yapar; state_dir
+        # geçici olmalı, GERÇEK engine/state'e YAZILMAMALI. piramit.py:416'daki
+        # yazma-dizini çözümü regrese ederse gerçek durum.json değişir → burada
+        # sha ile yakalanır (koşu öncesi/sonrası birebir aynı kalmalı).
+        import hashlib as _hl                                       # noqa: PLC0415
+        _gercek_durum = P.ENGINE / "state" / "durum.json"
+
+        def _durum_sha():
+            return (_hl.sha256(_gercek_durum.read_bytes()).hexdigest()
+                    if _gercek_durum.exists() else None)
+        _durum_once = _durum_sha()
         m15v = json.loads(m15.read_text(encoding="utf-8"))
         son_ms = m15v[-1][0]
         eski = son_ms - (P.KONVANSIYON["zorunlu_damga_tolerans_dk"] + 60) * 60_000
@@ -672,13 +690,16 @@ def main() -> int:
             k1z = [k for k in _kos(jz)["katmanlar"] if k["katman"] == "K1-LLM"][0]
             senaryo[ad] = (k1z.get("zorunlu_girdiler", {}).get("likidasyon") is not None,
                            " ".join(k1z.get("zorunlu_eksik") or []))
+        _izole = (_durum_sha() == _durum_once)   # gerçek engine/state dokunulmadı mı?
         kontrol("T28 zorunlu girdi tazeliği (bayat/damgasız kabul edilmez)",
                 senaryo["taze"][0] and not senaryo["bayat"][0]
                 and "BAYAT" in senaryo["bayat"][1]
                 and not senaryo["damgasiz"][0]
-                and "damgası YOK" in senaryo["damgasiz"][1],
+                and "damgası YOK" in senaryo["damgasiz"][1]
+                and _izole,
                 f"taze kabul={senaryo['taze'][0]}, bayat red={not senaryo['bayat'][0]}, "
-                f"damgasız red={not senaryo['damgasiz'][0]}")
+                f"damgasız red={not senaryo['damgasiz'][0]}, "
+                f"gerçek engine/state korundu={_izole}")
 
         # ---- T29: kanca — paket alımı geri sarmaz, ikinci sembol koşar -----
         sys.path.insert(0, str(P.REPO / ".claude" / "hooks"))

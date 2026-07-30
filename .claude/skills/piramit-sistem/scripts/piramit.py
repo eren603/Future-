@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
@@ -47,6 +48,16 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 import gozlemci as GZ  # noqa: E402
+
+
+def _atomik_yaz(hedef: Path, metin: str) -> None:
+    """Atomik JSON yazımı (S6): geçici dosyaya yaz + os.replace ile taşı. Yarım
+    yazım (süreç ölümü/disk dolu) hafızayı/anlık görüntüyü BOZMAZ — okuma tarafı
+    ya eski tam dosyayı ya yeni tam dosyayı görür, asla yarım JSON'u değil."""
+    hedef.parent.mkdir(parents=True, exist_ok=True)
+    tmp = hedef.with_suffix(hedef.suffix + ".tmp")
+    tmp.write_text(metin, encoding="utf-8")
+    os.replace(tmp, hedef)
 
 # --------------------------------------------------------------------------
 # Depo yerleşimi
@@ -104,7 +115,7 @@ KONVANSIYON = {
     # Kapılar
     "gorsel_tavan": 0.50,        # elle görsel okumanın azami güveni (ölçüm değil)
     "min_motor_k2": 2,           # K2: en az bu kadar motor sayısal sonuç üretmeli
-    "min_danisman_k3": 2,        # K3: en az bu kadar YÖNLÜ danışman
+    "min_danisman_k3": 2,        # K3: en az bu kadar ÖLÇÜLEN (mekanik) danışman
     # backtest doğrulama kapısı (yalnız job'da `dogrular` beyan edilirse kullanılır)
     "bt_min_pf": 1.0, "bt_min_prob_profit": 0.60,
     # ZORUNLU GİRDİ TAZELİĞİ: elle gelen likidasyon/görsel okuma HANGİ veriye
@@ -190,6 +201,17 @@ def _yol(p, taban: Path):
         if c.exists():
             return c
     return None
+
+
+def _yaz_dizin(p, varsayilan: Path) -> Path:
+    """YAZMA dizinini çöz (S6): var-olma ŞARTI ARANMAZ — state_dir bir yazma
+    hedefidir, henüz yaratılmamış olması normaldir. `_yol` (okuma) burada
+    kullanılırsa var olmayan kum-havuzu dizini sessizce gerçek engine/state'e
+    düşer ve izolasyon kırılır. Göreli yol depo köküne çözülür."""
+    if not p:
+        return varsayilan
+    q = Path(str(p)).expanduser()
+    return q if q.is_absolute() else (REPO / q)
 
 
 def _kos(script: Path, args: list, girdi_job: dict | None = None,
@@ -321,16 +343,32 @@ def k1_llm(job: dict, taban: Path) -> dict:
             return False, (f"{ad}: zaman damgası YOK (`bar_utc`/`zaman_utc`) → hangi "
                            "veriye ait olduğu kanıtlanamıyor, BAYAT sayıldı")
         if son_ms is None:
-            return True, f"{ad}: damga var, kline son barı ölçülemedi — kıyaslanmadı"
+            # kline son barı ölçülemiyorsa damga KIYASLANAMAZ → kanıt kurulamıyor,
+            # fail-closed (B1): kıyassız kabul, damgasız kabulle aynı deliktir.
+            return False, (f"{ad}: kline son barı ölçülemedi → damga kıyaslanamıyor, "
+                           "BAYAT sayıldı (fail-closed)")
         yas = (son_ms - ms) / 60000.0
         if yas > tol_dk:
             return False, (f"{ad}: BAYAT — okuma son bardan {yas:.0f} dk eski "
                            f"(tolerans {tol_dk:.0f} dk); yeni kline eski panel "
                            "okumasıyla birleştirilmez")
+        if yas < -tol_dk:
+            # simetrik korkuluk (B1): damga son bardan İLERİDE = okuma BAŞKA (daha
+            # yeni) veriye ait — eski kline yeni panel okumasıyla da birleştirilmez.
+            return False, (f"{ad}: BAYAT — okuma son bardan {-yas:.0f} dk İLERİDE "
+                           f"(tolerans {tol_dk:.0f} dk); kline eski, panel yeni — "
+                           "birleştirilmez")
         return True, f"{ad}: taze (son bara göre {yas:.0f} dk)"
 
+    # Varsayılan panel yolu YALNIZ ana sembol koşusunda kullanılır (B5): ikinci
+    # sembol job'u (usd_profil/_ikinci_sembol taşır) yolu beyan etmezse ANA
+    # sembolün paneline düşmek yanlış sembol verisi karıştırırdı — kanca açık yol
+    # geçer; geçmezse eksik sayılır (fail-closed), ana panele düşülmez.
+    _ikinci = bool(job.get("_ikinci_sembol") or job.get("usd_profil"))
+    _lik_yol = veri.get("likidasyon") or (
+        None if _ikinci else "engine/girdi/turev_ham/likidasyon.json")
     tazelik = []
-    lik = _yol((veri.get("likidasyon") or "engine/girdi/turev_ham/likidasyon.json"), taban)
+    lik = _yol(_lik_yol, taban) if _lik_yol else None
     if lik:
         try:
             d = json.loads(lik.read_text(encoding="utf-8"))
@@ -350,7 +388,8 @@ def k1_llm(job: dict, taban: Path) -> dict:
     else:
         zorunlu_eksik.append("likidasyon: CoinGlass long/short değerleri GELMEDİ "
                              "→ türev kapsamı eksik kalır")
-    gor = _yol((veri.get("gorsel") or "engine/girdi/gorsel_okuma.json"), taban)
+    _gor_yol = veri.get("gorsel") or (None if _ikinci else "engine/girdi/gorsel_okuma.json")
+    gor = _yol(_gor_yol, taban) if _gor_yol else None
     if gor:
         try:
             g = json.loads(gor.read_text(encoding="utf-8"))
@@ -413,7 +452,7 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
     # --- karar-motoru (15M + 4H kline) --------------------------------------
     p15, ph4 = _yol(veri.get("m15"), taban), _yol(veri.get("h4"), taban)
     if p15 and ph4:
-        sdir = Path(str(_yol(job.get("state_dir"), taban) or (ENGINE / "state")))
+        sdir = _yaz_dizin(job.get("state_dir"), ENGINE / "state")
         sdir.mkdir(parents=True, exist_ok=True)
         r = _kos(MOTOR["karar_motoru"],
                  ["--m15", str(p15), "--h4", str(ph4), "--state-dir", str(sdir)],
@@ -572,11 +611,18 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
             hatalar.append({"motor": "backtest-motoru",
                             "hata": r["hata"] or r["metin"][:300]})
 
-    n = len(sonuc)
+    # K2 sayacı BAĞIMSIZ KANIT AİLESİNİ sayar (B1): smc_tespit_h4, smc_tespit'in
+    # ikinci-zaman-dilimi koşusudur (aynı motor); setup_dogrulama yön üretmeyen
+    # bir kapı motorudur. İkisi de "bağımsız sayısal sonuç" sayılmaz — yoksa tek
+    # fiyat-yapısı motoru + kendi kapısı ile sayaç şişer (tek motor çoklu-ajan değildir).
+    _k2_aile = {"karar-motoru", "grafik-calisma", "turev-akis",
+                "backtest-motoru", "korelasyon"}
+    n = len([k for k in sonuc if k in _k2_aile])
     gecti = n >= KONVANSIYON["min_motor_k2"]
-    kapi = (f"K2 kapısı GEÇİLDİ: {n} motor bağımsız sayısal sonuç üretti."
+    kapi = (f"K2 kapısı GEÇİLDİ: {n} bağımsız kanıt ailesi sayısal sonuç üretti "
+            f"(setup_dogrulama/smc_tespit_h4 sayılmaz)."
             if gecti else
-            f"K2 kapısı KAPALI: yalnız {n} motor sonuç üretti "
+            f"K2 kapısı KAPALI: yalnız {n} bağımsız kanıt ailesi sonuç üretti "
             f"(gerek {KONVANSIYON['min_motor_k2']}) → tek motor ÇOKLU-AJAN değildir.")
     return {"katman": "K2-AI-AJAN", "rol": "tek ajan + araç; motorlar birbirini görmez",
             "motor_sonuclari": sonuc, "hatalar": hatalar,
@@ -740,10 +786,15 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
         d["confidence"] = round(_clamp(d["confidence"] * d["_agirlik"], 0.0, 1.0), 4)
 
     yonlu = [d for d in danismanlar if d["stance"] != "flat"]
-    gecti = len(danismanlar) >= KONVANSIYON["min_danisman_k3"]
+    # Kota ÖLÇÜLEN (mekanik) danışmana bağlıdır (B1): elle görsel okuma
+    # (_kaynak "ELLE...") tek başına kurulu oluşturamaz — yoksa "1 flat motor +
+    # 1 elle okuma" iki bağımsız danışman gibi K3'ü geçerdi. Flat mekanik danışman
+    # sayılır (NÖTR uzlaşı meşru çıktıdır; yön zorunlu satırı korunur).
+    olculen = [d for d in danismanlar if not str(d.get("_kaynak", "")).startswith("ELLE")]
+    gecti = len(olculen) >= KONVANSIYON["min_danisman_k3"]
     kapi = (f"K3 kapısı GEÇİLDİ: {len(danismanlar)} danışman "
-            f"({len(yonlu)} yönlü)." if gecti else
-            f"K3 kapısı KAPALI: {len(danismanlar)} danışman < "
+            f"({len(olculen)} ölçülen, {len(yonlu)} yönlü)." if gecti else
+            f"K3 kapısı KAPALI: {len(olculen)} ölçülen danışman < "
             f"{KONVANSIYON['min_danisman_k3']} → kurul kurulamaz.")
     return {"katman": "K3-COKLU-AJAN",
             "rol": "motorlar → danışman kurulu; güven K5 ağırlıklarıyla ölçeklenir",
@@ -782,7 +833,13 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
         r = _num(k.get("r"))
         ok = str(k.get("karar", "")).upper() in ("LONG", "SHORT") and \
             r is not None and r >= KONVANSIYON["r_min"]
-        verifier["karar-motoru"] = {"confirmed": bool(ok)}
+        # çürütme gerekçesi verifier'a da yazılır (B4): sentez.satirlar
+        # refute_reason'ı verifier[name]["reason"]'dan okur; yalnız ayrı `gerekce`
+        # sözlüğüne yazılırsa danışman özetinde çürütme gerekçesi None çıkardı.
+        verifier["karar-motoru"] = {
+            "confirmed": bool(ok),
+            "reason": None if ok else (f"R={k.get('r')} < R_MIN={KONVANSIYON['r_min']} "
+                                       f"ya da karar yönsüz (karar={k.get('karar')})")}
         gerekce["karar-motoru"] = (f"R={k.get('r')} vs R_MIN={KONVANSIYON['r_min']}; "
                                    f"karar={k.get('karar')}")
 
@@ -996,7 +1053,12 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
     # ---------- (a) ÖNCE: güven-ağırlıklı en yüksek sentez ------------------
     sentez_job = {
         "question": job.get("soru") or job.get("sembol") or "nihai karar",
-        "advisors": [{k: v for k, v in d.items() if not k.startswith("_")}
+        # `_` alanları sentez'e taşınmaz AMA `_verifier_confirmed` köprüsü
+        # korunur (B4): turev-akis kendi kapsamını doğrular (turev_akis.py),
+        # sentez.py:81-82 bunu okur; silinirse turev danışmanı sistematik
+        # "doğrulanmamış" sayılıp çürütme penaltısı yer (fail-closed değil, kayıp).
+        "advisors": [{k: v for k, v in d.items()
+                      if not k.startswith("_") or k == "_verifier_confirmed"}
                      for d in k3["danismanlar"]],
         "verifier": {k: v for k, v in k4["verifier"].items()},
         "invalidation": job.get("gecersizlik") or _gecersizlik(k2),
@@ -1114,16 +1176,38 @@ def _celiski_turu(sentez_job: dict, sentez: dict) -> dict:
     dogrulanan = [a for a in tumu
                   if (ver.get(str(a.get("name")), {}) or {}).get("confirmed") is True
                   or a.get("_verifier_confirmed") is True]
-    if not dogrulanan or len(dogrulanan) == len(tumu):
+    # gorsel-teyit BAĞIMSIZ kanıt DEĞİLDİR (B7): doğrulayıcısı smc_tespit trendi,
+    # grafik-calisma danışmanının yönü de aynı smc'den türer. Tek doğrulanan
+    # gorsel-teyit ise "bağımsız doğrulama yok" sayılır — yön yalnız smc ailesine
+    # dayanır, çelişki turu bunu doğrulanmış kabul edemez (dogrulanan boş muamelesi).
+    bagimsiz = [a for a in dogrulanan if str(a.get("name")) != "gorsel-teyit"]
+    if dogrulanan and not bagimsiz:
+        dogrulanan = []
+    if not dogrulanan:
+        # HİÇBİR danışman doğrulanmadı = yön %100 doğrulanmamış kanıta dayanıyor
+        # (en uç risk). Eskiden bu 'gerekmedi' sayılıp fail-OPEN geçiyordu (B1/S7).
+        # Yön LONG/SHORT ise fail-closed NÖTR; sentez zaten NÖTR ise çevrilecek
+        # yön yoktur (dayanıksızlık üretilmez).
+        ilk_yon = sentez.get("YON_BIAS")
+        dy = ilk_yon in ("LONG", "SHORT")
         return {"kostu": False,
-                "hukum": ("ÇELİŞKİ TURU: gerekmedi — "
-                          + ("doğrulanmış danışman yok" if not dogrulanan
-                             else "tüm danışmanlar doğrulanmış")),
+                "hukum": ("ÇELİŞKİ TURU: doğrulanmış danışman YOK → yön yalnız "
+                          "doğrulanmamış kanıta dayanıyor → fail-closed NÖTR"
+                          if dy else
+                          "ÇELİŞKİ TURU: gerekmedi — doğrulanmış danışman yok, "
+                          "sentez zaten NÖTR (çevrilecek yön yok)"),
+                "yon_dayaniksiz": bool(dy)}
+    if len(dogrulanan) == len(tumu):
+        return {"kostu": False,
+                "hukum": "ÇELİŞKİ TURU: gerekmedi — tüm danışmanlar doğrulanmış",
                 "yon_dayaniksiz": False}
     r = _kos(MOTOR["sentez"], [], girdi_job={**sentez_job, "advisors": dogrulanan})
     if not (r["ok"] and isinstance(r["cikti"], dict)):
-        return {"kostu": False, "hukum": f"ÇELİŞKİ TURU koşamadı ({r['hata']})",
-                "yon_dayaniksiz": False}
+        # motor çökerse ikinci-göz YAPILAMADI → fail-closed (yönü doğrulanmamış say)
+        ilk_yon = sentez.get("YON_BIAS")
+        return {"kostu": False, "hukum": f"ÇELİŞKİ TURU koşamadı ({r['hata']}) "
+                "→ fail-closed (yön doğrulanamadı)",
+                "yon_dayaniksiz": ilk_yon in ("LONG", "SHORT")}
     ikinci = r["cikti"]
     ilk_yon, ik_yon = sentez.get("YON_BIAS"), ikinci.get("YON_BIAS")
     dayaniksiz = (ilk_yon in ("LONG", "SHORT") and ik_yon != ilk_yon)
@@ -1182,7 +1266,10 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
     tv = (m.get("turev-akis") or {}).get("rapor") or {}
     fak = {f.get("faktor"): f.get("skor") for f in (tv.get("faktorler") or [])}
     ik = k5.get("islem_kalitesi") or {}
-    aday = (ik.get("adaylar") or [{}])[0] if ik.get("adaylar") else {}
+    # Sicile YAZILAN aday, _islem_kalitesi'nin kullanıcıya DUYURDUĞU adayla AYNI
+    # olmalı (B4): eskiden burada adaylar[0], orada max(R_gercekci) idi — en
+    # yüksek R ikinci sıradaysa sicil yanlış girişi kaydediyordu.
+    aday = ik.get("secilen") or {}
     kmk = m.get("karar-motoru") or {}      # bölge alanları motorun kararından
     # EMİR PLANI SİCİLE YAZILIR: motor temiz-giriş seti vermese de basılan
     # MARKET/LIMIT emri bir sonraki koşuda HESAP VERME ile ölçülmelidir.
@@ -1271,8 +1358,10 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
             adaylar.append({"motor": ad, **s, "R_gercekci": r_ger,
                             "rr_verdict": verdict})
 
+    secilen = {}
     if adaylar:
         a = max(adaylar, key=lambda x: x["R_gercekci"])
+        secilen = a           # sicil ile kullanıcı çıktısı AYNI adaydan beslenir (B4)
         hukum = "TEMİZ GİRİŞ VAR"
         ozet = (f"TEMİZ GİRİŞ VAR ({a['motor']}): giriş {a.get('entry')}, "
                 f"stop {a.get('stop')}, T1 {a.get('target')}, "
@@ -1282,7 +1371,8 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
         ozet = (f"Yön {sentez.get('YON_BIAS')} ama temiz giriş yok — "
                 + ("; ".join(engeller) if engeller
                    else f"motorlardan giriş/stop/hedef seti gelmedi ({YOK})"))
-    return {"hukum": hukum, "ozet": ozet, "adaylar": adaylar, "engeller": engeller,
+    return {"hukum": hukum, "ozet": ozet, "adaylar": adaylar, "secilen": secilen,
+            "engeller": engeller,
             "seviyeler": sevs, "rr_denetimi": rrs,
             "kapi_kurali": ("hizalı seviye + rr_denetim TUTARLI + "
                             f"R_gercekci ≥ {KONVANSIYON['r_min']} + doğrulama çürütülmemiş"),
@@ -1531,9 +1621,7 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
     hafiza_p = _hafiza_yolu(okuma)
     kayit["sicil_dizini"] = str(okuma)
     kayit["hafiza_dosyasi"] = str(hafiza_p)
-    hafiza_p.parent.mkdir(parents=True, exist_ok=True)
-    hafiza_p.write_text(json.dumps(kayit, ensure_ascii=False, indent=2),
-                        encoding="utf-8")
+    _atomik_yaz(hafiza_p, json.dumps(kayit, ensure_ascii=False, indent=2))
     return kayit
 
 
@@ -1562,8 +1650,12 @@ def kos(job: dict, taban: Path) -> dict:
 
     # Gözlemci "beyan edilip koşmayan motor" denetimi yapabilsin diye job'un
     # beyan alanları rapora taşınır (tam job DEĞİL — yalnız beyanlar).
+    # `_ikinci_sembol` de taşınır (B4): gozlemci_k5'in ikinci-sembol korkuluğu
+    # (profil silinince agresif emir) bu bayrağa bakar; taşınmazsa korkuluk ölü
+    # kalır ve profilsiz ikinci-sembol koşusu sessizce daha agresif emir yayınlar.
     rapor["_job"] = {k: job.get(k) for k in
-                     ("korelasyon", "usd_profil", "backtest", "risk", "portfoy")
+                     ("korelasyon", "usd_profil", "backtest", "risk", "portfoy",
+                      "_ikinci_sembol")
                      if job.get(k)}
 
     k1 = k1_llm(job, taban)
@@ -1643,8 +1735,8 @@ def kos(job: dict, taban: Path) -> dict:
         sdir = Path(str(_yol(job.get("state_dir"), taban)
                         or job.get("state_dir") or (ENGINE / "state")))
         sdir.mkdir(parents=True, exist_ok=True)
-        (sdir / "onceki_kosu.json").write_text(
-            json.dumps(yeni_gor, ensure_ascii=False, indent=2), encoding="utf-8")
+        _atomik_yaz(sdir / "onceki_kosu.json",
+                    json.dumps(yeni_gor, ensure_ascii=False, indent=2))
         rapor["ZIRVE"]["_anlik_goruntu"] = str(sdir / "onceki_kosu.json")
     except OSError as e:
         rapor["ZIRVE"]["_anlik_goruntu"] = f"YAZILAMADI ({e})"
@@ -1675,11 +1767,14 @@ def kos(job: dict, taban: Path) -> dict:
             gp = Path(str(rapor["ZIRVE"].get("_anlik_goruntu", "")))
             if gp.is_file():
                 g = json.loads(gp.read_text(encoding="utf-8"))
-                if (g.get("islem_seviyeleri") or {}).get("kaynak") == "emir_plani":
+                # Mühürlü koşuda işlem seviyesi HER KAYNAKTA temizlenir (B1):
+                # eskiden yalnız kaynak=="emir_plani" siliniyordu; motor-aday
+                # (1205-dalı, kaynak alanı YOK) seviyeleri sicilde kalıp bir
+                # sonraki koşunun "işlem yok" denmiş koşuya R ölçmesine yol açıyordu.
+                if g.get("islem_seviyeleri"):
                     g["islem_seviyeleri"] = {}
                     g["islem_kalitesi"] = rapor["ZIRVE"]["ISLEM_KALITESI"]
-                    gp.write_text(json.dumps(g, ensure_ascii=False, indent=2),
-                                  encoding="utf-8")
+                    _atomik_yaz(gp, json.dumps(g, ensure_ascii=False, indent=2))
         except (OSError, json.JSONDecodeError):
             pass
     rapor["durum"] = ("TAMAM — piramidin tepesine ulaşıldı"

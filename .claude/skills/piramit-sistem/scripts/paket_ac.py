@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -63,17 +64,28 @@ def _kisa(p: Path) -> str:
 
 
 def _yaz(hedef: Path, icerik, yedekle: bool = True) -> None:
+    # Atomik yazım (S6): geçici dosya + os.replace. paket_ac bir subprocess olarak
+    # 120 sn zaman aşımıyla ya da harness'in kanca kesmesiyle yazım ORTASINDA
+    # öldürülebilir; yarım/bozuk karar girdisi (m15/h4) kalmasın.
     hedef.parent.mkdir(parents=True, exist_ok=True)
     if yedekle and hedef.exists():
         shutil.copy2(hedef, hedef.with_suffix(hedef.suffix + ".yedek"))
-    hedef.write_text(json.dumps(icerik, ensure_ascii=False), encoding="utf-8")
+    tmp = hedef.with_suffix(hedef.suffix + ".tmp")
+    tmp.write_text(json.dumps(icerik, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, hedef)
 
 
 def _hedefler(sembol: str, ana: str) -> tuple:
     """Sembole göre yazım kökü: ANA sembol engine/girdi'ye, diğerleri alt klasöre."""
     if sembol == ana:
         return GIRDI, HAM
-    alt = GIRDI / sembol.replace("USDT", "").lower()
+    # yol-kaçışı korkuluğu (S2): sembol dışarıdan gelir; yol köküne YALNIZ
+    # alfanümerik parça girer — "../", mutlak yol, ayraç depo dışına yazamaz.
+    guvenli = "".join(c for c in sembol.replace("USDT", "").lower() if c.isalnum())
+    if not guvenli:
+        raise SystemExit(f"HATA: geçersiz sembol adı {sembol!r} — yol üretilemez "
+                         "(fail-closed).")
+    alt = GIRDI / guvenli
     return alt, alt / "turev_ham"
 
 
@@ -84,7 +96,11 @@ def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
         return {"semboller": [paket.get("sembol")],
                 "sonuc": {str(paket.get("sembol")): ac(paket, sembol_bekle)}}
     semboller = paket.get("semboller") or []
-    ana = semboller[0] if semboller else None
+    # ana slot (engine/girdi = BTC karar girdisi) LİSTE SIRASINDAN değil
+    # KİMLİKTEN seçilir (B2): yanlış sıralı/ETH-öncelikli paket ana slotu ezemez.
+    # BTCUSDT yoksa ana=None → hiçbir sembol engine/girdi köküne yazılmaz
+    # (hepsi alt klasöre), durum çıktıda raporlanır (fail-closed).
+    ana = "BTCUSDT" if "BTCUSDT" in semboller else None
     veri = paket.get("veri") or {}
     sonuc = {}
     for sem in semboller:
@@ -92,9 +108,13 @@ def ac_coklu(paket: dict, sembol_bekle: str | None = None) -> dict:
                "veri": veri.get(sem) or {}, "cekim_utc": paket.get("cekim_utc"),
                "hatalar": [h for h in (paket.get("hatalar") or []) if h.startswith(sem)]}
         sonuc[sem] = ac(alt, sem, *_hedefler(sem, ana))
+    hatalar = list(paket.get("hatalar", []))
+    if ana is None and semboller:
+        hatalar.append("BTCUSDT pakette yok — ana slot (engine/girdi) YAZILMADI, "
+                       "tüm semboller alt klasöre açıldı (fail-closed)")
     return {"semboller": semboller, "ana_sembol": ana,
             "cekim_utc": paket.get("cekim_utc", YOK), "sonuc": sonuc,
-            "paket_hatalari": paket.get("hatalar", [])}
+            "paket_hatalari": hatalar}
 
 
 def ac(paket: dict, sembol_bekle: str | None,
@@ -111,23 +131,40 @@ def ac(paket: dict, sembol_bekle: str | None,
     ham_kok = ham_kok or HAM
     yazilan, atlanan = {}, []
 
-    for ad, hedef, asgari in (("m15", girdi_kok / "m15.json", MIN_M15),
-                              ("h4", girdi_kok / "h4.json", MIN_H4)):
+    # m15 ve h4 ATOMİK ÇİFTTİR (B5): ikisi de doğrulamadan geçmeden HİÇBİRİ
+    # yazılmaz. Eskiden bağımsızdı — yeni m15 + bozuk h4 pakette YENİ 15M yazılıp
+    # ESKİ 4H yerinde kalıyordu; kanca bunu başarı sayıp SHA gömüyor, boru hattı
+    # YENİ 15M + BAYAT 4H çiftiyle koşuyordu (ayrışmış sahte veri).
+    kline_hedef = {"m15": girdi_kok / "m15.json", "h4": girdi_kok / "h4.json"}
+    kline_ok = {}
+    for ad, asgari in (("m15", MIN_M15), ("h4", MIN_H4)):
         d = veri.get(ad)
         if d is None:
             atlanan.append(f"{ad}: pakette yok ({YOK})")
             continue
         ok, neden = _kline_gecerli(d, asgari)
         if ok:
-            _yaz(hedef, d)
-            yazilan[ad] = f"{_kisa(hedef)} — {neden}"
+            kline_ok[ad] = (d, neden)
         else:
             atlanan.append(f"{ad}: {neden} → YAZILMADI")
+    if len(kline_ok) == 2:
+        for ad in ("m15", "h4"):
+            d, neden = kline_ok[ad]
+            _yaz(kline_hedef[ad], d)
+            yazilan[ad] = f"{_kisa(kline_hedef[ad])} — {neden}"
+    elif kline_ok:
+        atlanan.append("m15/h4 ATOMİK ÇİFT: yalnız biri geçerli → İKİSİ DE "
+                       "YAZILMADI (yeni/bayat kline çifti karışmasın; fail-closed)")
 
     for ad in ("openInterestHist", "premiumIndex", "takerlongshortRatio"):
         d = veri.get(ad)
         if d is None:
             atlanan.append(f"{ad}: pakette yok ({YOK}) → kanal boş kalır")
+            continue
+        # eleman tipi denetimi (S1): d liste-ama-eleman-sözlük-değil ise (ör.
+        # [1,2,3]) d[0].get() AttributeError fırlatırdı ve bu blok try içinde DEĞİL.
+        if isinstance(d, list) and d and not isinstance(d[0], dict):
+            atlanan.append(f"{ad}: liste elemanları sözlük değil → YAZILMADI")
             continue
         if isinstance(d, list) and d and str(d[0].get("symbol", sembol)) != sembol:
             atlanan.append(f"{ad}: sembol uyuşmuyor → YAZILMADI")

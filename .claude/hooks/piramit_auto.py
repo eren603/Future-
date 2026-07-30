@@ -23,6 +23,31 @@ import json
 import os
 import subprocess
 import sys
+import time
+
+# KÜRESEL KANCA BÜTÇESİ (S8): tüm alt-süreç timeout'larının TOPLAMI settings.json'daki
+# UserPromptSubmit tavanını (900 sn) aşabiliyordu (paket_ac 120 + türev 60×2 + boru
+# hattı 240×2 + grafik 120×2 = 960 > 900). Kötü günde harness kancayı 900. sn'de
+# öldürür ve DURUM/özet yazımı (en sonda) HİÇ olmaz. Her subprocess.run'a
+# timeout=min(yerel, kalan_bütçe) verilir; bütçe biterse adım açıkça atlanır.
+_KANCA_BASLANGIC = time.monotonic()
+KANCA_BUTCE = 850          # sn — 900 tavanının altında güvenlik payıyla
+
+
+def _kalan_butce() -> float:
+    return max(1.0, KANCA_BUTCE - (time.monotonic() - _KANCA_BASLANGIC))
+
+
+def _atomik_yaz(hedef, metin: str) -> None:
+    """Atomik JSON yazımı (S6): geçici dosya + os.replace. Kanca subprocess'leri
+    ya da harness kesmesi yazım ORTASINDA öldürebilir; yarım defter/durum dosyası
+    bir sonraki koşuda bozuk okunup SHA/fp geçmişini sıfırlamasın."""
+    from pathlib import Path as _P
+    hedef = _P(hedef)
+    hedef.parent.mkdir(parents=True, exist_ok=True)
+    tmp = hedef.with_suffix(hedef.suffix + ".tmp")
+    tmp.write_text(metin, encoding="utf-8")
+    os.replace(tmp, hedef)
 from pathlib import Path
 
 REPO = Path(os.environ.get("CLAUDE_PROJECT_DIR")
@@ -91,7 +116,11 @@ def _fp() -> str | None:
     """
     h = hashlib.sha256()
     var = False
-    for ad in ("m15.json", "h4.json", *EK_KANAL):
+    # ZORUNLU GİRDİ olan görsel okuma + elle likidasyon da parmak izine girer
+    # (B4): yalnız görsel/likidasyon tazelendiğinde de boru hattı yeniden
+    # koşmalı — yoksa gorsel-teyit danışmanı sessizce eski okumayla kalırdı.
+    for ad in ("m15.json", "h4.json", *EK_KANAL,
+               "gorsel_okuma.json", "turev_ham/likidasyon.json"):
         p = GIRDI / ad
         try:
             if p.is_file():
@@ -104,7 +133,8 @@ def _fp() -> str | None:
             # dizin-adlı/okunamayan girdi kancayı ÖLDÜRMEZ (kalıcı sessizlik
             # yerine parmak izine "OKUNAMADI" girer, koşu devam eder)
             h.update(b"OKUNAMADI")
-    for ad in ("m15.json", "h4.json", "turev.json"):
+    for ad in ("m15.json", "h4.json", "turev.json",
+               "gorsel_okuma.json", "turev_ham/likidasyon.json"):
         p = IKINCI["girdi"] / ad
         try:
             h.update(p.read_bytes() if p.is_file() else b"YOK")
@@ -137,9 +167,12 @@ def _paket_adaylari() -> list:
 def _son_bar_ms(kline) -> float | None:
     try:
         son = kline[-1]
-        return float(son[0] if isinstance(son, list) else
-                     (son.get("open_time") or son.get("t")))
-    except (IndexError, KeyError, TypeError, ValueError):
+        if isinstance(son, list):
+            return float(son[0])
+        if isinstance(son, dict):
+            return float(son.get("open_time") or son.get("t"))
+        return None                    # dize/sayı vb. son bar → ölçülemez (uydurma yok)
+    except (IndexError, KeyError, TypeError, ValueError, AttributeError):
         return None
 
 
@@ -219,9 +252,20 @@ def _paket_al() -> dict:
         defter = {}
     islenen = set(defter.get("islenen") or [])
     redded = dict(defter.get("reddedilen") or {})   # sha → gerekçe (görünür kalır)
+    # STAT ÖN-FİLTRESİ (S8): SHA için dosyanın TAMAMI okunur; kanca her istemde
+    # koştuğu için taranan tüm dizinlerdeki paketler baştan sona okunuyordu.
+    # (mtime, size) değişmemişse SHA'yı ön-bellekten al, read_bytes'ı ATLA.
+    stat_cache = dict(defter.get("stat") or {})     # yol → [mtime, size, sha]
     for p in _paket_adaylari():
         try:
-            sha = hashlib.sha256(p.read_bytes()).hexdigest()
+            st = p.stat()
+            anahtar = str(p)
+            onbellek = stat_cache.get(anahtar)
+            if onbellek and onbellek[0] == st.st_mtime and onbellek[1] == st.st_size:
+                sha = onbellek[2]
+            else:
+                sha = hashlib.sha256(p.read_bytes()).hexdigest()
+                stat_cache[anahtar] = [st.st_mtime, st.st_size, sha]
         except OSError:
             continue
         if sha in islenen or sha in redded:
@@ -260,7 +304,11 @@ def _paket_al() -> dict:
         # geri sardırmamalı. BTCUSDT anahtarı varsa _ANA yerine o kullanılır
         # (_ANA=max(tümü) idi: yeni ETH, eski BTC'yi maskeliyordu).
         geri, taze = [], []
-        for ad, yedek, yol in (("BTCUSDT", "_ANA", GIRDI / "m15.json"),
+        # BTCUSDT satırı için _ANA vekili KALDIRILDI (B1): paket BTCUSDT'yi
+        # AÇIKÇA beyan etmiyorsa BTC slotu bu paketten yazılmaz (paket_ac ana=
+        # kimlikten seçer), dolayısıyla ETH'nin barını BTC deposuyla kıyaslamak
+        # sahte tazelik üretirdi. BTCUSDT anahtarı yoksa o satır atlanır.
+        for ad, yedek, yol in (("BTCUSDT", None, GIRDI / "m15.json"),
                                ("ETHUSDT", None, IKINCI["girdi"] / "m15.json")):
             p_ms = harita.get(ad)
             if p_ms is None and yedek:
@@ -296,7 +344,7 @@ def _paket_al() -> dict:
             argv += ["--sembol", tek]          # paket_ac içinde ikinci kilit
         try:
             pr = subprocess.run(argv, capture_output=True, text=True,
-                                timeout=120, cwd=str(REPO))
+                                timeout=min(120, _kalan_butce()), cwd=str(REPO))
         except (subprocess.TimeoutExpired, OSError) as e:
             return {"paket": p.name, "hata": f"{type(e).__name__}: {e}"}
         # ÇIKIŞ KODU DENETLENİR: paket_ac reddettiyse (exit≠0) bu "alındı"
@@ -312,18 +360,34 @@ def _paket_al() -> dict:
         except json.JSONDecodeError as e:
             return {"paket": p.name, "hata": f"JSONDecodeError: {e}"}
         islenen.add(sha)
-        _defter_yaz(islenen, p, sha, redded)
+        _defter_yaz(islenen, p, sha, redded, stat=stat_cache)
         return {"paket": p.name, "sonuc": sonuc, "yol": str(p)}
+    # Paket alınmadı (yaygın durum): güncellenen stat ön-belleğini kalıcılaştır ki
+    # sonraki istem değişmemiş dosyaları yeniden okumasın.
+    if stat_cache != (defter.get("stat") or {}):
+        try:
+            _atomik_yaz(PAKET_DEFTER, json.dumps(
+                {"islenen": sorted(islenen), "reddedilen": redded,
+                 "son": defter.get("son") or {}, "stat": stat_cache},
+                ensure_ascii=False, indent=2))
+        except OSError:
+            pass
     return {}
 
 
-def _defter_yaz(islenen: set, p: Path, sha: str, redded: dict | None = None) -> None:
+def _defter_yaz(islenen: set, p: Path, sha: str, redded: dict | None = None,
+                stat: dict | None = None) -> None:
+    if stat is None:                     # mevcut stat ön-belleğini KORU (S8 prefilter)
+        try:
+            stat = (json.loads(PAKET_DEFTER.read_text(encoding="utf-8")) or {}).get("stat")
+        except (OSError, json.JSONDecodeError):
+            stat = None
     try:
-        PAKET_DEFTER.parent.mkdir(parents=True, exist_ok=True)
-        PAKET_DEFTER.write_text(json.dumps(
+        _atomik_yaz(PAKET_DEFTER, json.dumps(
             {"islenen": sorted(islenen), "reddedilen": redded or {},
-             "son": {"dosya": str(p), "sha": sha}},
-            ensure_ascii=False, indent=2), encoding="utf-8")
+             "son": {"dosya": str(p), "sha": sha},
+             **({"stat": stat} if stat else {})},
+            ensure_ascii=False, indent=2))
     except OSError:
         pass
 
@@ -475,7 +539,7 @@ def _ek_kanallar(job: dict) -> list:
 
 
 def _turev_uret(onceki: dict, girdi: Path | None = None,
-                seri: Path | None = None) -> dict:
+                seri: Path | None = None, sembol: str = "BTCUSDT") -> dict:
     """Türev girdisini KENDİLİĞİNDEN üret (kline körlüğü panzehiri).
 
     CVD kullanıcının kendi kline'ından çevrimdışı hesaplanır — panel
@@ -491,12 +555,13 @@ def _turev_uret(onceki: dict, girdi: Path | None = None,
         return {"durum": "üreteç ya da m15 yok — türev girdisi üretilmedi"}
     argv = [sys.executable, str(uretec), "--m15", str(m15),
             "--seri", str(seri),
+            "--sembol", sembol,
             "--ham", str(girdi / "turev_ham"),
             "--out", str(girdi / "turev.json")]
     if not onceki.get("http_engelli"):
         argv.append("--http")
     try:
-        pr = subprocess.run(argv, capture_output=True, text=True, timeout=60,
+        pr = subprocess.run(argv, capture_output=True, text=True, timeout=min(60, _kalan_butce()),
                             cwd=str(REPO))
         job = json.loads(pr.stdout) if pr.stdout.strip().startswith("{") else {}
     except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError) as e:
@@ -552,7 +617,7 @@ def _karar_grafigi() -> list:
             cikti.parent.mkdir(parents=True, exist_ok=True)
             jp.write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
             pr = subprocess.run([sys.executable, str(cizici), "--job", str(jp)],
-                                capture_output=True, text=True, timeout=120,
+                                capture_output=True, text=True, timeout=min(120, _kalan_butce()),
                                 cwd=str(REPO))
             if pr.returncode == 0 and cikti.exists():
                 uret.append(str(cikti.relative_to(REPO)))
@@ -577,9 +642,7 @@ def _durum_oku() -> dict:
 
 def _durum_yaz(d: dict) -> None:
     try:
-        DURUM.parent.mkdir(parents=True, exist_ok=True)
-        DURUM.write_text(json.dumps(d, ensure_ascii=False, indent=2),
-                         encoding="utf-8")
+        _atomik_yaz(DURUM, json.dumps(d, ensure_ascii=False, indent=2))
     except OSError:
         pass
 
@@ -605,8 +668,12 @@ def _zaten_islendi(girdi: Path | None = None, state: Path | None = None) -> bool
         return False
 
 
-def _kos() -> tuple[str, int]:
-    """Boru hattını koştur; (özet metni, çıkış kodu)."""
+def _kos() -> tuple[str, int, bool]:
+    """Boru hattını koştur; (özet metni, çıkış kodu, kum_havuzu_mu).
+
+    `kum` KOŞU ÖNCESİ hesaplanıp DÖNDÜRÜLÜR (B6): gerçek koşu durum.json'a yeni
+    barı yazdığı için koşudan SONRA _zaten_islendi() True döner ve gerçek koşu
+    yanlışlıkla "KUM HAVUZU — defter korundu" diye etiketlenirdi."""
     kum = _zaten_islendi()
     sdir = (SKILL / "state" / "kum_havuzu") if kum else (REPO / "engine" / "state")
     if kum:
@@ -630,12 +697,28 @@ def _kos() -> tuple[str, int]:
     # kapsamında koşar — elle koşu artık gerekmiyor).
     eth_m15 = GIRDI / "eth" / "m15.json"
     if eth_m15.exists():
-        job["korelasyon"] = {"a": str(GIRDI / "m15.json"), "b": str(eth_m15),
-                             "ad_a": "BTC", "ad_b": "ETH"}
+        # KORELASYON TAZELİĞİ ana yolda da uygulanır (B1): iki serinin son barları
+        # 240 dk'dan fazla ayrışıksa ρ bayat hizalı pencereden ölçülür ve "güncel"
+        # sanılırdı. ETH yolunda (_ikinci_job) bu kapı vardı, ana yolda YOKTU.
+        ana_ms = _girdi_son_bar()
+        try:
+            eth_ms = _son_bar_ms(json.loads(eth_m15.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError):
+            eth_ms = None
+        if (ana_ms is not None and eth_ms is not None
+                and abs(ana_ms - eth_ms) > 240 * 60 * 1000):
+            job["_korelasyon_uyarisi"] = (
+                "KORELASYON ATLANDI (ana yol): BTC/ETH son barları 240 dk'dan "
+                f"fazla ayrışık (BTC {int(ana_ms)} / ETH {int(eth_ms)}) — bayat "
+                "hizalı pencereyle ρ ölçülmez (fail-closed)")
+        else:
+            job["korelasyon"] = {"a": str(GIRDI / "m15.json"), "b": str(eth_m15),
+                                 "ad_a": "BTC", "ad_b": "ETH"}
     ek = _ek_kanallar(job)
     if ek:
         print(f"[PİRAMİT] Ek kanal(lar) otomatik bağlandı: {', '.join(ek)}")
-    return _job_kos(job, "otomatik_job.json", "son_rapor.json")
+    ozet, kod = _job_kos(job, "otomatik_job.json", "son_rapor.json")
+    return ozet, kod, kum
 
 
 def _job_kos(job: dict, job_ad: str, rapor_ad: str) -> tuple[str, int]:
@@ -645,7 +728,7 @@ def _job_kos(job: dict, job_ad: str, rapor_ad: str) -> tuple[str, int]:
     pr = subprocess.run(
         [sys.executable, str(PIRAMIT), "--job", str(jp),
          "--out", str(SKILL / "state" / rapor_ad), "--ozet"],
-        capture_output=True, text=True, timeout=ZAMAN_ASIMI, cwd=str(REPO))
+        capture_output=True, text=True, timeout=min(ZAMAN_ASIMI, _kalan_butce()), cwd=str(REPO))
     metin = (pr.stdout or "").strip() or (pr.stderr or "").strip()[-600:]
     return metin[:MAX_OZET], pr.returncode
 
@@ -760,14 +843,30 @@ def main() -> int:
     # yeni OI görüntüsü/funding boru hattını kendiliğinden yeniden koştursun.
     turev = _turev_uret(onceki)
     if turev.get("kaynaklar") is not None:
-        onceki["http_engelli"] = turev.get("http_engelli", onceki.get("http_engelli"))
+        # http mandalı TEK YÖNLÜ (S8): bir kez engellenince True kalır; False'a
+        # ezilmez. Eskiden mandal True iken --http verilmiyor → ağ hatası olmuyor
+        # → dönüş http_engelli=False → mandal sıfırlanıp her istem ağı yeniden
+        # deniyordu (docstring vaadinin tersi).
+        if turev.get("http_engelli"):
+            onceki["http_engelli"] = True
         var = ", ".join(turev["kaynaklar"]) or "yok"
         print(f"[PİRAMİT] Türev kanalı otomatik üretildi → dolu: {var} | "
               f"eksik: {len(turev.get('eksikler', []))} kanal (uydurulmadı)")
     # İkinci sembolün türevi de KENDİ kline'ından üretilir (CVD çevrimdışı).
+    # Sembol AÇIKÇA geçilir (B5): yoksa turev_girdi varsayılanı BTCUSDT'ye düşer
+    # ve ETH'nin funding/LSR/OI'si BTC verisiyle kirlenirdi.
     if (IKINCI["girdi"] / "m15.json").exists():
-        _turev_uret(onceki, IKINCI["girdi"],
-                    IKINCI["state"] / "turev_seri.jsonl")
+        # ETH dönüşü ATILMAZ (B3): başarısızlık/eksik kanal raporlanır, mandal taşınır.
+        t2 = _turev_uret(onceki, IKINCI["girdi"],
+                         IKINCI["state"] / "turev_seri.jsonl", sembol="ETHUSDT")
+        if t2.get("http_engelli"):
+            onceki["http_engelli"] = True
+        if t2.get("kaynaklar") is not None:
+            v2 = ", ".join(t2["kaynaklar"]) or "yok"
+            print(f"[PİRAMİT] ETH türev kanalı üretildi → dolu: {v2} | "
+                  f"eksik: {len(t2.get('eksikler', []))} kanal")
+        elif t2.get("durum"):
+            print(f"[PİRAMİT] ETH türev üretilemedi: {t2['durum']}")
     fp = _fp()
     if onceki.get("fp") == fp and onceki.get("ozet"):
         if bool(onceki.get("http_engelli")) != http_once:
@@ -778,7 +877,7 @@ def main() -> int:
         return 0
 
     try:
-        ozet, kod = _kos()
+        ozet, kod, kum = _kos()
     except subprocess.TimeoutExpired:
         print(f"[PİRAMİT] Boru hattı {ZAMAN_ASIMI}s içinde bitmedi — elle koşuya "
               "düşülür (bu AÇIKÇA söylenmeli).")
@@ -798,7 +897,7 @@ def main() -> int:
         return 0
 
     hafiza = ("KUM HAVUZU (motor bu barı zaten işlemişti — gerçek defter "
-              "korundu)" if _zaten_islendi() else "GERÇEK hafıza (yeni bar)")
+              "korundu)" if kum else "GERÇEK hafıza (yeni bar)")
     print(f"[PİRAMİT] Boru hattı koştu — hafıza: {hafiza} "
           f"(çıkış kodu {kod}; 0=zirve, 2=bir katman kapısında durdu):")
     print(ozet)
@@ -837,10 +936,10 @@ def main() -> int:
         print(satir)
         ozet = f"{ozet}\n{satir}"
     try:
-        DURUM.parent.mkdir(parents=True, exist_ok=True)
-        DURUM.write_text(json.dumps({"fp": fp, "ozet": ozet, "kod": kod,
-                                     "http_engelli": bool(onceki.get("http_engelli"))},
-                                    ensure_ascii=False, indent=2), encoding="utf-8")
+        _atomik_yaz(DURUM, json.dumps(
+            {"fp": fp, "ozet": ozet, "kod": kod,
+             "http_engelli": bool(onceki.get("http_engelli"))},
+            ensure_ascii=False, indent=2))
     except OSError:
         pass
     return 0

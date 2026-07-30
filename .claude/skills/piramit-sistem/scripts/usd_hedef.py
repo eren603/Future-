@@ -99,6 +99,7 @@ def hesapla(job: dict) -> dict:
 
     cevrim = {
         "hedef_tipi": hedef_tipi,
+        "atr_kurulum": round(atr_kur, 6),   # gozlemci izlenebilirlik: k2 smc_tespit_h4.atr
         "hedef_brut_usdt": [round(h_lo, 2), round(h_hi, 2)],
         "nominal_usdt": round(nominal, 2),
         "stop_mesafe_puan": round(stop_mesafe, 4),
@@ -186,6 +187,24 @@ def hesapla(job: dict) -> dict:
                                   f"{len(adaylar)} adayda gerçek likidite hedefi banda düşüyor"
                                   if likidite else f"{YOK} — likidite hedefi verilmedi")})
         gecen &= bool(yapi_ok)
+
+        # kapı 5 ENFORCE (B1): sabit stop, karşı yapı seviyesinin ötesinde mi?
+        # Eskiden her aday için hesaplanıp YALNIZ adaylar[].stop_yapinin_otesinde'ye
+        # yazılıyordu; `kapilar`a eklenmiyor, `gecen`e girmiyordu → stop yapının
+        # İÇİNDE (stop-av havuzunda) kalsa bile HUKUM UYGUN kalıyordu. Artık kapı
+        # görünür ve fail-closed uygulanır (karşı yapı verisi yoksa da geçmez).
+        iceride = [a for a in adaylar if a["stop_yapinin_otesinde"] is False]
+        if yapi_seviyeleri:
+            ok5 = not iceride
+            kanit5 = (f"{len(iceride)}/{len(adaylar)} adayda stop karşı yapının "
+                      "İÇİNDE (stop-av riski)" if iceride else
+                      "tüm adaylarda stop karşı yapının ötesinde")
+        else:
+            ok5 = False
+            kanit5 = (f"{YOK} — karşı yapı seviyesi verilmedi, kapı doğrulanamadı "
+                      "(fail-closed)")
+        kapilar.append({"kapi": "stop yapının ötesinde", "gecti": ok5, "kanit": kanit5})
+        gecen &= ok5
 
     hukum = ("UYGUN" if gecen and adaylar else
              ("UYGUN DEĞİL" if adaylar else f"{YOK} — giriş adayı verilmedi"))

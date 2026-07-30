@@ -278,7 +278,10 @@ def detect(job: dict) -> dict:
     fvgs = find_fvgs(df)
     acik_fvgs = [f for f in fvgs if not f["dolu"]][-10:]
 
-    tol = (p["eq_tol_atr"] * atr) if atr else 0.001 * close_last
+    # ATR yoksa (kısa/NaN seri) eşit tepe/dip toleransı gizli 0.001×close'a düşer;
+    # bu fallback varsayımlara ETİKETLENİR (B5): etiketsiz gizli eşik yasak.
+    atr_tol_fallback = not (atr and atr > 0)
+    tol = (0.001 * close_last) if atr_tol_fallback else (p["eq_tol_atr"] * atr)
     liq = find_liquidity(highs, lows, tol)
 
     # HTF (MTF hizalama): verilirse aynı yapı mantığıyla HTF trendi
@@ -342,7 +345,9 @@ def detect(job: dict) -> dict:
             f"ATR/ADX periyodu={p['atr_period']}/{p['adx_period']} (Wilder konvansiyonu)",
             f"ADX trend/range eşiği={p['adx_trend']}/{p['adx_range']} (Wilder konvansiyonu; "
             "params ile ezilebilir)",
-            f"eşit tepe/dip toleransı={p['eq_tol_atr']}×ATR (varsayım)",
+            (f"eşit tepe/dip toleransı=0.001×close (ATR hesaplanamadı — ETİKETLİ "
+             "fallback varsayım)" if atr_tol_fallback else
+             f"eşit tepe/dip toleransı={p['eq_tol_atr']}×ATR (varsayım)"),
             f"yüksek-vol eşiği: {vol_kaynak}",
         ],
         "not": ("Tespitler algoritmiktir (aynı veri = aynı seviye). SMC kavramları "

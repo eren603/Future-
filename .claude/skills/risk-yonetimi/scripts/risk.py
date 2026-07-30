@@ -34,6 +34,10 @@ class RiskError(Exception):
 def kelly_fraction(win_rate: float, avg_win: float, avg_loss: float) -> float:
     """Kelly = W - (1-W)/R, R = avg_win/avg_loss (pozitif büyüklükler)."""
     w = float(win_rate)
+    # win_rate 0-1 ORAN olmalı (S1): yüzde (ör. 55) girilirse full_kelly≈54.3,
+    # uygulanan≈27 → sermayenin 27 KATI pozisyon önerisi hatasız dönerdi.
+    if not 0.0 <= w <= 1.0:
+        raise RiskError("win_rate 0-1 aralığında ORAN olmalı (yüzde değil)")
     aw, al = abs(float(avg_win)), abs(float(avg_loss))
     if al == 0:
         raise RiskError("avg_loss sıfır olamaz")

@@ -71,13 +71,16 @@ def _kline_yukle(yol: Path) -> tuple[list, str]:
                            "low": float(r[3]), "close": float(r[4]),
                            "volume": float(r[5]) if len(r) > 5 else 0.0})
         elif isinstance(r, dict):
-            g = {k[0].lower(): k for k in r}
+            # Eksik alanlı satır ATLANIR (S1): open/o ikisi de yoksa float(None)
+            # TypeError ile TÜM motoru çökertirdi (satır bazlı atlama yoktu).
+            o = r.get("open", r.get("o")); h = r.get("high", r.get("h"))
+            l = r.get("low", r.get("l")); c = r.get("close", r.get("c"))
+            if None in (o, h, l, c):
+                continue
             mumlar.append({
                 "time": int(r.get("time") or r.get("t") or 0) or None,
-                "open": float(r.get("open", r.get("o"))),
-                "high": float(r.get("high", r.get("h"))),
-                "low": float(r.get("low", r.get("l"))),
-                "close": float(r.get("close", r.get("c"))),
+                "open": float(o), "high": float(h), "low": float(l),
+                "close": float(c),
                 "volume": float(r.get("volume", r.get("v", 0)) or 0)})
     return mumlar, "yedek parser (cizim.py)"
 

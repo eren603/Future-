@@ -207,6 +207,13 @@ def run_backtest(frame: pd.DataFrame, strategy: dict, *, fees_bps=5.0, slippage_
         "exposure": round(exposure, 4),
         "final_equity": round(float(equity.iloc[-1]), 6),
         "_trade_returns": trade_returns.tolist(),
+        # KONVANSİYON ETİKETİ (B4): equity eğrisi position=signal.shift(1) ile
+        # pozisyonun İLK bar getirisini (close[i-1]→close[i]) tahakkuk ettirir;
+        # işlem defteri girişi close[entry_i]'den fiyatlar → defter equity'den 1
+        # bar kayıktır. win_rate/profit_factor/expectancy defterden türer, dolayısıyla
+        # equity toplam getirisiyle birebir eşleşmeyebilir (etiketli varsayım).
+        "_konvansiyon": ("işlem defteri equity'den 1 bar kayıktır "
+                         "(position=signal.shift(1); defter girişi close[entry_i])"),
     }
 
 

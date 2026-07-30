@@ -399,10 +399,16 @@ def label_outcome(prev, bars):
         return "Önceki %s kararından sonra yeni bar yok — akıbet ölçülemez (VERİ YOK)." % yon
     # MARKET girişi (bölge tek nokta) ANINDA dolar — iptal-öncesi-dokunuş beklemez.
     # LIMIT girişi (bölge) bölgeye dokununca dolar; dokunmadan iptal olursa İPTAL.
-    market = abs(hi - lo) < 1e-6
+    # Dolum tipi AÇIK beyandan gelir (B4): decide() artık giris_tipi yazar ve
+    # akibet_etiketle.simule_et ile aynı sözleşme kullanılır. Eski defter
+    # kayıtlarında giris_tipi yoksa eşit-sınır fallback'i korunur (etiketsiz eski
+    # kayıt bozulmasın), ama yeni kararlar açık beyanla ölçülür.
+    market = (k.get("giris_tipi") == "market"
+              if k.get("giris_tipi") else abs(hi - lo) < 1e-6)
     triggered = market
     t1_hit = False
     for b in after:
+        just_filled = False
         if not triggered:
             # LIMIT: giriş tetiklenmeden iptal (gövde kapanışı iptal seviyesi ötesinde)
             if (yon == "LONG" and b.c < iptal) or (yon == "SHORT" and b.c > iptal):
@@ -410,11 +416,18 @@ def label_outcome(prev, bars):
                         "iptal %.6g, %s)." % (yon, b.c, iptal, fmt_ts(b.t)))
             if b.l <= hi and b.h >= lo:
                 triggered = True
-                # aynı barda stop kontrolü aşağıda devam eder
+                just_filled = True   # LIMIT dolum barı
         if triggered:
             stop_hit = b.l <= stop if yon == "LONG" else b.h >= stop
-            t1_now = b.h >= t1 if yon == "LONG" else b.l <= t1
-            t2_now = b.h >= t2 if yon == "LONG" else b.l <= t2
+            # LIMIT dolum barında HEDEF yalnız dolum AÇILIŞTA gerçekleştiyse
+            # kredilenir (B1): bar giriş bölgesinde/ötesinde açıldıysa dolum ilk
+            # tiktedir → hedef KANITLI sonradır. Fitille-dolumda (açılış bölge dışı)
+            # bar-içi sıra kanıtsız — fiyat önce hedefe gidip sonra girişe dönmüş
+            # olabilir → hedef ertelenir. Stop yine değerlendirilir (aleyhte).
+            dolum_acilista = lo <= b.o <= hi if just_filled else True
+            hedef_gecerli = market or not just_filled or dolum_acilista
+            t1_now = (b.h >= t1 if yon == "LONG" else b.l <= t1) if hedef_gecerli else False
+            t2_now = (b.h >= t2 if yon == "LONG" else b.l <= t2) if hedef_gecerli else False
             if stop_hit and t1_now and not t1_hit:
                 return ("Önceki %s: giriş tetiklendi; aynı barda hem stop hem T1 "
                         "menzilde (%s) — akıbet BELİRSİZ, defterde 'belirsiz' yazıldı."
@@ -494,7 +507,7 @@ def decide(bars15, bars4h):
         iptal = fvg["alt"] if yon == "LONG" else fvg["ust"]
         t1, t2, tk = _targets(yon, entry, stop, swings15, bars15)
         karar = {
-            "karar": yon, "yon": yon, "zincir": 1,
+            "karar": yon, "yon": yon, "zincir": 1, "giris_tipi": "limit",
             "neden": ("Dönüş dizisi 4/4 tamam: %.6g seviyesi süpürüldü, geri alındı, "
                       "yüksek-hacim displacement FVG bıraktı, BOS %.6g gövdeyle kırıldı."
                       % (rev["seviye"], rev.get("bos_seviye", 0))),
@@ -515,7 +528,7 @@ def decide(bars15, bars4h):
         iptal = bos["seviye"]
         t1, t2, tk = _targets(yon, entry, stop, swings15, bars15)
         karar = {
-            "karar": yon, "yon": yon, "zincir": 2,
+            "karar": yon, "yon": yon, "zincir": 2, "giris_tipi": "market",
             "neden": ("MARKET: son teyitli swing %.6g gövdeyle kırıldı, sonraki bar "
                       "C0 ekstremi ötesinde kapandı; 4H rejim (%s) karşı değil."
                       % (bos["seviye"], rej["rejim"])),
@@ -541,7 +554,7 @@ def decide(bars15, bars4h):
             iptal = f["alt"] if yon == "LONG" else f["ust"]
             t1, t2, tk = _targets(yon, entry, stop, swings15, bars15)
             karar = {
-                "karar": yon, "yon": yon, "zincir": 3,
+                "karar": yon, "yon": yon, "zincir": 3, "giris_tipi": "limit",
                 "neden": ("PUSU: 4H rejim %s (MA5-MA20=%.6g, eşik q%d=%.6g); fiyat "
                           "hizasında açık %s FVG bölgesi var."
                           % (rej["rejim"], rej["fark"], int(TREND_Q * 100), rej["esik"],
@@ -598,15 +611,26 @@ def decide(bars15, bars4h):
 # ---------------------------------------------------------------------------
 def load_state():
     if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            # Bozuk durum.json ÇÖKERTMEZ (S6): İLK KOŞU muamelesi yapılır ve
+            # bozulma stderr'e yazılır — yarım yazım kalıcı çökmeye dönüşmesin.
+            sys.stderr.write(f"[karar_motoru] durum.json okunamadı ({e}) — "
+                             "İLK KOŞU sayıldı.\n")
+            return None
     return None
 
 
 def save_state(state):
     os.makedirs(STATE_DIR, exist_ok=True)
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
+    # Atomik yazım (S6): geçici dosya + os.replace. Yarım yazım (disk dolu,
+    # sinyal) bozuk durum.json bırakıp SONRAKİ her koşuyu çökertmesin.
+    tmp = STATE_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, STATE_FILE)
 
 
 def append_ledger(entry):
@@ -632,8 +656,13 @@ def append_ledger(entry):
                         continue
                     if (v.get("karar_zamani"), v.get("sonuc")) == anahtar:
                         return          # zaten kayıtlı — tekrar yazma
-        except OSError:
-            pass
+        except OSError as e:
+            # Defter okunamadıysa "tekrar yok" GARANTİSİ kurulamaz (B3): sessizce
+            # append'e düşmek fail-OPEN olurdu (aynı satır yeniden yazılabilir).
+            # Fail-closed: yazmayı REDDET, uyarı bas — çift-yazım sicili şişirir.
+            sys.stderr.write(f"[karar_motoru] defter okunamadı ({e}) — "
+                             "tekilleme doğrulanamadı, yazım REDDEDİLDİ (fail-closed).\n")
+            return
     with open(LEDGER_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
@@ -737,13 +766,23 @@ def main(argv=None):
     karar, ctx = decide(bars15, bars4h)
 
     if karar["karar"] != "BEKLE":
-        if takip is not None:
-            # açık karar sonuç ölçülemeden yeni kararla değiştirildi — deftere yaz
+        # Yeni karar takiptekiyle ÖZDEŞ mi? (B7) Motor her barda sıfırdan üretir;
+        # süren bir sinyal (özellikle zincir-3 PUSU — açık FVG barlarca açık kalır)
+        # her barda AYNI kararı yeniden üretir. Özdeşse DEVRİLDİ yazma ve takibi
+        # KORU (orijinal karar_zamani/son_bar değişmez) — yoksa süren sinyal her
+        # barda kendini "DEVRİLDİ" diye sıfırlar ve akıbet hiç ölçülmez.
+        esk = takip["karar"] if takip is not None else None
+        ayni = (esk is not None and all(
+            esk.get(k) == karar.get(k)
+            for k in ("yon", "zincir", "giris_alt", "giris_ust", "stop", "t1")))
+        if takip is not None and not ayni:
+            # açık karar sonuç ölçülemeden FARKLI yeni kararla değişti — deftere yaz
             append_ledger({"karar_zamani": takip["son_bar"],
                            "etiket_zamani": bars15[-1].t,
                            "karar": takip["karar"], "sonuc": "DEVRİLDİ",
                            "not": "yeni karar geldi, önceki sonuç ölçülmeden kapandı"})
-        takip = {"son_bar": bars15[-1].t, "karar": karar}
+        if not ayni:
+            takip = {"son_bar": bars15[-1].t, "karar": karar}
 
     esikler = {"govde_q": body_threshold(bars15, len(bars15) - 1),
                "hacim_sira": vol_rank(bars15, len(bars15) - 1)}

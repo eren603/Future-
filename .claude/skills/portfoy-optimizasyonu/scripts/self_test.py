@@ -42,8 +42,10 @@ def main():
     _check(o3)
     assert len(o3["leaf_order"]) == 4
 
-    # min_var volatilitesi, eşit-ağırlıktan düşük ya da eşit olmalı (mantık kontrolü)
-    assert o1["volatility"] <= o2["volatility"] + 1e-6 or o1["volatility"] > 0
+    # min_var volatilitesi tanım gereği max_sharpe portföyünün volünden DÜŞÜK/EŞİT
+    # olmalı (mantık kontrolü). Eski `or o1["volatility"] > 0` dalı vol pozitifken
+    # daima True'ydu → assert TOTOLOJİK, hiçbir koşulda düşemezdi (B1).
+    assert o1["volatility"] <= o2["volatility"] + 1e-6, (o1["volatility"], o2["volatility"])
 
     print("SELF_TEST_OK: min_var, max_sharpe, hrp")
 
