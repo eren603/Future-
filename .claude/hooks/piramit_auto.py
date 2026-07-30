@@ -511,6 +511,21 @@ def _gorev_bas() -> None:
                   f"{prof.get('kurulum_olcegi')}")
         if g.get("strateji_kurali"):
             print("   strateji: " + str(g.get("strateji_kurali")))
+        # BEKLEYEN İŞLER: kullanıcının "sonra yapacağız" dediği maddeler. Dosyada
+        # durup basılmazsa yeni pencere onları göremez ve iş sessizce kaybolur
+        # (EKSİK_AKTARIM). Yalnız AÇIK olanlar basılır.
+        _bekleyen = g.get("bekleyen_isler")
+        for _b in (_bekleyen if isinstance(_bekleyen, list) else []):
+            if not isinstance(_b, dict):
+                continue
+            if str(_b.get("durum", "")).upper().startswith("KAPANDI"):
+                continue
+            print(f"   ⏳ BEKLEYEN İŞ [{_b.get('id', '?')}] {_b.get('durum', '')} — "
+                  f"{_b.get('ne', '')}")
+            if _b.get("olculen_durum"):
+                print(f"      ölçülen durum: {_b['olculen_durum']}")
+            if _b.get("on_kosul"):
+                print(f"      ön koşul: {_b['on_kosul']}")
         for _ad, _sk, _gd, _st in (
                 ("BTCUSDT", REPO / "engine" / "state" / "sunulan_karar.json",
                  GIRDI, REPO / "engine" / "state"),

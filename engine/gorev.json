@@ -36,6 +36,17 @@
     "eth_anlik": "engine/state/eth/onceki_kosu.json"
   },
   "sinir": "Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL. Uydurma sayı yasak — eksik = VERİ YOK.",
+  "bekleyen_isler": [
+    {
+      "id": "FVG_MITIGASYON_KALIBRASYONU",
+      "durum": "AÇIK — sonra yapılacak (kullanıcı 2026-07-30'da işaretledi)",
+      "ne": "FVG_MITIGASYON = 0.5 (karar_motoru + smc_tespit) KALİBRE EDİLMEMİŞ bir tasarım varsayımıdır; consequent-encroachment konvansiyonuna dayanır, edge kanıtına DEĞİL. Çıktıda 'KALİBRE EDİLMEMİŞ' diye beyan ediliyor ama değeri sınanmadı.",
+      "olculen_durum": "182 kayan pencere (BTC+ETH 15M, W=110): 0.5 vs 1.0 → 0 karar farkı; 0.5 vs 0.0 → 3 pencere farklı (ETH 112/113/119) ve üçünde de 0.0 daha iyi (0.5'in verdiği sinyallerin akıbeti İPTAL/İPTAL/STOP); 0.5 vs 0.25 → 2 pencere farklı. Yani mevcut veri 0.5'i DESTEKLEMİYOR — gözlenen faydanın tamamı zincir-1 mitigasyon KAPISINDAN geliyor, eşik DEĞERİNDEN değil.",
+      "nasil": "setup_dogrulama.py + kalibrasyon.py (permütasyon/bootstrap/Wilson) ile eşik taraması: 0.0 / 0.25 / 0.5 / 0.75 / 1.0 için akıbet dağılımı ölçülür. Kazanan eşik istatistiksel testle seçilir; 'en iyi sonucu veren'e çekmek SERBEST AYAR sayılır ve YASAKTIR — Wilson alt sınırı + permütasyon p-değeri raporlanmadan değer değiştirilmez.",
+      "on_kosul": "200 barlık örneklem bu iş için YETERSİZ. Geniş tarihsel set gerekir: binance/binance-public-data arşivi (data.binance.vision, 'um' = USD-M vadeli, 15m/4h, 2020'den itibaren). NOT: fapi.binance.com bu ortamda CONNECT 403 ile engelli, arşiv alan adı AYRI — engel oradan gelmeyebilir, denenmeli.",
+      "kaynak": "üç turluk gözlemci ajan denetimi; commit'ler e97ee41 → 36f8c7a"
+    }
+  ],
   "cikti_sozlesmesi": {
     "bicim": "Hikâye YOK. Emir satırı: '<MARKET|LIMIT> <LONG|SHORT> @<giriş> | stop <stop> | T1 <hedef> | R <R>'",
     "emir_yoksa": "'EMİR YOK' + hangi kapının düştüğü (mekanik gerekçe) yazılır — boş bırakılmaz",
