@@ -70,11 +70,15 @@ def test_nan_reddedilir():
 
 
 def main():
+    # Banner KOŞAN testlerden üretilir (sabit metin DEĞİL): sabit listede yeni
+    # eklenen vaka (ör. test_nan_reddedilir) çıktıda görünmüyordu ve yalnız
+    # çıktıya bakan bir denetçi "o vaka koşmadı" diye YANLIŞ sonuca varabiliyordu.
+    kosan = []
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
             fn()
-    print("SELF_TEST_OK: sisirilmis-4R-yakalandi, mesru-swing-tutarli, motor-scalp-tutarli, "
-          "long-simetri, geometri-gecersiz, atr-zorunlu")
+            kosan.append(name[len("test_"):])
+    print(f"SELF_TEST_OK ({len(kosan)} vaka): " + ", ".join(kosan))
     return 0
 
 
