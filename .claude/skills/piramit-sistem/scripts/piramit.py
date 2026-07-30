@@ -1735,9 +1735,25 @@ def kos(job: dict, taban: Path) -> dict:
         sdir = Path(str(_yol(job.get("state_dir"), taban)
                         or job.get("state_dir") or (ENGINE / "state")))
         sdir.mkdir(parents=True, exist_ok=True)
-        _atomik_yaz(sdir / "onceki_kosu.json",
-                    json.dumps(yeni_gor, ensure_ascii=False, indent=2))
+        _metin = json.dumps(yeni_gor, ensure_ascii=False, indent=2)
+        _atomik_yaz(sdir / "onceki_kosu.json", _metin)
         rapor["ZIRVE"]["_anlik_goruntu"] = str(sdir / "onceki_kosu.json")
+        # KUM HAVUZU AYNASI: anlık görüntü bir DEFTER KAYDI değil, "kullanıcıya
+        # EN SON SÖYLENEN karar"dır — HESAP VERME ve KIYAS bunu GERÇEK sicilden
+        # (defter_dizini) okur. Kum havuzu koşusunda yalnız sandığa yazılırsa,
+        # aynı bar daha İYİ veriyle (taze görsel okuma, düzeltilmiş türev sembolü)
+        # yeniden koşulduğunda gerçek hafıza ESKİ/EKSİK sürümde donar ve bir
+        # sonraki KIYAS kullanıcıya hiç gösterilmemiş bir kararla kıyaslar
+        # (ölçüldü: gerçek hafıza -0.2627/3 danışman, gösterilen karar
+        # -0.8277/4 danışman). Defter/akıbet YAZIMLARI sandıkta KALIR; yalnız
+        # bu "son söylenen" kaydı gerçek sicile de aynalanır.
+        _gercek = _yol(job.get("defter_dizini"), taban) or job.get("defter_dizini")
+        if _gercek:
+            _gp = Path(str(_gercek))
+            if _gp.resolve() != sdir.resolve():
+                _gp.mkdir(parents=True, exist_ok=True)
+                _atomik_yaz(_gp / "onceki_kosu.json", _metin)
+                rapor["ZIRVE"]["_anlik_goruntu_ayna"] = str(_gp / "onceki_kosu.json")
     except OSError as e:
         rapor["ZIRVE"]["_anlik_goruntu"] = f"YAZILAMADI ({e})"
 

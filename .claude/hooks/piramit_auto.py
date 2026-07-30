@@ -424,6 +424,64 @@ def _okunmamis_gorseller() -> list:
     return sorted(set(yeni), key=lambda p: -p.stat().st_mtime)[:12]
 
 
+def _acik_emri_olc(kayit: dict, girdi_dizin: Path, state_dizin: Path) -> dict:
+    """AÇIK sunulan emri BU koşunun barlarıyla ÖLÇ (kapandı mı, R kaç?).
+
+    Neden: `sunulan_karar.json` kendi açıklamasında "her koşuda simule_et ile
+    ölçülür, kapanınca düşülür" diyordu ama bu ölçüm HİÇBİR YERDE YAPILMIYORDU —
+    dosya yalnız BASILIYORDU. Sonuç: 2026-07-28 16:45'te stop olan ETH SHORT'u
+    (stop 1924.993333, o barın tepesi 1928.31) sistem günlerce "AÇIK" diye
+    raporladı; kullanıcı var olmayan bir pozisyonun riskini taşıdı, strateji
+    süzgecinin EKLEME YASAĞI gerçek olmayan pozisyon yüzünden yeni emirleri
+    bloklamaya devam etti ve -1R sicile hiç yazılmadı.
+
+    Ölçüm akıbet motorunun AYNI muhafazakâr kurallarıyla yapılır (aynı barda
+    stop+hedef → STOP; market dolum açık beyanla). Ölçülemezse kayıt AÇIK kalır
+    (fail-closed: kanıtsız kapatma yok).
+    """
+    bos = {"kapandi": False, "sonuc": "VERİ YOK"}
+    try:
+        scripts = SKILL / "scripts"
+        if str(scripts) not in sys.path:
+            sys.path.insert(0, str(scripts))
+        import akibet_etiketle as AE                              # noqa: PLC0415
+    except Exception:                                             # noqa: BLE001
+        return bos
+    try:
+        giris = float(kayit["giris"]); stop = float(kayit["stop"])
+        t1 = float(kayit["t1"]); zaman = int(kayit["karar_bari"])
+    except (KeyError, TypeError, ValueError):
+        return {"kapandi": False, "sonuc": "VERİ YOK — kayıt şema dışı"}
+    karar = {
+        "karar": str(kayit.get("yon", "")).upper(),
+        "yon": str(kayit.get("yon", "")).upper(),
+        "giris": giris,
+        "giris_alt": float(kayit.get("giris_alt", giris)),
+        "giris_ust": float(kayit.get("giris_ust", giris)),
+        "stop": stop, "t1": t1,
+        "iptal": float(kayit.get("iptal", stop)),
+        "giris_tipi": kayit.get("giris_tipi", "market"),
+    }
+    # Bar havuzu: bu koşunun kline'ı + arşiv (kayan pencere telafisi — karar barı
+    # 200-barlık pencereden düşmüş olabilir, arşiv onu geri getirir).
+    try:
+        barlar = AE.bar_yukle([str(state_dizin / "bar_arsivi.jsonl"),
+                               str(girdi_dizin / "m15.json")])
+    except Exception:                                             # noqa: BLE001
+        return bos
+    if not barlar:
+        return bos
+    try:
+        s = AE.simule_et(karar, zaman, barlar, AE.KONVANSIYON)
+    except Exception as e:                                        # noqa: BLE001
+        return {"kapandi": False, "sonuc": f"VERİ YOK — ölçüm hatası ({type(e).__name__})"}
+    kod = str(s.get("sonuc", ""))
+    terminal = any(x in kod for x in ("STOP", "T1", "T2", "INVALIDATION", "İPTAL"))
+    return {"kapandi": bool(s.get("olculebilir") and terminal) or "İPTAL" in kod,
+            "sonuc": kod, "r": s.get("r"),
+            "cikis_bar_utc": s.get("cikis_bar_utc") or s.get("cikis_bar")}
+
+
 def _gorev_bas() -> None:
     """Duran görevi bağlama bas — yeni pencere görevi/hedefi tekrar sormaz.
 
@@ -453,15 +511,38 @@ def _gorev_bas() -> None:
                   f"{prof.get('kurulum_olcegi')}")
         if g.get("strateji_kurali"):
             print("   strateji: " + str(g.get("strateji_kurali")))
-        for _ad, _sk in (("BTCUSDT", REPO / "engine" / "state" / "sunulan_karar.json"),
-                         ("ETHUSDT", IKINCI["state"] / "sunulan_karar.json")):
+        for _ad, _sk, _gd, _st in (
+                ("BTCUSDT", REPO / "engine" / "state" / "sunulan_karar.json",
+                 GIRDI, REPO / "engine" / "state"),
+                ("ETHUSDT", IKINCI["state"] / "sunulan_karar.json",
+                 IKINCI["girdi"], IKINCI["state"])):
             try:
                 if _sk.exists():
                     _s = json.loads(_sk.read_text(encoding="utf-8"))
-                    print(f"   AÇIK SUNULAN EMİR [{_ad}]: {_s.get('yon')} "
-                          f"@{_s.get('giris')} | stop {_s.get('stop')} | "
-                          f"T1 {_s.get('t1')} (karar barı {_s.get('karar_bari_utc')}; "
-                          f"her koşuda HESAP VERME'de ölçülür, kapanınca düşülür)")
+                    _sonuc = _acik_emri_olc(_s, _gd, _st)
+                    if _sonuc.get("kapandi"):
+                        # KAPANDI: kayıt DÜŞÜLÜR ve sonuç görünür kılınır. Eskiden
+                        # bu ölçüm HİÇ yapılmıyordu (dosya yalnız basılıyordu):
+                        # 2026-07-28 16:45'te stop olan ETH emri günlerce "AÇIK"
+                        # görünüp kullanıcıya var olmayan pozisyon raporluyordu.
+                        print(f"   ✔ KAPANDI [{_ad}]: {_s.get('yon')} @{_s.get('giris')} → "
+                              f"{_sonuc['sonuc']}"
+                              + (f" | gerçekleşen R = {_sonuc['r']}"
+                                 if _sonuc.get("r") is not None else "")
+                              + f" (karar barı {_s.get('karar_bari_utc')}) — kayıt düşüldü")
+                        _arsiv = _sk.with_name("kapanan_kararlar.jsonl")
+                        try:
+                            with _arsiv.open("a", encoding="utf-8") as _f:
+                                _f.write(json.dumps({**_s, "kapanis": _sonuc},
+                                                    ensure_ascii=False) + "\n")
+                            _sk.unlink()
+                        except OSError:
+                            pass
+                    else:
+                        print(f"   AÇIK SUNULAN EMİR [{_ad}]: {_s.get('yon')} "
+                              f"@{_s.get('giris')} | stop {_s.get('stop')} | "
+                              f"T1 {_s.get('t1')} (karar barı {_s.get('karar_bari_utc')}; "
+                              f"ÖLÇÜLDÜ: {_sonuc.get('sonuc', 'VERİ YOK')})")
             except (OSError, json.JSONDecodeError, TypeError, ValueError):
                 print(f"   ⚠ {_sk.name} [{_ad}] okunamadı — açık emir kaydı elle kontrol edilmeli")
         _hafiza_bas(g)
