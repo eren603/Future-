@@ -43,6 +43,11 @@ TREND_Q = 0.60      # |MA5-MA20| rejim eşiği = fark geçmişinin q60'ı
 TREND_HIST = 120    # rejim eşiği için fark geçmişi penceresi (4H bar)
 SWING_K = 2         # fraktal swing kanat genişliği (her iki taraf)
 FVG_LOOKBACK = 96   # açık FVG taranan pencere (15M bar)
+FVG_MITIGASYON = 0.5  # bölgenin kaçı tükenince "dolmuş" sayılır (0.5 = ce/orta nokta)
+                      # GİRİŞ ZATEN ce'den yapılıyor (bkz. decide: entry = fvg["ce"]);
+                      # dolum eşiği de ce olmalı, yoksa girişi geçilmiş bölge "açık"
+                      # görünür ve bayat kurulum taze diye sunulur (fail-OPEN).
+                      # 1.0 = eski davranış (uzak kenar), 0.0 = ilk dokunuş.
 RECLAIM_MAX = 6     # süpürme sonrası gecikmeli geri alım için azami bar
 DISP_MAX = 12       # geri alım sonrası displacement için azami bar
 RECENT_N = 24       # sinyalin "güncel" sayıldığı pencere (15M bar = 6 saat)
@@ -181,13 +186,15 @@ def open_fvgs(bars, lookback=FVG_LOOKBACK):
         a, c = bars[i - 2], bars[i]
         if c.l > a.h:  # bullish FVG
             top, bot = c.l, a.h
-            filled = any(bars[j].l <= bot for j in range(i + 1, n))
+            esik = top - (top - bot) * FVG_MITIGASYON   # yukarıdan aşağı tüketilir
+            filled = any(bars[j].l <= esik for j in range(i + 1, n))
             if not filled:
                 out.append({"tip": "bull", "ust": top, "alt": bot,
                             "ce": (top + bot) / 2, "bar": i, "zaman": bars[i - 1].t})
         if c.h < a.l:  # bearish FVG
             top, bot = a.l, c.h
-            filled = any(bars[j].h >= top for j in range(i + 1, n))
+            esik = bot + (top - bot) * FVG_MITIGASYON   # aşağıdan yukarı tüketilir
+            filled = any(bars[j].h >= esik for j in range(i + 1, n))
             if not filled:
                 out.append({"tip": "bear", "ust": top, "alt": bot,
                             "ce": (top + bot) / 2, "bar": i, "zaman": bars[i - 1].t})

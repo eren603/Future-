@@ -43,6 +43,11 @@ DEFAULTS = {
     "vol_quantile": 0.90,        # yüksek-vol = ATR% kendi tarihinin üst %10'unda
 }
 
+# FVG "dolu" eşiği: bölgenin kaçı tükenince mitige sayılır.
+# 0.5 = consequent encroachment (orta nokta) — karar_motoru.FVG_MITIGASYON ile
+# AYNI olmak zorunda, yoksa iki motor aynı bölge için farklı "açık" der.
+FVG_MITIGASYON = 0.5
+
 _KEYMAP = {"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume",
            "open": "open", "high": "high", "low": "low", "close": "close",
            "volume": "volume"}
@@ -172,18 +177,25 @@ def find_order_block(df: pd.DataFrame, ev: dict):
     return None
 
 
-def find_fvgs(df: pd.DataFrame):
+def find_fvgs(df: pd.DataFrame, mitigasyon: float = FVG_MITIGASYON):
+    """3-mum FVG'ler. `dolu` eşiği bölgenin `mitigasyon` oranı kadar tükenmesidir
+    (0.5 = consequent encroachment / orta nokta). Giriş fiyatı da orta noktadır
+    (karar_motoru.decide: entry = fvg["ce"]), bu yüzden eşik onunla HİZALI olmak
+    zorunda: 1.0 (uzak kenar) kullanılırsa girişi çoktan geçilmiş bölge "açık"
+    görünür ve confluence FVG kapısı bayat kurulumla açılır (fail-OPEN)."""
     h = df["high"].to_numpy(); l = df["low"].to_numpy()
     out = []
     n = len(df)
     for i in range(2, n):
         if l[i] > h[i - 2]:
             zone_lo, zone_hi = float(h[i - 2]), float(l[i])
-            dolu = bool(l[i + 1:].min() <= zone_lo) if i + 1 < n else False
+            esik = zone_hi - (zone_hi - zone_lo) * mitigasyon
+            dolu = bool(l[i + 1:].min() <= esik) if i + 1 < n else False
             out.append({"i": int(i), "type": "bull", "low": zone_lo, "high": zone_hi, "dolu": dolu})
         elif h[i] < l[i - 2]:
             zone_lo, zone_hi = float(h[i]), float(l[i - 2])
-            dolu = bool(h[i + 1:].max() >= zone_hi) if i + 1 < n else False
+            esik = zone_lo + (zone_hi - zone_lo) * mitigasyon
+            dolu = bool(h[i + 1:].max() >= esik) if i + 1 < n else False
             out.append({"i": int(i), "type": "bear", "low": zone_lo, "high": zone_hi, "dolu": dolu})
     return out
 
