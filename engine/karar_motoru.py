@@ -214,15 +214,40 @@ def vol_rank(bars, i):
 
 
 def leaves_fvg(bars, i):
-    """i barının displacement'ı bir FVG bıraktı mı (i, orta mum olabilir)?"""
+    """i barının displacement'ı bir FVG bıraktı mı (i, orta mum olabilir)?
+
+    `bar` = bölgenin TAMAMLANDIĞI bar (3'lünün sonuncusu). fvg_mitige() bu
+    indeksten SONRASINI tarar; sabit bir tahmin kullanılırsa desenin kendi
+    barları mitigasyon sanılır ya da bir bar atlanıp fail-OPEN'a düşülür.
+    """
     for mid in (i, i + 1):
         if 1 <= mid < len(bars) - 1:
             a, c = bars[mid - 1], bars[mid + 1]
             if c.l > a.h:
-                return {"tip": "bull", "ust": c.l, "alt": a.h, "ce": (c.l + a.h) / 2}
+                return {"tip": "bull", "ust": c.l, "alt": a.h,
+                        "ce": (c.l + a.h) / 2, "bar": mid + 1}
             if c.h < a.l:
-                return {"tip": "bear", "ust": a.l, "alt": c.h, "ce": (a.l + c.h) / 2}
+                return {"tip": "bear", "ust": a.l, "alt": c.h,
+                        "ce": (a.l + c.h) / 2, "bar": mid + 1}
     return None
+
+
+def fvg_mitige(bars, fvg, mitigasyon=None):
+    """FVG'nin mitigasyon eşiği, bölge tamamlandıktan SONRA geçildi mi?
+
+    open_fvgs() ile AYNI kural. Gerekçe: zincir-1'in bölgesi leaves_fvg'den
+    gelir ve open_fvgs taramasının DIŞINDADIR — burada açıkça uygulanmazsa
+    girişi (ce) çoktan geçilmiş bir bölge taze kurulum diye sunulur. Zincir-1
+    gerçek sinyallerin çoğunu üretir, dolayısıyla bu kapı asıl ateşleyen yolu
+    korur (fail-closed).
+    """
+    m = FVG_MITIGASYON if mitigasyon is None else mitigasyon
+    top, bot = fvg["ust"], fvg["alt"]
+    if fvg["tip"] == "bull":
+        esik = top - (top - bot) * m
+        return any(b.l <= esik for b in bars[fvg["bar"] + 1:])
+    esik = bot + (top - bot) * m
+    return any(b.h >= esik for b in bars[fvg["bar"] + 1:])
 
 
 def detect_reversal(bars, swings):
@@ -506,7 +531,15 @@ def decide(bars15, bars4h):
     karar = None
 
     # (1) tamamlanmış dönüş dizisi
-    if rev and rev["adim"] == 4:
+    # Zincir-1'in FVG'si leaves_fvg'den gelir (open_fvgs taramasının dışında),
+    # bu yüzden mitigasyon kapısı BURADA uygulanır: girişi (ce) zaten geçilmiş
+    # bölge taze kurulum sayılamaz → aday düşer, alt zincirlere devredilir.
+    # adim DEĞİŞTİRİLMEZ (dizi gerçekten 4/4 tamamlandı) — yalnız bayrak konur,
+    # yoksa çıktı olmayan bir durumu rapor eder.
+    rev_mitige = bool(rev and rev.get("fvg") and fvg_mitige(bars15, rev["fvg"]))
+    if rev is not None:
+        rev["fvg_mitige"] = rev_mitige
+    if rev and rev["adim"] == 4 and not rev_mitige:
         yon = rev["yon"]
         fvg = rev["fvg"]
         entry = fvg["ce"]
@@ -552,7 +585,14 @@ def decide(bars15, bars4h):
                    if (yon == "LONG" and f["tip"] == "bull" and f["ust"] < last.c) or
                       (yon == "SHORT" and f["tip"] == "bear" and f["alt"] > last.c)]
         if aligned:
-            f = aligned[-1]  # fiyata en yakın / en güncel bölge
+            # EN GÜNCEL (en son oluşan) bölge — fiyata en yakın olduğu GARANTİ
+            # DEĞİL. Mitigasyon kapısı yakın bir bölgeyi düşürürse yerine daha
+            # eski/uzak bölge terfi edebilir; uzak giriş risk mesafesini büyütüp
+            # R'yi yükseltir. Yani mitigasyon kuralı bu yolda sinyal sayısını
+            # tek yönlü AZALTMAZ (ölçüldü: sentetik seride 100→88, 5 kapanma /
+            # 3 açılma). Burada R "yüksek" ise sebebi kenar değil MESAFE olabilir
+            # — zincir-3 çıktısı bu yüzden rr_denetim'siz kullanılmamalıdır.
+            f = aligned[-1]
             entry = f["ce"]
             below = [s[1] for s in swings15 if s[2] == "L" and s[1] < min(f["alt"], f["ust"])]
             above = [s[1] for s in swings15 if s[2] == "H" and s[1] > max(f["alt"], f["ust"])]
@@ -693,9 +733,14 @@ def render(karar, ctx, akibet, bars15, bars4h, esikler):
     L.append("-" * 64)
     L.append("SABİTLER (yapısal, beyan): N_VOL=%d VOL_RANK_MIN=%.2f N_BODY=%d "
              "BODY_Q=%.2f MA=%d/%d TREND_Q=%.2f SWING_K=%d RECENT_N=%d "
-             "R_fallback=%.1f/%.1f R_MIN=%.2f" %
+             "R_fallback=%.1f/%.1f R_MIN=%.2f FVG_MITIGASYON=%.2f" %
              (N_VOL, VOL_RANK_MIN, N_BODY, BODY_Q, MA_FAST, MA_SLOW, TREND_Q,
-              SWING_K, RECENT_N, R_T1_FALLBACK, R_T2_FALLBACK, R_MIN))
+              SWING_K, RECENT_N, R_T1_FALLBACK, R_T2_FALLBACK, R_MIN,
+              FVG_MITIGASYON))
+    L.append("VARSAYIM: FVG_MITIGASYON=%.2f KALİBRE EDİLMEMİŞ tasarım varsayımıdır "
+             "(consequent encroachment konvansiyonu; edge kanıtı DEĞİL). Giriş "
+             "fiyatı da bölgenin orta noktasıdır — eşik onunla hizalıdır. "
+             "1.00 = eski davranış (uzak kenar), 0.00 = ilk dokunuş." % FVG_MITIGASYON)
     L.append("BU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q%d=%s | son bar "
              "hacim sırası=%s | 4H |MA5-MA20| eşiği=%s (fark=%s, rejim=%s)" %
              (int(BODY_Q * 100), fnum(esikler["govde_q"]), fnum(esikler["hacim_sira"]),

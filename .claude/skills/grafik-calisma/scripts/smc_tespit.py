@@ -41,12 +41,13 @@ DEFAULTS = {
     "adx_trend": 25.0, "adx_range": 20.0,   # Wilder konvansiyonu (varsayım)
     "vol_esik": None,            # None → KENDİ tarihinden kalibre (quantile)
     "vol_quantile": 0.90,        # yüksek-vol = ATR% kendi tarihinin üst %10'unda
+    "fvg_mitigasyon": 0.5,       # bölgenin kaçı tükenince "dolu" sayılır
+                                 # (0.5 = consequent encroachment / orta nokta)
 }
 
-# FVG "dolu" eşiği: bölgenin kaçı tükenince mitige sayılır.
-# 0.5 = consequent encroachment (orta nokta) — karar_motoru.FVG_MITIGASYON ile
-# AYNI olmak zorunda, yoksa iki motor aynı bölge için farklı "açık" der.
-FVG_MITIGASYON = 0.5
+# karar_motoru.FVG_MITIGASYON ile AYNI olmak zorunda, yoksa iki motor aynı bölge
+# için farklı "açık" der. Eşitliği self_test sınar (elle senkron güvenilmez).
+FVG_MITIGASYON = DEFAULTS["fvg_mitigasyon"]
 
 _KEYMAP = {"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume",
            "open": "open", "high": "high", "low": "low", "close": "close",
@@ -177,12 +178,17 @@ def find_order_block(df: pd.DataFrame, ev: dict):
     return None
 
 
-def find_fvgs(df: pd.DataFrame, mitigasyon: float = FVG_MITIGASYON):
+def find_fvgs(df: pd.DataFrame, mitigasyon: float | None = None):
     """3-mum FVG'ler. `dolu` eşiği bölgenin `mitigasyon` oranı kadar tükenmesidir
     (0.5 = consequent encroachment / orta nokta). Giriş fiyatı da orta noktadır
     (karar_motoru.decide: entry = fvg["ce"]), bu yüzden eşik onunla HİZALI olmak
     zorunda: 1.0 (uzak kenar) kullanılırsa girişi çoktan geçilmiş bölge "açık"
-    görünür ve confluence FVG kapısı bayat kurulumla açılır (fail-OPEN)."""
+    görünür ve confluence FVG kapısı bayat kurulumla açılır (fail-OPEN).
+
+    `mitigasyon=None` ise modül sabiti ÇAĞRI ANINDA okunur — varsayılan argümana
+    bağlanırsa çalışma anında sabiti değiştirmek etkisiz kalır (karar_motoru
+    sabiti çağrı anında okuyor; iki motor asimetrik davranmamalı)."""
+    mitigasyon = FVG_MITIGASYON if mitigasyon is None else mitigasyon
     h = df["high"].to_numpy(); l = df["low"].to_numpy()
     out = []
     n = len(df)
@@ -287,7 +293,7 @@ def detect(job: dict) -> dict:
         ob = find_order_block(df, ev)
         if ob:
             obs.append(ob)
-    fvgs = find_fvgs(df)
+    fvgs = find_fvgs(df, float(p["fvg_mitigasyon"]))
     acik_fvgs = [f for f in fvgs if not f["dolu"]][-10:]
 
     # ATR yoksa (kısa/NaN seri) eşit tepe/dip toleransı gizli 0.001×close'a düşer;
@@ -361,6 +367,10 @@ def detect(job: dict) -> dict:
              "fallback varsayım)" if atr_tol_fallback else
              f"eşit tepe/dip toleransı={p['eq_tol_atr']}×ATR (varsayım)"),
             f"yüksek-vol eşiği: {vol_kaynak}",
+            (f"FVG mitigasyon eşiği={p['fvg_mitigasyon']} — KALİBRE EDİLMEMİŞ "
+             "tasarım varsayımı (consequent encroachment konvansiyonu; edge kanıtı "
+             "DEĞİL). Girişin de bölge orta noktası olmasıyla hizalıdır. "
+             "1.0=uzak kenar (eski), 0.0=ilk dokunuş; params ile ezilebilir"),
         ],
         "not": ("Tespitler algoritmiktir (aynı veri = aynı seviye). SMC kavramları "
                 "yorumsal bir çerçevedir; tespit nesnelliği doğruluk garantisi değildir."),

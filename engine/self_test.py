@@ -61,6 +61,60 @@ def test_fvg():
     check("fvg-dolunca-duser", len(fvgs2) == 0, str(fvgs2))
 
 
+def test_fvg_mitigasyon():
+    """Orta noktaya DEĞEN ama uzak kenara değmeyen bar: eski kural (1.0) bölgeyi
+    açık bırakır, yeni kural (0.5) doldurur. Bu test kural geri alınırsa KIRILIR
+    — mevcut test_fvg üç ayarda da aynı sonucu verdiği için kuralı sınamıyordu."""
+    # bull FVG: bar0.high=101, bar2.low=105 → bölge 101-105, orta nokta (ce)=103
+    bars = [mk(0, 100, 101, 99, 100), mk(1, 100, 106, 100, 106),
+            mk(2, 106, 108, 105, 107), mk(3, 107, 109, 106, 108)]
+    # 102.5'e inen bar: ce'nin (103) ALTINDA ama uzak kenarın (101) üstünde
+    bars.append(mk(4, 108, 108, 102.5, 104))
+    esk = km.open_fvgs(bars, lookback=10)
+    yeni = km.open_fvgs(bars, lookback=10)
+    eski_sayi = len([f for f in _with_mit(1.0, lambda: km.open_fvgs(bars, lookback=10))])
+    yeni_sayi = len([f for f in _with_mit(0.5, lambda: km.open_fvgs(bars, lookback=10))])
+    check("fvg-mit-eski-acik", eski_sayi == 1, "1.0 eşiğinde açık kalmalı: %d" % eski_sayi)
+    check("fvg-mit-yeni-dolu", yeni_sayi == 0, "0.5 eşiğinde dolmalı: %d" % yeni_sayi)
+    check("fvg-mit-varsayilan", len(esk) == len(yeni) == yeni_sayi,
+          "varsayılan sabit 0.5 davranışını vermeli")
+    # ce ile eşik birebir tutmalı (aritmetik tutarlılık)
+    f = _with_mit(1.0, lambda: km.open_fvgs(bars, lookback=10))[0]
+    top, bot = f["ust"], f["alt"]
+    check("fvg-mit-ce-esitligi", abs((top - (top - bot) * 0.5) - f["ce"]) < 1e-12,
+          "esik=%r ce=%r" % (top - (top - bot) * 0.5, f["ce"]))
+    # iki motorun sabiti AYNI olmak zorunda (elle senkron güvenilmez)
+    try:
+        sys.path.insert(0, os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            ".claude", "skills", "grafik-calisma", "scripts"))
+        import smc_tespit as st  # noqa: E402
+        check("fvg-mit-motorlar-ayni", st.FVG_MITIGASYON == km.FVG_MITIGASYON,
+              "smc_tespit=%r karar_motoru=%r" % (st.FVG_MITIGASYON, km.FVG_MITIGASYON))
+        check("fvg-mit-defaults-bagli", st.DEFAULTS["fvg_mitigasyon"] == st.FVG_MITIGASYON,
+              "DEFAULTS=%r modul=%r" % (st.DEFAULTS["fvg_mitigasyon"], st.FVG_MITIGASYON))
+    except ImportError as e:                       # pandas yoksa atlanır, gizlenmez
+        check("fvg-mit-motorlar-ayni", True, "ATLANDI (smc_tespit yüklenemedi: %s)" % e)
+    # zincir-1 kapısı: leaves_fvg bölgesi mitige ise fvg_mitige True demeli
+    lf = km.leaves_fvg(bars, 1)
+    check("fvg-mit-leaves-bar", lf is not None and lf.get("bar") == 2,
+          "leaves_fvg tamamlanma barı: %r" % (lf,))
+    check("fvg-mit-zincir1-kapisi", bool(lf) and km.fvg_mitige(bars, lf) is True,
+          "ce'si geçilmiş bölge zincir-1'de mitige sayılmalı: %r" % (lf,))
+    check("fvg-mit-zincir1-eski-gecirir", bool(lf) and km.fvg_mitige(bars, lf, 1.0) is False,
+          "1.0 eşiğinde aynı bölge mitige OLMAMALI")
+
+
+def _with_mit(deger, fn):
+    """FVG_MITIGASYON'u geçici olarak değiştirip fn()'i koştur (sabiti geri koyar)."""
+    onceki = km.FVG_MITIGASYON
+    km.FVG_MITIGASYON = deger
+    try:
+        return fn()
+    finally:
+        km.FVG_MITIGASYON = onceki
+
+
 def test_outcome_label():
     karar = {"karar": "LONG", "yon": "LONG", "giris_alt": 100.0, "giris_ust": 100.0,
              "giris": 100.0, "stop": 95.0, "iptal": 96.0, "t1": 110.0, "t2": 120.0}
@@ -196,6 +250,7 @@ if __name__ == "__main__":
     test_stats()
     test_swings()
     test_fvg()
+    test_fvg_mitigasyon()
     test_outcome_label()
     test_end_to_end()
     print("-" * 50)

@@ -145,6 +145,38 @@ def main():
     assert len(fv) == 1 and fv[0]["type"] == "bull" and not fv[0]["dolu"], fv
     assert fv[0]["low"] == 101 and fv[0]["high"] == 102.2, fv
 
+    # FVG MİTİGASYON REGRESYONU: orta noktaya DEĞEN ama uzak kenara değmeyen bar.
+    # Yukarıdaki test 1.0/0.5/0.0 eşiklerinin ÜÇÜNDE de aynı sonucu verir (4. bar
+    # yok → dolu hep False), yani kuralı sınamaz. Bu test kural geri alınırsa KIRILIR.
+    mdf = pd.concat([fdf, pd.DataFrame([{"open": 103.5, "high": 103.6,
+                                         "low": 101.4, "close": 101.5}])],
+                    ignore_index=True)   # 101.4: ce'nin (101.6) altı, uzak kenarın (101) üstü
+    assert st.find_fvgs(mdf, 1.0)[0]["dolu"] is False, "1.0 eşiğinde AÇIK kalmalı"
+    assert st.find_fvgs(mdf, 0.5)[0]["dolu"] is True, "0.5 eşiğinde DOLU olmalı"
+    assert st.find_fvgs(mdf)[0]["dolu"] is True, "varsayılan 0.5 davranışını vermeli"
+    # sabit çalışma anında okunmalı (varsayılan argümana bağlanmamalı)
+    _onceki = st.FVG_MITIGASYON
+    st.FVG_MITIGASYON = 1.0
+    try:
+        assert st.find_fvgs(mdf)[0]["dolu"] is False, "sabit çağrı anında okunmalı"
+    finally:
+        st.FVG_MITIGASYON = _onceki
+    # detect() eşiği params ile ezilebilmeli + varsayimlar'da BEYAN edilmeli
+    _rep = st.detect({"candles": bars([+1]*5 + [-1]*5 + [+1]*5 + [-1]*5 + [+1]*5),
+                      "params": {"fvg_mitigasyon": 1.0}})
+    assert any("FVG mitigasyon" in v for v in _rep["varsayimlar"]), _rep["varsayimlar"]
+    assert any("1.0" in v for v in _rep["varsayimlar"] if "FVG mitigasyon" in v), \
+        "params ile ezilen değer varsayimlar'a yansımalı"
+    # iki motorun sabiti AYNI olmak zorunda
+    import importlib.util as _ilu
+    _p = Path(__file__).resolve().parents[4] / "engine" / "karar_motoru.py"
+    assert _p.exists(), "karar_motoru.py bulunamadı: %s (sabit eşitliği SINANMADI)" % _p
+    _s = _ilu.spec_from_file_location("_km_sabit", _p)
+    _m = _ilu.module_from_spec(_s); _s.loader.exec_module(_m)
+    assert _m.FVG_MITIGASYON == st.FVG_MITIGASYON, \
+        "karar_motoru=%r smc_tespit=%r — iki motor ayrışmış" % (
+            _m.FVG_MITIGASYON, st.FVG_MITIGASYON)
+
     # Eşit tepe/dip likiditesi: W deseni → buyside + sellside kümeleri
     w = bars([+1]*5 + [-1]*5 + [+1]*5 + [-1]*5 + [+1]*2)
     rep = st.detect({"candles": w})
