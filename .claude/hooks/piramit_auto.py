@@ -1026,9 +1026,38 @@ def main() -> int:
     return 0
 
 
+def _sessiz_cik(kod: int = 0):
+    """stdout kapalıyken çıkışta ikinci BrokenPipeError üretme.
+
+    Python yorumlayıcısı çıkışta stdout'u flush eder; boru kapalıysa bu flush
+    yeni bir BrokenPipeError doğurur ve süreç 1 ile ölür. stdout'u /dev/null'a
+    çevirip öyle çıkmak standart çözümdür.
+    """
+    try:
+        sys.stdout.flush()
+    except (BrokenPipeError, ValueError, OSError):
+        try:
+            devnull = os.open(os.devnull, os.O_WRONLY)
+            os.dup2(devnull, sys.stdout.fileno())
+        except (OSError, ValueError):
+            pass
+    sys.exit(kod)
+
+
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        _sessiz_cik(main() or 0)
+    except BrokenPipeError:
+        # Okuyan taraf çıktıyı erken kapattı (ör. `| head`). Kanca SÖZLEŞMESİ
+        # "çıkış kodu DAİMA 0; istem asla bloklanmaz" — boru kırılması bu
+        # sözleşmeyi çiğnemiyordu ama süreç 1 ile ölüyor ve DURUM yazımı
+        # yarıda kalıyordu (çapraz doğrulama ajanı ölçtü). Sessizce 0 ile çık.
+        _sessiz_cik(0)
+    except SystemExit:
+        raise
     except Exception as e:  # noqa: BLE001 — son emniyet: istem asla bloklanmaz
-        print(f"[PİRAMİT] kanca hatası ({type(e).__name__}: {e})")
-        sys.exit(0)
+        try:
+            print(f"[PİRAMİT] kanca hatası ({type(e).__name__}: {e})")
+        except (BrokenPipeError, ValueError, OSError):
+            pass          # tanı basılamıyorsa bile çıkış kodu 0 KALIR
+        _sessiz_cik(0)
