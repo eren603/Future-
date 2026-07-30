@@ -350,6 +350,7 @@ def plan(job: dict) -> dict:
 
 
 def _varsayimlar(p: dict, r_min: float, profil_var: bool) -> list:
+    import karar_motoru as KM  # noqa: PLC0415
     return [
         f"R_min = {r_min} (depo risk kuralı); ŞİŞİRİLMİŞ aday rr_denetim ile elenir",
         f"MARKET eşiği: |giriş − fiyat| ≤ {p['market_tolerans_atr']}×ATR15 "
@@ -358,6 +359,13 @@ def _varsayimlar(p: dict, r_min: float, profil_var: bool) -> list:
          else "kurulum ölçeği ATR'si 15M (sabit-USDT profili yok)"),
         "giriş adayları YALNIZ ölçülen yapıdan: açık 15M FVG kenarları + "
         "teyitli swingler; yuvarlak/uydurma seviye kullanılmaz",
+        # "açık FVG"yi tanımlayan eşik burada BEYAN EDİLİR: aday havuzunu
+        # doğrudan belirlediği için etiketsiz bırakılırsa gizli eşik olur.
+        (f"'açık FVG' eşiği = karar_motoru.FVG_MITIGASYON {KM.FVG_MITIGASYON} "
+         "(bölgenin bu oranı tükenince mitige sayılır; KALİBRE EDİLMEMİŞ "
+         "tasarım varsayımı — consequent encroachment konvansiyonu). Giriş "
+         "fiyatı da bölge orta noktasıdır; eşik onunla hizalıdır. Bu değer "
+         "aday havuzunu doğrudan daraltır/genişletir"),
         "hedef yön tarafındaki İLK teyitli likidite; yoksa aday düşer "
         "(R-katı uydurma hedef üretilmez)",
     ]

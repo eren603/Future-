@@ -237,9 +237,9 @@ def fvg_mitige(bars, fvg, mitigasyon=None):
 
     open_fvgs() ile AYNI kural. Gerekçe: zincir-1'in bölgesi leaves_fvg'den
     gelir ve open_fvgs taramasının DIŞINDADIR — burada açıkça uygulanmazsa
-    girişi (ce) çoktan geçilmiş bir bölge taze kurulum diye sunulur. Zincir-1
-    gerçek sinyallerin çoğunu üretir, dolayısıyla bu kapı asıl ateşleyen yolu
-    korur (fail-closed).
+    girişi (ce) çoktan geçilmiş bir bölge taze kurulum diye sunulur.
+    (Zincir-1'in toplam sinyal içindeki payı hakkında burada sayı verilmez —
+    ölçüm veriye bağlıdır ve kaynaksız nicel iddia yasaktır.)
     """
     m = FVG_MITIGASYON if mitigasyon is None else mitigasyon
     top, bot = fvg["ust"], fvg["alt"]
@@ -539,7 +539,20 @@ def decide(bars15, bars4h):
     rev_mitige = bool(rev and rev.get("fvg") and fvg_mitige(bars15, rev["fvg"]))
     if rev is not None:
         rev["fvg_mitige"] = rev_mitige
-    if rev and rev["adim"] == 4 and not rev_mitige:
+    if rev and rev["adim"] == 4 and rev_mitige:
+        # FAIL-CLOSED: dizi 4/4 tamam ama girişi bayat. Karar ALT ZİNCİRLERE
+        # DEVREDİLMEZ. Gerekçe ölçümle: devretmek serbest bırakıldığında zincir-2
+        # market girişi devralıyor ve BEKLE'ler sinyale dönüyordu (kapı sinyali
+        # AZALTMAK yerine ARTIRIYORDU). En kaliteli kurulum bayatsa daha gevşek
+        # bir ikame alınmaz — bu, kapının varlık sebebidir.
+        karar = {"karar": "BEKLE", "yon": None, "zincir": 1,
+                 "neden": ("BEKLE: dönüş dizisi 4/4 TAMAM (%s, %.6g süpürüldü) ama "
+                           "kurulumun FVG'si mitige — giriş ce=%.6g bölge %%%.0f "
+                           "tükendikten sonra zaten geçilmiş, kurulum BAYAT. "
+                           "Alt zincire devredilmez (fail-closed)."
+                           % (rev["yon"], rev["seviye"], rev["fvg"]["ce"],
+                              FVG_MITIGASYON * 100))}
+    elif rev and rev["adim"] == 4:
         yon = rev["yon"]
         fvg = rev["fvg"]
         entry = fvg["ce"]
@@ -588,10 +601,8 @@ def decide(bars15, bars4h):
             # EN GÜNCEL (en son oluşan) bölge — fiyata en yakın olduğu GARANTİ
             # DEĞİL. Mitigasyon kapısı yakın bir bölgeyi düşürürse yerine daha
             # eski/uzak bölge terfi edebilir; uzak giriş risk mesafesini büyütüp
-            # R'yi yükseltir. Yani mitigasyon kuralı bu yolda sinyal sayısını
-            # tek yönlü AZALTMAZ (ölçüldü: sentetik seride 100→88, 5 kapanma /
-            # 3 açılma). Burada R "yüksek" ise sebebi kenar değil MESAFE olabilir
-            # — zincir-3 çıktısı bu yüzden rr_denetim'siz kullanılmamalıdır.
+            # R'yi yükseltir. Yani buradaki R "yüksek" ise sebebi kenar değil
+            # MESAFE olabilir — zincir-3 çıktısı rr_denetim'siz kullanılmamalıdır.
             f = aligned[-1]
             entry = f["ce"]
             below = [s[1] for s in swings15 if s[2] == "L" and s[1] < min(f["alt"], f["ust"])]
@@ -771,6 +782,14 @@ def render(karar, ctx, akibet, bars15, bars4h, esikler):
                  "süpürme ucu %s. Dizi tamamlanırsa yön değişebilir." %
                  (rev["adim"], rev["yon"], fnum(rev["seviye"]),
                   fnum(rev["supurme_ucu"])))
+    elif rev and rev["adim"] == 4 and rev.get("fvg_mitige"):
+        # Düşen 4/4 dizi SESSİZCE kaybolmaz (aksi halde çıktı "dizi tamamlanmadı"
+        # der ve state 4/4 gösterir — kendi çıktısıyla çelişir).
+        L.append("-" * 64)
+        L.append("UYARI : dönüş dizisi 4/4 TAMAM (%s) ama FVG mitige — giriş "
+                 "ce=%s bölgenin %%%.0f'i tükendikten sonra geçilmiş, kurulum "
+                 "BAYAT. Zincir-1 düştü ve alt zincire DEVREDİLMEDİ (fail-closed)." %
+                 (rev["yon"], fnum(rev["fvg"]["ce"]), FVG_MITIGASYON * 100))
     L.append("=" * 64)
     return "\n".join(L)
 

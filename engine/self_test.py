@@ -105,6 +105,49 @@ def test_fvg_mitigasyon():
           "1.0 eşiğinde aynı bölge mitige OLMAMALI")
 
 
+def test_zincir1_kapisi_fail_closed():
+    """DEĞİŞMEZ: mitigasyon kapısı sinyal AÇAMAZ, yalnız kapatabilir.
+
+    Gözlemci bunun ihlal edildiğini ölçtü: kapı zincir-1'i düşürünce karar alt
+    zincire devroluyor ve BEKLE'ler market sinyaline dönüyordu (fail-OPEN).
+    Kapı artık 4/4+mitige durumunda doğrudan BEKLE veriyor. Bu test o değişmezi
+    gerçek girdi verisiyle kilitler — devretme geri gelirse KIRILIR."""
+    base = os.path.dirname(os.path.abspath(__file__))
+    setler = [(os.path.join(base, "girdi", "m15.json"), os.path.join(base, "girdi", "h4.json")),
+              (os.path.join(base, "girdi", "eth", "m15.json"),
+               os.path.join(base, "girdi", "eth", "h4.json"))]
+    setler = [(a, b) for a, b in setler if os.path.exists(a) and os.path.exists(b)]
+    if not setler:
+        check("zincir1-kapi-fail-closed", True, "ATLANDI (girdi verisi yok)")
+        return
+    orij = km.fvg_mitige
+    acti, kapatti, pencere = [], 0, 0
+    try:
+        for m15p, h4p in setler:
+            b15, b4 = km.parse_klines(m15p), km.parse_klines(h4p)
+            for e in range(110, len(b15) + 1):
+                w, h4 = b15[:e], b4[:max(km.MIN_H4, int(e / 16) + 1)]
+                if len(h4) < km.MIN_H4:
+                    h4 = b4[:km.MIN_H4]
+                km.fvg_mitige = lambda *a, **k: False
+                yok, _ = km.decide(w, h4)
+                km.fvg_mitige = orij
+                var, _ = km.decide(w, h4)
+                pencere += 1
+                y, v = yok.get("karar"), var.get("karar")
+                if y == "BEKLE" and v in ("LONG", "SHORT"):
+                    acti.append((m15p.split("/")[-2], e, v))
+                elif y in ("LONG", "SHORT") and v == "BEKLE":
+                    kapatti += 1
+    finally:
+        km.fvg_mitige = orij
+    check("zincir1-kapi-fail-closed", not acti,
+          "%d pencere: kapattı=%d AÇTI=%d %s" %
+          (pencere, kapatti, len(acti), acti[:3] if acti else ""))
+    check("zincir1-kapi-etkili", kapatti > 0,
+          "kapı hiç kurulum düşürmüyorsa ölçüm anlamsız (kapattı=%d)" % kapatti)
+
+
 def _with_mit(deger, fn):
     """FVG_MITIGASYON'u geçici olarak değiştirip fn()'i koştur (sabiti geri koyar)."""
     onceki = km.FVG_MITIGASYON
@@ -251,6 +294,7 @@ if __name__ == "__main__":
     test_swings()
     test_fvg()
     test_fvg_mitigasyon()
+    test_zincir1_kapisi_fail_closed()
     test_outcome_label()
     test_end_to_end()
     print("-" * 50)

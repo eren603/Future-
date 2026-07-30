@@ -162,11 +162,26 @@ def main():
     finally:
         st.FVG_MITIGASYON = _onceki
     # detect() eşiği params ile ezilebilmeli + varsayimlar'da BEYAN edilmeli
-    _rep = st.detect({"candles": bars([+1]*5 + [-1]*5 + [+1]*5 + [-1]*5 + [+1]*5),
-                      "params": {"fvg_mitigasyon": 1.0}})
-    assert any("FVG mitigasyon" in v for v in _rep["varsayimlar"]), _rep["varsayimlar"]
-    assert any("1.0" in v for v in _rep["varsayimlar"] if "FVG mitigasyon" in v), \
-        "params ile ezilen değer varsayimlar'a yansımalı"
+    # DAVRANIŞ assert'i — yalnız varsayimlar METNİNE bakmak sahte güvencedir:
+    # detect() içindeki find_fvgs(df, p[...]) bağı koparılsa bile metin p'den
+    # üretildiği için testi geçerdi. Bu yüzden ÇIKTI farkı sınanır.
+    # Fixture eşiği AYIRT ETMELİ: gap'e girip orta noktayı geçen ama uzak
+    # kenara değmeyen bir geri çekilme şart. Düz zigzag bunu üretmez (1.0 ile
+    # 0.0 aynı sonucu verir) — o yüzden bölge ve dokunuş elle kurulur.
+    _c = bars([0.0] * 22)          # DÜZ taban: kendi başına hiç FVG üretmez
+    _c += [{"open": 100.0, "high": 100.2, "low": 99.9, "close": 100.1},
+           {"open": 100.1, "high": 106.0, "low": 100.0, "close": 105.8},  # displacement
+           {"open": 105.8, "high": 106.5, "low": 103.0, "close": 105.0},  # bull FVG 100.2–103.0
+           {"open": 105.0, "high": 105.2, "low": 101.4, "close": 102.0},  # ce=101.6 GEÇİLDİ,
+           {"open": 102.0, "high": 103.2, "low": 101.8, "close": 102.5}]  # uzak kenar 100.2 sağlam
+    _r05 = st.detect({"candles": _c, "params": {"fvg_mitigasyon": 0.0}})
+    _r10 = st.detect({"candles": _c, "params": {"fvg_mitigasyon": 1.0}})
+    assert len(_r10["acik_fvgler"]) > len(_r05["acik_fvgler"]), (
+        "params gerçekten UYGULANMALI: 1.0 daha çok açık FVG bırakmalı "
+        "(1.0=%d, 0.0=%d)" % (len(_r10["acik_fvgler"]), len(_r05["acik_fvgler"])))
+    assert any("FVG mitigasyon" in v for v in _r10["varsayimlar"]), _r10["varsayimlar"]
+    assert any("1.0" in v for v in _r10["varsayimlar"] if "FVG mitigasyon" in v), \
+        "params ile ezilen değer varsayimlar'a da yansımalı"
     # iki motorun sabiti AYNI olmak zorunda
     import importlib.util as _ilu
     _p = Path(__file__).resolve().parents[4] / "engine" / "karar_motoru.py"
