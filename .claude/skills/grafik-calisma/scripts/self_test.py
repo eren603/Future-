@@ -10,6 +10,7 @@ import confluence as cf  # noqa: E402
 import smc_tespit as st  # noqa: E402
 import setup_dogrulama as sd  # noqa: E402
 import kalibrasyon as kb  # noqa: E402
+import fvg_kalibre as fk  # noqa: E402
 
 
 def bars(moves, start=100.0, wick=0.2):
@@ -302,10 +303,55 @@ def main():
     r = cf.synth(long_job)
     assert "varsayım" in r["esik_kaynagi"], r["esik_kaynagi"]
 
+    # ================= FVG KALİBRASYON =================
+    # Bölge tanımı smc_tespit'ten İTHAL edilmeli; ikinci bir tanım = sessiz sapma.
+    up = bars([0.5] * 6 + [4.0] + [0.5] * 4 + [-0.4] * 8 + [0.5] * 20)
+    df = st.load_frame({"candles": up})
+    atr = st.wilder_atr(df, 14).to_numpy()
+    rec = fk.fvg_ozellikleri(df, atr, st.FVG_MITIGASYON)
+    idx_kalibre = {r["i"] for r in rec}
+    idx_tespit = {f["i"] for f in st.find_fvgs(df, st.FVG_MITIGASYON)}
+    assert idx_kalibre == idx_tespit, (idx_kalibre, idx_tespit)
+    # displacement mumu ORTA mumdur (i-1), bölgeyi kapatan 3. mum DEĞİL
+    buyuk = [r for r in rec if r["govde_atr"] == max(
+        (x["govde_atr"] for x in rec if x["govde_atr"] == x["govde_atr"]), default=0)]
+    if buyuk:
+        r0 = buyuk[0]
+        d = r0["i"] - 1
+        govde_orta = abs(df["close"][d] - df["open"][d])
+        assert abs(r0["govde_atr"] * r0["atr"] - govde_orta) < 1e-6, r0
+
+    # dolum eşiği find_fvgs ile aynı yönde: seviye derinleştikçe dolum ARTMAZ
+    h = df["high"].to_numpy(); l = df["low"].to_numpy()
+    onceki = None
+    for sv in (0.0, 0.5, 1.0):
+        n_dol = sum(1 for r in rec
+                    if fk._dolum_bari(h, l, r, sv, 40)[0] is not None)
+        if onceki is not None:
+            assert n_dol <= onceki, (sv, n_dol, onceki)
+        onceki = n_dol
+
+    # az veri → fail-closed "VERİ YOK" (uydurma eşik üretilmez)
+    kucuk = fk.kalibre({"candles": bars([0.3] * 30)})
+    assert kucuk["sonuc"] in ("VERİ YOK", "KALİBRE EDİLEMEDİ (fail-closed)"), kucuk["sonuc"]
+    if kucuk["sonuc"] == "VERİ YOK":
+        assert kucuk["onerilen_params"] == {}, kucuk["onerilen_params"]
+
+    # terzil testi: ayrım yoksa filtre ÖNERİLMEZ (eşik uydurulmaz)
+    duz = [{"r": 0.1 * ((i % 5) - 2), "x": float(i)} for i in range(30)]
+    t = fk.tercil_testi(duz, "x")
+    assert t["sonuc"] != "FİLTRE KANITLI" or t["onerilen_esik"] is not None, t
+    if t["sonuc"].startswith("AYRIM YOK"):
+        assert t["onerilen_esik"] is None, t
+    # örneklem taban altındaysa test koşmaz (fail-closed)
+    assert fk.tercil_testi(duz[:5], "x")["sonuc"] == "VERİ YOK"
+
     print("SELF_TEST_OK: confluence(long/short/yalniz-fib/celiski/rr/geometri/"
           "canlilik/atr-sl/mtf-kapi/rejim-kapi/yuksek-vol/esik-kaynak), "
           "smc-tespit(fvg/likidite/rejim/yapi/uctan-uca/mtf), "
           "kalibrasyon(wilson/dinamik-rr/bootstrap/mae/permutasyon), "
+          "fvg-kalibre(tanim-ithal/displacement-orta-mum/dolum-monoton/"
+          "veri-yok-fail-closed/tercil-filtre), "
           "dogrulama(kalibre-long/short/fail-closed/legacy-etiket)")
 
 
