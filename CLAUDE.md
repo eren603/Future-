@@ -308,3 +308,15 @@ Kurallar:
 3. **Kullanıcıyı memnun etme / gerekçesiz geri adım:** kullanıcının iddiası dahil
    HİÇBİR iddia doğrulanmadan kabul edilmez. İtiraz gelince kanıtsız fikir
    değiştirilmez; kanıt desteklerse kabul, desteklemezse gerekçeyle itiraz edilir.
+
+## Ek kural (BAĞ-KURMA — tetikleyicisiz, her pencerede otomatik)
+
+Bir soru/analiz birden fazla olay, problem, veri ya da sinyal içeriyorsa
+`bag-kurma` becerisi (.claude/skills/bag-kurma/SKILL.md) OTOMATİK uygulanır —
+kullanıcı hiçbir komut yazmaz. Dört yöntem grubundan (nedensel zincir, analojik
+eşleme, düğüm-bağ haritası, zaman bağları) EN AZ İKİSİ denenir; her bağ hipotezi
+Pre-Mortem → Steelman → Red Team döngüsünden geçer; hafızadan bağ, dairesel
+doğrulama, tünel görüş ve taraflılık YASAKTIR. Çıktı kanıt-etiketli BAĞ
+HARİTASIDIR; harita karar değildir, karar ilgili motor/kapıların işidir.
+Ciddi çıktılar yayın öncesi .claude/agents/denetci.md yönergesiyle bağımsız
+denetimden geçer.
