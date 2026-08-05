@@ -2,6 +2,7 @@
   "islenen": [
     "0599b48071538279eeaa226df537b77aa7e86d35dbe27a4966adaa441f42fe8c",
     "05cb65c3fad27f5621df535186b51c5635637aeebd6dc858b083d3bc05b0e1e6",
+    "4a2829bc99bf6228d6ca5012414eb5a40c4cd6f876e89809b3c66240ed6e7b2b",
     "4f68a8ea71effda3536682cc12ded84b5388430b01bb3f752372ce7bd8139db8",
     "7a4623f5b909368a3de6dbe8acc5528cb71d2fe58494f88e05c71b4bab860aa3",
     "7e0fdd15ca4b107ddd9b343080b819abd2dcb3e85ff739bc55abcf0015ae95fa",
@@ -13,14 +14,19 @@
   ],
   "reddedilen": {},
   "son": {
-    "dosya": "/root/.claude/uploads/f01690ea-251d-58a2-9ef0-0ca3fea3a3cb/6f79f38f-piramit_veri_BTC_ETH_20260729_0341.json",
-    "sha": "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3"
+    "dosya": "/root/.claude/uploads/565b11f2-dd0c-5fa3-8fa9-9ad2e1116185/32d51091-piramit_veri_BTC_ETH_20260805_1032.json",
+    "sha": "4a2829bc99bf6228d6ca5012414eb5a40c4cd6f876e89809b3c66240ed6e7b2b"
   },
   "stat": {
     "/root/.claude/uploads/f01690ea-251d-58a2-9ef0-0ca3fea3a3cb/6f79f38f-piramit_veri_BTC_ETH_20260729_0341.json": [
       1785296542.7227147,
       141027,
       "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3"
+    ],
+    "/root/.claude/uploads/565b11f2-dd0c-5fa3-8fa9-9ad2e1116185/32d51091-piramit_veri_BTC_ETH_20260805_1032.json": [
+      1785926094.8832316,
+      140787,
+      "4a2829bc99bf6228d6ca5012414eb5a40c4cd6f876e89809b3c66240ed6e7b2b"
     ]
   }
 }

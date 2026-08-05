@@ -1,9 +1,9 @@
 {
-  "liq_long": 0.6117,
-  "liq_short": 0.7075,
+  "liq_long": 0.1131,
+  "liq_short": 0.1484,
   "birim": "milyon USD (CoinGlass 4S bar, Sembol Likidasyonları)",
-  "kaynak": "CoinGlass Binance BTCUSDT Perpetual 4S — Longs 611.7K / Shorts 707.5K (62660 dibinden 64175'e toparlanma sonrası; SHORT likidasyonu long'dan BÜYÜK — düşüş beklentisindeki kalabalık toparlanmada yakalandı). 15M panelde Longs 67.4K / Shorts 2.5K (küçük long temizliği)",
-  "zaman_utc": "2026-07-29 03:40",
-  "zaman_yerel": "2026-07-29 06:39-06:40 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 06:39-06:40 (UTC+3) → UTC 03:39-03:40; paket çekimi 2026-07-29 03:41:24 UTC ile aynı dakikalar; son bar 2026-07-29 03:30"
+  "kaynak": "CoinGlass Binance BTCUSDT Perpetual 4S — Longs 113.1K / Shorts 148.4K (SHORT likidasyonu baskın, 1.31×; 62228.80 dibinden 64512.90'a toparlanma short kalabalığını yakmaya devam ediyor). 15M panelde Longs -- / Shorts -- (son 15M barında likidasyon YOK — sakin bar)",
+  "zaman_utc": "2026-08-05 10:32",
+  "zaman_yerel": "2026-08-05 13:32 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 13:31-13:32 (UTC+3) → UTC 10:31-10:32; paket çekimi 2026-08-05 10:32:54 UTC ile aynı dakika; son bar 2026-08-05 10:30 (2 dk)"
 }

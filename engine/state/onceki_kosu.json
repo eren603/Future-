@@ -1,7 +1,7 @@
 {
   "sembol": "engine/girdi",
-  "son_bar": 1785295800000,
-  "son_bar_utc": "2026-07-29 03:30",
+  "son_bar": 1785925800000,
+  "son_bar_utc": "2026-08-05 10:30",
   "son_kapanis": null,
   "YON_BIAS": "NÖTR",
   "yon_skoru": 0.0,
@@ -16,14 +16,14 @@
     "gorsel-teyit": "flat"
   },
   "surucu": {
-    "trend": "bear",
-    "adx": 16.63,
-    "atr": 176.90141823,
+    "trend": "bull",
+    "adx": 8.15,
+    "atr": 101.85207979,
     "rejim": "range",
-    "turev_skor": -0.078,
+    "turev_skor": -0.003,
     "turev_kapsam": 1.0,
     "funding": 0.0,
-    "lsr": 0.0,
+    "lsr": 0.5,
     "cvd_delta": 0.7,
     "oi_delta": -0.6,
     "liq_long": 0.0
