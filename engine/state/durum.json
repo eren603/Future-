@@ -1,11 +1,11 @@
 {
-  "son_bar": 1785925800000,
-  "son_bar_utc": "2026-08-05 10:30",
+  "son_bar": 1785963600000,
+  "son_bar_utc": "2026-08-05 21:00",
   "karar": {
     "karar": "BEKLE",
     "yon": null,
-    "zincir": 4,
-    "neden": "BEKLE: 4H rejim UP ama fiyat hizasında açık FVG (pusu bölgesi) yok; dönüş dizisi ve teyitli 15M kırılımı da yok."
+    "zincir": 1,
+    "neden": "BEKLE: dönüş dizisi 4/4 TAMAM (LONG, 64066.1 süpürüldü) ama kurulumun FVG'si mitige — giriş ce=64271.8 bölge %50 tükendikten sonra zaten geçilmiş, kurulum BAYAT. Alt zincire devredilmez (fail-closed)."
   },
   "takip": {
     "son_bar": 1785195000000,
@@ -26,47 +26,60 @@
       "r": 1.87
     }
   },
-  "akibet_onceki": "Önceki SHORT: giriş tetiklendi, T1 geldi, T2 bekliyor — pozisyon AÇIK görünümde (son bar 2026-08-05 10:30).",
-  "acik_bolgeler": [],
+  "akibet_onceki": "Önceki SHORT: giriş tetiklendi, T1 geldi, T2 bekliyor — pozisyon AÇIK görünümde (son bar 2026-08-05 21:00).",
+  "acik_bolgeler": [
+    {
+      "tip": "bull",
+      "ust": 64638.7,
+      "alt": 64589.5,
+      "ce": 64614.1,
+      "bar": 186,
+      "zaman": 1785951000000
+    },
+    {
+      "tip": "bear",
+      "ust": 64906.6,
+      "alt": 64804.3,
+      "ce": 64855.45,
+      "bar": 199,
+      "zaman": 1785962700000
+    }
+  ],
   "swing_15m_son": [
     [
-      64010.1,
-      "L"
-    ],
-    [
-      64052.4,
-      "L"
-    ],
-    [
-      64500.0,
+      64548.6,
       "H"
     ],
     [
-      64345.8,
-      "H"
-    ],
-    [
-      63962.4,
+      64265.4,
       "L"
     ],
     [
-      64257.1,
+      64728.5,
       "H"
     ],
     [
-      64066.1,
+      64348.7,
       "L"
     ],
     [
-      64181.6,
+      64740.5,
+      "H"
+    ],
+    [
+      64506.3,
+      "L"
+    ],
+    [
+      64772.3,
+      "L"
+    ],
+    [
+      65022.0,
       "H"
     ]
   ],
   "swing_4h_son": [
-    [
-      63779.0,
-      "H"
-    ],
     [
       62268.2,
       "L"
@@ -86,16 +99,20 @@
     [
       64512.9,
       "H"
+    ],
+    [
+      63847.0,
+      "L"
     ]
   ],
   "rejim_4h": {
     "rejim": "UP",
-    "fark": 562.6199999999953,
-    "esik": 557.8740000000034
+    "fark": 626.8349999999846,
+    "esik": 558.8819999999963
   },
   "donus_dizisi": {
-    "yon": "SHORT",
-    "adim": 3,
-    "supurme_ucu": 64329.4
+    "yon": "LONG",
+    "adim": 4,
+    "supurme_ucu": 64007.0
   }
 }

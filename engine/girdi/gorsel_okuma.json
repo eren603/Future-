@@ -2,35 +2,36 @@
   "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (8 görüntünün BTC bölümü: 15M+4S Liquidity Heatmap, 15M+4S panel) ↔ kline uçları (aynı bar)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "yatay",
-  "yapi_olayi": "62228.80 (07/31 03:00) dibinden çok-günlük toparlanma 64512.90'a (08/05 ~03:00), sonrasında 64000-64400 bandında SIKIŞMA — 15M MA'lar iç içe (MA5 64145.71 / MA10 64140.53 / MA30 64169.56; toplam açıklık 29 puan = %0.05), fiyat 64157 tam MA kümesinin İÇİNDE. 4S'te ise fiyat MA5 64141.63 > MA10 63963.10 > MA30 63362.62 dizisinin ÜSTÜNDE (boğa dizilimi, açıklık 779 puan = %1.2)",
+  "trend": "bull",
+  "yapi_olayi": "08/05 16:00'daki 63847.00 dibinden KESİNTİSİZ İMPULS 65022.00'ye (+1175 puan / %1.84, ~7 saat), ardından son barlarda sert kırmızı geri çekilme 64758'e. 15M MA dizilimi boğa (MA5 64872.38 > MA10 64852.16 > MA30 64659.96) ama fiyat MA5/MA10'un ALTINA düştü, MA30'un üstünde kaldı — impuls sonrası ilk düzeltme. 4S'te fiyat MA5 64420.68 > MA10 64250.21 > MA30 63539.29'un tümünün üstünde (açıklık 881 puan = %1.4, bir önceki koşudaki 779 puandan geniş)",
   "seviyeler": {
     "direnc": [
-      64400,
-      64512.9,
-      65000,
-      65689.6
+      64800,
+      64900,
+      65022,
+      65100,
+      65391.3
     ],
     "destek": [
-      64050,
-      63917.1,
-      63582.1,
-      63428.8,
-      62228.8
+      64660,
+      64600,
+      64500,
+      64000,
+      63847
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 64157 (+1.07%); 24S menzil 63436-64513, 24S hacim 8.632B; VOL 5.5M vs MA5 25.4M / MA10 36.8M — son bar hacmi ortalamanın ÇOK ALTINDA (sıkışma barı, itki yok); funding +0.0038%, şerit pencere boyunca KESİNTİSİZ POZİTİF, sonda hafif yükseliyor; Sembol Likidasyonları Longs -- / Shorts -- (son 15M barında likidasyon YOK); Açık Faiz 107.3K/107.3K/107.3K/107.3K (düz) ve eğri pencere boyunca AŞAĞI (109.7K tavanından 107.3K'ya)",
-    "4S panel: fiyat 64157 (+1.07%); MA5 64141.63 / MA10 63963.10 / MA30 63362.62 — fiyat üçünün de ÜSTÜNDE, dizilim boğa yönlü; pencere tepesi 66924.10 (07/21), dip 62228.80 (07/31 03:00); VOL 466.0M vs MA5 1.18B / MA10 1.25B → YÜKSELİŞ DÜŞÜK HACİMLE (teyit zayıf); funding +0.0038%; bu 4S barda likidasyon Longs 113.1K / Shorts 148.4K (SHORT baskın 1.31×); Açık Faiz bu 4S barda 107.8K açılış → 107.3K kapanış (OI DÜŞÜYOR; pencere tavanı 111.8K)",
-    "15M heatmap (08/05 00:00→10:15+): fiyat 64149.90; pencere tepesi 64512.90, dibi 63917.10; KOYU (mor) likidite şeritleri: 64500 hattında kalın kesintisiz bant, 64400 hattında ikinci kalın bant, altta 64050 hattında bant — fiyatın 250-350 puan ÜSTÜNDE çift likidite tavanı, ~100 puan altında tek taban",
-    "4S heatmap (07/27→08/05): fiyat 64154.40; pencere tepesi 65689.60, dibi 62228.80; üst kitap İNCE (65000-65500 arası dağınık soluk şeritler, kalın duvar YOK); en yoğun bölge 64000-64500 bandı",
-    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S tepe 64513 ↔ kline son-96-bar max 64512.9 BİREBİR; 15M pencere dibi 63582.10 ↔ kline son-96-bar min 63582.1 BİREBİR; 4S heatmap dibi 62228.80 ↔ 4H min 62228.8 BİREBİR; panel fiyat 64157 / heatmap 64149.90-64154.40 ↔ son kapanış 64166.20 (bar içi sapma 9-16 puan = %0.02). SAPMA AÇIKLANDI: panel 24S dibi 63436 ↔ kline son-96-bar min 63582.1 uyuşmuyor; kline son-100 barda min 63428.8 (08/04 09:45-10:45 UTC) → borsanın 24S penceresi 96 bardan ~1 saat daha geriye uzanıyor, panel değeri o barlardan geliyor (çelişki DEĞİL)",
-    "Görsel yön okuması: 4S boğa dizilimi + 15M tam sıkışma (MA'lar iç içe, hacim ortalamanın altında) = 15M'de tek yönlü net sinyal YOK. Yükselişin İÇ KALİTESİ ZAYIF: OI düşerken (107.8K→107.3K) fiyat yükseliyor ve short likidasyonu baskın → bu YENİ ALICI DEĞİL, SHORT KAPATMA (short-covering) karakteri; short arzı bittiğinde itki de biter"
+    "15M panel: fiyat 64766 (+0.75%); 24S menzil 63847-65022, 24S hacim 9.578B (bir önceki koşudaki 8.632B'den yüksek); VOL 48.3M vs MA5 129.4M / MA10 103.5M — impulsun hacmi ortalamanın üstündeydi ama SON bar ortalamanın altında (itki sönüyor); funding %0.0011 ve şerit sonda SARI (negatif) barlar gösteriyor — bir önceki koşuda kesintisiz pozitifti, şimdi long primi sıfırın altına indi; Sembol Likidasyonları Longs 70.9K / Shorts -- (tepe sonrası küçük long temizliği); Açık Faiz 107.5K/107.5K/107.4K/107.4K ve eğri impulsla yükselip SON barlarda SERT DÜŞTÜ",
+    "4S panel: fiyat 64758 (+0.75%); MA5 64420.68 / MA10 64250.21 / MA30 63539.29 — fiyat üçünün de üstünde, dizilim boğa; pencere tepesi 66711.00 (07/21), dip 62228.80 (07/31 15:00); VOL 641.4M vs MA5 1.43B / MA10 1.47B — hâlâ ortalamanın YARISININ altında; funding %0.0011; bu 4S barda likidasyon Longs 107.5K / Shorts 1.2M → SHORT LİKİDASYONU 11.2× BASKIN (short squeeze); Açık Faiz bu 4S barda 108.8K açılış → 107.4K kapanış (OI 1.4K DÜŞTÜ — fiyat yükselirken pozisyon kapanıyor)",
+    "15M heatmap (08/05 10:30→20:45+): fiyat 64772.90; pencere tepesi 65022.00, dibi 63847.00; kalın koyu bantlar 65000-65100 (üstte çoklu), 64900, 64800 (fiyatın hemen üstünde), 64600, 64500, 64000 ve 63850; yani impuls yukarıdaki bantları yemedi, onların ALTINDA durdu",
+    "4S heatmap (07/27→08/05): fiyat 64773.00; pencere tepesi 65391.30, dibi 62228.80; üst kitap İNCE — 65000-65100 civarında birkaç kırmızı şerit dışında kalın duvar yok",
+    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S tepe 65022 ↔ kline son-96-bar max 65022.0 BİREBİR; panel 24S dip 63847 ↔ kline son-96-bar min 63847.0 BİREBİR (bir önceki koşudaki pencere-genişliği sapması bu koşuda YOK); 4S heatmap dibi 62228.80 ↔ 4H serisinde mevcut; panel fiyat 64766/64758 ↔ son kapanış 64758.10 BİREBİR; heatmap 64772.90/64773.00 (bar içi, +15 puan)",
+    "Görsel yön okuması: 15M yapı açıkça BOĞA (63847→65022 kesintisiz impuls, MA dizilimi boğa). AMA impulsun iç kalitesi bir önceki koşuyla aynı hastalığı taşıyor: 4S barda OI 108.8K→107.4K DÜŞERKEN fiyat yükseldi ve short likidasyonu 11.2× baskın → bu yeni alıcı değil SHORT SQUEEZE. Squeeze bitince (short arzı tükenince) itkinin kendi yakıtı yok; son bar bunu gösteriyor: hacim ortalamanın altında, funding sıfırın altına sarktı, fiyat MA5/MA10'un altına düştü"
   ],
   "h4_trend": "bull",
-  "celiski_notu": "Görsel-kline uyum 3 uçta BİREBİR (64512.9 / 63582.1 / 62228.8); tek sapma panel 24S dibi (63436) olup kline son-100 barın minimumu 63428.8 ile eşleşiyor — borsa 24S penceresinin 96 barlık pencereden geniş olmasından kaynaklanıyor, çelişki değil. DİKKAT (yükselişin iç kalitesi): (a) 4S hacim 466M = MA10 1.25B'nin %37'si; (b) 4S barda OI 107.8K→107.3K DÜŞÜYOR (pozisyon boşalması, yeni para girmiyor); (c) short likidasyonu long'un 1.31×'i (yakıt short kapatmadan geliyor); (d) 15M'de fiyatın 250-350 puan üstünde 64400 ve 64500'de ÇİFT kalın likidite bandı = hem mıknatıs hem satış duvarı. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
+  "celiski_notu": "Görsel-kline uyum TAM ve BİREBİR (65022.0 / 63847.0 / 64758.10 — üç uç da tam eşleşti, bu koşuda pencere sapması bile yok). ÇELİŞKİ: yapı boğa ama akış boşalıyor — (a) 4S barda OI 108.8K→107.4K, fiyat yükselirken pozisyon KAPANIYOR (squeeze karakteri, taze long değil); (b) short likidasyonu 1.2M vs long 107.5K = 11.2×, itkinin yakıtı short kapatma; (c) funding şeridi sonda NEGATİF bara döndü (bir önceki koşuda kesintisiz pozitifti) — long iştahı bitti; (d) son bar hacmi 48.3M, MA10 103.5M'in yarısından az. Yukarıda 64800/64900/65000-65100 kalın likidite bantları duruyor: impuls onları YEMEDİ, altlarında durdu. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-08-05 10:32",
-  "zaman_yerel": "2026-08-05 13:31-13:32 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:31-13:32 (UTC+3) → UTC 10:31-10:32; paket çekimi 2026-08-05 10:32:54 UTC ile aynı dakika; son bar 2026-08-05 10:30 (2 dk)"
+  "zaman_utc": "2026-08-05 21:05",
+  "zaman_yerel": "2026-08-06 00:04-00:05 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 00:04-00:05 (UTC+3) → UTC 21:04-21:05; paket çekimi 2026-08-05 21:05:49 UTC ile aynı dakika; son bar 2026-08-05 21:00 (5 dk)"
 }

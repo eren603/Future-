@@ -2,40 +2,38 @@
   "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: 15M+4S Liquidity Heatmap, 15M+4S panel) ↔ kline uçları (aynı bar)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
-  "trend": "yatay",
-  "yapi_olayi": "1820.61 (07/31 03:00) dibinden toparlanma; 15M penceresinde 1881.72 tepesinden 1857.38'e düşüş, ardından 1862-1874 arası SIKIŞMA — MA5 1871.67 / MA10 1870.92 / MA30 1869.10 iç içe (açıklık 2.6 puan = %0.14), fiyat 1872.09 kümenin hemen üstünde. 4S'te fiyat MA5 1870.81 > MA10 1868.48 > MA30 1864.24 dizisinin ÜSTÜNDE ama açıklık yalnız 6.6 puan (%0.35) — BTC'nin (%1.2) üçte biri, dizilim boğa ama ZAYIF",
+  "trend": "bull",
+  "yapi_olayi": "08/05 16:00'daki 1854.51 dibinden DİK İMPULS 1927.19'a (+72.68 puan / %3.92, ~7 saat — BTC'nin %1.84'ünün iki katı), ardından son barda sert kırmızı geri çekilme 1908.95'e. 15M MA dizilimi boğa ama MA5 1917.46 ≈ MA10 1917.60 (yapışık) ve fiyat İKİSİNİN DE ALTINDA, MA30 1899.53'ün üstünde — impuls sonrası ilk düzeltme, momentum kayıyor. 4S'te fiyat MA5 1887.47 > MA10 1879.15 > MA30 1867.64'ün tümünün ÜSTÜNDE (açıklık 19.83 puan = %1.04; bir önceki koşudaki %0.35'in üç katı — 4S boğa dizilimi artık zayıf değil)",
   "seviyeler": {
     "direnc": [
-      1874,
-      1880.8,
-      1881.72,
-      1900,
-      1920,
+      1914,
+      1917.5,
+      1927.19,
+      1930,
       1940,
-      1977.58,
-      1982
+      1949.64
     ],
     "destek": [
-      1868,
-      1864,
-      1860.3,
-      1857.38,
-      1852.55,
-      1820.61
+      1900,
+      1899.53,
+      1890,
+      1880,
+      1866,
+      1854.51
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 1872.09 (+0.91%); 24S menzil 1854.61-1881.72, 24S hacim 5.165B; MA5 1871.67 / MA10 1870.92 / MA30 1869.10 İÇ İÇE, fiyat hepsinin hafif üstünde; VOL 2.4M vs MA5 20.1M / MA10 25.1M — son bar hacmi ortalamanın çok altında; funding +0.001% ve şerit pencere boyunca TEPEDEN İNİYOR (0.0095'ten sıfıra doğru, sonda birkaç SARI/negatif bar) — long primi tükeniyor; Sembol Likidasyonları Longs -- / Shorts -- (son 15M barında yok); Açık Faiz 2.3M düz, eğri pencere boyunca AŞAĞI, sonda küçük toparlanma",
-    "4S panel: fiyat 1872.18 (+0.92%); MA5 1870.81 / MA10 1868.48 / MA30 1864.24 — fiyat üçünün üstünde ama MA30 eğrisi hâlâ 1920'lerden AŞAĞI eğimli (orta vade düşüş yeni kırıldı, teyit yok); pencere tepesi 1982.00 (07/26), dip 1820.61 (07/31 03:00); VOL 342.8M vs MA5 634.1M / MA10 781.5M (hacim yok); funding +0.001%; bu 4S barda likidasyon Longs 9.2K / Shorts 75.0K (SHORT baskın 8.2×); Açık Faiz 2.3M/2.3M/2.3M/2.3M düz (tavan 2.4M)",
-    "15M heatmap (08/05 00:00→10:15+): fiyat 1871.71; pencere tepesi 1880.80, dibi 1860.30; kitap YOĞUN — fiyatın üstündeki 1872-1882 bölgesi neredeyse tamamen koyu mor (büyük duran emir kütlesi), 1860 altı da koyu; aydınlık (ince) koridor yalnız 1864-1872 arası → fiyat ince koridorun tavanında, üstünde duvar var",
-    "4S heatmap (07/27→08/05): fiyat 1871.71; pencere tepesi 1977.58, dibi 1820.61; kalın koyu bantlar 1980 / 1940 / 1920 / 1900 hatlarında (üst likidite kademeli mıknatıs); 07/31 sonrası 1830-1900 bölgesi bütünüyle koyu (yoğun kitap)",
-    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S tepe 1881.72 ↔ kline son-96-bar max 1881.72 BİREBİR; 15M pencere dibi 1857.38 ↔ kline son-96-bar min 1857.38 BİREBİR; 4S heatmap dibi 1820.61 ↔ 4H min 1820.61 BİREBİR; panel fiyat 1872.09-1872.18 / heatmap 1871.71 ↔ son kapanış 1872.27 (bar içi sapma 0.1-0.6 = %0.03). SAPMA AÇIKLANDI: panel 24S dibi 1854.61 ↔ kline son-96-bar min 1857.38 uyuşmuyor; kline son-100 barda min 1853.22 → borsa 24S penceresi 96 bardan geniş (BTC'deki ile aynı sebep, çelişki DEĞİL)",
-    "Görsel yön okuması: BTC ile AYNI ŞEKİL — 4S'te zayıf boğa dizilimi, 15M'de tam sıkışma, düşük hacim, düşen/düz OI ve short-baskın likidasyon (8.2×, BTC'nin 1.31×'inden keskin). Bir önceki koşuda ETH'de LONG flush baskındı (2.1M/581.7K); bu koşuda TERSİNE DÖNDÜ → düşüş bacağının long kalabalığı temizlendi, şimdi short'lar sıkışıyor. Ama funding sıfıra inip sarı barlar görünmesi = long primi bitti; itki tek başına short-covering'e dayanıyor"
+    "15M panel: fiyat 1908.54 (+1.82%); 24S menzil 1854.51-1927.19, 24S hacim 7.001B (bir önceki koşudaki 5.165B'den %36 yüksek); MA5 1917.46 / MA10 1917.60 / MA30 1899.53, fiyat MA5-MA10'un altında; VOL 102.8M vs MA5 67.3M / MA10 55.7M — son bar hacmi ortalamanın ÇOK ÜSTÜNDE (BTC'nin tersi: buradaki geri çekilme HACİMLİ); funding %0.005 ve şerit pencere boyunca DÜZENLİ YÜKSELİYOR (0.0062 tavanına doğru) — bir önceki koşuda sıfıra iniyordu, şimdi long primi geri geldi; Sembol Likidasyonları Longs 615.4K / Shorts -- (bu barda long temizliği); Açık Faiz 2.3M ×4, eğri impulsla yükselip son barda SERT DÜŞTÜ",
+    "4S panel: fiyat 1907.71 (+1.78%); MA5 1887.47 / MA10 1879.15 / MA30 1867.64 — fiyat üçünün de üstünde, MA30 eğrisi artık YATAY/YUKARI (bir önceki koşuda hâlâ aşağı eğimliydi); pencere tepesi 1982.00 (07/26), dip 1820.61 (07/31 15:00); VOL 336.3M vs MA5 1.17B / MA10 1.04B (hacim düşük); funding %0.005; bu 4S barda likidasyon Longs 685.2K / Shorts 181.5K → LONG likidasyonu 3.8× baskın; Açık Faiz 2.3M/2.4M/2.3M/2.3M",
+    "15M heatmap (08/05 10:30→20:45+): fiyat 1908.99; pencere tepesi 1927.19, dibi 1854.51; kitap ÇOK YOĞUN — 1930 üstü tamamen koyu, 1920 hattında kalın bant, 1880 hattında kalın bant; fiyatın bulunduğu 1900-1914 aralığı görece açık koridor",
+    "4S heatmap (07/27→08/05): fiyat 1909.00; pencere tepesi 1949.64, dibi 1820.61; kalın koyu bantlar 1940 ve 1920 hatlarında (üstte iki kademe), altta 1880/1860/1840 yoğun",
+    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S tepe 1927.19 ↔ kline son-96-bar max 1927.19 BİREBİR; panel 24S dip 1854.51 ↔ kline son-96-bar min 1854.51 BİREBİR; 4S tepe 1982.00 ↔ 4H serisinde mevcut; panel fiyat 1908.54/1907.71 ↔ son kapanış 1908.95 (bar içi sapma 0.4-1.2 = %0.06); heatmap 1908.99/1909.00 BİREBİR",
+    "Görsel yön okuması: 15M yapı açıkça BOĞA ve BTC'den GÜÇLÜ (%3.92 vs %1.84). BTC ile AYRIŞMA: (a) likidasyon BTC'de short-baskın (11.2×) ama ETH'de long-baskın (3.8×); (b) funding BTC'de negatife sarktı, ETH'de yükseliyor (%0.005); (c) geri çekilme barının hacmi BTC'de ortalama altı, ETH'de ortalama ÜSTÜ. Yani ETH'nin yükselişi BTC'ninkinden daha çok GERÇEK ALIM taşıyor ama aynı barda long tasfiyesi de var — tepe bölgesinde iki taraflı çatışma"
   ],
   "h4_trend": "bull",
-  "celiski_notu": "Görsel-kline uyum 3 uçta BİREBİR (1881.72 / 1857.38 / 1820.61); panel 24S dibi sapması borsa penceresi genişliğiyle açıklandı. KRİTİK: 15M heatmap'te fiyatın HEMEN ÜSTÜNDE (1872-1882) çok yoğun duran emir kütlesi var — yukarı hareket bu duvarı yemek zorunda; aynı anda 4S kitapta 1900/1920/1940 kademeli mıknatıslar duruyor. Yani yön yukarı ama YOL TIKALI: ilk 10 puan pahalı, kırılırsa üstü hızlı. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
+  "celiski_notu": "Görsel-kline uyum TAM (1927.19 / 1854.51 / 1909.00 birebir). KRİTİK GÖZLEM: bu koşuda motor ETH'ye MARKET LONG emri üretti ve fiyat tam 1908.95'te — 15M heatmap'te fiyatın hemen üstünde 1920 kalın bandı, 1930 üstü tamamen dolu duvar var; yani hedefe giden yol 1920'de tıkalı. Ayrıca son bar hacimli KIRMIZI ve o barda 615.4K long tasfiye edildi: impulsun tepesinde alım yapan taraf zarar ediyor. Buna karşılık funding yükseliyor ve 4S dizilimi ilk kez net boğa. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-08-05 10:32",
-  "zaman_yerel": "2026-08-05 13:32 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 13:32 (UTC+3) → UTC 10:32; paket çekimi 2026-08-05 10:32:54 UTC ile aynı dakika; son bar 2026-08-05 10:30 (2 dk)"
+  "zaman_utc": "2026-08-05 21:05",
+  "zaman_yerel": "2026-08-06 00:05 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 00:05 (UTC+3) → UTC 21:05; paket çekimi 2026-08-05 21:05:49 UTC ile aynı dakika; son bar 2026-08-05 21:00 (5 dk)"
 }
