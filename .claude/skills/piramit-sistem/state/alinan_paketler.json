@@ -2,25 +2,43 @@
   "islenen": [
     "0599b48071538279eeaa226df537b77aa7e86d35dbe27a4966adaa441f42fe8c",
     "05cb65c3fad27f5621df535186b51c5635637aeebd6dc858b083d3bc05b0e1e6",
+    "4a2829bc99bf6228d6ca5012414eb5a40c4cd6f876e89809b3c66240ed6e7b2b",
     "4f68a8ea71effda3536682cc12ded84b5388430b01bb3f752372ce7bd8139db8",
+    "71e1a9f2f5f81e76c7060f78e32b9afeeeaaa7151d0aef6efee5539d7d2d2764",
     "7a4623f5b909368a3de6dbe8acc5528cb71d2fe58494f88e05c71b4bab860aa3",
     "7e0fdd15ca4b107ddd9b343080b819abd2dcb3e85ff739bc55abcf0015ae95fa",
     "80a83191352764f3459c426298e255adfefb3d8e6623dac8758f4dd1168b69d7",
     "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3",
+    "bf791fe8a8f17c64fcee9d45fcc7cc18069464c8146992cfb210d0a06dcc2449",
     "d25ad53ef9d05bd26c9fa1bd6037f6e2d5f6925e737caf9098e6ced4bcbd159c",
     "f0a6569f3a288bf272a5a9a0aa1d1e01d4668c2dd01ee34483846392db236154",
     "fb290d36119cc97391771466e797f9ffc8966aca1913024ef669278d68ce2fdf"
   ],
   "reddedilen": {},
   "son": {
-    "dosya": "/root/.claude/uploads/f01690ea-251d-58a2-9ef0-0ca3fea3a3cb/6f79f38f-piramit_veri_BTC_ETH_20260729_0341.json",
-    "sha": "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3"
+    "dosya": "/root/.claude/uploads/565b11f2-dd0c-5fa3-8fa9-9ad2e1116185/09b441fa-piramit_veri_BTC_ETH_20260806_0810.json",
+    "sha": "bf791fe8a8f17c64fcee9d45fcc7cc18069464c8146992cfb210d0a06dcc2449"
   },
   "stat": {
     "/root/.claude/uploads/f01690ea-251d-58a2-9ef0-0ca3fea3a3cb/6f79f38f-piramit_veri_BTC_ETH_20260729_0341.json": [
       1785296542.7227147,
       141027,
       "b45999106ef68539bc12e29cbb46fd4ad15515de3fe2bda54a2bd7d3d05e76d3"
+    ],
+    "/root/.claude/uploads/565b11f2-dd0c-5fa3-8fa9-9ad2e1116185/32d51091-piramit_veri_BTC_ETH_20260805_1032.json": [
+      1785926094.8832316,
+      140787,
+      "4a2829bc99bf6228d6ca5012414eb5a40c4cd6f876e89809b3c66240ed6e7b2b"
+    ],
+    "/root/.claude/uploads/565b11f2-dd0c-5fa3-8fa9-9ad2e1116185/9a5fc6f6-piramit_veri_BTC_ETH_20260805_2105.json": [
+      1785964083.9911537,
+      140868,
+      "71e1a9f2f5f81e76c7060f78e32b9afeeeaaa7151d0aef6efee5539d7d2d2764"
+    ],
+    "/root/.claude/uploads/565b11f2-dd0c-5fa3-8fa9-9ad2e1116185/09b441fa-piramit_veri_BTC_ETH_20260806_0810.json": [
+      1786003846.6187325,
+      140783,
+      "bf791fe8a8f17c64fcee9d45fcc7cc18069464c8146992cfb210d0a06dcc2449"
     ]
   }
 }
