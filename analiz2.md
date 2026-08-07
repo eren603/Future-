@@ -279,25 +279,6 @@ EOF
 Kurallar: **tetiklenmediyse İPTAL, R YAZILMAZ**; aynı barda stop+hedef → **STOP**;
 sonuçlanmadıysa **AÇIK** denir ve R yazılmaz (MFE/MAE raporlanır).
 
-⚠️ **Yukarıdaki betik yalnız MARKET dolumu için geçerlidir** (giriş anında
-dolmuş sayar). **LIMIT bölgeli** bir karar bu betikle ölçülürse sonuç YANLIŞ
-çıkar: betik dolum penceresini bilmez, aylar sonraki bir dokunuşu bile "tetik"
-sayar. §7.2'de tam bu hata yapıldı. LIMIT kararda ya `simule_et` doğrudan
-çağrılır (tercih edilen), ya da **24 bar dolum + 96 bar tutma + aleyhte kenar
-dolumu** elle uygulanır:
-
-```bash
-python3 - <<'EOF'
-import json,sys
-sys.path.insert(0,'.claude/skills/piramit-sistem/scripts')
-import akibet_etiketle as ae
-barlar=ae.bar_yukle(['engine/state/bar_arsivi.jsonl','engine/girdi/m15.json'])
-kayit=[json.loads(l) for l in open('engine/state/defter.jsonl') if l.strip()][-1]
-print(json.dumps(ae.simule_et(kayit['karar'],kayit['karar_zamani'],barlar,
-                              ae.KONVANSIYON),ensure_ascii=False))
-EOF
-```
-
 ### Adım 9 — EMİR DOĞDUYSA: İLK-GEÇİŞ ÖLÇÜMÜ (STRATEJI.md §2 kapısı)
 `EMİR` `MARKET`/`LIMIT` ile başlıyorsa, emir **işlem önerisi sayılmadan önce**
 o koşunun kendi arşivinde ilk-geçiş yarışı ölçülür. Betik:
@@ -466,14 +447,6 @@ En sonda daima: `⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİ
    engine/state .claude/skills/piramit-sistem/hafiza`.
 9. **Motor kodunu analiz sırasında değiştirme.** Bulunan hata **raporlanır**,
    karar mekaniği aynı koşuda değiştirilmez.
-10. **Elle ikinci-göz ölçümünü sözleşmesiz yapma.** Adım 8'in elle akıbet
-    kontrolü `simule_et`'in kurallarını yalnız kısmen kopyalarsa motordan DAHA
-    yanlış olur. §7.2'de tam bu oldu: elle 4H ölçümü **dolum penceresini
-    (24 bar / 6 saat) uygulamadı**, 28.5 saat sonraki bir dokunuşu "tetik"
-    sayıp sisteme kazanılmamış bir T2 yazdırmaya götürdü. Elle ölçümde
-    **dolum penceresi + tutma penceresi + aleyhte kenar + aynı-barda-stop
-    kuralı DÖRDÜ BİRDEN** uygulanır; farklı zaman dilimiyle ölçülüyorsa
-    pencereler **bar sayısı değil SÜRE** olarak taşınır.
 
 ---
 
@@ -483,75 +456,21 @@ En sonda daima: `⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİ
 `karar_motoru` + `smc_tespit` sabiti. Consequent-encroachment konvansiyonuna
 dayanır, **edge kanıtına değil**. Ölçülen durum: 182 kayan pencerede 0.5 vs 1.0 →
 0 karar farkı; 0.5 vs 0.0 → 3 pencere farklı ve **üçünde de 0.0 daha iyi**.
-Geniş tarihsel set gerekiyor.
-**ÖN KOŞUL TEST EDİLDİ (2026-08-07) — YOL KAPALI:** `data.binance.vision` de
-`fapi.binance.com` gibi **CONNECT 403** veriyor (kök dizin, günlük zip, aylık
-zip ve kesin var olan `2024-01` aylığı — dördü de). Proxy günlüğü reddi
-`connect_rejected / policy denial` diye doğruluyor. Yani **bu ortamda Binance
-geniş tarihsel seti alınamıyor**; kalibrasyon Binance verisiyle yapılamaz.
-Tek alternatif başka bir borsanın mumları (ör. Crypto.com MCP) — ölçümün
-anlamını değiştirir, "farklı borsa / out-of-sample" diye ETİKETLENMEDEN
-kullanılamaz ve Binance kararını bağlamaz.
+Geniş tarihsel set gerekiyor (data.binance.vision arşivi; `fapi.binance.com` bu
+ortamda 403 ama arşiv alan adı ayrı, denenmeli).
 **Referans oturumda 2. ve 3. koşuda İKİ SEMBOLDE de dönüş dizisi 4/4 tamamlandı
 ve kurulumu tam olarak bu eşik öldürdü.** Yani artık tek seferlik değil,
 sistematik kesme noktası — her çıktıda VARSAYIM olarak beyan et.
 
-### 7.2 Defter akıbet hatası — İKİ SÖZLEŞME, TEK DEFTER  ✔ sicil düzeltildi 2026-08-07
-
-⚠️ **Bu maddenin ilk teşhisi YANLIŞTI ve 2026-08-07'de çürütüldü.** Eski metin
-"BTC'nin 07-27 SHORT'u gerçekte T2'ye gitti, defter haksız yere kapatmadı"
-diyordu. Bu iddia **4H serisinde dolum penceresi uygulanmadan** ölçülmüştü;
-sözleşmeyle ölçülünce tersi çıktı. Ders §6.10 olarak eklendi.
-
-**Gerçek durum (ölçüldü):** BTC 07-27 23:30 SHORT, bölge 64193.9–64534.1.
-Sözleşmenin dolum penceresi **24 bar = 6 saat** (`KONVANSIYON["azami_bekleme"]`).
-O pencerede (07-27 23:45 → 07-28 05:30) en yüksek fiyat **63794.3** — bölgenin
-**399.6 puan altında**, iptal gövdesi de yok. Yani **emir hiç dolmadı**;
-sözleşme hükmü **İPTAL — R yazılmaz**. Aynı şey 07-24 22:00 SHORT'unda da var
-(pencere tepesi 64187.6, bölge tabanı 64515.6 → **328.0 puan** uzak).
-
-**Kök neden — iki ölçüm sözleşmesi çatışıyor:**
-
-| | `akibet_etiketle.simule_et` | `karar_motoru.label_outcome` |
-|---|---|---|
-| dolum penceresi | 24 bar (6 saat) | **YOK — süresiz** |
-| tutma penceresi | 96 bar (24 saat) | **YOK — süresiz** |
-| bar havuzu | `bar_arsivi.jsonl` (birikimli) | **200 barlık kayan pencere** |
-| eski kayıtta `giris_tipi` yoksa | LIMIT sayar (fail-closed) | genişlik 0 ise MARKET sayar |
-
-`karar_motoru.py:435`'teki yorum "akibet_etiketle.simule_et ile aynı sözleşme
-kullanılır" der — bu **yalnız dolum TİPİ için** doğrudur; iki zaman penceresi
-canlı takipte hiç uygulanmaz. Sonuç: ölmüş bir LIMIT emri günlerce canlı kalır.
-07-24 kararı **29 saat**, 07-27 kararı **7 gün** sonra "doldu" sayıldı; ikincisi
-08-05 18:45'te STOP diye deftere yazıldı.
-
-**Ölçülen zarar — abartılmadı:** ağırlık öğrenmesi yalnız `gercek_r` okur
-(`piramit.py:1038`), bu kayıtların hiçbirinde `gercek_r` yok → **öğrenilmiş
-ağırlıklar kirlenmedi** (n=1, ağırlık 1.0 fail-closed). Kirlenen yer
-`sonuc` alanını gösteren **HESAP VERME satırı** ve defterin kendi tarihçesiydi.
-
-**Yapılan düzeltme (veri; kod DEĞİŞTİRİLMEDİ):** iki kayıtta `sonuc`
-`STOP → İPTAL` olarak sözleşmeye hizalandı; orijinal `sonuc_motor_kaydi`
-altında saklandı, her satıra kanıtlı `denetim` bloğu yazıldı, `gercek_r`
-hiçbir satırda **üretilmedi**. Ölçülemeyen kayıtlar (karar barı arşiv öncesi)
-ve `DEVRİLDİ` kayıtları değiştirilmeden yalnız işaretlendi.
-
-**HÂLÂ AÇIK — kod tarafı (yetki bekliyor):**
-1. `label_outcome`'a `azami_bekleme`/`azami_tutma` eklenmeli; iki motor tek
-   sözleşmeden okumalı.
-2. Canlı takip 200 barlık pencere yerine arşivi okumalı (aynı kayıt farklı
-   koşuda farklı hüküm alıyor: bugünkü tekrar-oynatma aynı kayda `AÇIK (T1
-   geldi)` diyor, deftere `STOP` yazılmıştı).
-3. Defter tekilleştirmesi `(karar_zamani, sonuc)` anahtarını kullanıyor
-   (`karar_motoru.py:704`) → **aynı karar iki farklı sonuçla iki kez yazılabiliyor**;
-   07-24 22:00 kararı defterde `DEVRİLDİ` + `STOP` diye **iki satır**. Anahtar
-   yalnız `karar_zamani` olmalı.
-4. ETH defterindeki 07-27 04:30 MARKET kaydı iki sözleşmeye göre iki farklı
-   sonuç veriyor (motor "T1 ve T2", etiketleyici "İPTAL"); eski kayıtlarda
-   `giris_tipi` beyanı olmadığı için **ölçülemez** sayıldı, dokunulmadı.
-
-15M arşiv boşluğu (`2026-07-29 03:30 → 2026-08-03 08:45`, **7515 dk**) hâlâ
-duruyor ve bu ortamda kapatılamıyor (§7.1 ile aynı sebep: arşiv alan adı 403).
+### 7.2 `durum.json` defter hatası — 15M arşiv boşluğu
+BTC'nin 2026-07-27 23:30 SHORT'u (giriş 64364.0 / stop 64790.3 / T1 63567.0 /
+T2 63298.25 / R 1.87) defterde hâlâ **"T2 bekliyor — pozisyon AÇIK"**.
+4H serisiyle doğrulandı: tetik 07-29 04:00 (H 64544.0), T1 07-29 16:00
+(L 63483.9), **T2 07-29 20:00 (L 63234.0)** → kurulum kapandı.
+Sebep: 15M `bar_arsivi.jsonl`'de **2026-07-29 03:30 → 2026-08-03 08:45 arası
+7515 dakikalık (5.2 gün) boşluk** — T2'nin bastığı barlar arşivde yok.
+Karar yönünü değiştirmez ama **sicili ve ağırlık öğrenmesini kirletir.**
+Her koşuda hâlâ açıksa tekrar bildir.
 
 ---
 
@@ -576,8 +495,7 @@ duruyor ve bu ortamda kapatılamıyor (§7.1 ile aynı sebep: arşiv alan adı 4
 - [ ] `git checkout -- engine/state …` yapıldı (çift işleme yok)
 - [ ] `turev_girdi.py` iki sembol için koştu, funding panel ile eşleşti
 - [ ] `piramit.py` iki sembol için koştu, **ZORUNLU GİRDİ EKSİK satırı YOK**
-- [ ] HESAP VERME elle de ölçüldü — LIMIT kararda `simule_et` sözleşmesiyle (§6.10)
-- [ ] Defterdeki `sonuc` ↔ sözleşme hükmü ayrışması var mı diye bakıldı (§7.2)
+- [ ] HESAP VERME elle de ölçüldü
 - [ ] Emir doğduysa ilk-geçiş ölçümü koştu (3 yöntem, hepsi raporlandı)
 - [ ] Çizim basıldı, (a)(b)(c) ikinci-göz yapıldı
 - [ ] `iddia_denetle.py` koştu, KAYNAKSIZ sayıların kaynağı metinde gösterildi
@@ -660,14 +578,6 @@ geldiği, ne yapıldığı, motorun ne dediği ve ne raporlandığı sırayla ve
 pozisyon AÇIK" gösteriyordu. 4H serisiyle elle ölçüldü: tetik 07-29 04:00
 (H 64544.0), T1 07-29 16:00 (L 63483.9), **T2 07-29 20:00 (L 63234.0)**.
 Sebep: 15M arşivinde **7515 dakikalık boşluk**. Raporlandı, kod değiştirilmedi.
-
-> **🔵 DÜZELTME (2026-08-07):** yukarıdaki 4H ölçümü **hatalıydı** — sözleşmenin
-> **24 barlık (6 saat) dolum penceresini uygulamadı**. Karar 07-27 23:30'da
-> verildi; o pencerede fiyat bölgenin **399.6 puan altında** kaldı (pencere
-> tepesi 63794.3 vs bölge tabanı 64193.9), yani **emir hiç dolmadı**. "Tetik
-> 07-29 04:00" karardan **28.5 saat** sonrasıdır ve geçerlilik penceresinin
-> dışındadır. Doğru hüküm: **İPTAL — R yazılmaz**. Bu satır tarihsel kayıt
-> olarak duruyor; güncel teşhis ve düzeltme §7.2'dedir, ders §6.10'dur.
 
 **Çizim/ikinci-göz:** BTC "BULL / range · 8.15", altın bölge 64.123,74 –
 64.098,39 ✔ birebir; ETH "BEAR / range · 13.98", 1.871,46 – 1.873,90 ✔; emir
