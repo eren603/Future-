@@ -28,24 +28,6 @@ Bu dosya her oturumda otomatik yüklenir; aşağıdaki disiplin `/komut` bekleme
 
 ⚠️ Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL.
 
-## TETİKLEYİCİ: `analiz2` → TEK HEDEF `analiz2.md`
-
-Kullanıcı bir istemde **`analiz2`** yazdığında (tek başına ya da veri/görüntü
-ekiyle), **ilk iş depo kökündeki `analiz2.md` dosyasını okumaktır** ve analiz
-**birebir orada yazan yöntemle** yapılır. Bu tetikleyici için **BAŞKA hiçbir
-yöntem dosyasına, başka örneğe ya da başka oturum kaydına yönelme**; `analiz2.md`
-tek kaynaktır.
-
-`analiz2.md` iki bölümdür: **BÖLÜM A — YÖNTEM** (12 adımlık iş akışı, çalışan
-komutlar, 10 başlıklı çıktı şablonu, sert yasaklar, kontrol listesi) ve
-**BÖLÜM B — REFERANS OTURUM** (yöntemin üretildiği pencerenin kronolojik tam
-kaydı: 3 veri paketi, 3 koşu, bulunan hatalar).
-
-`CLAUDE.md` ve `STRATEJI.md` yürürlükteki **kurallardır** (değişmez sözleşme);
-`analiz2.md` o kuralların **nasıl koşturulacağının** çalışan kaydıdır — çelişki
-olursa kural dosyaları üstündür ve çelişki açıkça raporlanır. Yöntem değişirse
-`analiz2.md` güncellenir; yöntem başka bir dosyaya yazılmaz.
-
 ## Otomatik beceri kullanımı (TETİKLEYİCİ GEREKMEZ)
 
 Kullanıcı **hiçbir `/komut` yazmaz.** Bir soru **finans**, **analiz**, **veri**
