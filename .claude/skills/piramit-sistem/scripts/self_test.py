@@ -624,6 +624,41 @@ def main() -> int:
                 f"Δskor={yd['skor_delta']}, sürücü={len(k26['onemli_degisimler'])} "
                 f"değişim, kayıtsız fail-closed=True")
 
+        # ---- T26b: ARŞİV BOŞLUĞU kapısı (akibet_etiketle.simule_et) --------
+        # REGRESYON — 2026-08-08: 15M arşivindeki 7515 dk'lık boşluk, T2'de
+        # +2.50R kazanan BTC SHORT'unu "STOP" diye ölçtürmüştü: yürüyüş barları
+        # İNDEKSLE dolaşıyor, boşluğu görmüyor, boşluk SONRASI ilk stop temasını
+        # buluyordu. Kapı: boşluk → ÖLÇÜLEMEDİ, R YAZILMAZ (fail-closed).
+        # Kontrol grubu şart: boşluksuz seri eski davranışı BİREBİR korumalı.
+        _BAR = 900_000
+        _T0 = 1_785_000_000_000
+        _T0 -= _T0 % _BAR
+        k26b = {"yon": "SHORT", "karar": "SHORT", "giris_alt": 100.0,
+                "giris_ust": 101.0, "giris": 100.5, "stop": 103.0,
+                "t1": 96.0, "t2": 95.0, "iptal": 101.0}
+        p26b = {"azami_bekleme": 24, "azami_tutma": 96}
+
+        def _seri(bosluklu: bool) -> list:
+            b = [(_T0, 99.0, 99.5, 98.5, 99.0, 1.0),
+                 (_T0 + _BAR, 100.2, 101.5, 100.0, 100.4, 1.0)]     # DOLUM
+            atlama = 5 * 24 * 60 * 60_000 if bosluklu else _BAR      # 5 gün / normal
+            t = _T0 + _BAR + atlama
+            b.append((t, 102.0, 103.5, 101.8, 103.2, 1.0))           # stop teması
+            for i in range(1, 5):
+                b.append((t + i * _BAR, 103.2, 103.4, 102.9, 103.0, 1.0))
+            return b
+
+        ab_bos = AE.simule_et(k26b, _T0, _seri(True), p26b)
+        ab_duz = AE.simule_et(k26b, _T0, _seri(False), p26b)
+        kontrol("T26b arşiv boşluğu → ölçüm fail-closed (R yazılmaz)",
+                ab_bos.get("olculebilir") is False
+                and "boşlu" in str(ab_bos.get("sonuc", ""))
+                and ab_bos.get("r") is None
+                and ab_duz.get("olculebilir") is True
+                and ab_duz.get("sonuc") == "STOP" and ab_duz.get("r") == -1.0,
+                f"boşluklu={ab_bos.get('sonuc')!r} r={ab_bos.get('r')!r} | "
+                f"boşluksuz={ab_duz.get('sonuc')!r} r={ab_duz.get('r')!r}")
+
         # ---- T27: çapraz-sembol hafıza izolasyonu -------------------------
         # İkinci sembol (ör. ETH) kendi state dizininde koşunca ana sembolün
         # öğrenilmiş ağırlığı EZİLMEMELİ. Bu bir P0'dı: tek global agirlik.json

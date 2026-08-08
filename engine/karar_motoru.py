@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------------
@@ -54,6 +55,7 @@ RECENT_N = 24       # sinyalin "güncel" sayıldığı pencere (15M bar = 6 saat
 R_T1_FALLBACK = 1.5 # likidite hedefi yoksa T1 = giriş +/- 1.5R
 R_T2_FALLBACK = 2.5 # likidite hedefi yoksa T2 = giriş +/- 2.5R
 R_MIN = 1.35        # depo kuralı ("Analiz yapma komutu" 5_RISK): altı = kenar zayıf -> BEKLE
+BOSLUK_TOLERANS = 1.5  # akıbet ölçümünde "arşiv boşluğu" eşiği (bkz. label_outcome)
 MIN_M15 = N_VOL + 2 * SWING_K + 4
 MIN_H4 = MA_SLOW + 5
 
@@ -416,8 +418,56 @@ def regime_4h(bars4h):
 # ---------------------------------------------------------------------------
 # Önceki kararın akıbeti (hafıza: etkileme değil, hesap verme)
 # ---------------------------------------------------------------------------
+def _bar_araligi(bars):
+    """Barların NOMİNAL aralığı (ms) = EN AZ İKİ KEZ görülen EN KÜÇÜK pozitif fark.
+
+    Kline serisi sabit ızgaradadır: her fark nominal aralığın tam katıdır, o
+    yüzden en küçük gerçek fark nominalin kendisidir. Ne medyan ne mod işe
+    yarar — ikisi de boşluk SAYISI gerçek barları geçince boşluk boyutuna
+    kayar ve kapı sessizce fail-OPEN olur (medyan için denetçi 2026-08-08'de
+    48 eksik bar üzerinden r=-1.0 yazdırarak kanıtladı; mod için aynı kusuru
+    self_test yakaladı). "En az iki kez" koşulu, tek bir bozuk zaman
+    damgasının (ör. 1 ms) nominali sıfıra çekip TÜM ölçümü kapatmasını
+    engeller. Hiç tekrar yoksa sabit ızgara zaten yoktur → en küçük pozitif
+    farka düşülür (dar tolerans = fail-closed yönü). Ölçülemezse 0 → boşluk
+    denetimi kapanır (uydurma aralıkla sahte boşluk üretilmesin).
+    """
+    if len(bars) < 3:
+        return 0
+    sayac = Counter(bars[i + 1].t - bars[i].t for i in range(len(bars) - 1))
+    pozitif = {f: n for f, n in sayac.items() if f > 0}
+    if not pozitif:
+        return 0
+    tekrarli = [f for f, n in pozitif.items() if n >= 2]
+    return min(tekrarli) if tekrarli else min(pozitif)
+
+
 def label_outcome(prev, bars):
-    """Önceki karardan SONRAKİ 15M barların fiyat yoluyla akıbet etiketi."""
+    """Önceki karardan SONRAKİ 15M barların fiyat yoluyla akıbet etiketi.
+
+    ARŞİV BOŞLUĞU KAPISI (fail-closed) — 2026-08-08'de ölçülen gerçek olay:
+      BTC SHORT (karar 07-27 23:30, giriş 64364.0 / stop 64790.3 / T1 63567.0 /
+      T2 63298.25). 4H serisinde tetik 07-29 04:00, T1 07-29 16:00, T2 07-29
+      20:00 → +2.50R KAZANÇ. Ama 15M arşivinde 07-29 03:30 → 08-03 08:45 arası
+      7515 dk BOŞLUK var; T1/T2 barları arşivde YOK. Yürüyüş barları İNDEKSLE
+      dolaştığı için boşluğu göremedi, boşluk sonrası ilk stop temasını
+      (08-05 18:45) buldu ve deftere "STOP" yazdı — kazanan işlem kaybeden
+      olarak kaydedildi.
+    Kök neden: `for b in after:` zaman sürekliliğini DENETLEMİYOR; ayrıca
+    azami bekleme/tutma pencereleri BAR sayısıyla ölçüldüğünden bir boşluk o
+    pencereleri sessizce günlere yayıyor.
+    Kural: ardışık iki bar arası nominal aralığın BOSLUK_TOLERANS katını
+    aşarsa ölçüm DURUR ve "ÖLÇÜLEMEDİ" döner. ÖLÇÜLEMEDİ terminal DEĞİLDİR →
+    pozisyon takipte kalır, deftere R YAZILMAZ, ağırlık öğrenmesi kirlenmez.
+
+    SINIR (denetçi 2026-08-08): bu fonksiyon yalnız eline verilen 200 barlık
+    KAYAN pencereyi görür — `bar_arsivi.jsonl`'ı okumaz. Karar barı pencereden
+    düştüğünde (≈50 saat) hüküm kalıcı ÖLÇÜLEMEDİ olur ve o kayıt bu yoldan
+    hiç kapanmaz. Bu bilinçli fail-closed'dır (eski davranış aynı durumda
+    YANLIŞ bir terminal etiket yazıyordu), ama çare bu yolda DEĞİLDİR: kesin
+    ölçüm `akibet_etiketle.py --arsiv` ile yapılır. Hüküm metni bunu söyler;
+    "kendiliğinden düzelir" diye dayanaksız söz VERİLMEZ.
+    """
     if prev is None:
         return "İLK KOŞU — kıyas yok."
     k = prev.get("karar", {})
@@ -439,7 +489,41 @@ def label_outcome(prev, bars):
               if k.get("giris_tipi") else abs(hi - lo) < 1e-6)
     triggered = market
     t1_hit = False
+    # Arşiv boşluğu korkuluğu (bkz. docstring): nominal aralık TÜM seriden
+    # ölçülür (after kısa olabilir), tarama ise karar barından itibaren
+    # yürüyen pencerede yapılır — karar barı ile ilk sonraki bar arasındaki
+    # kopukluk da boşluktur.
+    _aralik = _bar_araligi(bars)
+    _tol = _aralik * BOSLUK_TOLERANS if _aralik else 0
+    # PENCERE KAYMASI mı, ARŞİV DELİĞİ mi? Bu kod yolu 200 barlık KAYAN
+    # pencereyle koşar (piramit.py karar-motoruna yalnız veri.m15'i verir,
+    # bar_arsivi.jsonl'ı ASLA vermez). Karar barı pencereden düşmüşse
+    # aradaki kopukluk bir arşiv deliği DEĞİL, pencere kaymasıdır — ikisi
+    # de ölçülemez ama nedeni ve çaresi farklıdır, karıştırılıp kullanıcıya
+    # yanlış çare gösterilmez (denetçi 2026-08-08).
+    _pencere_disi = bool(bars) and prev["son_bar"] < bars[0].t
+    _CARE = ("Bu yol arşivi okumaz; kesin ölçüm tam arşivle yapılır: "
+             "`akibet_etiketle.py --arsiv engine/state/bar_arsivi.jsonl`.")
+    _onceki_t = prev["son_bar"]
     for b in after:
+        if _tol:
+            _d = b.t - _onceki_t
+            if abs(_d) > _tol:      # negatif = sırasız liste; o da kopukluk
+                # Metin hiçbir TERMINAL kod içermemeli (harf duyarsız) —
+                # yoksa outcome_code hükmü terminal sayar. self_test kilitler.
+                if _pencere_disi and _onceki_t == prev["son_bar"]:
+                    return ("Önceki %s: akıbet ÖLÇÜLEMEDİ — karar barı (%s) elde "
+                            "bulunan 15M penceresinin (%s →) DIŞINDA; aradaki %d dk "
+                            "görünmüyor. Bu PENCERE KAYMASIDIR, arşiv deliği değil. "
+                            "R YAZILMAZ (fail-closed). %s"
+                            % (yon, fmt_ts(prev["son_bar"]), fmt_ts(bars[0].t),
+                               abs(_d) // 60000, _CARE))
+                return ("Önceki %s: akıbet ÖLÇÜLEMEDİ — arşiv boşluğu %s → %s "
+                        "arası %d dk kopukluk (nominal bar %d dk). Boşluğun içinde "
+                        "gerçekleşmiş temaslar görünmez; R YAZILMAZ (fail-closed). %s"
+                        % (yon, fmt_ts(_onceki_t), fmt_ts(b.t),
+                           abs(_d) // 60000, _aralik // 60000, _CARE))
+        _onceki_t = b.t
         just_filled = False
         if not triggered:
             # LIMIT: giriş tetiklenmeden iptal (gövde kapanışı iptal seviyesi ötesinde)
@@ -490,7 +574,10 @@ def label_outcome(prev, bars):
 # Sıra önemli: outcome_code ilk eşleşeni döndürür (INVALIDATION-EXIT metni küçük
 # harf "iptal" içerir; "İPTAL" büyük-İ olduğundan yanlış eşleşmez).
 TERMINAL_OUTCOMES = ("İPTAL", "STOP", "T1 ve T2", "BELİRSİZ", "INVALIDATION-EXIT")
-NONTERMINAL_OUTCOMES = ("TETİKLENMEDİ", "AÇIK")
+# ÖLÇÜLEMEDİ bilerek NONTERMINAL: arşiv boşluğunda pozisyon takipte KALIR,
+# deftere yazılmaz (fail-closed). Kod listede olmasa outcome_code "DİĞER"
+# döner — sessiz kova; burada AÇIKÇA tanınır.
+NONTERMINAL_OUTCOMES = ("TETİKLENMEDİ", "AÇIK", "ÖLÇÜLEMEDİ")
 OUTCOME_CODES = TERMINAL_OUTCOMES + NONTERMINAL_OUTCOMES
 
 

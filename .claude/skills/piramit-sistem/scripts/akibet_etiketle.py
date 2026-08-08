@@ -43,6 +43,7 @@ import json
 import os
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
@@ -57,6 +58,17 @@ KONVANSIYON = {
     "azami_tutma": 96,     # dolumdan sonra çıkış için azami bar (24 saat)
     "maliyet_dusuldu": False,
 }
+
+# Arşiv boşluğu eşiği: ardışık iki bar arasındaki fark nominal aralığın bu
+# katını aşarsa "boşluk" sayılır ve ölçüm fail-closed durur. 1.5 seçildi:
+# TEK bar eksikliğini bile yakalar (2.0 olsa bir bar kaçardı) ama borsa
+# damgasındaki milisaniye oynamalarına takılmaz.
+# Yanlış-pozitif ölçümü (2026-08-08, `bar_yukle` SONRASI havuz — ham
+# bar_arsivi.jsonl sırasızdır, bu yüzden ham dosya üzerinde ölçülmez):
+#   BTC 902 bar → farklar {15 dk: 900, 7515 dk: 1}
+#   ETH 892 bar → farklar {15 dk: 890, 7515 dk: 1}
+# tol = 22.5 dk → her iki sembolde TEK tetikleyici, o da gerçek boşluk.
+BOSLUK_TOLERANS = 1.5
 
 
 class EtiketError(Exception):
@@ -131,8 +143,48 @@ def _yon_isaret(karar: dict) -> int:
     raise EtiketError(f"yön okunamadı: {y!r}")
 
 
+def _bar_araligi(barlar: list) -> int:
+    """Barların NOMİNAL aralığı (ms) = EN AZ İKİ KEZ görülen EN KÜÇÜK pozitif fark.
+
+    Kline serisi sabit ızgaradadır: her fark nominal aralığın tam katıdır, o
+    yüzden en küçük gerçek fark nominalin kendisidir.
+    NE MEDYAN NE MOD: ilk yazımda medyan kullanılmıştı, denetçi (2026-08-08)
+    onu fail-OPEN diye çürüttü — boşluk SAYISI gerçek barları geçince medyan
+    boşluk boyutuna kayıyor, tolerans genişliyor ve kapı sessizce açılıyor
+    (48 eksik bar üzerinden r=-1.0 yazdırılarak kanıtlandı). Mod da aynı
+    kusuru taşıyor (self_test yakaladı).
+    "En az iki kez" koşulu, tek bir bozuk zaman damgasının (ör. 1 ms)
+    nominali sıfıra çekip TÜM ölçümü kapatmasını engeller. Hiç tekrar yoksa
+    sabit ızgara zaten yoktur → en küçük pozitif farka düşülür (dar tolerans
+    = daha çok yakalar = fail-closed yönü).
+    Ölçülemezse 0 döner ve boşluk denetimi KAPANIR (uydurma aralıkla sahte
+    boşluk üretmemek için) — bilinçli ve dar bir fail-open.
+    """
+    if len(barlar) < 3:
+        return 0
+    sayac = Counter(int(barlar[i + 1][0]) - int(barlar[i][0])
+                    for i in range(len(barlar) - 1))
+    pozitif = {f: n for f, n in sayac.items() if f > 0}
+    if not pozitif:
+        return 0
+    tekrarli = [f for f, n in pozitif.items() if n >= 2]
+    return min(tekrarli) if tekrarli else min(pozitif)
+
+
 def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
-    """Kararı ileriye doğru simüle et → gerçekleşen R (ya da neden ölçülemediği)."""
+    """Kararı ileriye doğru simüle et → gerçekleşen R (ya da neden ölçülemediği).
+
+    ARŞİV BOŞLUĞU KAPISI (fail-closed): bu fonksiyon barlar üzerinde İNDEKSLE
+    yürür. İndeks ardışıklığı ZAMAN ardışıklığı DEĞİLDİR — arşivde eksik bar
+    varsa `barlar[j]` ile `barlar[j-1]` arasında saatler/günler olabilir ve o
+    aralıkta gerçekleşen stop/hedef temasları GÖRÜNMEZ olur. 2026-08-08 doctor
+    denetiminde yakalandı: 15M arşivindeki 7515 dk'lık boşluk yüzünden, 4H
+    serisinde T2'ye ulaşıp +2.50R KAZANAN bir SHORT, boşluğun 7 gün ötesinde
+    ilk görülen stop temasıyla "STOP" (-1.0R) diye kaydedilmişti — kazanan
+    işlem kaybeden olarak deftere yazıldı ve ağırlık öğrenmesini kirletti.
+    Artık yürüyüş bir boşluğa çarparsa ölçüm YAPILMAZ: "ÖLÇÜLEMEDİ" denir,
+    R yazılmaz. Eksik veriyle etiket uydurmak yasaktır.
+    """
     idx = {t: i for i, (t, *_) in enumerate(barlar)}
     i0 = idx.get(int(karar_zamani))
     if i0 is None:
@@ -152,6 +204,36 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
     market = bool(karar.get("market")
                   or str(karar.get("giris_tipi", "")).strip().lower() == "market")
 
+    # --- 0) arşiv boşluğu korkuluğu (bkz. docstring) ----------------------
+    _aralik = _bar_araligi(barlar)
+    _tol = int(_aralik * BOSLUK_TOLERANS) if _aralik else 0
+
+    def bosluk(j: int) -> int:
+        """barlar[j-1] → barlar[j] geçişindeki zaman atlaması (ms), yoksa 0.
+
+        MUTLAK değere bakılır: negatif fark (geri atlama = sırasız liste) de
+        kopukluktur. Üretim yolları (`bar_yukle`, `parse_klines`) sıralayıp
+        tekilleştirir, ama ham `bar_arsivi.jsonl` sırasızdır (BTC dosyasında
+        −2445 dk ve 1665 dk atlamalar ölçüldü) — sırasız liste doğrudan
+        verilirse kapı körleşmesin.
+        """
+        if not _tol or j <= 0:
+            return 0
+        d = int(barlar[j][0]) - int(barlar[j - 1][0])
+        return d if abs(d) > _tol else 0
+
+    def bosluk_hukmu(j: int, d: int) -> dict:
+        # Metinde hiçbir TERMINAL akıbet kodu geçmemeli (büyük/küçük harf
+        # farkı gözetmeksizin) — yoksa outcome_code bu hükmü yanlışlıkla
+        # terminal sayar ve kapı sessizce tersine döner. Bu yüzden "stop"
+        # kelimesi bilerek kullanılmadı; self_test bu koşulu kilitler.
+        return {"olculebilir": False,
+                "sonuc": (f"ÖLÇÜLEMEDİ — arşiv boşluğu: {barlar[j-1][0]} → "
+                          f"{barlar[j][0]} arası {abs(d) // 60000} dk kopukluk "
+                          f"(nominal bar {_aralik // 60000} dk). Boşluğun "
+                          "içinde gerçekleşmiş temaslar görünmez; R YAZILMAZ "
+                          "(fail-closed). Arşiv tamamlanınca yeniden ölçülür.")}
+
     def iptal_asildi(c):     # gövde kapanışı iptalin ötesinde mi?
         return c > iptal if s < 0 else c < iptal
 
@@ -163,6 +245,9 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
         f, giris = None, None
         son = min(len(barlar) - 1, i0 + int(p["azami_bekleme"]))
         for j in range(i0 + 1, son + 1):
+            d = bosluk(j)
+            if d:
+                return bosluk_hukmu(j, d)
             _, o, h, l, c, _v = barlar[j]
             dokundu = (h >= giris_alt) if s < 0 else (l <= giris_ust)
             iptal_oldu = iptal_asildi(c)
@@ -190,6 +275,10 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
     # --- 2) çıkış ---------------------------------------------------------
     son = min(len(barlar) - 1, f + int(p["azami_tutma"]))
     for k in range(f, son + 1):
+        if k > f:
+            d = bosluk(k)
+            if d:
+                return bosluk_hukmu(k, d)
         if k == i0 and market:
             continue                      # karar barında market dolum: aynı barı sayma
         _, o, h, l, c, _v = barlar[k]

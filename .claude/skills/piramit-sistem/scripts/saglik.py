@@ -59,13 +59,28 @@ def _motor_tablosu() -> dict:
     return importlib.import_module("piramit").MOTOR
 
 
+# Sağlık satırındaki sayıların TEK kaynağı: kontrol_hizli() burayı doldurur,
+# main() buradan okur. Sabit dize basmak yasaktır (doğruluk sözleşmesi).
+SAYIM: dict[str, int] = {}
+
+
 def kontrol_hizli() -> list[str]:
-    """Kırık halkaların listesi (boş liste = SAĞLAM)."""
+    """Kırık halkaların listesi (boş liste = SAĞLAM).
+
+    SAYIM SÖZLEŞMESİ: bu fonksiyon `SAYIM` sözlüğüne GERÇEKTEN denetlenen ve
+    GERÇEKTEN geçen kalem sayılarını yazar. Başarı satırı bu sayıları basar.
+    Eskiden "bağımlılık 3/3, kanca 2/2" SABİT DİZEYDİ — ölçülmemiş sayı
+    yayınlamak CLAUDE.md doğruluk sözleşmesinin ("uydurma/ölçülmemiş sayı
+    gerçek gibi sunulamaz") ihlaliydi ve launcher kancalarına kördü.
+    """
     kirik: list[str] = []
+    SAYIM.update(bagimlilik_ok=0, bagimlilik=0, kanca_ok=0, kanca=0)
 
     for mod in ("pandas", "numpy", "scipy"):
+        SAYIM["bagimlilik"] += 1
         try:
             importlib.import_module(mod)
+            SAYIM["bagimlilik_ok"] += 1
         except Exception as e:  # noqa: BLE001 — hangi modül, neden: gizlenmez
             kirik.append(f"BAĞIMLILIK: {mod} import edilemedi ({type(e).__name__})")
 
@@ -106,13 +121,21 @@ def kontrol_hizli() -> list[str]:
                 continue
             # anahtar varlığı yetmez: komutun İŞARET ETTİĞİ dosya da denetlenir
             # (komut ölü dosyaya bakarken "kanca 2/2" deniyordu).
+            # Sayım KOMUT başınadır, olay anahtarı başına DEĞİL: bir olayda
+            # birden çok kanca olabilir (ör. SessionStart × 2) ve sabit "2/2"
+            # bunları görünmez kılıyordu.
             for grup in girisler:
                 for h in (grup.get("hooks") or []):
                     kmt = str(h.get("command") or "")
+                    SAYIM["kanca"] += 1
+                    hedef_kirik = False
                     for m in re.findall(r"\$CLAUDE_PROJECT_DIR[\"']?/([^\s\"']+)", kmt):
                         if not (REPO / m).exists():
                             kirik.append(f"KANCA: {gerekli} komutunun hedefi YOK "
                                          f"— {m}")
+                            hedef_kirik = True
+                    if not hedef_kirik:
+                        SAYIM["kanca_ok"] += 1
     except Exception as e:  # noqa: BLE001
         kirik.append(f"KANCA: {ayar_p} okunamadı ({e})")
     for h in ("session-start.sh", "piramit_auto.py"):
@@ -224,8 +247,12 @@ def main(argv=None) -> int:
         for k in kirik:
             print(f"   ✖ {k}")
         return 1
+    # Sayılar SAYIM'dan gelir (kontrol_hizli'nin ölçtüğü gerçek değerler).
+    # Sabit dize YASAK — bkz. kontrol_hizli docstring'i.
     print(f"[SAĞLIK] ✔ SAĞLAM — motor {n_motor}/{n_motor} yerinde, "
-          f"bağımlılık 3/3, kanca 2/2, girdi/görev OK{ozet}")
+          f"bağımlılık {SAYIM['bagimlilik_ok']}/{SAYIM['bagimlilik']}, "
+          f"kanca {SAYIM['kanca_ok']}/{SAYIM['kanca']}, "
+          f"girdi/görev OK{ozet}")
     return 0
 
 

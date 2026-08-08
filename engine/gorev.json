@@ -45,6 +45,15 @@
       "nasil": "setup_dogrulama.py + kalibrasyon.py (permütasyon/bootstrap/Wilson) ile eşik taraması: 0.0 / 0.25 / 0.5 / 0.75 / 1.0 için akıbet dağılımı ölçülür. Kazanan eşik istatistiksel testle seçilir; 'en iyi sonucu veren'e çekmek SERBEST AYAR sayılır ve YASAKTIR — Wilson alt sınırı + permütasyon p-değeri raporlanmadan değer değiştirilmez.",
       "on_kosul": "200 barlık örneklem bu iş için YETERSİZ. Geniş tarihsel set gerekir: binance/binance-public-data arşivi (data.binance.vision, 'um' = USD-M vadeli, 15m/4h, 2020'den itibaren). NOT: fapi.binance.com bu ortamda CONNECT 403 ile engelli, arşiv alan adı AYRI — engel oradan gelmeyebilir, denenmeli.",
       "kaynak": "üç turluk gözlemci ajan denetimi; commit'ler e97ee41 → 36f8c7a"
+    },
+    {
+      "id": "AKIBET_SOZLESME_AYRISMASI",
+      "durum": "AÇIK — 2026-08-08 denetçi bulgusu; arşiv-boşluğu tamiri (008964d) bunu ÇÖZMEZ",
+      "ne": "Aynı karar hakkında iki motor ZIT hüküm veriyor. defter.jsonl kayıt [6] (BTC SHORT, karar 2026-07-27 23:30, giriş 64364.0 / stop 64790.3 / T1 63567.0 / T2 63298.25): karar_motoru 'doldu + T1 geldi' diyor, akibet_etiketle ise 'İPTAL (bölgeye dokunulmadı)' diyor. Sebep: akibet_etiketle'nin azami_bekleme=24 bar (6 saat) dolum penceresi, bölgeye ilk dokunuştan (karar+173.2 saat) ÇOK önce kapanıyor. Ayrıca kayıt [5] ve [6]'nın sonuc alanı ('STOP') ile etiket_denemesi alanı ('İPTAL ... R yazılmaz') çelişik ve hiçbir mekanizma sonuc'u düzeltmiyor.",
+      "olculen_durum": "4H serisinde (engine/girdi/h4.json) doğrulandı: tetik 07-29 04:00 (H 64544.0), T1 07-29 16:00 (L 63483.9), T2 07-29 20:00 (L 63234.0) = +2.50R KAZANÇ. Motor deftere 'STOP' yazmıştı (15M arşivindeki 7515 dk'lık boşluk yüzünden). Boşluk kapısı artık bunu ÖLÇÜLEMEDİ'ye çeviriyor, ama ESKİ kayıt düzelmiyor ve iki motorun pencere sözleşmesi hâlâ ayrışık. AĞIRLIK ÖĞRENMESİ ETKİLENMİYOR (kanıt: piramit.py _defter_oku yalnız sayısal gercek_r okur; kayıt 'atlanan'da, hafiza/agirlik.json karar-motoru n=1 < n_taban 10 → ağırlık 1.0 nötr). Zarar denetim izinde: sicil yanlış.",
+      "nasil": "(1) azami_bekleme'yi kalibre et ya da LIMIT emrinin ömrünü STRATEJI.md §3 'dolmayan limitin ömrü 240 dk' kuralıyla hizala — şu an 6 saat vs 4 saat ayrışık, ikisi de kalibre edilmemiş. (2) Tek-kaynak kuralı: sonuc alanını kim yazar (karar_motoru) ile kim düzeltir (akibet_etiketle gercek_sonuc) ayrışmasını kapat. (3) Geçmiş kayıtlar YENİDEN YAZILMAZ; düzeltme ayrı bir alanla ve gerekçeyle eklenir (denetim izi silinmez).",
+      "on_kosul": "Pencere kalibrasyonu için geniş tarihsel set gerekir — FVG_MITIGASYON_KALIBRASYONU ile aynı ön koşul (data.binance.vision).",
+      "kaynak": "denetçi raporu 2026-08-08 (A7 + A4/2); commit 008964d sonrası"
     }
   ],
   "cikti_sozlesmesi": {
