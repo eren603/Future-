@@ -46,6 +46,9 @@ CEKIRDEK = [SCRIPTS / n for n in (
     "piramit.py", "gozlemci.py", "emir_plani.py", "kiyas.py",
     "esik_kalibre.py", "iddia_denetle.py", "usd_hedef.py", "korelasyon.py",
     "akibet_etiketle.py", "turev_girdi.py", "paket_ac.py",
+    # STRATEJI.md §2 ilk-geçiş ölçümü — boru hattında _ilk_gecis_ekle çağırır.
+    # Kayda alındı ki derlenmezse SAĞLIK "KIRIK" desin (sessizce düşmesin).
+    "ilk_gecis.py",
 )] + [REPO / ".claude" / "hooks" / "piramit_auto.py"]
 
 OZ_TESTLER = sorted(SKILLS.glob("*/scripts/self_test.py")) + [

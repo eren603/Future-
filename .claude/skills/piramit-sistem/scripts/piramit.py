@@ -95,6 +95,7 @@ MOTOR = {
     "kiyas": SKILL_DIR / "scripts" / "kiyas.py",
     "esik_kalibre": SKILL_DIR / "scripts" / "esik_kalibre.py",
     "emir_plani": SKILL_DIR / "scripts" / "emir_plani.py",
+    "ilk_gecis": SKILL_DIR / "scripts" / "ilk_gecis.py",
 }
 
 # --------------------------------------------------------------------------
@@ -1240,8 +1241,53 @@ def _emir_plani(job: dict, taban: Path, k1: dict, sentez: dict) -> dict:
             pass
     r = _kos(MOTOR["emir_plani"], [], girdi_job=ej)
     if r["ok"] and isinstance(r["cikti"], dict):
-        return r["cikti"]
+        return _ilk_gecis_ekle(r["cikti"], p15)
     return {"EMIR": "EMİR YOK", "gerekce": f"emir planı motoru çalışmadı ({r['hata']})"}
+
+
+def _ilk_gecis_ekle(emir: dict, p15: Path) -> dict:
+    """STRATEJI.md §2 kapısı: emrin hedefe mi stopa mı ÖNCE değeceğini ÖLÇ.
+
+    §2: "Taze emir ancak O KOŞUNUN ölçümü hedef-önceyi favori gösteriyorsa
+    alınır (MC/analog ilk-geçiş yarışında p_hedef > p_stop). Ölçüm yoksa
+    VERİ YOK → işlem yok."
+    Bu kural 2026-08-08'e kadar ÖLÇÜMSÜZDÜ: motoru (ilk_gecis.py) main'de yoktu,
+    `doctor-command-y15960` dalında kalmıştı. Dosyayı koymak yetmez — burada
+    ÇAĞRILMAZSA kural yine elle iştir. Ölçüm emri REDDETMEZ; hükmü etiketler
+    (strateji süzgeci gorev.json strateji_kurali (3)'te tanımlı).
+
+    Fail-closed: motor koşmazsa alan "ÖLÇÜM YOK" olur, uydurma olasılık YAZILMAZ.
+    """
+    aday = (emir.get("adaylar") or [{}])[0]
+    g, s, h = aday.get("giris"), aday.get("stop"), aday.get("hedef")
+    yon = str(aday.get("yon") or emir.get("yon") or "").upper()
+    if not (g and s and h and yon in ("LONG", "SHORT")):
+        emir["ilk_gecis"] = {"durum": f"{YOK} — ölçülecek aday emir yok "
+                                      "(§2 kapısı uygulanamadı)"}
+        return emir
+    # MUTLAK yol şart: _kos betiği KENDİ dizininde koşturur (cwd=script.parent),
+    # göreli yol orada çözülmez → FileNotFoundError → sessizce "ÖLÇÜM YOK".
+    r = _kos(MOTOR["ilk_gecis"], ["--m15", str(Path(p15).resolve()), "--yon", yon,
+                                  "--giris", str(g), "--stop", str(s),
+                                  "--hedef", str(h)])
+    if not (r["ok"] and isinstance(r["cikti"], dict)):
+        emir["ilk_gecis"] = {"durum": f"ÖLÇÜM YOK — motor çalışmadı ({r['hata']})",
+                             "strateji": "§2 karşılanmadı: taban stop-favori, "
+                                         "işlem önerisi SAYILMAZ"}
+        return emir
+    ham = (r["cikti"].get("HAM") or {})
+    favori = ham.get("favori")
+    emir["ilk_gecis"] = {
+        "durum": ham.get("durum", YOK), "favori": favori,
+        "p_hedef": ham.get("p_hedef"), "p_stop": ham.get("p_stop"),
+        "EV_R": ham.get("EV_R"),
+        "demean_favori": (r["cikti"].get("DEMEAN") or {}).get("favori"),
+        "strateji": ("§2 KARŞILANDI — ölçüm hedef-önceyi favori gösteriyor"
+                     if favori == "HEDEF" else
+                     "§2 KARŞILANMADI — ölçüm stop-önceyi favori gösteriyor; "
+                     "bu kasa profiliyle STRATEJİ: ATLA"),
+    }
+    return emir
 
 
 def _onceki_kosu(job: dict, taban: Path) -> dict:
@@ -1705,6 +1751,11 @@ def kos(job: dict, taban: Path) -> dict:
         "EMIR_GEREKCE": (k5.get("emir_plani") or {}).get("gerekce", ""),
         "emir_adaylari": (k5.get("emir_plani") or {}).get("adaylar") or [],
         "emir_red_nedenleri": (k5.get("emir_plani") or {}).get("red_nedenleri") or [],
+        # STRATEJI.md §2 ilk-geçiş ölçümü ZİRVEDE görünür: K5'in içine gömülü
+        # kalırsa iki-satır çıktısını okuyan kullanıcı kapının uygulanıp
+        # uygulanmadığını göremez (sessiz kapı = uygulanmamış kapı).
+        "ILK_GECIS": (k5.get("emir_plani") or {}).get("ilk_gecis")
+                     or {"durum": f"{YOK} — §2 ölçümü yapılmadı"},
         "CELISKI_TURU": (k5.get("celiski_turu") or {}).get("hukum", YOK),
         "iki_satir": {
             "1_YON": f"YÖN (bias): {s.get('YON_BIAS')} — ağırlıklı yön skoru "

@@ -110,11 +110,32 @@ def yapi_oku(m15: str, h4: str) -> dict:
     son = b15[-1].c
 
     def _atr(bars, n=14):
+        """ATR — WILDER yumuşatması (smc_tespit.py ile AYNI tanım).
+
+        Eskiden son n TR'nin BASİT ortalamasıydı. Aynı barlar için smc_tespit'in
+        Wilder ATR'sinden FARKLI bir sayı üretiyordu; oysa `usd_hedef` ve
+        `rr_denetim` kapılarının eşikleri ([0.8, 2.0] kurulum bandı ve 3.0
+        şişirilmiş-R sınırı) Wilder ölçeğine göre kalibre edilmiştir — yani kapı
+        yanlış ölçekte değerlendiriliyordu. `usd_hedef`in kendi girdi beyanı da
+        zaten "smc_tespit_h4.atr (4H — kurulum ölçeği)" diyor.
+        Ölçülen fark (2026-08-08, ETH 4H, engine/girdi/eth/h4.json):
+          basit ortalama 20.8914  →  33.3333 puanlık sabit stop = 1.60×ATR
+          Wilder         22.1913  →  aynı stop                  = 1.50×ATR
+        Bu veride ikisi de banttan geçiyor; fark bandın KENARINDA taraf
+        değiştirir. İki motorun aynı barlar için tek sayı üretmesi şart.
+        """
+        if len(bars) < 2:
+            return None
         tr = []
         for i in range(1, len(bars)):
             h, l, pc = bars[i].h, bars[i].l, bars[i - 1].c
             tr.append(max(h - l, abs(h - pc), abs(l - pc)))
-        return sum(tr[-n:]) / min(n, len(tr)) if tr else None
+        if len(tr) < n:                   # periyot dolmadı → basit ortalama
+            return sum(tr) / len(tr)
+        atr = sum(tr[:n]) / n             # Wilder tohumu: ilk n TR'nin ortalaması
+        for x in tr[n:]:                  # sonra yinelemeli yumuşatma
+            atr = (atr * (n - 1) + x) / n
+        return atr
 
     return {
         "son_kapanis": son, "atr15": _atr(b15), "atr4h": _atr(b4),
