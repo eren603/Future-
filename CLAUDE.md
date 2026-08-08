@@ -28,6 +28,40 @@ Bu dosya her oturumda otomatik yüklenir; aşağıdaki disiplin `/komut` bekleme
 
 ⚠️ Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL.
 
+## DIŞ BECERİ SİSTEMLERİ ve ÇAKIŞMA ÖNCELİĞİ
+
+Depoda üç beceri ailesi kurulu:
+
+| Aile | Kaynak | Ne zaman | Adet |
+|---|---|---|---|
+| **Proje motorları** | bu depo | piyasa analizi/kararı | 14 |
+| **Superpowers** | `obra/superpowers` (MIT) | **depo KODU** değişecekse | 14 |
+| **Vercel Agent Skills** | `vercel-labs/agent-skills` (MIT) | React/Next/Expo/UI işi | 9 |
+
+`using-superpowers` becerisi `.claude/hooks/superpowers-session-start.sh` ile her
+oturum başında bağlama enjekte edilir. O beceri "her cevaptan ÖNCE skill çağır"
+der; bu depoda **koşulsuz değildir**. Çelişkide sıra (üstteki kazanır):
+
+1. **`CLAUDE.md` + `STRATEJI.md`** — proje sözleşmesi (piyasa kararı disiplini,
+   doğruluk sözleşmesi, sert yasaklar). **Her zaman üstündür.**
+2. **Somut depo kanıtı** — dosya/ölçüm/koşu raporu. Hafızadan iddia yenilir.
+3. **Superpowers iş akışı** — yalnız KOD/MÜHENDİSLİK işlerinde
+   (brainstorm → plan → TDD → implement → review → verification).
+4. **Vercel Agent Skills** — yalnız React/Next/Expo/UI/erişilebilirlik işlerinde.
+5. Genel tercihler.
+
+**Somut kural — atlanamaz:** Kullanıcı piyasa verisi gönderdiğinde
+(`piramit_veri_*.json`, kline, CoinGlass paneli, grafik görüntüsü) **VARSAYILAN
+yol piramit boru hattıdır**. "Önce brainstorm edelim", "önce plan yazalım",
+"önce skill çağırayım" diye araya girilmez — boru hattı tetikleyicisiz koşar.
+Superpowers akışı depo kodu değiştirilecekse uygulanır, **piyasa analizi
+üretilirken DEĞİL**.
+
+Buna karşılık **`verification-before-completion` disiplini her iki alanda da
+geçerlidir** ve zaten sözleşmenin parçasıdır: "tamamlandı/çalışıyor/düzeldi"
+denmeden önce doğrulama komutu TAZE koşulur ve çıktısı gösterilir. Bu, mevcut
+"garanti söz değil, denetimdir" ilkesinin dış karşılığıdır — çelişmez, güçlendirir.
+
 ## Otomatik beceri kullanımı (TETİKLEYİCİ GEREKMEZ)
 
 Kullanıcı **hiçbir `/komut` yazmaz.** Bir soru **finans**, **analiz**, **veri**
