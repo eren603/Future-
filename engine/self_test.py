@@ -267,6 +267,43 @@ def test_akibet_arsiv_boslugu():
     txt_k = km.label_outcome(takip, seri(False))
     check("akibet-bosluksuz-degismedi", "STOP" in txt_k, txt_k)
 
+    # (a) KIRILGANLIK KİLİDİ: hüküm metni hiçbir TERMINAL kodu İÇERMEMELİ —
+    # büyük/küçük harf farkı GÖZETMEKSİZİN. Koruma yalnız harf duyarlılığına
+    # dayanırsa metin bir gün .upper()'lanınca ÖLÇÜLEMEDİ sessizce terminal
+    # STOP'a döner ve tamir tersine çevrilir (denetçi bulgusu 2026-08-08).
+    _ust = txt_b.upper()
+    check("akibet-bosluk-metni-terminal-kod-icermez",
+          not any(c.upper() in _ust for c in km.TERMINAL_OUTCOMES),
+          [c for c in km.TERMINAL_OUTCOMES if c.upper() in _ust] or txt_b[:80])
+
+    # (b) PENCERE KAYMASI ≠ ARŞİV DELİĞİ: karar barı 200 barlık kayan
+    # pencerenin dışına düştüyse hüküm bunu AÇIKÇA söylemeli ve çareyi
+    # (--arsiv) göstermeli; "arşiv deliği" diye yanlış teşhis koymamalı.
+    _uzak = [mk(T0 + 30 * 24 * 60 * 60_000 + i * BAR,
+                102.0, 102.5, 101.5, 102.0) for i in range(6)]
+    txt_p = km.label_outcome(takip, _uzak)
+    check("akibet-pencere-kaymasi-ayirt-edilir",
+          "PENCERE KAYMASI" in txt_p and "--arsiv" in txt_p
+          and km.outcome_code(txt_p) == "ÖLÇÜLEMEDİ", txt_p)
+
+    # (c) NOMİNAL ARALIK boşluk ÇOĞUNLUKTAYKEN de doğru olmalı: farkların
+    # çoğu boşluksa medyan da mod da boşluğa kayıp kapıyı fail-OPEN yapıyordu.
+    _seyrek = [mk(T0, 99, 99.5, 98.5, 99.0),
+               mk(T0 + BAR, 100.2, 101.5, 100.0, 100.4),
+               mk(T0 + 2 * BAR, 100.4, 100.8, 100.1, 100.5)]
+    for i in range(1, 6):                       # 5 adet 24×BAR'lık atlama
+        _seyrek.append(mk(T0 + 2 * BAR + i * 24 * BAR, 100.5, 100.9, 100.2, 100.6))
+    check("akibet-bar-araligi-boslukla-kaymaz",
+          km._bar_araligi(_seyrek) == BAR,
+          "ölçülen=%s dk, beklenen=%s dk (farkların 5/7'si boşluk)"
+          % (km._bar_araligi(_seyrek) // 60000, BAR // 60000))
+    # (d) tek bozuk zaman damgası nominali sıfıra çekip TÜM ölçümü kapatmamalı
+    _bozuk = [mk(T0 + i * BAR, 100, 100.5, 99.5, 100) for i in range(6)]
+    _bozuk.insert(3, mk(T0 + 2 * BAR + 1, 100, 100.5, 99.5, 100))   # 1 ms sapma
+    check("akibet-bar-araligi-tek-bozuk-damga-yutulur",
+          km._bar_araligi(_bozuk) == BAR,
+          "ölçülen=%s ms, beklenen=%s ms" % (km._bar_araligi(_bozuk), BAR))
+
 
 # ---------------------------------------------------------------- uçtan uca
 def synth(seed, n15=400):
