@@ -58,6 +58,14 @@ KONVANSIYON = {
     "maliyet_dusuldu": False,
 }
 
+# Arşiv boşluğu eşiği: ardışık iki bar arasındaki fark nominal aralığın bu
+# katını aşarsa "boşluk" sayılır ve ölçüm fail-closed durur. 1.5 seçildi:
+# TEK bar eksikliğini bile yakalar (2.0 olsa bir bar kaçardı) ama borsa
+# damgasındaki milisaniye oynamalarına takılmaz. Ölçülen gerçek arşivlerde
+# (BTC 902 bar / ETH 892 bar) 15 dk dışındaki tek fark 7515 dk'lık boşluktur
+# → bu eşik yanlış-pozitif üretmez.
+BOSLUK_TOLERANS = 1.5
+
 
 class EtiketError(Exception):
     pass
@@ -131,8 +139,36 @@ def _yon_isaret(karar: dict) -> int:
     raise EtiketError(f"yön okunamadı: {y!r}")
 
 
+def _bar_araligi(barlar: list) -> int:
+    """Barların NOMİNAL aralığı (ms) — ardışık farkların MEDYANI.
+
+    Medyan seçildi çünkü ortalama tek bir büyük boşlukla kayar; medyan
+    900000 (15 dk) gibi baskın aralığı boşluklara rağmen doğru verir.
+    Ölçülemezse 0 döner ve boşluk denetimi KAPANIR (uydurma aralıkla
+    sahte boşluk üretmemek için).
+    """
+    if len(barlar) < 3:
+        return 0
+    farklar = sorted(int(barlar[i + 1][0]) - int(barlar[i][0])
+                     for i in range(len(barlar) - 1))
+    orta = farklar[len(farklar) // 2]
+    return orta if orta > 0 else 0
+
+
 def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
-    """Kararı ileriye doğru simüle et → gerçekleşen R (ya da neden ölçülemediği)."""
+    """Kararı ileriye doğru simüle et → gerçekleşen R (ya da neden ölçülemediği).
+
+    ARŞİV BOŞLUĞU KAPISI (fail-closed): bu fonksiyon barlar üzerinde İNDEKSLE
+    yürür. İndeks ardışıklığı ZAMAN ardışıklığı DEĞİLDİR — arşivde eksik bar
+    varsa `barlar[j]` ile `barlar[j-1]` arasında saatler/günler olabilir ve o
+    aralıkta gerçekleşen stop/hedef temasları GÖRÜNMEZ olur. 2026-08-08 doctor
+    denetiminde yakalandı: 15M arşivindeki 7515 dk'lık boşluk yüzünden, 4H
+    serisinde T2'ye ulaşıp +2.50R KAZANAN bir SHORT, boşluğun 7 gün ötesinde
+    ilk görülen stop temasıyla "STOP" (-1.0R) diye kaydedilmişti — kazanan
+    işlem kaybeden olarak deftere yazıldı ve ağırlık öğrenmesini kirletti.
+    Artık yürüyüş bir boşluğa çarparsa ölçüm YAPILMAZ: "ÖLÇÜLEMEDİ" denir,
+    R yazılmaz. Eksik veriyle etiket uydurmak yasaktır.
+    """
     idx = {t: i for i, (t, *_) in enumerate(barlar)}
     i0 = idx.get(int(karar_zamani))
     if i0 is None:
@@ -152,6 +188,25 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
     market = bool(karar.get("market")
                   or str(karar.get("giris_tipi", "")).strip().lower() == "market")
 
+    # --- 0) arşiv boşluğu korkuluğu (bkz. docstring) ----------------------
+    _aralik = _bar_araligi(barlar)
+    _tol = int(_aralik * BOSLUK_TOLERANS) if _aralik else 0
+
+    def bosluk(j: int) -> int:
+        """barlar[j-1] → barlar[j] geçişindeki zaman atlaması (ms), yoksa 0."""
+        if not _tol or j <= 0:
+            return 0
+        d = int(barlar[j][0]) - int(barlar[j - 1][0])
+        return d if d > _tol else 0
+
+    def bosluk_hukmu(j: int, d: int) -> dict:
+        return {"olculebilir": False,
+                "sonuc": (f"ÖLÇÜLEMEDİ — arşiv boşluğu: {barlar[j-1][0]} → "
+                          f"{barlar[j][0]} arası {d // 60000} dk eksik "
+                          f"(nominal bar {_aralik // 60000} dk). Boşluğun "
+                          "içindeki stop/hedef temasları görünmez; R YAZILMAZ "
+                          "(fail-closed). Arşiv tamamlanınca yeniden ölçülür.")}
+
     def iptal_asildi(c):     # gövde kapanışı iptalin ötesinde mi?
         return c > iptal if s < 0 else c < iptal
 
@@ -163,6 +218,9 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
         f, giris = None, None
         son = min(len(barlar) - 1, i0 + int(p["azami_bekleme"]))
         for j in range(i0 + 1, son + 1):
+            d = bosluk(j)
+            if d:
+                return bosluk_hukmu(j, d)
             _, o, h, l, c, _v = barlar[j]
             dokundu = (h >= giris_alt) if s < 0 else (l <= giris_ust)
             iptal_oldu = iptal_asildi(c)
@@ -190,6 +248,10 @@ def simule_et(karar: dict, karar_zamani: int, barlar: list, p: dict) -> dict:
     # --- 2) çıkış ---------------------------------------------------------
     son = min(len(barlar) - 1, f + int(p["azami_tutma"]))
     for k in range(f, son + 1):
+        if k > f:
+            d = bosluk(k)
+            if d:
+                return bosluk_hukmu(k, d)
         if k == i0 and market:
             continue                      # karar barında market dolum: aynı barı sayma
         _, o, h, l, c, _v = barlar[k]

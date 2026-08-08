@@ -232,6 +232,40 @@ def test_outcome_label():
           str(km.TERMINAL_OUTCOMES))
     for _c in km.OUTCOME_CODES:
         check("outcome-code-tanir-%s" % _c, km.outcome_code("... %s ..." % _c) == _c, _c)
+    test_akibet_arsiv_boslugu()
+
+
+def test_akibet_arsiv_boslugu():
+    """REGRESYON — 2026-08-08: 15M arşivindeki 7515 dk'lık boşluk, T2'de +2.50R
+    kazanan BTC SHORT'unu deftere 'STOP' diye yazdırmıştı (boşluk sonrası ilk
+    stop teması bulundu, boşluğun içindeki T1/T2 barları görünmedi).
+    Kapı: boşluk varsa ÖLÇÜLEMEDİ (nonterminal, R yazılmaz); boşluk YOKSA
+    eski davranış birebir korunur (aksi halde kapı tüm ölçümü öldürür)."""
+    BAR = 900_000                       # 15 dk
+    T0 = 1_785_000_000_000
+    T0 -= T0 % BAR
+    karar = {"karar": "SHORT", "yon": "SHORT", "giris_alt": 100.0,
+             "giris_ust": 101.0, "giris": 100.5, "stop": 103.0,
+             "iptal": 101.0, "t1": 96.0, "t2": 95.0, "giris_tipi": "limit"}
+    takip = {"son_bar": T0, "karar": karar}
+
+    def seri(bosluklu):
+        b = [mk(T0 + BAR, 100.2, 101.5, 100.0, 100.4)]          # DOLUM
+        atlama = 5 * 24 * 60 * 60_000 if bosluklu else BAR      # 5 gün / normal
+        t = T0 + BAR + atlama
+        b.append(mk(t, 102.0, 103.5, 101.8, 102.5))             # stop teması
+        for i in range(1, 6):
+            b.append(mk(t + i * BAR, 102.5, 102.8, 102.2, 102.6))
+        return b
+
+    txt_b = km.label_outcome(takip, seri(True))
+    check("akibet-bosluk-olculemedi", "ÖLÇÜLEMEDİ" in txt_b and "STOP" not in txt_b,
+          txt_b)
+    check("akibet-bosluk-nonterminal",
+          km.outcome_code(txt_b) == "ÖLÇÜLEMEDİ"
+          and "ÖLÇÜLEMEDİ" not in km.TERMINAL_OUTCOMES, km.outcome_code(txt_b))
+    txt_k = km.label_outcome(takip, seri(False))
+    check("akibet-bosluksuz-degismedi", "STOP" in txt_k, txt_k)
 
 
 # ---------------------------------------------------------------- uçtan uca

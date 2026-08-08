@@ -3,6 +3,17 @@
 Bu depo finans/kripto piyasa analizi odaklıdır (Binance futures, fable paneli,
 SMC/likidite okuması).
 
+@STRATEJI.md
+
+<!-- Yukarıdaki satır bir @import'tur (Claude Code CLAUDE.md içe aktarma
+     sözdizimi) — STRATEJI.md'yi HER oturuma yükler. 2026-08-08'de ölçülen
+     kusur: bu dosya 44. satırda STRATEJI.md'yi "proje sözleşmesi, her zaman
+     üstündür" diye ilan ediyordu ama `grep -cE '^@' CLAUDE.md` = 0 idi;
+     dosya HİÇ yüklenmiyordu. Sermaye/stop/rejim kuralları (400 USD, stop
+     %25, 4 ardışık stop, ρ≥0.85 tek bahis, ekleme YASAK) her karar için
+     bağlayıcı olduğundan içe aktarım maliyeti (~2.1k token/oturum) kabul
+     edildi. STRATEJI.md silinir/taşınırsa bu satır da güncellenmeli. -->
+
 ## VARSAYILAN ÇALIŞMA MODU (otomatik — tetikleyici GEREKMEZ)
 
 Bu dosya her oturumda otomatik yüklenir; aşağıdaki disiplin `/komut` beklemeden

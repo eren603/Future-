@@ -54,6 +54,7 @@ RECENT_N = 24       # sinyalin "güncel" sayıldığı pencere (15M bar = 6 saat
 R_T1_FALLBACK = 1.5 # likidite hedefi yoksa T1 = giriş +/- 1.5R
 R_T2_FALLBACK = 2.5 # likidite hedefi yoksa T2 = giriş +/- 2.5R
 R_MIN = 1.35        # depo kuralı ("Analiz yapma komutu" 5_RISK): altı = kenar zayıf -> BEKLE
+BOSLUK_TOLERANS = 1.5  # akıbet ölçümünde "arşiv boşluğu" eşiği (bkz. label_outcome)
 MIN_M15 = N_VOL + 2 * SWING_K + 4
 MIN_H4 = MA_SLOW + 5
 
@@ -416,8 +417,34 @@ def regime_4h(bars4h):
 # ---------------------------------------------------------------------------
 # Önceki kararın akıbeti (hafıza: etkileme değil, hesap verme)
 # ---------------------------------------------------------------------------
+def _bar_araligi(bars):
+    """Barların NOMİNAL aralığı (ms) — ardışık farkların MEDYANI. Yetersizse 0."""
+    if len(bars) < 3:
+        return 0
+    farklar = sorted(bars[i + 1].t - bars[i].t for i in range(len(bars) - 1))
+    orta = farklar[len(farklar) // 2]
+    return orta if orta > 0 else 0
+
+
 def label_outcome(prev, bars):
-    """Önceki karardan SONRAKİ 15M barların fiyat yoluyla akıbet etiketi."""
+    """Önceki karardan SONRAKİ 15M barların fiyat yoluyla akıbet etiketi.
+
+    ARŞİV BOŞLUĞU KAPISI (fail-closed) — 2026-08-08'de ölçülen gerçek olay:
+      BTC SHORT (karar 07-27 23:30, giriş 64364.0 / stop 64790.3 / T1 63567.0 /
+      T2 63298.25). 4H serisinde tetik 07-29 04:00, T1 07-29 16:00, T2 07-29
+      20:00 → +2.50R KAZANÇ. Ama 15M arşivinde 07-29 03:30 → 08-03 08:45 arası
+      7515 dk BOŞLUK var; T1/T2 barları arşivde YOK. Yürüyüş barları İNDEKSLE
+      dolaştığı için boşluğu göremedi, boşluk sonrası ilk stop temasını
+      (08-05 18:45) buldu ve deftere "STOP" yazdı — kazanan işlem kaybeden
+      olarak kaydedildi.
+    Kök neden: `for b in after:` zaman sürekliliğini DENETLEMİYOR; ayrıca
+    azami bekleme/tutma pencereleri BAR sayısıyla ölçüldüğünden bir boşluk o
+    pencereleri sessizce günlere yayıyor.
+    Kural: ardışık iki bar arası nominal aralığın BOSLUK_TOLERANS katını
+    aşarsa ölçüm DURUR ve "ÖLÇÜLEMEDİ" döner. ÖLÇÜLEMEDİ terminal DEĞİLDİR →
+    pozisyon takipte kalır, deftere R YAZILMAZ, ağırlık öğrenmesi kirlenmez.
+    Arşiv tamamlanınca aynı karar yeniden ölçülür.
+    """
     if prev is None:
         return "İLK KOŞU — kıyas yok."
     k = prev.get("karar", {})
@@ -439,7 +466,24 @@ def label_outcome(prev, bars):
               if k.get("giris_tipi") else abs(hi - lo) < 1e-6)
     triggered = market
     t1_hit = False
+    # Arşiv boşluğu korkuluğu (bkz. docstring): nominal aralık TÜM seriden
+    # ölçülür (after kısa olabilir), tarama ise karar barından itibaren
+    # yürüyen pencerede yapılır — karar barı ile ilk sonraki bar arasındaki
+    # kopukluk da boşluktur.
+    _aralik = _bar_araligi(bars)
+    _tol = _aralik * BOSLUK_TOLERANS if _aralik else 0
+    _onceki_t = prev["son_bar"]
     for b in after:
+        if _tol:
+            _d = b.t - _onceki_t
+            if _d > _tol:
+                return ("Önceki %s: akıbet ÖLÇÜLEMEDİ — arşiv boşluğu %s → %s "
+                        "arası %d dk eksik (nominal bar %d dk). Boşluğun içindeki "
+                        "stop/hedef temasları görünmez; R YAZILMAZ (fail-closed). "
+                        "Arşiv tamamlanınca yeniden ölçülür."
+                        % (yon, fmt_ts(_onceki_t), fmt_ts(b.t),
+                           _d // 60000, _aralik // 60000))
+        _onceki_t = b.t
         just_filled = False
         if not triggered:
             # LIMIT: giriş tetiklenmeden iptal (gövde kapanışı iptal seviyesi ötesinde)
@@ -490,7 +534,10 @@ def label_outcome(prev, bars):
 # Sıra önemli: outcome_code ilk eşleşeni döndürür (INVALIDATION-EXIT metni küçük
 # harf "iptal" içerir; "İPTAL" büyük-İ olduğundan yanlış eşleşmez).
 TERMINAL_OUTCOMES = ("İPTAL", "STOP", "T1 ve T2", "BELİRSİZ", "INVALIDATION-EXIT")
-NONTERMINAL_OUTCOMES = ("TETİKLENMEDİ", "AÇIK")
+# ÖLÇÜLEMEDİ bilerek NONTERMINAL: arşiv boşluğunda pozisyon takipte KALIR,
+# deftere yazılmaz (fail-closed). Kod listede olmasa outcome_code "DİĞER"
+# döner — sessiz kova; burada AÇIKÇA tanınır.
+NONTERMINAL_OUTCOMES = ("TETİKLENMEDİ", "AÇIK", "ÖLÇÜLEMEDİ")
 OUTCOME_CODES = TERMINAL_OUTCOMES + NONTERMINAL_OUTCOMES
 
 
