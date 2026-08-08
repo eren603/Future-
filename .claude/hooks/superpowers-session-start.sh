@@ -34,8 +34,7 @@ Yukarıdaki 'using-superpowers' becerisi bu depoda KOŞULSUZ DEĞİLDİR.
      doğruluk sözleşmesi, sert yasaklar)
   2. Somut depo kanıtı (dosya/ölçüm/koşu raporu)
   3. Superpowers iş akışı — KOD/MÜHENDİSLİK işlerinde
-  4. Vercel Agent Skills — React/Next/Expo/UI işlerinde
-  5. Genel tercihler
+  4. Genel tercihler
 
 Somut kural: kullanıcı piyasa verisi (piramit_veri_*.json, kline, CoinGlass
 paneli) gönderdiğinde VARSAYILAN yol piramit boru hattıdır; 'önce brainstorm

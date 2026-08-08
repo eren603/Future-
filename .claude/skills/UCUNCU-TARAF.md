@@ -16,18 +16,22 @@ Bu dizindeki becerilerin bir kısmı dış depolardan alınmıştır. Proje moto
   `.claude/hooks/superpowers-session-start.sh` yazıldı (yol bağımsız + öncelik
   korkuluğu gömülü). Gerekçe betiğin kendi başlığındadır.
 
-## vercel-labs/agent-skills — 9 beceri
-- Kaynak: https://github.com/vercel-labs/agent-skills
-- Lisans: MIT (SKILL.md frontmatter `license:` alanında)
-- Alınma yöntemi: `npx skills add vercel-labs/agent-skills -a claude-code --skill '*' --copy`
-- Beceriler: deploy-to-vercel, vercel-cli-with-tokens, vercel-composition-patterns,
-  vercel-optimize, vercel-react-best-practices, vercel-react-native-skills,
-  vercel-react-view-transitions, web-design-guidelines, writing-guidelines
-- NOT: bu depo Python/finans odaklıdır; bu 9 becerinin tetikleyicisi
-  React/Next/Expo/UI'dır ve piyasa analizinde eşleşmez. Bağlam maliyeti dışında
-  etkileri yoktur. Kaldırmak için: `rm -rf .claude/skills/vercel-* \
-  .claude/skills/deploy-to-vercel .claude/skills/web-design-guidelines \
-  .claude/skills/writing-guidelines`
+## vercel-labs/agent-skills — KURULU DEĞİL (kaldırıldı)
+- 2026-08-08'de 9 beceri kuruldu, aynı gün `/doctor` denetiminde **kaldırıldı**.
+- Gerekçe (ölçülmüş): bu depo Python/finans odaklıdır; 9 becerinin tetikleyicisi
+  React/Next/Expo/UI'dır ve piyasa analizinde hiç eşleşmez. Beceri listeleme
+  bütçesinde ~800 est. token/oturum yer kaplıyorlardı (toplam listeleme ~%1
+  bütçesinin 2,6 katındaydı), karşılığında sıfır kullanım.
+- Geri istenirse:
+  `npx skills add vercel-labs/agent-skills -a claude-code --skill '*' --copy`
+  ardından `~/.claude/skills/` altındaki dizinleri `.claude/skills/` içine kopyala.
+
+## Tek-kaynak kuralı
+Bu beceriler YALNIZ depoda (`.claude/skills/`) tutulur. `~/.claude/skills/`
+altına kopya BIRAKILMAZ: iki kök ayrışırsa hangisinin yükleneceği makineye ve
+çözüm sırasına bağlı kalır ve sessizce farklı sürüm koşar. (2026-08-08'de 23
+beceri iki kökte birden duruyordu — bayt-özdeşti ama sapma riski taşıyordu;
+global kopyalar silindi.)
 
 ## Çakışma önceliği
 `CLAUDE.md` → "DIŞ BECERİ SİSTEMLERİ ve ÇAKIŞMA ÖNCELİĞİ" bölümü bağlayıcıdır.
