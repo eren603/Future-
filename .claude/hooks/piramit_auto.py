@@ -895,6 +895,48 @@ def _ikinci_job() -> dict | None:
     return job
 
 
+def _kaynak_teyit_bas() -> None:
+    """Bağlayıcı kaynak-teyidi raporunu bas (salt-okunur; kanca AĞA ÇIKMAZ).
+
+    Kullanıcı kuralı (2026-08-09): her koşuda bağımsız kaynak teyidi. Dış borsa
+    API'si kancadan erişilemez (api.crypto.com CONNECT 403 — proxy engeli);
+    çekim yalnız Claude'un MCP bağlayıcısıyla yapılır → engine/state/
+    kaynak_ham.json → scripts/kaynak_teyit.py → engine/state/kaynak_teyit.json.
+    Kanca burada yalnız raporu okur: bu barın taze teyidi varsa özetini basar,
+    yoksa GÖRÜNÜR "TEYİT GEREKLİ" uyarısı basar ki adım sessizce atlanamasın.
+    Teyit karara GERİ BESLENMEZ (dairesel kanıt yasak) — veri bütünlüğü sınavıdır.
+    """
+    tp = REPO / "engine" / "state" / "kaynak_teyit.json"
+    gerekli = ("[PİRAMİT] ⚠ KAYNAK TEYİDİ GEREKLİ (duran görev adım 8): MCP "
+               "bağlayıcısından (Crypto.com get_ticker + get_candlestick 15m, "
+               "BTCUSD-PERP/ETHUSD-PERP) taze veri çekilip engine/state/"
+               "kaynak_ham.json'a `zaman_utc` damgasıyla yazılır ve `python3 "
+               ".claude/skills/piramit-sistem/scripts/kaynak_teyit.py --ham "
+               "engine/state/kaynak_ham.json` koşulur — ağ kancadan 403-engelli, "
+               "çekim yalnız Claude/MCP katmanında yapılabilir.")
+    try:
+        son = _girdi_son_bar()
+        if son is None:
+            return
+        if not tp.exists():
+            print(gerekli)
+            return
+        t = json.loads(tp.read_text(encoding="utf-8"))
+        if t.get("son_bar_ms") != son:
+            print(f"[PİRAMİT] ⚠ KAYNAK TEYİDİ BAYAT — rapor {t.get('son_bar_utc')} "
+                  "barına ait, girdi ilerledi.")
+            print(gerekli)
+            return
+        print("[PİRAMİT] KAYNAK TEYİDİ (bağlayıcı): " + str(t.get("ozet", "özet alanı yok")))
+        if t.get("HUKUM_GENEL") != "UYUM":
+            print("[PİRAMİT] ⚠ KAYNAK TEYİDİ UYUMSUZ — veri şüphesi çıktıda "
+                  "GİZLENMEZ; işlem hükmü verilmeden önce kaynak ayrışması "
+                  "açıklanmalı (fail-closed).")
+    except Exception as e:  # noqa: BLE001 — teyit bloğu kancayı düşüremez
+        print(f"[PİRAMİT] ⚠ kaynak_teyit okunamadı ({type(e).__name__}: {e}) — "
+              "teyit elle yapılmalı (uydurulmaz).")
+
+
 def main() -> int:
     print(KURAL)
     _gorev_bas()
@@ -970,6 +1012,7 @@ def main() -> int:
         print("[PİRAMİT] Girdi verisi DEĞİŞMEDİ — yeniden koşulmadı; son koşunun "
               "sonucu (motor hafızası kirletilmedi):")
         print(onceki["ozet"])
+        _kaynak_teyit_bas()
         return 0
 
     try:
@@ -1031,6 +1074,7 @@ def main() -> int:
                  "ÜRETMEZ): " + ", ".join(grafikler))
         print(satir)
         ozet = f"{ozet}\n{satir}"
+    _kaynak_teyit_bas()
     try:
         _atomik_yaz(DURUM, json.dumps(
             {"fp": fp, "ozet": ozet, "kod": kod,
