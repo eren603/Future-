@@ -1,9 +1,9 @@
 {
-  "liq_long": 0.0000305,
-  "liq_short": 0.0003151,
+  "liq_long": 0.0036,
+  "liq_short": 0.0719,
   "birim": "milyon USD (CoinGlass 4S bar, Sembol Likidasyonları)",
-  "kaynak": "CoinGlass Binance ETHUSDT Perpetual — Longs 30.5 USD / Shorts 315.1 USD. ⚠ KAPSAM UYARISI: 4S barı (08:00) ekran anında yalnız ~9 dakikalıktır (15M ve 4S panelleri AYNI değerleri gösteriyor), toplam likidasyon 345.6 USD = pratikte SIFIR; short/long oranı (10.3×) kaskad kanıtı DEĞİLDİR, gürültüdür",
-  "zaman_utc": "2026-08-06 08:08",
-  "zaman_yerel": "2026-08-06 11:09 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 11:09 (UTC+3) → UTC 08:09; paket çekimi 2026-08-06 08:10:13 UTC; son bar 2026-08-06 08:00"
+  "kaynak": "CoinGlass Binance ETHUSDT Perpetual — 4S paneli: Longs 3.6K USD / Shorts 71.9K USD. 4S barı 12:00 UTC'de başladı, ekran anında ~2s14dk'lık (panel geri sayım 01:45:12) — bar anlamlı dolulukta. 15M paneli aynı anda: Longs — (görünmüyor/≈0) / Shorts 123.2 (ölçek 1.0M; panelde çıplak sayı — mutlak değeri küçük). Short/long oranı ~20× — 1926.84 kırılımında tasfiyeler short tarafında (yukarı yön ile tutarlı); BTC'deki 1.1M short tasfiyesine kıyasla ETH tarafı KÜÇÜK",
+  "zaman_utc": "2026-08-09 14:13",
+  "zaman_yerel": "2026-08-09 17:14 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 17:14 (UTC+3) → UTC 14:14; paket çekimi 2026-08-09 14:15:30 UTC; son 15M bar 2026-08-09 14:15 (açık), son 4S bar 12:00"
 }

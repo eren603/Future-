@@ -1,39 +1,37 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: 15M+4S Liquidity Heatmap, 15M+4S panel) ↔ kline uçları (aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: 15M+4S panel, 15M+4S Liquidity Heatmap) ↔ kline uçları (aynı bar)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
-  "trend": "yatay",
-  "yapi_olayi": "08/05 21:00'deki 1927.19 tepesinden geri çekilme 1893.62'ye (08/06 ~05:00), ardından toparlanma ~1918'e ve şimdi 1909.69'da SIKIŞMA. 15M MA'ları tamamen iç içe (MA5 1910.25 / MA10 1911.22 / MA30 1906.11 — toplam açıklık 5.11 puan = %0.27) ve fiyat tam ortalarında; MA5 < MA10 olması kısa vadeli momentumun döndüğünü gösteriyor. 4S'te ise fiyat MA5 1908.05 > MA10 1888.87 > MA30 1871.36'nın tümünün üstünde (açıklık 36.69 puan = %1.92; bir önceki koşudaki %1.04'ün neredeyse iki katı — 4S boğa dizilimi belirginleşti)",
+  "trend": "bull",
+  "yapi_olayi": "08/09 gün içi: 1911.10 dibinden (etiketli, ~09:00 civarı) yükselen dipli toparlanma, 13:45-14:15 penceresinde kırılım 1926.84 tepesine (etiketli) — BTC ile AYNI ANDA, aynı desen. Fiyat şimdi 1924.93, kırılım tepesinin 2 puan altında. 15M MA dizilimi boğa: MA5 1922.68 > MA10 1919.93 > MA30 1918.74, fiyat üstünde. 4S'te fiyat MA5 1918.12 / MA10 1918.36 / MA30 1904.24'ün tümünün üstünde; 4S pencere tepesi 1982.00 (07/26 bölgesi), dip 1820.61; 4S yapı: 1820.61 dibinden yükselen kanal, son mumlar 1920'lerde tutunuyor",
   "seviyeler": {
     "direnc": [
-      1915,
-      1918,
-      1923.94,
-      1927.19,
-      1936.57,
-      1940
+      1926.84,
+      1930,
+      1940,
+      1943,
+      1982
     ],
     "destek": [
-      1906,
+      1920,
+      1916,
+      1911.1,
       1900,
-      1895,
-      1893.62,
-      1880,
-      1854.51
+      1880
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 1909.69 (+2.16%); 24S menzil 1854.51-1927.19, 24S hacim 7.198B; MA5 1910.25 / MA10 1911.22 / MA30 1906.11 İÇ İÇE; VOL 17.5M vs MA5 29.5M / MA10 26.3M (ortalama altı); funding %0.0013 — şerit pozitif tümsekten sonra GENİŞ SARI (NEGATİF) BLOĞA döndü ve şimdi küçük pozitife çıkıyor: bir önceki koşuda 'funding yükseliyor, long primi geri geldi' demiştim, o prim ARADA ERİDİ ve negatife geçti; Sembol Likidasyonları Longs 30.5 / Shorts 315.1 (⚠ toplam 345.6 USD = pratikte sıfır, bar ~9 dakikalık); Açık Faiz 2.3M ×4 ama eğri pencerede belirgin DÜŞTÜ, sonda düzleşti",
-    "4S panel: fiyat 1909.48 (+2.16%); MA5 1908.05 / MA10 1888.87 / MA30 1871.36 — fiyat üçünün de üstünde, MA30 artık YUKARI eğimli; pencere tepesi 1982.00 (07/27), dip 1820.61 (08/01 03:00); 4S barı yeni başladı (3:51:07 kaldı) → hacim 19.3M kıyaslanabilir değil; funding %0.0013",
-    "15M heatmap (08/05 21:30→08/06 07:45+): fiyat 1909.64; pencere tepesi 1923.94, dibi 1893.62; kitap YOĞUN — 1915 hattında geniş koyu bant ve 1920 üstü tamamen dolu (yukarı yol tıkalı), 1905/1900 civarı da koyu; fiyatın hemen çevresi (1907-1913) görece açık",
-    "4S heatmap (07/28 11:00→08/06): fiyat 1909.62; pencere tepesi 1936.57, dibi 1820.61; kalın koyu bantlar 1940, 1930, 1920 ve 1900 hatlarında",
-    "ÇAPRAZ SORGU (panel ↔ kline): panel 24S tepe 1927.19 ↔ kline son-96-bar max 1927.19 BİREBİR; panel 24S dip 1854.51 ↔ kline min 1854.51 BİREBİR; panel fiyat 1909.69/1909.48 ↔ son kapanış 1908.74 (0.74-0.95 fark, 08:00 barı açık — ekran paketten 2 dk önce); heatmap 1909.64/1909.62 aradaki değerler",
-    "Görsel yön okuması: bir önceki koşuda 'impulsun tepesinde alım yapılmaz, 1893-1883 geri çekilmesi beklenir' demiştim; fiyat 1893.62'ye kadar indi (o bölgenin üst kenarına DEĞDİ) ve oradan toparladı — ama şimdi 1909'da yeniden sıkışmış durumda ve MA'lar yapıştı. 4S boğa dizilimi güçlendi, 15M kararsız. Yukarıda 1915 bandı + 1920 üstü dolu kitap: ilk direnç fiyata 5 puan uzakta"
+    "15M panel: fiyat 1924.93 (+0.22%); 24S menzil 1911.10-1926.84, 24S hacim 1,977,015,254; VOL 64.7M vs MA5 58.1M / MA10 39.6M (ortalama üstü, kırılım mumunda yüksek yeşil çubuk, ölçek 138.8M); funding %0.0051 — şerit pencere boyunca KESİNTİSİZ yeşil pozitif ve seviye düz; Sembol Likidasyonları Longs — / Shorts 123.2 (ölçek 1.0M; mutlak değer küçük); Açık Faiz 2.3M — eğri pencere ortasında düşüş, SONDA KESKİN YEŞİL YÜKSELİŞ (BTC ile aynı desen: kırılım OI artışıyla)",
+    "4S panel: fiyat 1924.93; MA5 1918.12 / MA10 1918.36 / MA30 1904.24 — fiyat üstünde, MA30 yukarı eğimli; VOL 363.4M vs MA5 309.5M; funding %0.0051 (pencere başında birkaç sarı negatif bar, sonrası pozitif); 4S Likidasyon Longs 3.6K / Shorts 71.9K (bar ~2s14dk dolu); pencerede en büyük tasfiye çubuğu 08/04 civarı dev YEŞİL (short) — 1820 dibi bölgesinde; Açık Faiz 2.3M, 4S OI eğrisi sonda toparlıyor",
+    "15M heatmap (08/09 03:30→13:45+): fiyat 1924.72 (yeşil rozet); pencere tepesi 1926.84; kitap ölçeği 3083 — YOĞUN; fiyatın hemen üstü 1926-1928 bölgesinde bantlar var ama EN KOYU bloklar pencere ortasındaki 1914-1922 geçiş bölgesinde kalmış (fiyatın altında); 1911-1912 dip bölgesi çevresi görece açık",
+    "4S heatmap (07/31 15:00→08/07 11:00+): fiyat 1924.72; pencere tepesi 1943.00; kitap ölçeği 2963 — fiyatın ÜSTÜ DOLU: 1930-1945 bölgesi geniş koyu mor bloklar (özellikle 1940 hattı), yani yukarı yolun üstünde kalın likidite tavanı; 1830-1850 alt bölgesi sağ tarafta açık/boşalmış",
+    "ÇAPRAZ SORGU (panel ↔ kline): panel 24S tepe 1926.84 ↔ kline son-96-bar max 1926.84 BİREBİR; panel 24S dip 1911.10 ↔ kline min 1911.1 BİREBİR; panel fiyat 1924.93 ↔ son kapanış 1924.19 (0.74 fark — 14:15 barı AÇIK, ekran paketten ~1-2 dk önce; heatmap 1924.72 arada)",
+    "Görsel yön okuması: BTC ile eşzamanlı, hacim + OI destekli yukarı kırılım; ETH'nin short tasfiyesi BTC'ninkine kıyasla küçük (71.9K vs 1.1M) — ETH kırılımı daha çok BTC'yi TAKİP ediyor görünümünde. Kritik asimetri: 4S heatmap'te 1930-1943 bandı KALIN likidite tavanı — 2 puan yukarıdaki 1926.84 kırıldıktan sonra ilk gerçek engel 1930-1940; hedefi o bandın YAKIN kenarından öteye koymak likiditeyle yarışmak olur"
   ],
   "h4_trend": "bull",
-  "celiski_notu": "Görsel-kline uyum iki uçta BİREBİR (1927.19 / 1854.51); fiyat farkı açık 08:00 barından. KRİTİK DEĞİŞİM: funding bir önceki koşuda YÜKSELİYORDU (%0.005), aradaki pencerede NEGATİFE geçti ve şimdi %0.0013 ile zar zor pozitif — yani motorun geçen koşuda ürettiği MARKET LONG'un lehine saydığım funding sürüklenişi ORTADAN KALKTI. Aynı anda OI düşmeye devam etti. Likidasyon okuması bu koşuda kullanılamaz kalitede (toplam 345.6 USD, ~9 dakikalık bar) — oranı kaskad sayan her skor gürültüdür. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
+  "celiski_notu": "Görsel-kline uyum iki uçta BİREBİR (1926.84 / 1911.1). Funding görünümü bir önceki koşunun tersine döndü: 08/06 koşusunda 'long primi eridi, negatife geçti' okunmuştu; şimdi %0.0051 ile şerit kesintisiz pozitif — long primi GERİ GELDİ (yukarı kırılımla tutarlı ama kalabalık long riskini de büyütür). Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-08-06 08:08",
-  "zaman_yerel": "2026-08-06 11:09 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 11:07-11:09 (UTC+3) → UTC 08:07-08:09; paket çekimi 2026-08-06 08:10:13 UTC; son bar 2026-08-06 08:00 (açık bar)"
+  "zaman_utc": "2026-08-09 14:13",
+  "zaman_yerel": "2026-08-09 17:14 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 17:13-17:14 (UTC+3) → UTC 14:13-14:14; paket çekimi 2026-08-09 14:15:30 UTC; son 15M bar 2026-08-09 14:15 (açık bar)"
 }
