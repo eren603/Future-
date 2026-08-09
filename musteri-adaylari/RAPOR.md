@@ -33,14 +33,26 @@ Mercedes-Benz Türk, Odeon Turizm*, TAV*, Bosch, Habaş, Eti Maden, BSH, TUSAŞ,
 
 ## Çıktı
 
-`lojistik_musteri_aday_listesi.xlsx` — 3 sayfa:
+`lojistik_musteri_aday_listesi.xlsx` — 4 sayfa:
 
 1. **İhracatçı Adaylar (38 firma):** TİM 2025 verisinden, havayolu/turizm hariç; sektör,
    tutar (yalnız kaynaklı olanlar), il, yük tipi (YORUM) ve öncelik (YORUM) ile.
-2. **İthalatçı Adaylar:** ⚠ Türkiye'de firma bazlı resmi ithalatçı sıralaması kamuya açık
+2. **İnşaat-Taahhüt Adaylar (Rönesans-benzeri, 45+3 firma):** ENR "Top 250 International
+   Contractors 2025" listesindeki 45 Türk müteahhidi (ENKA 46., Rönesans 50., Limak 61. ...)
+   + Apollo.io'nun bulduğu 3 ek aday (GAMA, Kazancı/Aksa, Karadeniz/Karpowership).
+   11 firma Apollo.io ile zenginleştirildi (web sitesi, çalışan sayısı, merkez).
+   ⚠ Listedeki 45. firma Orkun Uluslararası Nakliyat lojistikçidir — müşteri değil RAKİP.
+3. **İthalatçı Adaylar:** ⚠ Türkiye'de firma bazlı resmi ithalatçı sıralaması kamuya açık
    yayımlanmaz (VERİ YOK) — liste sektör bilgisine dayalı YORUMDUR (distribütörler, perakende,
    ilaç, hurda/enerji).
-3. **Nasıl Kullanılır:** hedef segment seçimi ve satış yaklaşımı.
+4. **Nasıl Kullanılır:** hedef segment seçimi ve satış yaklaşımı.
+
+### İnşaat-taahhüt kaynağı (gerçek veri)
+
+ENR 2025: Türkiye 45 firmayla Çin'in (76) ardından dünya 2.si; 2024'te üstlenilen
+uluslararası proje değeri 20,8 milyar $ (Ticaret Bakanlığı açıklaması). Bu firmalar yurtdışı
+şantiyelere sürekli ekipman/malzeme sevk eder → proje kargo, ağır/gabari-dışı taşıma,
+şantiye ikmal zinciri ihtiyacı — Rönesans profili birebir bu segmenttir.
 
 ## Ana sonuçlar (yorum, etiketli)
 
