@@ -45,7 +45,7 @@ Depoda iki beceri ailesi kurulu:
 
 | Aile | Kaynak | Ne zaman | Adet |
 |---|---|---|---|
-| **Proje motorları** | bu depo | piyasa analizi/kararı | 14 |
+| **Proje motorları** | bu depo | piyasa analizi/kararı | 13 |
 | **Superpowers** | `obra/superpowers` (MIT) | **depo KODU** değişecekse | 14 |
 
 `using-superpowers` becerisi `.claude/hooks/superpowers-session-start.sh` ile her
@@ -80,7 +80,6 @@ beceriyi uygula.
 
 | Soru şununla ilgiliyse | Otomatik uygulanan beceri |
 |------------------------|---------------------------|
-| Değerleme, finansal model, DCF, comps, LBO, 3 tablo, çarpan, WACC, yatırım getirisi | `finansal-modelleme` |
 | Veri analizi, finansal tablo, oran, trend, istatistik, hesaplama, Excel/CSV/JSON denetimi, kripto/hisse verisi yorumlama, sayısal iddia doğrulama | `data-analysis-deep-scan` |
 | Grafik/chart okuma, mum grafiği, teknik analiz, SMC, CHoCH/BOS, order block, FVG, likidite, Fibonacci/golden zone, giriş bölgesi, grafik oluşturma, dashboard | `grafik-calisma` |
 | Grafik ÜZERİNE çizim: fibonacci çizme, trend çizgisi/kanal/regresyon/çatal, destek-direnç bölgesi, order block-FVG-likidite işaretleme, long/short pozisyon (R:R) kutusu, ölçüm, ok/metin/etiket, bilgi paneli, EMA bulutu, "çizimli grafik ver", "TradingView gibi çiz" | `grafik-cizim` (SVG; matplotlib GEREKMEZ) |
