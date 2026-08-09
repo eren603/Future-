@@ -1,6 +1,6 @@
 {
-  "son_bar": 1786284900000,
-  "son_bar_utc": "2026-08-09 14:15",
+  "son_bar": 1786305600000,
+  "son_bar_utc": "2026-08-09 20:00",
   "karar": {
     "karar": "BEKLE",
     "yon": null,
@@ -8,62 +8,42 @@
     "neden": "BEKLE: dönüş dizisi 4/4 TAMAM (LONG, 1916.3 süpürüldü) ama kurulumun FVG'si mitige — giriş ce=1918.39 bölge %50 tükendikten sonra zaten geçilmiş, kurulum BAYAT. Alt zincire devredilmez (fail-closed)."
   },
   "takip": null,
-  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-08-06 08:00).",
+  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-08-09 14:15).",
   "acik_bolgeler": [
     {
       "tip": "bull",
       "ust": 1915.64,
       "alt": 1914.81,
       "ce": 1915.225,
-      "bar": 181,
+      "bar": 158,
       "zaman": 1786267800000
     },
     {
-      "tip": "bull",
-      "ust": 1919.18,
-      "alt": 1917.32,
-      "ce": 1918.25,
-      "bar": 195,
-      "zaman": 1786280400000
+      "tip": "bear",
+      "ust": 1925.49,
+      "alt": 1924.8,
+      "ce": 1925.145,
+      "bar": 184,
+      "zaman": 1786291200000
     },
     {
-      "tip": "bull",
-      "ust": 1921.42,
-      "alt": 1919.19,
-      "ce": 1920.305,
-      "bar": 196,
-      "zaman": 1786281300000
+      "tip": "bear",
+      "ust": 1923.36,
+      "alt": 1923.29,
+      "ce": 1923.3249999999998,
+      "bar": 191,
+      "zaman": 1786297500000
     },
     {
-      "tip": "bull",
-      "ust": 1924.19,
-      "alt": 1922.95,
-      "ce": 1923.5700000000002,
-      "bar": 199,
-      "zaman": 1786284000000
+      "tip": "bear",
+      "ust": 1922.17,
+      "alt": 1921.82,
+      "ce": 1921.995,
+      "bar": 192,
+      "zaman": 1786298400000
     }
   ],
   "swing_15m_son": [
-    [
-      1924.63,
-      "H"
-    ],
-    [
-      1912.3,
-      "L"
-    ],
-    [
-      1922.49,
-      "H"
-    ],
-    [
-      1918.63,
-      "L"
-    ],
-    [
-      1920.84,
-      "H"
-    ],
     [
       1915.59,
       "L"
@@ -75,13 +55,29 @@
     [
       1925.86,
       "H"
+    ],
+    [
+      1926.84,
+      "H"
+    ],
+    [
+      1926.69,
+      "H"
+    ],
+    [
+      1920.57,
+      "L"
+    ],
+    [
+      1918.0,
+      "L"
+    ],
+    [
+      1921.71,
+      "H"
     ]
   ],
   "swing_4h_son": [
-    [
-      1920.92,
-      "H"
-    ],
     [
       1891.46,
       "L"
@@ -101,12 +97,16 @@
     [
       1911.1,
       "L"
+    ],
+    [
+      1926.84,
+      "H"
     ]
   ],
   "rejim_4h": {
     "rejim": "FLAT",
-    "fark": 4.319999999999936,
-    "esik": 20.612799999999826
+    "fark": 5.794000000000324,
+    "esik": 19.332099999999716
   },
   "donus_dizisi": {
     "yon": "LONG",

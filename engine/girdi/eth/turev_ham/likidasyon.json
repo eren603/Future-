@@ -1,9 +1,9 @@
 {
-  "liq_long": 0.0036,
-  "liq_short": 0.0719,
+  "liq_long": 0.0,
+  "liq_short": 0.0,
   "birim": "milyon USD (CoinGlass 4S bar, Sembol Likidasyonları)",
-  "kaynak": "CoinGlass Binance ETHUSDT Perpetual — 4S paneli: Longs 3.6K USD / Shorts 71.9K USD. 4S barı 12:00 UTC'de başladı, ekran anında ~2s14dk'lık (panel geri sayım 01:45:12) — bar anlamlı dolulukta. 15M paneli aynı anda: Longs — (görünmüyor/≈0) / Shorts 123.2 (ölçek 1.0M; panelde çıplak sayı — mutlak değeri küçük). Short/long oranı ~20× — 1926.84 kırılımında tasfiyeler short tarafında (yukarı yön ile tutarlı); BTC'deki 1.1M short tasfiyesine kıyasla ETH tarafı KÜÇÜK",
-  "zaman_utc": "2026-08-09 14:13",
-  "zaman_yerel": "2026-08-09 17:14 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 17:14 (UTC+3) → UTC 14:14; paket çekimi 2026-08-09 14:15:30 UTC; son 15M bar 2026-08-09 14:15 (açık), son 4S bar 12:00"
+  "kaynak": "CoinGlass Binance ETHUSDT Perpetual — 4S ve 15M panelleri İKİSİ DE 'Longs: -- / Shorts: --' gösteriyor: 20:00 UTC'de başlayan 4S barı ekran anında ~8-9 dakikalık ve içinde likidasyon YOK (görüntülenen değer yok, ölçülen sıfır bar). ⚠ Kaskad ölçümü DEĞİLDİR — neredeyse boş bardan gelen sıfırdır. NİTEL not (sayısallaştırılamadı): 15M şeridinde pencere ortasında kırmızı (long) tasfiye çubukları ve ~16:30 civarı tek yeşil (short) çubuk var; şeridin sonunda çubuk yok",
+  "zaman_utc": "2026-08-09 20:08",
+  "zaman_yerel": "2026-08-09 23:08-23:09 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 23:08-23:09 (UTC+3) → UTC 20:08-20:09; paket çekimi 2026-08-09 20:10:29 UTC; son 15M bar 2026-08-09 20:00 (açık), 4S bar 20:00'de başladı"
 }
