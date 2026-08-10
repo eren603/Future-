@@ -1,25 +1,25 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (8 görüntünün BTC bölümü: 15M+4S panel, 15M+4S Liquidity Heatmap) ↔ kline uçları (aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance BTCUSDT Perpetual (setin BTC bölümü: 15M+4S panel, 15M+4S Liquidity Heatmap) ↔ kline uçları (aynı bar)",
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
-  "trend": "yatay",
-  "yapi_olayi": "08/09 15:00 UTC civarı impuls 64950→65279.90, ardından 65120–65250 bandında dağıtım; fiyat 65122 ve MA5 65159.82 / MA10 65170.46 / MA30 65169.82 (toplam açıklık ~11 puan = sıkışma) ÜÇÜNÜN ALTINDA — kısa vadeli momentum dönmüş. 4S dizilim MA5 65039.58 > MA10 64991.86 > MA30 64714.38 (boğa, açıklık 325 puan), fiyat MA5 üstünde.",
+  "trend": "bear",
+  "yapi_olayi": "08/09 ~23:00 UTC'de 65482.70 spike'ı (dünkü 65130–65300 bantları SÜPÜRÜLDÜ) ve 65500 ana duvarından sert RED: fiyat 64872'ye markdown, dip 64805.10 test edildi. MA5 64896.86 < MA10 65029.93 < MA30 65116.44 — TAM AYI dizilimi, fiyat üçünün altında. 4S: MA5 65003.62 > MA10 64959.40 > MA30 64729.99 dizilim hâlâ boğa AMA fiyat 64868 ile MA5 ve MA10'un ALTINA inmiş — 4S boğa yapısı zayıflıyor.",
   "seviyeler": {
-    "direnc": [65160, 65250, 65279.9, 65300, 65358, 65500],
-    "destek": [64800, 64759.2, 64700, 64500]
+    "direnc": [64960, 65000, 65140, 65300, 65400, 65482.7, 65500],
+    "destek": [64805.1, 64780, 64700, 64500]
   },
   "gozlem": [
-    "15M panel: fiyat 65122 (+0.12%); 24S menzil 64700–65280, 24S hacim 2.311B; VOL 15.7M vs MA5 13.6M / MA10 13.7M (ortalama civarı); funding %0.0099 pozitif ve son barlarda YÜKSELEN merdiven; Sembol Likidasyonları Longs -- / Shorts -- (SAYISAL DEĞER PANELDE YOK, imleçsiz; ölçek 751.3K, 15:00 civarı kırmızı short-tasfiye barları görünür); Açık Faiz 107.9K/108.0K — eğri 00:30–12:45 düşüş, 15:00 rallisiyle SERT yükseliş, sonda 108K tepe/yatay (taze long birikimi)",
-    "4S panel: fiyat 65122; MA5 65039.58 > MA10 64991.86 > MA30 64714.38 boğa dizilimi, fiyat MA5 üstünde; pencere tepesi 65722.50 (07/25 sonrası), dip 62228.80; funding %0.0099, şeritte yalnız 07/26 civarı tek sarı bar; Açık Faiz 108.0K (ölçek tepesi 111.8K, 08/03), son günler 106–108K yatay-yukarı; 4S barı yeni başladı (3:50:55 kaldı) → bar hacmi kıyaslanamaz",
-    "15M heatmap (08/09 09:30→19:45+, kitap ölçeği 129): kalın koyu bantlar 65300 (ekran boyu kesintisiz) ve ~65250; fiyatın hemen üstünde 65130–65160 kalın bantlar; fiyat altında sağda 64800 bandı; pencere dibi 64759.20 — yukarı yol kademeli TIKALI, altta 64800 çekici havuz",
-    "4S heatmap (07/31 23:00→08/07 19:00+, ölçek 840): 65400–65500 turuncu üst bantlar, pencere tepesi 65358; fiyat altı 64500'e dek görece boş; arka plan genel açık (kitap ince)",
-    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): panel 24S High/Low 65280/64700 ↔ kline son-96-bar 65279.9/64700.0 BİREBİR; panel 4S pencere 65722.50/62228.80 ↔ kline (07/25 23:00 sonrası) 65722.5/62228.8 BİREBİR; panel fiyat 65122 ↔ son kapanış 65101.80 — 20 puan fark, 20:00 barı AÇIK ve ekran 20:08–20:09 UTC, paket 20:10:29 (aynı ana ait değil, sapma değil)",
-    "Görsel yön okuması: 4S boğa yapı içinde 15M üst bölgede dağıtım — impuls sonrası fiyat MA'ların altına sarktı, tepe üstü 65130–65300 likidite duvarları kademeli, OI tepede, funding pozitif ve yükseliyor (long tarafı kalabalık); kısa vade YATAY/soğuma, kırılım kanıtı yok"
+    "15M panel: fiyat 64872 (-0.09%); 24S menzil 64700–65483, 24S hacim 3.128B (dünkü 2.311B'den YÜKSEK — spike katılımlı); VOL 17.2M vs MA5 62.5M / MA10 88.4M (spike sonrası soğuma); funding %0.0074 — dünkü %0.0099'dan İNİYOR, şerit tümsekten dönmüş; Sembol Likidasyonları Longs 4.2K / Shorts -- (ÇİFT EKSİK → BTC likidasyon VERİ YOK, sayı uydurulmadı); Açık Faiz 107.1K/107.1K/107.0K/107.0K — dünkü 108.0K tepeden eğri SERT KIRMIZI DÜŞÜŞ: ralli pozisyonları boşaltılıyor",
+    "4S panel: fiyat 64868; MA5 65003.62 / MA10 64959.40 / MA30 64729.99 — dizilim boğa ama fiyat MA5 ve MA10 altında; pencere tepesi 65722.50 (07/26 sonrası), dip 62228.80; funding %0.0074; VOL MA5 499.3M; 4S barı yeni açıldı (3:57:00 kaldı) → bar hacmi kıyaslanamaz",
+    "15M heatmap (08/09 13:30→23:45+, kitap ölçeği 129): 65500 hattında EKRAN BOYU ÇOK KALIN koyu bant (süpürülmemiş ana duvar — dün de vardı, duruyor); 65400–65450 koyu bantlar; 65300 parçalı; dünkü 65130–65160/65250 bantları spike ile SÜPÜRÜLMÜŞ; fiyat 64852.80, altında dip 64805.10; 64800 bölgesi (dünkü havuz) kısmen test edildi",
+    "4S heatmap (08/01 03:00→08/07 23:00+, ölçek 840): 65400–65500 turuncu bantlar duruyor — 65482.70 spike tam o bölgeye vurup reddedildi; fiyat altı 64000'e dek görece soluk",
+    "ÇAPRAZ SORGU (panel ↔ kline, aynı bar): 24S High/Low 65483/64700 ↔ 65482.7/64700.0 ✔; 4S pencere 65722.50/62228.80 ↔ 65722.5/62228.8 ✔ BİREBİR; panel fiyat 64872 ↔ kapanış 64873.00 (1 puan, 00:00 barı AÇIK, ekran 00:02–00:03 UTC)",
+    "Görsel yön okuması: dünkü koşunun uyarısı GERÇEKLEŞTİ — fiyat üstü bant istifi süpürüldü (65482.70) ve 65500 ana duvarından sert red geldi; OI 108.0→107.0K boşaldı, funding %0.0099→%0.0074 soğudu, 15M MA'lar tam ayı dizilimine geçti. Klasik likidite süpürme + dağıtım görünümü: kısa vade BEAR"
   ],
   "h4_trend": "bull",
-  "celiski_notu": "Görsel-kline uyum: dört uç BİREBİR (65279.9/64700.0/65722.5/62228.8). İç uyumsuzluk: 4S dizilim boğa ama 15M'de fiyat üç MA'nın altında ve impuls sonrası alçalan kısa tepeler — üst TF yukarı, alt TF soğuma. KRİTİK EKSİK: likidasyon sayısal değeri bu setin DÖRT panelinde de okunamıyor (imleçsiz 'Longs -- / Shorts --') → likidasyon kanalı bu koşuda VERİ YOK, sayı UYDURULMADI; ayrıca 4S barı ekran anında ~8 dk'lıktı. OI tepe + funding yükselen + fiyat-üstü yakın bantlar (65130–65160) birleşimi stop-av riskini yükseltir. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
+  "celiski_notu": "Görsel-kline uyum: dört uç BİREBİR. 15M net bear (spike reddi + tam ayı MA dizilimi), 4S dizilim hâlâ boğa ama fiyat MA5/MA10 altına sarkmış — üst TF yapısı ilk kez zayıflama sinyali veriyor. BTC likidasyon çifti okunamadı (Shorts '--') → kanal VERİ YOK; 4S barı ekran anında ~2 dk'lıktı. Dünkü okumanın doğrulaması: 'stop-av riski yüksek' denmişti, süpürme gerçekleşti — bu, heatmap bantlarının bilgi taşıdığının lehine bir gözlem (tek örnek, istatistik değil). Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendine bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-08-09 20:08",
-  "zaman_yerel": "2026-08-09 23:08–23:09 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 23:08–23:09 (UTC+3) → UTC 20:08–20:09; paket çekimi 2026-08-09 20:10:29 UTC ile aynı dakikalar; son bar 2026-08-09 20:00 (8–9 dk, bar AÇIK)"
+  "zaman_utc": "2026-08-10 00:02",
+  "zaman_yerel": "2026-08-10 03:02-03:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 03:02-03:03 (UTC+3) → UTC 00:02-00:03; paket çekimi 2026-08-10 00:04:40 UTC ile aynı dakikalar; son bar 2026-08-10 00:00 (2-3 dk, bar AÇIK)"
 }
