@@ -3,35 +3,36 @@
   "sembol": "BTCUSDT",
   "zaman_dilimi": "15m",
   "trend": "bear",
-  "yapi_olayi": "14:15 koşusundaki kırılımın DEVAMI ve REDDİ: fiyat 15:00 civarı 65279.90 tepesini yaptı (etiketli), sonra alçalan tepelerle düzeltme — 65280 → ~65240 → ~65200 → şimdi 65122, son mumlar kırmızı ve 65140-65160 rafının altına sarkıyor. 15M MA'ları YAPIŞIK ve fiyat ÜÇÜNÜN DE ALTINDA: MA5 65159.82 / MA10 65170.46 / MA30 65169.82 (açıklık 11 puan — düzleşmiş) → kısa vade AŞAĞI eğimli. 4S ise hâlâ boğa: fiyat MA5 65039.58 > MA10 64991.86 > MA30 64714.38'in üstünde; 4S pencere tepesi 65722.50, dip 62228.80. Yani 15M düzeltme ↔ 4S yükseliş gerilimi",
+  "yapi_olayi": "SÜPÜRME VE RED: ~23:45-00:00 penceresinde dikey spike 65482.70'e (etiketli) — 15M heatmap'teki 65400-65500 koyu bant kümesinin İÇİNE fitil — ardından SERT DUMP 64805.10'a (heatmap dip etiketi); şimdi 64852-64873. Yani dünkü 'üstte 65300/65500 likidite tavanı' bölgesi süpürüldü ve fiyat kırılım öncesi bölgeye GERİ döndü. 15M MA dizilimi TAM AYI: MA5 64896.86 < MA10 65029.93 < MA30 65116.44 ve fiyat üçünün de altında. 4S KIRILMA BELİRTİSİ: fiyat ≈64868, 4S MA5 65003.62 ve MA10 64959.40'ın ALTINA indi (dün üstündeydi), yalnız MA30 64729.99 üstünde — 4S boğa dizilimi bozuldu, yükselen dip yapısı (62228.80'den) henüz kırılmadı",
   "seviyeler": {
     "direnc": [
-      65160,
-      65280,
+      64960,
+      65000,
+      65140,
       65300,
-      65358,
+      65400,
+      65482.7,
       65500
     ],
     "destek": [
-      65000,
-      64950,
-      64800,
-      64759.2,
-      64700
+      64805.1,
+      64780,
+      64700,
+      64500
     ]
   },
   "gozlem": [
-    "15M panel: fiyat hanesi yine bozuk ('6,5,1,2,2' ≈ 65122); kesin fiyat heatmap rozetinden 65121.70; 24S menzil 64700-65280 (grafik etiketi 65279.90, haneler bozuk); 24S hacim 2,311,439,060; VOL 15.7M vs MA5 13.6M — düzeltme mumlarında hacim SÖNÜK (tepe reddi yüksek hacimli değil); funding %0.0099 — 14:13 okumasındaki %0.0059'dan NEREDEYSE İKİ KAT yukarı, şerit sonda basamak basamak YÜKSELİYOR; Sembol Likidasyonları Longs -- / Shorts -- (bar boş) ama şeritte 16:15-17:30 penceresinde kırmızı LONG tasfiye çubukları; Açık Faiz 107.9K/108.0K — 14:13'teki 106.6-106.8K'dan YÜKSELMİŞ, eğri ralli boyunca dik çıkmış ve düzeltmede DÜŞMÜYOR (longlar pozisyonda tutunuyor)",
-    "4S panel: fiyat ≈65122 (+0.12%); MA5 65039.58 / MA10 64991.86 / MA30 64714.38 — fiyat üçünün üstünde, dizilim boğa; funding %0.0099; Açık Faiz 107.9K/108.0K",
-    "15M heatmap (08/09 09:30→19:45+): fiyat 65121.70 (kırmızı rozet); pencere tepesi 65279.90, dibi 64759.20; kitap ölçeği 129 — ÇOK İNCE; EN KALIN koyu bantlar fiyatın ÜSTÜNDE: 65300 hattı (pencere boyunca kesintisiz, en kalın), 65155-65170 ve fiyatın hemen üstü 65125-65135; altta 64950 ve 64800 bantları; yani likidite dengesi 14:13'ün TERSİNE döndü — o zaman yoğunluk fiyatın altındaydı, şimdi üstünde",
-    "4S heatmap (07/31 23:00→08/07 19:00+): fiyat 65121.70; pencere tepesi 65358.00; ölçek 840; üstte 65300-65500 arası kırmızımsı şeritler (en üst sıralar), alt taraf açık",
-    "ÇAPRAZ SORGU (panel ↔ kline): grafik etiketi 65279.90 ↔ kline son-96-bar max 65279.9 BİREBİR; 24S dip 64700 ↔ kline min 64700.0 BİREBİR; panel fiyat ~65122 / heatmap 65121.70 ↔ son kapanış 65101.80 (20:00 barı AÇIK, ekran paketten ~2 dk önce — bar-içi fark); heatmap pencere dibi 64759.20 kendi penceresine (09:30 sonrası) ait, 24S dibiyle karıştırılmadı",
-    "Görsel yön okuması: ÜÇ işaret kısa vadede ALEYHTE döndü — (1) fiyat kırılım tepesinden alçalan tepelerle iniyor ve 15M MA'larının altında, (2) funding fiyat düşerken NEREDEYSE İKİ KATINA çıktı (long kalabalıklaşıyor, fiyat karşılık vermiyor), (3) düzeltme penceresinde long tasfiye çubukları var ve OI yüksekte tutunuyor = su altında tutunan kalabalık long + üstte 65300 dev likidite bandı. 4S dizilim hâlâ boğa — bu bir TREND DÖNÜŞÜ kanıtı değil, kalabalık longun kısa vadeli kırılganlığı"
+    "15M panel: fiyat hanesi yine bozuk ('6,4,8,7,2' ≈ 64872, -0.09%); kesin fiyat heatmap rozetlerinden 64852.80-64854.00; 24S menzil 64700-65483 (grafik etiketi 65482.70); 24S hacim 3,127,548,293 — dünden BÜYÜDÜ (2.31B → 3.13B, süpürme hacimli); VOL 17.2M vs MA5 62.5M; spike ve dump mumlarında yüksek hacim blokları; funding %0.0074 — 20:08'deki %0.0099'dan DÜŞTÜ ama hâlâ yüksek bant; Sembol Likidasyonları Longs 4.2K / Shorts -- (4S barı boş); şeritte spike'ta büyük YEŞİL short-tasfiye çubuğu; Açık Faiz 107.1K/107.0K — eğri 108K tepesinden KIRMIZI DÜŞÜŞTE = long boşalması dump ile birlikte",
+    "4S panel: fiyat ≈64868 (-0.09%); MA5 65003.62 / MA10 64959.40 / MA30 64729.99 — fiyat MA5 ve MA10'un ALTINDA (dünkü boğa dizilimi bozuldu); son 4S mumu üst fitilli kırmızı (süpürme mumu); funding %0.0074",
+    "15M heatmap (08/09 13:30→08/10 00:00+): fiyat 64852.80; pencere tepesi 65482.70, dibi 64805.10; ölçek 129; 65500 bandı hâlâ EN KALIN (pencere boyu kesintisiz, fitil değdi ama tüketmedi), 65400-65430 ve 65300 koyu satırlar duruyor; fiyat altı görece ince — 64805 dip bölgesi ve 64700 çevresinde bantlar",
+    "4S heatmap (08/01 03:00→08/07 23:00+ penceresi): fiyat 64854.00; 65482.70 fitili üst bant kümesine (65500 civarı) değmiş; yükseliş kanalı boyunca alt taraf açık",
+    "ÇAPRAZ SORGU (panel ↔ kline): grafik etiketi 65482.70 ↔ kline son-96-bar max 65482.7 BİREBİR; 24S dip 64700 ↔ kline min 64700.0 BİREBİR; heatmap dip etiketi 64805.10 ↔ kline 20:00-sonrası min 64805.1 BİREBİR; panel fiyat ~64872 / heatmap 64852.80 ↔ son kapanış 64873.00 (00:00 barı AÇIK — bar-içi fark)",
+    "Görsel yön okuması: dün 'üstte 65300 dev bandı — squeeze de olabilir, boşalma da' demiştim; ikisi de SIRAYLA oldu: önce yukarı süpürme (short tasfiyeleri, 65482.7), sonra sert red ve long boşalması (OI kırmızı düşüş, funding soğuma). Bu klasik süpür-ve-dön yapısıdır ve SHORT lehinedir; ama fiyat 5 saatte 680 puan düşüp 64805 dibine yakın — tepeden değil dipten short kovalamak da aynı hatanın simetriğidir"
   ],
-  "h4_trend": "bull",
-  "celiski_notu": "Görsel-kline uyum iki uçta BİREBİR (65279.9 / 64700.0). Panel fiyat hanesi yine bozuk ('6,5,1,2,2') — fiyat heatmap rozetinden alındı. 14:13 okumasıyla ZIT dönüşüm: o koşuda 'squeeze + taze giriş' okunmuştu; bu koşuda funding ×1.7 artmış, tepe reddedilmiş, tasfiyeler LONG tarafına geçmiş ve üst kitap kalınlaşmış. 15M görsel okuma (bear) 4S dizilimle (bull) ÇELİŞİK — bu gerilim gizlenmiyor. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendiyle uyuşmasına bağlıdır",
+  "h4_trend": "yatay",
+  "celiski_notu": "Görsel-kline uyum üç uçta BİREBİR (65482.7 / 64700.0 / 64805.1). Panel fiyat hanesi yine bozuk — fiyat heatmap rozetinden alındı. Dünkü okumanın iki tezi de gerçekleşti (funding şişkinliği + üst likidite → süpürme; sonra boşalma) — bu teyit değil DERS: iki yönlü senaryoda yön seçtirmeyen okuma doğruydu. h4_trend 'yatay' yazdım çünkü fiyat 4S MA5/MA10 altına indi ama 62228.80'den gelen yükselen dip yapısı kırılmadı — smc_tespit_h4 bull derse bu bir GÖRSEL-MEKANİK gerilimidir, gizlenmesin. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendiyle uyuşmasına bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-08-09 20:08",
-  "zaman_yerel": "2026-08-09 23:08-23:09 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 23:08-23:09 (UTC+3) → UTC 20:08-20:09; paket çekimi 2026-08-09 20:10:29 UTC; son 15M bar 2026-08-09 20:00 (açık bar)"
+  "zaman_utc": "2026-08-10 00:02",
+  "zaman_yerel": "2026-08-10 03:02-03:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 03:02-03:03 (UTC+3) → UTC 00:02-00:03; paket çekimi 2026-08-10 00:04:40 UTC; son 15M bar 2026-08-10 00:00 (açık bar)"
 }

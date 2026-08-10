@@ -1,37 +1,36 @@
 {
-  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: 15M+4S panel, 15M+4S Liquidity Heatmap) ↔ kline uçları (aynı bar)",
+  "kaynak": "elle-görsel (Claude okuması) + ÇAPRAZ SORGU — CoinGlass Binance ETHUSDT Perpetual (8 görüntünün ETH bölümü: 2× 15M panel, 15M+4S Liquidity Heatmap; bu partide ETH 4S paneli YOK) ↔ kline uçları (aynı bar)",
   "sembol": "ETHUSDT",
   "zaman_dilimi": "15m",
   "trend": "bear",
-  "yapi_olayi": "1926.84 tepesinin REDDİ ve düzeltme: fiyat tepeden sarkarak 1918.0'a sert kırmızı mumla indi (kline: 14:15 sonrası dip 1918.0), sonra 1919-1922 bandında sıkıştı, şimdi 1920.82. 15M MA dizilimi AYIYA döndü: MA5 1921.05 < MA10 1921.18 < MA30 1922.67 ve fiyat üçünün de altında/dibinde. 4S'te fiyat hâlâ MA5 1920.96 / MA10 1919.53 / MA30 1907.58'in üstünde ama MA5-MA10'a yapışık (1.4 puan) — 4S boğa dizilimi KENARDA. 4S pencere tepesi 1982.00, dip 1820.61",
+  "yapi_olayi": "SÜPÜRME VE RED (BTC ile eşzamanlı): spike 1937.67'ye (etiketli) — 4S heatmap'teki 1935-1943 koyu bölgeye fitil — ardından SERT DUMP 1906.41'e (etiketli); şimdi 1910.26-1910.35. Dün '1940 tavanı yerinde, hedefi o banda koymak likiditeyle yarışmak olur' denen bant SÜPÜRÜLDÜ. 15M MA dizilimi TAM AYI: MA5 1912.00 < MA10 1918.24 < MA30 1920.48 ve fiyat üçünün de altında. Dump mumları yüksek hacimli (VOL ölçeği 168.4M; spike/dump çubukları 100M+ bölgesinde), sonrasında hacim soğuyor (son bar 21.5-23.3M)",
   "seviyeler": {
     "direnc": [
-      1922.5,
-      1926.84,
+      1912,
+      1918,
+      1920,
+      1925,
       1930,
-      1940,
-      1943
+      1937.67
     ],
     "destek": [
-      1918,
-      1916,
-      1912.3,
-      1911.1,
-      1900
+      1906.41,
+      1905,
+      1900,
+      1895
     ]
   },
   "gozlem": [
-    "15M panel: fiyat 1920.82 (+0.07%); 24S menzil 1911.10-1926.84, 24S hacim 1,974,300,839; VOL 4.9M vs MA5 7.6M / MA10 13.4M — hacim KURUDU; funding %0.0098 — 14:13'teki %0.0051'den neredeyse İKİ KAT yukarı, şerit sonda belirgin basamaklı YÜKSELİŞTE; Sembol Likidasyonları Longs -- / Shorts -- (bar boş); Açık Faiz 2.3M — 15M OI eğrisi ralliyle tepe yapıp düzeltmede SERT DÜŞTÜ (görünür kırmızı iniş) = ETH longları düzeltmede BOŞALDI (BTC'nin tersi: orada OI tutunuyor)",
-    "4S panel: fiyat 1921.25 (+0.09%); MA5 1920.96 / MA10 1919.53 / MA30 1907.58 — fiyat üstünde ama MA5'e yapışık; funding %0.0098; 4S barı 20:00'de başladı (geri sayım 03:50:21) → VOL 5.7M kıyaslanamaz",
-    "15M heatmap (08/09 09:30→19:45+): fiyat 1920.62 (kırmızı rozet); pencere tepesi 1926.84, dibi 1912.30; ölçek 2494; fiyatın hemen üstü 1921-1924 bölgesinde açık/krem bantlar (yakın direnç kitabı), 1924-1926.8 tepe bölgesi karışık; altta 1916 ve 1914 hatlarında seyrek bantlar — kitap iki yönde de 14:13'teki kadar tek taraflı değil",
-    "4S heatmap (07/31 23:00→08/07 19:00+): fiyat 1920.62; pencere tepesi 1943.00; ölçek 2963; 1925-1943 üst bölgesi hâlâ koyu (1940 kalın bandı duruyor) — yukarı yolun tavanı yerinde; 1830-1860 alt bölgesi sağda açılmış",
-    "ÇAPRAZ SORGU (panel ↔ kline): panel 24S tepe 1926.84 ↔ kline max 1926.84 BİREBİR; panel 24S dip 1911.10 ↔ kline min 1911.1 BİREBİR; panel fiyat 1920.82/1921.25 ↔ son kapanış 1920.57 (20:00 barı AÇIK — bar-içi fark; heatmap 1920.62 arada); heatmap pencere dibi 1912.30 kendi penceresine ait",
-    "Görsel yön okuması: ETH, BTC'den daha zayıf — tepe reddi sonrası OI BOŞALDI (BTC'de tutunuyor), 15M MA dizilimi ayıya döndü, hacim kurudu, funding iki katına çıktı (kalan longlar prim ödüyor). Üstte 4S 1940 tavanı duruyor. Kısa vade aşağı eğilimli sıkışma; 4S boğa dizilimi kenarda ama henüz kırılmadı"
+    "15M panel (iki görüntü, 24 sn arayla): fiyat 1910.35 → 1910.26 (-0.29/-0.3%); 24S menzil 1906.41-1937.67, 24S hacim 2,723,165,798 — dünden BÜYÜDÜ (1.97B → 2.72B); VOL 23.3M/21.5M vs MA5 68.8M/68.5M — dump sonrası hacim kuruyor; funding %0.0047-0.0048 — 20:08'deki %0.0098'den YARIYA indi (şerit tümseği sönüyor: long primi dump ile boşaldı); Sembol Likidasyonları Longs 7.2K / Shorts 5.3K (dengeli, kaskad yok); Açık Faiz 2.3M — eğri tepe yapıp sonda KIRMIZI düşüşte (pozisyon boşalması)",
+    "15M heatmap (08/09 13:30→08/10 00:00+): fiyat 1910.32 (yeşil rozet); pencere tepesi 1937.67, dibi 1906.41; ölçek 2494; spike mumu 1935+ bölgesindeki açık/krem bantlara değip dönmüş; fiyatın hemen altı 1906-1908 bölgesinde açık bantlar (dip likiditesi), üstte 1918-1925 arası karışık kitap",
+    "4S heatmap (08/01 03:00→08/07 23:00+ penceresi): fiyat 1910.31; 1943.00 pencere tepesi; 1935-1943 koyu bölgeye fitil girmiş (bant kısmen tüketildi ama üst satırlar duruyor); 1900 altı 1880-1860 bölgesi sağda görece açık",
+    "ÇAPRAZ SORGU (panel ↔ kline): panel 24S tepe 1937.67 ↔ kline son-96-bar max 1937.67 BİREBİR; panel 24S dip 1906.41 ↔ kline min 1906.41 BİREBİR; panel fiyat 1910.35/1910.26 ↔ son kapanış 1910.29 (00:00 barı AÇIK — bar-içi fark; heatmap 1910.31/1910.32 arada)",
+    "Görsel yön okuması: ETH süpürmesi BTC ile aynı anda ve aynı şekilde — 1940 bandına fitil, sonra 31 puanlık dump. Funding'in yarıya inmesi + OI düşüşü + dengeli likidasyon = kalabalık long temizlendi, kaskad YOK. Kısa vade ayı; ama fiyat 24S dibinin 4 puan üstünde ve dip bölgesinde likidite bantları var — dipten short kovalamak süpürülme riskli"
   ],
-  "h4_trend": "bull",
-  "celiski_notu": "Görsel-kline uyum iki uçta BİREBİR (1926.84 / 1911.1). 14:13 okumasının 'BTC'yi takip eden kırılım' tezi tersine döndü: kırılım tutmadı, OI boşaldı, funding şişti. 15M görsel okuma (bear) 4S dizilimle (bull, kenarda) gerilimde — gizlenmiyor. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendiyle uyuşmasına bağlıdır",
+  "h4_trend": "yatay",
+  "celiski_notu": "Görsel-kline uyum iki uçta BİREBİR (1937.67 / 1906.41). Bu partide ETH 4S paneli YOK — 4S okuması yalnız 4S heatmap'ten; MA değerleri okunamadı, h4_trend 'yatay' fiyatın 20:08 koşusunda bilinen 4S MA5/MA10 bölgesinin (≈1919-1921) altına inmesine ve yükselen dip yapısının henüz kırılmamasına dayanıyor (VARSAYIM etiketli — taze 4S MA görüntüsü yok). smc_tespit_h4 bull derse GÖRSEL-MEKANİK gerilimi not edilsin. Görsel okuma ÖLÇÜM DEĞİLDİR; güven tavanı 0.50, doğrulaması smc_tespit trendiyle uyuşmasına bağlıdır",
   "guven": 0.5,
-  "zaman_utc": "2026-08-09 20:08",
-  "zaman_yerel": "2026-08-09 23:08-23:09 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüleri cihaz saati 23:08-23:09 (UTC+3) → UTC 20:08-20:09; paket çekimi 2026-08-09 20:10:29 UTC; son 15M bar 2026-08-09 20:00 (açık bar)"
+  "zaman_utc": "2026-08-10 00:02",
+  "zaman_yerel": "2026-08-10 03:02-03:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüleri cihaz saati 03:02-03:03 (UTC+3) → UTC 00:02-00:03; paket çekimi 2026-08-10 00:04:40 UTC; son 15M bar 2026-08-10 00:00 (açık bar)"
 }

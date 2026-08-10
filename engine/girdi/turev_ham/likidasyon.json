@@ -1,9 +1,9 @@
 {
-  "liq_long": 0.0,
+  "liq_long": 0.0042,
   "liq_short": 0.0,
-  "birim": "milyon USD (CoinGlass 4S bar, Sembol Likidasyonları)",
-  "kaynak": "CoinGlass Binance BTCUSDT Perpetual — 4S ve 15M panelleri İKİSİ DE 'Longs: -- / Shorts: --' gösteriyor: 20:00 UTC'de başlayan 4S barı ekran anında ~8-9 dakikalık ve içinde likidasyon YOK (görüntülenen değer yok, ölçülen sıfır bar). ⚠ Bu bir kaskad ölçümü DEĞİLDİR — neredeyse boş bardan gelen sıfırdır. NİTEL not (sayısallaştırılamadı): 15M likidasyon şeridinde 65279.9 tepesinden dönüş penceresinde (~16:15-17:30) belirgin KIRMIZI (long) tasfiye çubukları görünüyor — düzeltmede longlar tasfiye olmuş; şeridin sonunda çubuk yok",
-  "zaman_utc": "2026-08-09 20:08",
-  "zaman_yerel": "2026-08-09 23:08-23:09 (cihaz, UTC+3)",
-  "damga_kaynagi": "ekran görüntüsü cihaz saati 23:08-23:09 (UTC+3) → UTC 20:08-20:09; paket çekimi 2026-08-09 20:10:29 UTC; son 15M bar 2026-08-09 20:00 (açık), 4S bar 20:00'de başladı"
+  "birim": "milyon USD (CoinGlass panel başlığı, Sembol Likidasyonları)",
+  "kaynak": "CoinGlass Binance BTCUSDT Perpetual — 15M paneli: Longs 4.2K USD / Shorts -- (görünmüyor/≈0). 4S paneli: Longs -- / Shorts -- (00:00'da başlayan 4S barı ekran anında ~3 dk'lık, boş). NİTEL not (sayısallaştırılamadı): likidasyon şeridinde 65482.7 spike'ında BÜYÜK YEŞİL (short) tasfiye çubuğu (ölçek 751.3K'ya yakın) ve ardından dump penceresinde yeşil çubuklar var — süpürmede önce shortlar tasfiye oldu; başlıktaki 4.2K long tasfiyesi son barın küçük kesiti",
+  "zaman_utc": "2026-08-10 00:02",
+  "zaman_yerel": "2026-08-10 03:02-03:03 (cihaz, UTC+3)",
+  "damga_kaynagi": "ekran görüntüsü cihaz saati 03:02-03:03 (UTC+3) → UTC 00:02-00:03; paket çekimi 2026-08-10 00:04:40 UTC; son 15M bar 2026-08-10 00:00 (açık), 4S bar 00:00'da başladı"
 }
