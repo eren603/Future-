@@ -182,16 +182,14 @@ def test_grounding(m):
     kaynaksiz = []
     for spec in ciz:
         for anahtar in ("fiyat", "fiyat1", "fiyat2", "giris", "stop", "hedef"):
-            if spec.get(anahtar) is not None:
-                if round(float(spec[anahtar]), 6) not in olculen:
-                    kaynaksiz.append((spec["arac"], anahtar, spec[anahtar]))
+            if spec.get(anahtar) is not None and round(float(spec[anahtar]), 6) not in olculen:
+                kaynaksiz.append((spec["arac"], anahtar, spec[anahtar]))
         for nk in ("p1", "p2", "p3"):
             p = spec.get(nk)
-            if isinstance(p, dict) and "fiyat" in p:
-                if round(float(p["fiyat"]), 6) not in olculen:
-                    kaynaksiz.append((spec["arac"], nk, p["fiyat"]))
+            if isinstance(p, dict) and "fiyat" in p and round(float(p["fiyat"]), 6) not in olculen:
+                kaynaksiz.append((spec["arac"], nk, p["fiyat"]))
     onay("GROUNDING: otomatik katmanda kaynaksız fiyat yok", not kaynaksiz,
-         f"kaynaksız: {kaynaksiz[:3]}")
+         f"kaynaksız: {kaynaksız[:3]}")
 
 
 def test_uctan_uca(m, tmp: Path):
