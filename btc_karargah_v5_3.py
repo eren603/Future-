@@ -24,6 +24,23 @@
 #      yalnizca uyari/oncu katmanindadir.
 #   8) MODUL HICBIR EMIR GONDERMEZ: create_order yok, API anahtari yok;
 #      cikti yalnizca sinyal ve uyaridir.
+#
+# v5.3.1 (canli kosu bulgusu — 11/11 sembol veto):
+#   9) pump_anomaly() YENIDEN TANIMLANDI. Canli taramada 11 sembolun 11'i
+#      14.79-17.92 bandinda "PUMP_OR_DUMP_RISK" verip motoru tamamen
+#      kilitledi. Ayni bant spike ICERMEYEN sentetik gurultude de uretildi
+#      (medyan cs = 10.05-10.82), yani sinyal degil TANIM hatasiydi:
+#        - skor tum seri uzerinden aliniyordu (z.max()/cs.max()) -> "simdi
+#          anomali var mi" yerine "son 25 gunde hic oldu mu";
+#        - cs = rolling10(|dv|)/ewm_std(v) standartlastirilmis degildi ve
+#          yapisi geregi ~10 tabani uretiyordu (esik 3.0'in 3.6 kati).
+#      Tamir: iki bilesen de SON KAPANMIS BARDA, kendi gecmis dagilimina
+#      gore z-skoru olarak olculur; referanslar .shift(1) ile alinir.
+#      Esik GEVSETILMEDI (PUMP_THRESHOLD_Z = 3.0 aynen) — degisen sey,
+#      esigin uygulandigi istatistigin dogru tanimlanmasidir.
+#      Sentetik olcum (500 seri/hucre, gercek piyasa DEGIL): saf gurultude
+#      veto %2.8-4.6; son barda x3 spike %74, x5 %96.3, x10 %100 yakalanir;
+#      40 bar once olan x50 spike artik SIMDIKI karari vetolamaz.
 # --------------------------------------------------------------------
 
 import math
@@ -222,19 +239,41 @@ def corr_stats(alt_close, ref_close, n_max=672):
 # 3. PUMP / DUMP — EWMA + degisim noktasi skoru (ONCU: hacim fiyatin onunde)
 # ---------------------------------------------------------------------------
 def pump_anomaly(vol_series, span=PUMP_SPAN, threshold=PUMP_THRESHOLD_Z):
-    if len(vol_series) < 5:
+    """Hacim anomalisi — SON KAPANMIS BARDA olculur (seri maksimumu DEGIL).
+
+    v5.3.1 TAMIR (canli kosuda uretildi: 11/11 sembol 14.79-17.92 bandinda
+    veto yedi; ayni bant spike ICERMEYEN sentetik gurultude de uretildi):
+      (a) Eski kod skoru TUM seri uzerinden aliyordu (z.max(), cs.max()) —
+          "su anda anomali var mi" yerine "son 25 gunde hic oldu mu" sorusu.
+          Cevap her sembolde EVET oldugu icin veto kalici hale geliyordu.
+      (b) Eski `cs = rolling10(|dv|) / ewm_std(v)` STANDARTLASTIRILMIS bir
+          istatistik degildi: 10 barlik mutlak degisim toplami tek barlik
+          standart sapmaya bolununce yapisi geregi ~10 civari cikar
+          (olculen medyan 10.05-10.82), yani esigin 3.6 kati bir taban.
+    Tamir: her iki bilesen de KENDI gecmis dagilimina gore z-skoruna
+    cevrildi ve referans .shift(1) ile hesaplandi (bar kendi referansinin
+    icinde yer almaz). Esik GEVSETILMEDI (PUMP_THRESHOLD_Z = 3.0 aynen);
+    degisen sey esigin uygulandigi istatistigin dogru tanimlanmasidir.
+    """
+    if len(vol_series) < 30:
         return 0.0, "NONE"
     v = vol_series.astype(float).fillna(0.0)
-    ewma = v.ewm(span=span, adjust=False).mean()
-    evol = v.ewm(span=span, adjust=False).std()
+    # (1) hacim seviyesi: son bar, kendisini ICERMEYEN EWMA referansina gore
+    ewma = v.ewm(span=span, adjust=False).mean().shift(periods=1)
+    evol = v.ewm(span=span, adjust=False).std().shift(periods=1)
     z = (v - ewma) / (evol + 1e-12)
-    max_z = float(z.max())
+    z_now = float(z.iloc[-1])
+    # (2) degisim noktasi: 10-barlik |dv| toplaminin KENDI dagilimindaki z'si
     cus = v.diff().abs().rolling(window=10).sum()
-    cs = cus / (evol + 1e-6)
-    cs_max = float(cs.max()) if len(cs) else 0.0
-    score = max(max_z, cs_max)
-    if not np.isfinite(score):
+    cus_mu = cus.ewm(span=span * 5, adjust=False).mean().shift(periods=1)
+    cus_sd = cus.ewm(span=span * 5, adjust=False).std().shift(periods=1)
+    cs = (cus - cus_mu) / (cus_sd + 1e-12)
+    cs_now = float(cs.iloc[-1])
+    if not (np.isfinite(z_now) or np.isfinite(cs_now)):
         return 0.0, "NONE"
+    z_now = z_now if np.isfinite(z_now) else 0.0
+    cs_now = cs_now if np.isfinite(cs_now) else 0.0
+    score = max(z_now, cs_now)
     if score < threshold * 0.6:
         return score, "NORMAL"
     if score < threshold:
