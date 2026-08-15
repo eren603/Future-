@@ -1,46 +1,72 @@
-# BTC KARARGAH v5.3 — ONCU VERI katmani + anlik uyari (v5.2 tamiri)
+# BTC KARARGAH v5.3.2 — ONCU VERI katmani + anlik uyari (v5.2 tamiri)
 # --------------------------------------------------------------------
 # v5.2 -> v5.3 TAMIR VE EKLENTI LOGU:
 #   1) TANIMSIZ ISIM TAMIRI: tick_confirm_score ve PUMP_TICK_WATCH
-#      tanimlandi. v5.2 dosyasinda bu isimler yalnizca cagiriliyordu,
-#      hicbir yerde tanimlanmiyordu (tam dosya taramasi ile metin
-#      duzeyinde dogrulandi; bu oturumda runtime gozlemi yapilmadi).
+#      tanimlandi. Kaynak: kullanicinin gonderdigi v5.2 metni (o dosya bu
+#      depoda YOK — v5.2'ye dair iddialar o metnin taramasina dayanir ve
+#      depodan DOGRULANAMAZ; bu acikca isaretlenir).
 #   2) YONTEM CAGRISI TAMIRI: w = w.copy -> w = w.copy();
 #      float(w["usd"].sum) -> float(w["usd"].sum()); aynisi amount icin.
-#   3) EKLENTI (kullanici gereksinimi): uyari katmani TAMAMI ONCU veriyle
-#      calisir: tick akisi, emir defteri, anlik hacim z-skoru,
-#      tick kovalari. Gecikmeli veriyle yeni hicbir hesap yapilmadi.
+#   3) EKLENTI (kullanici gereksinimi): ANLIK uyarilarin karar bileseni
+#      ONCU veridir (tick akisi, emir defteri, tick kovalari, kapanmis-
+#      dakika hacim z'si). ISTISNA — acik beyan: pump_anomaly hacim
+#      bileseni KAPANMIS 15M mumlardan hesaplanir (gecikmeli ama
+#      muhafazakar); "katmanin tamami oncu" iddiasi DOGRU DEGILDI,
+#      v5.3.2'de duzeltildi.
 #   4) ANI UYARILAR: anlik pump/dump dalgasi, V donusu (dip/tepe),
 #      trend/rejim donusu — kod her sembolde calistiginda yazdirilir.
-#   5) ESIKLER GEVSETILMEDI: FEE_TAKER, SLIPPAGE, ATR_SL_MULT,
+#   5) ESIK SABITLERI DEGISTIRILMEDI: FEE_TAKER, SLIPPAGE, ATR_SL_MULT,
 #      TIME_STOP_BARS, Z_GRID, ALPHA, EMBARGO, BOOTSTRAP_B, LOB_DEPTH,
-#      FR_TOLERANCE_BPS aynen korundu.
+#      FR_TOLERANCE_BPS v5.3'ten beri ayni (git diff ile izlenebilir).
 #   6) YENI ESIKLER HIPOTEZ ETIKETLIDIR: PUMP_TICK_WATCH, TICK_CONFIRM_*,
 #      V_REVERSAL_* — canli olcumle kalibre edilmeden "cozum" kabul
 #      edilmez; dogrulama plani dosya sonundadir.
 #   7) LOOKAHEAD KORUMALARI (.shift(periods=1), olusmamis mumun
-#      dusurulmesi) GEVSETILMEDI: bunlar korumadir; kaldirmak yasaktir.
-#      Analiz en guncel KAPANMIS mumla calisir; anlik durum bilgisi
-#      yalnizca uyari/oncu katmanindadir.
+#      dusurulmesi) GEVSETILMEDI. Analiz en guncel KAPANMIS mumla calisir.
 #   8) MODUL HICBIR EMIR GONDERMEZ: create_order yok, API anahtari yok;
 #      cikti yalnizca sinyal ve uyaridir.
 #
 # v5.3.1 (canli kosu bulgusu — 11/11 sembol veto):
 #   9) pump_anomaly() YENIDEN TANIMLANDI. Canli taramada 11 sembolun 11'i
-#      14.79-17.92 bandinda "PUMP_OR_DUMP_RISK" verip motoru tamamen
-#      kilitledi. Ayni bant spike ICERMEYEN sentetik gurultude de uretildi
-#      (medyan cs = 10.05-10.82), yani sinyal degil TANIM hatasiydi:
+#      14.79-17.92 bandinda "PUMP_OR_DUMP_RISK" verip motoru kilitledi
+#      (kaynak: kullanicinin yapistirdigi canli kosu ciktisi). Kok neden:
 #        - skor tum seri uzerinden aliniyordu (z.max()/cs.max()) -> "simdi
 #          anomali var mi" yerine "son 25 gunde hic oldu mu";
 #        - cs = rolling10(|dv|)/ewm_std(v) standartlastirilmis degildi ve
-#          yapisi geregi ~10 tabani uretiyordu (esik 3.0'in 3.6 kati).
+#          yapisi geregi yuksek bir taban uretiyordu.
 #      Tamir: iki bilesen de SON KAPANMIS BARDA, kendi gecmis dagilimina
 #      gore z-skoru olarak olculur; referanslar .shift(1) ile alinir.
-#      Esik GEVSETILMEDI (PUMP_THRESHOLD_Z = 3.0 aynen) — degisen sey,
-#      esigin uygulandigi istatistigin dogru tanimlanmasidir.
-#      Sentetik olcum (500 seri/hucre, gercek piyasa DEGIL): saf gurultude
-#      veto %2.8-4.6; son barda x3 spike %74, x5 %96.3, x10 %100 yakalanir;
-#      40 bar once olan x50 spike artik SIMDIKI karari vetolamaz.
+#      Esik GEVSETILMEDI (PUMP_THRESHOLD_Z = 3.0 aynen).
+#      OLCUM ARTEFAKTI (izlenebilir, deterministik, sabit tohum):
+#      olcum/pump_kalibrasyon.py -> olcum/pump_kalibrasyon_cikti.txt
+#      (500 seri/hucre, sentetik lognormal — GERCEK PIYASA DEGIL):
+#      eski istatistik saf gurultude %100 veto, skor medyani 18.63
+#      (esik 3.0'a karsi); yeni istatistik saf gurultude veto %2.4-4.8;
+#      son barda x2 spike %36.2, x3 %74.2, x5 %97.0, x10 %100 yakalanir;
+#      40 bar onceki x50 spike: eski %100 veto -> yeni %0.0.
+#
+# v5.3.2 (bagimsiz anayasa denetimi bulgulari — Constitution v2):
+#  10) K25: "Tarama tamamlandi." kosulsuz basiliyordu (sifir sembol
+#      taransa bile). Simdi tamam/atlanan sayilir; TAMAMLANDI yalniz
+#      hepsi taranirsa, yoksa KISMEN/BASARISIZ yazilir.
+#  11) tick_confirm_score KAPANMAMIS dakikayi "son dakika" sayiyordu:
+#      z-skoru duvar-saati fazina bagliydi (dakika basinda buyuk spike
+#      bile gomuluyordu = eskalasyon korlesmesi). Simdi yalniz KAPANMIS
+#      dakikalar kullanilir; cut ile kismi kalan ilk dakika da dusulur
+#      (mum katmanindaki kapanmis-bar disiplini tick katmanina tasindi).
+#  12) "CPCV" adlandirmasi yanlisti: fonksiyon kombinatoryal-purged CV
+#      degil, embargolu GENISLEYEN-PENCERE walk-forward'dir. Ad ve
+#      ciktilar duzeltildi (walkforward_splits / "WF+FDR+bootstrap").
+#  13) pump_anomaly kisa seride (<30 bar) "NONE" yerine "VERI_YOK" doner
+#      ve ciktida "anomali yok" DENMEZ (eksik veri "anomali yok" degildir).
+#      Not: bu yol canli akista erisilmez (sinyal motoru >=700 bar ister).
+#  14) selftest genisletildi: pump_anomaly spike yakalama + sakin seri,
+#      tick_confirm_score bos-veri fail-closed, v_reversal_detect bos
+#      girdi — deterministik, agsiz.
+#  15) pump_dump_direction ayni girdiyle iki kez cagriliyordu; tek cagri.
+#  16) Miras sabitler (rejim marji, guven formulu, router esikleri, WATCH
+#      bandi, LIMIT_TIMEOUT_SEC...) "MIRAS SABIT — kalibre edilmedi"
+#      diye etiketlendi; kalibre edilmis suslemesi yapilmaz.
 # --------------------------------------------------------------------
 
 import math
@@ -58,6 +84,8 @@ TF_MS = {"15m": 900000, "4h": 14400000}
 LIMIT_15M = 2400
 LIMIT_4H = 600
 
+# Asagidaki sabitler v5.2 mirasidir ve bu depoda KALIBRE EDILMEMISTIR
+# (MIRAS SABIT etiketi): degerlerin olculmus bir dayanagi dosyada yok.
 FEE_TAKER = 0.00040
 SLIPPAGE = 0.0005
 ATR_LEN = 14
@@ -74,12 +102,12 @@ BOOTSTRAP_B = 2000
 BOOTSTRAP_SEEDS = (20240101, 20250101)
 Z_GRID = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5]
 PUMP_BUCKET_MS = 30_000
-PUMP_SPAN = 20
-PUMP_THRESHOLD_Z = 3.0
-FR_TOLERANCE_BPS = 5.0
-LOB_DEPTH = 5
+PUMP_SPAN = 20           # MIRAS SABIT — kalibre edilmedi
+PUMP_THRESHOLD_Z = 3.0   # MIRAS SABIT — kalibre edilmedi (degistirilmez, K22)
+FR_TOLERANCE_BPS = 5.0   # MIRAS SABIT — kalibre edilmedi
+LOB_DEPTH = 5            # MIRAS SABIT — kalibre edilmedi
 TARGET_USD = 500.0
-LIMIT_TIMEOUT_SEC = 8.0
+LIMIT_TIMEOUT_SEC = 8.0  # MIRAS SABIT — kalibre edilmedi
 
 # --- v5.3 ONCU VERI / ANLIK UYARI parametreleri (HIPOTEZ) ---
 PUMP_TICK_WATCH = 2.5          # hipotez: tick hacim z esigi (v5.2'de tanimsizdi)
@@ -112,7 +140,24 @@ def selftest():
     probe = pd.Series([1.0, 2.0, 3.0, 5.0, 8.0]).ewm(span=3).std()
     assert len(probe.dropna()) > 0, \
         "Selftest 3 BASARISIZ: ewm.std"
-    print("Kendinden kontrol: OK")
+    # v5.3.2: davranis testleri (deterministik, agsiz)
+    v = pd.Series(np.random.default_rng(42).lognormal(3.0, 0.4, 600))
+    sc, note = pump_anomaly(v)
+    assert note in ("NORMAL", "WATCH"), \
+        f"Selftest 4 BASARISIZ: sakin seride {note} (skor={sc:.2f})"
+    v2 = v.copy()
+    v2.iloc[-1] *= 10.0
+    sc2, note2 = pump_anomaly(v2)
+    assert note2 == "PUMP_OR_DUMP_RISK", \
+        f"Selftest 5 BASARISIZ: x10 spike yakalanmadi ({note2}, {sc2:.2f})"
+    assert pump_anomaly(pd.Series([1.0] * 10))[1] == "VERI_YOK", \
+        "Selftest 6 BASARISIZ: kisa seri VERI_YOK degil"
+    bos = pd.DataFrame(columns=["timestamp", "price", "amount"])
+    assert tick_confirm_score("SELFTEST", bos) is None, \
+        "Selftest 7 BASARISIZ: bos tick verisi None donmedi"
+    assert v_reversal_detect(None) == [], \
+        "Selftest 8 BASARISIZ: bos girdi V-donusu bos liste degil"
+    print("Kendinden kontrol: OK (8 test)")
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +301,9 @@ def pump_anomaly(vol_series, span=PUMP_SPAN, threshold=PUMP_THRESHOLD_Z):
     degisen sey esigin uygulandigi istatistigin dogru tanimlanmasidir.
     """
     if len(vol_series) < 30:
-        return 0.0, "NONE"
+        # v5.3.2 (K34): eksik veri "anomali yok" DEGILDIR — acikca isaretle.
+        # Canli akista erisilmez yol (sinyal motoru >= 700 bar ister).
+        return 0.0, "VERI_YOK"
     v = vol_series.astype(float).fillna(0.0)
     # (1) hacim seviyesi: son bar, kendisini ICERMEYEN EWMA referansina gore
     ewma = v.ewm(span=span, adjust=False).mean().shift(periods=1)
@@ -270,11 +317,11 @@ def pump_anomaly(vol_series, span=PUMP_SPAN, threshold=PUMP_THRESHOLD_Z):
     cs = (cus - cus_mu) / (cus_sd + 1e-12)
     cs_now = float(cs.iloc[-1])
     if not (np.isfinite(z_now) or np.isfinite(cs_now)):
-        return 0.0, "NONE"
+        return 0.0, "VERI_YOK"
     z_now = z_now if np.isfinite(z_now) else 0.0
     cs_now = cs_now if np.isfinite(cs_now) else 0.0
     score = max(z_now, cs_now)
-    if score < threshold * 0.6:
+    if score < threshold * 0.6:  # WATCH bandi carpani 0.6: MIRAS SABIT — kalibre edilmedi
         return score, "NORMAL"
     if score < threshold:
         return score, "WATCH"
@@ -330,9 +377,17 @@ def tick_confirm_score(symbol, trades=None):
     t["usd"] = t["price"] * t["amount"]
     t["minute"] = (t["timestamp"] // 60_000).astype("int64")
     m = t.groupby("minute")["usd"].sum().sort_index()
+    # v5.3.2: yalniz KAPANMIS dakikalar. Icinde bulundugumuz dakika kismi
+    # oldugundan z-skoru duvar-saati fazina bagimliydi (dakika basinda
+    # buyuk spike bile gomuluyordu). Kapanmis-bar disiplini tick katmanina
+    # tasindi. Cut ile kismi kalan ILK dakika da dusulur.
+    now_minute = unix_ms() // 60_000
+    m = m[m.index < now_minute]
+    if len(m) >= 2:
+        m = m.iloc[1:]
     if len(m) < 5:
         return None
-    cur = float(m.iloc[-1])
+    cur = float(m.iloc[-1])   # son KAPANMIS dakika
     past = m.iloc[:-1].astype(float)
     base = float(past.mean())
     sd = float(past.std(ddof=1))
@@ -384,7 +439,7 @@ def v_reversal_detect(trades, window_sec=V_REVERSAL_WINDOW_SEC,
     return warnings
 
 
-def trend_flip_watch(close_15m, trades, min_mom_pct=0.001):
+def trend_flip_watch(close_15m, trades, min_mom_pct=0.001):  # min_mom_pct: hipotez, kalibre edilmedi
     """Trend/rejim donusu uyarisi. EMA8/21 kesismesi yalnizca baglamdir;
     karar ONCU tick momentumundadir."""
     if close_15m is None or len(close_15m) < 30:
@@ -471,10 +526,12 @@ def regime_detector(close_15m, close_4h):
     atr_pct = float((tr4.rolling(window=14).mean() / close_4h).iloc[-1])
     if not np.isfinite(atr_pct):
         atr_pct = 0.0
-    margin = max(0.003, atr_pct * 1.5)
+    margin = max(0.003, atr_pct * 1.5)  # MIRAS SABIT (0.003, 1.5) — kalibre edilmedi
     s = slope.reindex(r15.index, method="ffill").fillna(0.0)
     mu = float(r15.mean())
     cur = float(s.iloc[-1])
+    # Guven formulu (0.5 + |cur|*5, tavan 0.9) ve CALM=0.7: MIRAS SABIT —
+    # kalibre edilmedi; olculmus olasilik DEGIL, siralama amacli skordur.
     if cur > margin and mu > 0:
         return "BULL", min(0.9, 0.5 + abs(cur) * 5.0)
     if cur < -margin and mu < 0:
@@ -558,9 +615,13 @@ def bootstrap_max_t(oos_by_rule, B=BOOTSTRAP_B, seeds=BOOTSTRAP_SEEDS):
 
 
 # ---------------------------------------------------------------------------
-# 7. CPCV
+# 7. WALK-FORWARD BOLUMLEME (genisleyen pencere + embargo)
+#    v5.3.2 AD DUZELTMESI: eski ad "cpcv_splits" YANLISTI — bu fonksiyon
+#    kombinatoryal-purged CV (CPCV) degil, embargolu genisleyen-pencere
+#    walk-forward'dir (train daima testten once; kombinasyon yok).
+#    Sahip olunmayan yontem adi iddia edilmez.
 # ---------------------------------------------------------------------------
-def cpcv_splits(n, k=N_FOLDS, embargo=EMBARGO):
+def walkforward_splits(n, k=N_FOLDS, embargo=EMBARGO):
     fold = n // k
     splits = []
     if fold <= 0:
@@ -652,6 +713,7 @@ def execution_router(symbol, direction, target_usd, bids=None, asks=None):
         return ("MARKET", float("nan"), "taker", None, None, imb, spread_bps)
     best_bid = float(bids["price"].iloc[0])
     best_ask = float(asks["price"].iloc[0])
+    # Router esikleri (0.10 OBI, 2x derinlik, 5 bps): MIRAS SABIT — kalibre edilmedi
     bias = (imb > 0.10 and direction == "LONG") or \
         (imb < -0.10 and direction == "SHORT")
     depth_ok = depth_usd >= target_usd * 2.0
@@ -697,11 +759,12 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     # v5.3: LOB tek cagirilir; hem uyari katmaninda hem router'da kullanilir
     bids, asks = fetch_order_book(symbol)
 
-    # --- ONCU VERI: ANLIK UYARILAR (v5.3) ---
+    # --- ANLIK UYARILAR (v5.3) — tick/LOB oncu; hacim bileseni kapanmis 15M ---
     score15, note15 = pump_anomaly(df_15m["volume"])
-    yon_a, yon_move_a = pump_dump_direction(trades, df_15m["close"])
+    # v5.3.2: yon tespiti TEK kez hesaplanir (ayni girdiyle mukerrer cagri yoktu)
+    yon, yon_move = pump_dump_direction(trades, df_15m["close"])
     mw = realtime_warnings(symbol, trades, df_15m["close"], bids, asks,
-                           score15, note15, yon_a, yon_move_a)
+                           score15, note15, yon, yon_move)
     if mw:
         for w in mw:
             print(f"  ONCU UYARI: {w}")
@@ -710,17 +773,19 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
 
     # --- Pump/Dump vetosu (v5.3: tick teyidi artik tanimli) ---
     note = note15
-    src = "OHLCV/15M"
+    src = "OHLCV/15M(kapanmis)"
     if note15 in ("NORMAL", "WATCH"):
         tscore = tick_confirm_score(symbol, trades)
         if tscore is not None:
-            src = "OHLCV/15M (+tick teyit)"
+            src = "OHLCV/15M(kapanmis) + tick teyit"
             print(f"  Tick teyit: z={tscore:.2f} (esik {PUMP_TICK_WATCH})")
             if note15 == "WATCH" and tscore >= PUMP_TICK_WATCH:
                 note = "PUMP_OR_DUMP_RISK"
-    yon, yon_move = pump_dump_direction(trades, df_15m["close"])
     print(f"  Pump/Dump oncu: {note} | score={score15:.2f} | kaynak={src}")
-    if note != "PUMP_OR_DUMP_RISK":
+    if note == "VERI_YOK":
+        print("  Yon izleme: VERI YOK — hacim serisi anomali olcumu icin "
+              "yetersiz (eksik veri 'anomali yok' sayilmaz)")
+    elif note != "PUMP_OR_DUMP_RISK":
         print(f"  Yon izleme: {yon} ({yon_move * 100:+.2f}%) - anomali yok, "
               f"izlemede")
     else:
@@ -764,12 +829,12 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
             ["open", "close", "low", "high", "z", "atr"]}
     rule_trades = {z: [] for z in Z_GRID}
     folds = 0
-    for train_idx, test_idx in cpcv_splits(len(df), N_FOLDS, EMBARGO):
+    for train_idx, test_idx in walkforward_splits(len(df), N_FOLDS, EMBARGO):
         for zt in Z_GRID:
             rule_trades[zt].extend(simulate(feat, test_idx, zt, direction))
         folds += 1
     if folds == 0:
-        print("  -> CPCV split yok.")
+        print("  -> Walk-forward split yok.")
         return
     stats = {zt: oos_stats(rule_trades[zt]) for zt in Z_GRID}
     pvals = {}
@@ -783,7 +848,7 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     accepted = fdr_bh([pvals[k] for k in keys], ALPHA)
     accepted_z = [zt for zt, ok in zip(keys, accepted) if ok]
     p_max = bootstrap_max_t(rule_trades)
-    print(f"  CPCV fold: {folds} | BH-FDR kabul: "
+    print(f"  WF fold: {folds} (genisleyen pencere+embargo) | BH-FDR kabul: "
           f"{accepted_z if accepted_z else 'yok'} | "
           f"max-t bootstrap p: {p_max:.3f}")
     if not accepted_z or p_max >= ALPHA:
@@ -810,7 +875,7 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     target_px = float(cur["target"])
     sl_px = last_close - ATR_SL_MULT * atr_i if direction == "LONG" \
         else last_close + ATR_SL_MULT * atr_i
-    print(f"  >>> {direction} SINYALI (CPCV+FDR+bootstrap onayli) <<<")
+    print(f"  >>> {direction} SINYALI (WF+FDR+bootstrap onayli) <<<")
     print(f"  Referans (son kapanis): {last_close:.4f}")
     if order_type == "MARKET":
         px_str = f"{ref_px:.4f}" if np.isfinite(ref_px) else f"{last_close:.4f}"
@@ -842,8 +907,11 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
 # 11. ANA DONGU
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    print("BTC Karargah v5.3 — ONCU veri katmani tamam")
+    print("BTC Karargah v5.3.2 — oncu veri katmani (karar-destek; emir gondermez)")
     print("=" * 70)
+    # v5.3.2 (K25): tamamlanma beyani KOSULSUZ degil — sayilarak verilir.
+    tamam, atlanan = 0, 0
+    kurulum_hatasi = False
     try:
         selftest()
         btc_4h = fetch_ohlcv("BTC/USDT", TF_4H, LIMIT_4H)
@@ -856,12 +924,22 @@ if __name__ == "__main__":
                 a15 = fetch_ohlcv(alt, TF_15M, LIMIT_15M)
                 signal_engine(alt, a4, a15, btc_4h, btc_15m,
                               eth_4h, eth_15m, TARGET_USD)
+                tamam += 1
             except Exception:
                 traceback.print_exc()
+                atlanan += 1
                 print(f"  [{alt}] atlandi.")
     except Exception:
+        kurulum_hatasi = True
         traceback.print_exc()
-    print("\nTarama tamamlandi.")
+    if kurulum_hatasi:
+        print(f"\nTarama BASARISIZ — kurulum/veri hatasi "
+              f"({tamam}/{len(SYMBOLS)} sembol tarandi).")
+    elif atlanan == 0 and tamam == len(SYMBOLS):
+        print(f"\nTarama tamamlandi ({tamam}/{len(SYMBOLS)} sembol).")
+    else:
+        print(f"\nTarama KISMEN tamamlandi: {tamam} tamam, "
+              f"{atlanan} atlandi ({len(SYMBOLS)} sembol).")
 
 # --------------------------------------------------------------------
 # DOGRULAMA PLANI (yeni esikler HIPOTEZDIR — olculmeden "cozuldu" denmez):
