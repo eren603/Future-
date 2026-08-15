@@ -74,3 +74,17 @@ print("\n[4] ESKI ISTATISTIGIN TABANI (saf gurultu, sigma=0.4) — skor dagilimi
 skorlar = [pump_anomaly_eski(seri(4000 + k, 0.4))[0] for k in range(N_SERI)]
 q = np.percentile(skorlar, [5, 50, 95])
 print(f"  eski skor p5={q[0]:.2f} medyan={q[1]:.2f} p95={q[2]:.2f} (esik 3.0)")
+
+print("\n[5] ESKI cs BILESENININ TABANI (saf gurultu) — cs medyaninin dagilimi")
+print("    (cs = rolling10(|dv|)/ewm_std; standartlastirilmamis oldugu icin")
+print("    spike olmadan da esik 3.0'in kat kat ustunde taban uretir)")
+for sigma in (0.4, 0.8):
+    medyanlar = []
+    for k in range(N_SERI):
+        v = seri(5000 + k, sigma)
+        evol = v.ewm(span=PUMP_SPAN, adjust=False).std()
+        cs = (v.diff().abs().rolling(window=10).sum() / (evol + 1e-6)).dropna()
+        medyanlar.append(float(cs.median()))
+    q = np.percentile(medyanlar, [5, 50, 95])
+    print(f"  sigma={sigma}: cs-medyan p5={q[0]:.2f} medyan={q[1]:.2f} "
+          f"p95={q[2]:.2f} (esik 3.0'in ~{q[1]/3.0:.1f} kati)")

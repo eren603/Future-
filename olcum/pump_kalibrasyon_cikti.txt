@@ -18,3 +18,9 @@ veri: lognormal(3, sigma) SENTETIK gurultu — gercek piyasa DEGIL
 
 [4] ESKI ISTATISTIGIN TABANI (saf gurultu, sigma=0.4) — skor dagilimi
   eski skor p5=17.65 medyan=18.63 p95=20.10 (esik 3.0)
+
+[5] ESKI cs BILESENININ TABANI (saf gurultu) — cs medyaninin dagilimi
+    (cs = rolling10(|dv|)/ewm_std; standartlastirilmamis oldugu icin
+    spike olmadan da esik 3.0'in kat kat ustunde taban uretir)
+  sigma=0.4: cs-medyan p5=10.69 medyan=10.91 p95=11.17 (esik 3.0'in ~3.6 kati)
+  sigma=0.8: cs-medyan p5=9.62 medyan=9.90 p95=10.21 (esik 3.0'in ~3.3 kati)

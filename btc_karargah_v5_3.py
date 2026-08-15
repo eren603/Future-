@@ -286,15 +286,19 @@ def corr_stats(alt_close, ref_close, n_max=672):
 def pump_anomaly(vol_series, span=PUMP_SPAN, threshold=PUMP_THRESHOLD_Z):
     """Hacim anomalisi — SON KAPANMIS BARDA olculur (seri maksimumu DEGIL).
 
-    v5.3.1 TAMIR (canli kosuda uretildi: 11/11 sembol 14.79-17.92 bandinda
-    veto yedi; ayni bant spike ICERMEYEN sentetik gurultude de uretildi):
+    v5.3.1 TAMIR. Belirti (kaynak: kullanicinin yapistirdigi canli kosu
+    ciktisi): 11/11 sembol 14.79-17.92 bandinda veto yedi; kalici veto
+    davranisi spike ICERMEYEN sentetik gurultude de yeniden uretildi
+    (olcum artefakti: olcum/pump_kalibrasyon_cikti.txt). Kok neden:
       (a) Eski kod skoru TUM seri uzerinden aliyordu (z.max(), cs.max()) —
           "su anda anomali var mi" yerine "son 25 gunde hic oldu mu" sorusu.
           Cevap her sembolde EVET oldugu icin veto kalici hale geliyordu.
       (b) Eski `cs = rolling10(|dv|) / ewm_std(v)` STANDARTLASTIRILMIS bir
           istatistik degildi: 10 barlik mutlak degisim toplami tek barlik
-          standart sapmaya bolununce yapisi geregi ~10 civari cikar
-          (olculen medyan 10.05-10.82), yani esigin 3.6 kati bir taban.
+          standart sapmaya bolununce spike olmadan da yuksek taban uretir —
+          olcum: sentetik gurultude cs-medyani ~9.9-10.9, yani esik 3.0'in
+          ~3.3-3.6 kati (bkz. artefakt bolum [5]; eski TOPLAM skorun
+          tabani icin bolum [4]: medyan 18.63).
     Tamir: her iki bilesen de KENDI gecmis dagilimina gore z-skoruna
     cevrildi ve referans .shift(1) ile hesaplandi (bar kendi referansinin
     icinde yer almaz). Esik GEVSETILMEDI (PUMP_THRESHOLD_Z = 3.0 aynen);
@@ -761,7 +765,8 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
 
     # --- ANLIK UYARILAR (v5.3) — tick/LOB oncu; hacim bileseni kapanmis 15M ---
     score15, note15 = pump_anomaly(df_15m["volume"])
-    # v5.3.2: yon tespiti TEK kez hesaplanir (ayni girdiyle mukerrer cagri yoktu)
+    # v5.3.2: yon tespiti TEK kez hesaplanir. (v5.3/v5.3.1'de ayni girdiyle
+    # iki kez cagriliyordu — git f34721b, eski satirlar 702 ve 721; kaldirildi.)
     yon, yon_move = pump_dump_direction(trades, df_15m["close"])
     mw = realtime_warnings(symbol, trades, df_15m["close"], bids, asks,
                            score15, note15, yon, yon_move)
