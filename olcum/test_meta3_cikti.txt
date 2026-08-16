@@ -1,0 +1,24 @@
+  GECTI: T1 stop = v5.4 formuluyle bit duzeyinde ayni (186.25595805788015 == 186.25595805788015)
+  GECTI: T1b hedef = SMA20 birebir 
+  GECTI: T2 yon alani dolu ve gecerli (yon=LONG, kaynak=rejim BULL (guven=0.87))
+  GECTI: T3 acik kapiyi V1 filtresi dusurdu (gerekceli) 
+  GECTI: T3b kapali kapiyi hicbir varyant ACAMAZ 
+  GECTI: T3c taban varyant acik kapiya dokunmaz 
+  GECTI: T4a acik pozisyon: sonuc None (uydurma kapanis yok) 
+  GECTI: T4b ayni pencerede stop+hedef -> muhafazakar STOP ({'sonuc': 'STOP', 'r': -1.0})
+  GECTI: T4c dolmayan oneri TIME_STOP sonrasi IPTAL, R yazilmaz ({'sonuc': 'IPTAL', 'r': None})
+  GECTI: T5a olculmus akibet yokken META = HOLD (olculmus akibet yetersiz (n=0/8) — evaluator kararsiz, degisiklik yok (fail-closed))
+  GECTI: T5b olcumle ustun varyant -> KEEP (varyant degisti) (aktif varyant V0_taban -> V1_komposit_teyit (olcumle))
+  GECTI: T5c gerileyen varyant olcumle TABANA doner (KEEP ya da ROLLBACK) (KEEP: aktif varyant V1_komposit_teyit -> V0_taban (olcumle))
+  GECTI: T5d aday J olculemezken gerileme -> ROLLBACK dali (ROLLBACK: V1_komposit_teyit -> V0_taban (olculmus gerileme))
+  GECTI: T6a ilk kosu muhru kaydetti 
+  GECTI: T6b sabit degisince HALT (muhur tutmadi) 
+  GECTI: T7a .bak anlik goruntusu var 
+  GECTI: T7b her deney kaydi PDF #10 alanlarini tasir (2 kayit)
+  GECTI: T7c evrim zinciri soy tutuyor 
+  GECTI: T2b ciktida BTC/USDT YON satiri var 
+  GECTI: T2b ciktida ETH/USDT YON satiri var 
+  GECTI: T8a eps ust banttan cikamadi (eps=0.3)
+  GECTI: T8b W ust banttan cikamadi (W=50)
+
+SONUC: 22 kontrol, 0 basarisiz.

@@ -1,2 +1,5 @@
 __pycache__/
-*.pyc
+olcum/_meta3_test_sandik/
+meta3_bellek.json
+meta3_bellek.json.bak
+meta3_override.json
