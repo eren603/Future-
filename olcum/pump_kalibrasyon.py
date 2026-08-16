@@ -1,5 +1,5 @@
 # pump_anomaly kalibrasyon olcumu — DETERMINISTIK (sabit tohum), IZLENEBILIR.
-# Amac: btc_karargah_v5_3.py basligindaki sentetik olcum sayilarinin kaynagi.
+# Amac: btc_karargah_v5_4.py basligindaki sentetik olcum sayilarinin kaynagi.
 # Kosum: python3 olcum/pump_kalibrasyon.py > olcum/pump_kalibrasyon_cikti.txt
 # UYARI: veri sentetik lognormal gurultudur; GERCEK PIYASA OLCUMU DEGILDIR.
 import sys, os
@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from btc_karargah_v5_3 import pump_anomaly, PUMP_SPAN, PUMP_THRESHOLD_Z
+from btc_karargah_v5_4 import pump_anomaly, PUMP_SPAN, PUMP_THRESHOLD_Z
 
 # ESKI v5.3 istatistigi (git 8506ea8'deki tanim) — kiyas icin birebir kopya
 def pump_anomaly_eski(vol_series, span=PUMP_SPAN, threshold=PUMP_THRESHOLD_Z):

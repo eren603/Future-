@@ -1,4 +1,67 @@
-# BTC KARARGAH v5.3.2 — ONCU VERI katmani + anlik uyari (v5.2 tamiri)
+# BTC KARARGAH v5.4.0 — uc onayli tamir yamasinin birlesimi (A + B + C)
+# --------------------------------------------------------------------
+# v5.3.2 -> v5.4.0 BIRLESIM LOGU (KOD-YAZICI/BIRLESTIRICI; kaynaklar:
+# ajanA/yama.py, ajanB/yama.py, ajanC/yama.py — ucu de bagimsiz anayasa
+# denetiminden gecmis yamalardir; asagida her madde sahibiyle etiketli):
+#   A1) KAPSAM (ajanA G1): SYMBOLS'e "BTC/USDT" eklendi (12 sembol).
+#       signal_engine'de oz-referans temizligi: BTC kosusunda kendine-
+#       korelasyon ve rejim oz-kiyasi ATLANIR ve atlama gerekcesiyle
+#       BEYAN edilir (sessiz atlama yok); BTC uyum iptal kapisi diger
+#       semboller icin AYNEN korundu. __main__ dongusunde BTC verisi
+#       yeniden CEKILMEZ (dongu oncesi btc_4h/btc_15m kullanilir) —
+#       mukerrer fetch ve ayni sembolun iki farkli anlik goruntusu riski
+#       kalkti. (A serhi geregi signal_engine + __main__ yamasi BIRLIKTE.)
+#   A2) lead_lag_stats (ajanA G2): alt-BTC capraz-korelasyon taramasi,
+#       lag -8..+8 — RAPOR-ONLY, hicbir kapi/veto buna baglanmaz.
+#       LEAD_LAG_MAX_LAG HIPOTEZ etiketli.
+#   A3) winsorize (ajanA G3): YALNIZ getiri-tabanli istatistik girdilerine
+#       (corr_stats + lead_lag_stats). HACIM/pump yoluna ve islem PnL'ine
+#       UYGULANMAZ (spike tespiti korlesir / istatistik kapisi yapay
+#       iyilesirdi). WINSOR_Q_* HIPOTEZ etiketli.
+#   B1) composite_leading_score + composite_line (ajanB): 6 kanalli
+#       BILESIK ONCU SKOR — RAPOR-ONLY, esit agirlik HIPOTEZ; eksik kanal
+#       0 SAYILMAZ, kapsam < 0.5 ise "VERI YOK". tick_confirm_score
+#       signal_engine'de TEK kez hesaplanir (cifte cagri kalkti; ayni
+#       girdiyle ayni deger — davranis degismedi).
+#   B2) (bagimsiz denetci duzeltmesi) Kompozit ciktida YONLU-KAPSAM
+#       AYRICA gosterilir: "kapsam X (yonlu Y)". OI yonsuz mevcudiyet
+#       kanali PAYDADA BIRAKILDI cunku (a) rapor-esigi davranisi ve B'nin
+#       onceden sabitlenmis kabul testleri (kapsam 0.5 siniri) korunmali
+#       (test bulguya uydurulamaz), (b) sissirme gorunur kilinarak
+#       cozulur: okur yonlu kanit payini ayrica gorur. Davranis (skor,
+#       kapsam, rapor esigi) DEGISMEDI; yalniz gorunurluk eklendi.
+#   B3) (bagimsiz denetci duzeltmesi) PDD_MOVE_ESIK sabiti eklendi ve
+#       pump_dump_direction icindeki 0.005 literali ile kompozit "yon"
+#       olcegi TEKILLESTIRILDI (tek kaynak). DEGER DEGISMEDI (0.005);
+#       davranis esdegerligi birlestirici testiyle kanitlandi
+#       (eski/yeni fonksiyon ayni girdilerde birebir ayni cikti).
+#   C1) wilder_rsi (ajanC): Wilder RMA, .shift(periods=1) — z/ATR ile
+#       ayni lookahead sozlesmesi. RSI_LEN/RSI_LONG_MAX/RSI_SHORT_MIN
+#       HIPOTEZ etiketli (kalibre edilmedi).
+#   C2) simulate() imzasi genisledi: (feat, idx, z_th, rsi_on, direction).
+#       rsi_on=False davranisi ESKISIYLE BIREBIR AYNI; rsi_on=True yalniz
+#       tetik anina RSI<30 (LONG) / RSI>70 (SHORT) sarti ekler.
+#   C3) Kural izgarasi Z_GRID x {RSI yok, RSI var} = 22 kural; ayni
+#       BH-FDR + coklu-seed max-t bootstrap kapilari (esik sabitleri
+#       degismedi). Kapi etkisi OLCULDU ve beyan DARALTILMIS haliyle
+#       korunur (ajanC duzeltme surumu): bootstrap kapisi TEK YONLU
+#       sertlesir (null maksimumu 22 kural uzerinden; olculen ornek
+#       p 0.2022 -> 0.3545); BH-FDR'de sira esikleri (k/m)*ALPHA kuculur
+#       ve FDR <= ALPHA garantisi m'den bagimsiz korunur, ANCAK BH bir
+#       step-up prosedur oldugundan eslikci kucuk-p kurallar tek adayin
+#       kabulunu KOLAYLASTIRABILIR (olculen karsi-ornek: p=0.026 m=11'de
+#       RET; m=22'de 11 eslikci p=0.001 ile KABUL, sira-12 esigi
+#       12/22*0.05=0.027273). "Her durumda sertlesir" GENELLEMESI YANLIS
+#       ve KULLANILMAZ.
+#   C4) Canli tetik blogu secilen kuralin RSI sartini da uygular; RSI
+#       yuzunden dusen tetik GEREKCESIYLE yazilir (sessiz atlama yok).
+#   L1) CNN-LSTM/derin öğrenme İSTENDİ ama EKLENMEDİ — gerekçe: bu
+#       ortamda eğitim/doğrulama altyapısı yok; eğitilmemiş/doğrulanmamış
+#       model çıktısı ölçülmemiş sayı üretir (K5/K20). İleri iş: ayrı
+#       eğitim deposu + walk-forward doğrulama planıyla.
+#   L2) MEVCUT ESIK/KAPI SABITLERI DEGISTIRILMEDI (K22); modul hicbir
+#       emir gondermez (K2); yeni sabitlerin TAMAMI HIPOTEZ etiketlidir
+#       ve dosya sonundaki dogrulama plani kapsamindadir (K20).
 # --------------------------------------------------------------------
 # v5.2 -> v5.3 TAMIR VE EKLENTI LOGU:
 #   1) TANIMSIZ ISIM TAMIRI: tick_confirm_score ve PUMP_TICK_WATCH
@@ -108,6 +171,11 @@ FR_TOLERANCE_BPS = 5.0   # MIRAS SABIT — kalibre edilmedi
 LOB_DEPTH = 5            # MIRAS SABIT — kalibre edilmedi
 TARGET_USD = 500.0
 LIMIT_TIMEOUT_SEC = 8.0  # MIRAS SABIT — kalibre edilmedi
+# v5.4.0 (B3 — denetci duzeltmesi): pump_dump_direction icindeki 0.005
+# literali TEKILLESTIRILDI; tek kaynak bu sabittir. DEGER DEGISMEDI ve
+# davranis esdegerligi testle kanitlandi (birlestirici koşusu).
+# MIRAS SABIT — kalibre edilmedi.
+PDD_MOVE_ESIK = 0.005
 
 # --- v5.3 ONCU VERI / ANLIK UYARI parametreleri (HIPOTEZ) ---
 PUMP_TICK_WATCH = 2.5          # hipotez: tick hacim z esigi (v5.2'de tanimsizdi)
@@ -120,7 +188,26 @@ V_REVERSAL_FLIP_PCT = 0.002    # hipotez: ekstremden minimum donus (%0.2)
 V_REVERSAL_MIN_BUCKETS = 6     # hipotez: minimum dolu kova sayisi
 LOB_BIAS_ALERT = 0.10          # router'daki mevcut bias esigi ile ayni
 
+# --- v5.4.0 (ajanA) lead-lag / winsorize parametreleri (HIPOTEZ) ---
+# Ucu de HIPOTEZ — bu kosunun verisinden turetilmis DEGILLER; canli
+# olcumle kalibre edilmeden "dogru deger" iddiasi tasimazlar.
+LEAD_LAG_MAX_LAG = 8    # HIPOTEZ — kalibre edilmedi: 15M barda ±8 bar = ±2 saat tarama penceresi
+WINSOR_Q_LOW = 0.005    # HIPOTEZ — kalibre edilmedi (oneri: alt %0.5 kantil)
+WINSOR_Q_HIGH = 0.995   # HIPOTEZ — kalibre edilmedi (oneri: ust %99.5 kantil)
+
+# --- v5.4.0 (ajanC) RSI parametreleri (HIPOTEZ) ---
+# 14 ve 30/70 literatur gelenegidir, bu depoda OLCULEREK kalibre
+# edilmemistir; kalibrasyonu WF+FDR+bootstrap kapilarindan gecen
+# kurallarin secimi saglar (izgara-ici secim), sabitin kendisi serbestce
+# oynanmaz.
+RSI_LEN = 14          # HIPOTEZ — RSI uzunlugu; kalibre edilmedi
+RSI_LONG_MAX = 30.0   # HIPOTEZ — LONG tetikte RSI < 30 bandi; kalibre edilmedi
+RSI_SHORT_MIN = 70.0  # HIPOTEZ — SHORT tetikte RSI > 70 bandi; kalibre edilmedi
+
+# v5.4.0 (ajanA G1): hedef sembol BTCUSDT listede yoktu, hic taranmiyordu;
+# basa eklendi. Oz-referans yollari signal_engine icinde temizlendi.
 SYMBOLS = [
+    "BTC/USDT",  # G1: kullanici gereksinimi — hedef sembol taramaya dahil
     "ETH/USDT", "XRP/USDT", "LINK/USDT", "DOGE/USDT", "DOT/USDT",
     "AVAX/USDT", "SUSHI/USDT", "ZEC/USDT", "ETC/USDT", "FIL/USDT",
     "AAVE/USDT",
@@ -266,18 +353,125 @@ def log_returns(close):
     return np.log(close / close.shift(periods=1)).dropna()
 
 
+# v5.4.0 (ajanA G3): getiri-tabanli istatistiklerin (korelasyon, lead-lag)
+# tek-bar uc degerlere karsi duyarliligini sinirlamak. Kantil SINIRLARI
+# (q_low/q_high) HIPOTEZ etiketli sabittir; kirpma ESIKLERI ise her
+# kosuda O KOSUNUN serisinden hesaplanir (sabit fiyat siniri yok).
+# KAPSAM DISI (K12 geregi gerekceli): HACIM serisine ve pump_anomaly
+# girdisine UYGULANMAZ — pump tespitinin hedefi spike'in KENDISIdir;
+# winsorize spike'i kirparak tespiti korlestirir. simulate/oos_stats
+# islem PnL'lerine de uygulanmaz (gercek maliyet/kayip kirpilamaz).
+def winsorize(returns, q_low=WINSOR_Q_LOW, q_high=WINSOR_Q_HIGH):
+    """Getiri serisini kendi [q_low, q_high] kantillerine kirpar.
+
+    YALNIZ getiri-tabanli istatistik girdisi icindir (corr_stats,
+    lead_lag_stats). Hacim/pump yoluna BAGLANMAZ (gerekce ustte).
+    Kantil esikleri seriden hesaplanir; bos/yetersiz seride seri
+    oldugu gibi doner (davranis degistirmeden gecirir)."""
+    r = pd.Series(returns).astype(float)
+    valid = r.dropna()
+    if len(valid) < 3:
+        return r
+    lo = float(valid.quantile(q_low))
+    hi = float(valid.quantile(q_high))
+    return r.clip(lower=lo, upper=hi)
+
+
+# v5.4.0 (ajanA G3): korelasyon girdisi getirileri winsorize edilir.
+# Cikti sozlesmesi ({"n","r","p"}) ve 50-gozlem alt siniri AYNEN korundu
+# (K22/K23: kapi gevsetilmedi/sikilmadi).
 def corr_stats(alt_close, ref_close, n_max=672):
     d = pd.concat([log_returns(alt_close), log_returns(ref_close)],
                   axis=1).dropna().tail(n_max)
     if len(d) < 50:
         return None
-    r = float(d.iloc[:, 0].corr(d.iloc[:, 1]))
+    # G3: winsorize pencere ICINDEKI veriden kantille (o kosunun verisi)
+    a = winsorize(d.iloc[:, 0])
+    b = winsorize(d.iloc[:, 1])
+    r = float(a.corr(b))
     if not np.isfinite(r):
         return None
     zf = 0.5 * math.log((1.0 + r) / max(1.0 - r, 1e-12))
     se = 1.0 / math.sqrt(len(d) - 3)
     p = 2.0 * (1.0 - norm_cdf(abs(zf) / se))
     return {"n": len(d), "r": r, "p": p}
+
+
+# v5.4.0 (ajanA G2): oncu-ardil iliskisi. Cikti YALNIZ RAPOR icindir —
+# hicbir kapi/veto/karar bu fonksiyona baglanmaz (kanitsiz yeni kapi
+# K22'ye takilir; dogrulanmadan karar bileseni yapilamaz).
+# Lag isareti sozlesmesi: pozitif lag = REF ONCU (alt_t, ref_{t-lag}
+# ciftinin korelasyonu), negatif lag = ALT ONCU.
+def lead_lag_stats(alt_close, ref_close, max_lag=LEAD_LAG_MAX_LAG,
+                   n_max=672):
+    """Log-getirilerde capraz-korelasyon taramasi, lag -max..+max.
+
+    RAPOR-ONLY: karara girmez. Doner: en iyi lag (|r| maksimumu), o
+    lagdeki r + Fisher-z p degeri, lag-0 r'si ve asimetri:
+      asimetri = mean(r[lag>0]) - mean(r[lag<0])
+      (pozitif = ref gecikmeli->alt korelasyonu baskin = REF ONCU).
+    max_lag HIPOTEZ etiketli sabittir (kalibre edilmedi). Getiriler
+    winsorize edilir (G3). Yetersiz pencerede None (VERI YOK)."""
+    d = pd.concat([log_returns(alt_close), log_returns(ref_close)],
+                  axis=1).dropna().tail(n_max)
+    # veri-yeterlilik korkulugu: corr_stats'in mevcut 50 tabani +
+    # her iki uctaki lag tuketimi (gevsetme degil, ek guvence)
+    if len(d) < 50 + 2 * max_lag:
+        return None
+    a = winsorize(d.iloc[:, 0])   # alt getirileri
+    b = winsorize(d.iloc[:, 1])   # ref getirileri
+    rows = {}
+    for lag in range(-max_lag, max_lag + 1):
+        pair = pd.concat([a, b.shift(lag)], axis=1).dropna()
+        if len(pair) < 50:
+            continue
+        r = float(pair.iloc[:, 0].corr(pair.iloc[:, 1]))
+        if np.isfinite(r):
+            rows[lag] = (r, len(pair))
+    if not rows or 0 not in rows:
+        return None
+    best_lag = max(rows, key=lambda k: abs(rows[k][0]))
+    r_best, n_best = rows[best_lag]
+    zf = 0.5 * math.log((1.0 + r_best) / max(1.0 - r_best, 1e-12))
+    se = 1.0 / math.sqrt(max(n_best - 3, 1))
+    p = 2.0 * (1.0 - norm_cdf(abs(zf) / se))
+    ref_leads = [rows[k][0] for k in rows if k > 0]
+    alt_leads = [rows[k][0] for k in rows if k < 0]
+    asym = float("nan")
+    if ref_leads and alt_leads:
+        asym = float(np.mean(ref_leads) - np.mean(alt_leads))
+    return {"best_lag": int(best_lag), "r": r_best, "n": n_best, "p": p,
+            "r0": rows[0][0], "asym": asym, "max_lag": int(max_lag)}
+
+
+# v5.4.0 (ajanC CAPA-2): Wilder RSI — lookahead'siz.
+def wilder_rsi(close, length=None):
+    """Wilder RSI — lookahead'siz (.shift(1) disiplini z ile AYNI).
+
+    Duzlestirme: EWM(alpha=1/length, adjust=False) — Wilder'in ozyinelemeli
+    ortalamasi (RMA). Tohum: pandas adjust=False geregi ilk gozlem degeri
+    (klasik Wilder'daki ilk-14-SMA tohumu DEGIL; fark geometrik hizla soner).
+    Bu tohum tercihi bir UYGULAMA HIPOTEZIDIR ve rapora islenmistir.
+    min_periods=length: ilk `length` degisim gorulmeden RSI uretilmez (NaN).
+
+    DONUS: .shift(periods=1) UYGULANMIS seri — bar i'deki deger yalniz
+    <= i-1 kapanislarindan hesaplanmistir. Boylece simulate() bar i'de
+    tetigi degerlendirirken ve canli blok son KAPANMIS barda calisirken
+    olusmakta olan bilgi kullanilamaz (mevcut z kolonuyla ayni sozlesme).
+    """
+    if length is None:
+        length = RSI_LEN
+    c = close.astype(float)
+    delta = c.diff()
+    gain = delta.clip(lower=0.0)
+    loss = (-delta).clip(lower=0.0)
+    avg_gain = gain.ewm(alpha=1.0 / length, adjust=False,
+                        min_periods=length).mean()
+    avg_loss = loss.ewm(alpha=1.0 / length, adjust=False,
+                        min_periods=length).mean()
+    rs = avg_gain / (avg_loss + 1e-12)
+    rsi = 100.0 - 100.0 / (1.0 + rs)
+    return rsi.shift(periods=1)
 
 
 # ---------------------------------------------------------------------------
@@ -336,7 +530,9 @@ def pump_dump_direction(trades, close_15m, lookback_min=15):
     """Yon tespiti: tick VWAP + 15m OHLCV birlikte. ONCU veri.
       Hacim anomalisi + fiyat yukari = PUMP (sisme fazi)
       Hacim anomalisi + fiyat asagi  = DUMP (satis dalgasi)
-    v5.3 TAMIR: w = w.copy() ve .sum() parantezleri eklendi."""
+    v5.3 TAMIR: w = w.copy() ve .sum() parantezleri eklendi.
+    v5.4.0 (B3): 0.005 literali PDD_MOVE_ESIK sabitine tekillestirildi
+    (deger ayni; davranis esdegerligi testle kanitli)."""
     tick_dir = 0.0
     if trades is not None and not trades.empty and len(trades) >= 10:
         cut = unix_ms(lookback_min=lookback_min)
@@ -355,9 +551,9 @@ def pump_dump_direction(trades, close_15m, lookback_min=15):
         c = close_15m.astype(float)
         ohlcv_dir = (float(c.iloc[-1]) - float(c.iloc[-3])) / float(c.iloc[-3])
     move = tick_dir if abs(tick_dir) > 1e-12 else ohlcv_dir
-    if move <= -0.005:
+    if move <= -PDD_MOVE_ESIK:
         return "DUMP", move
-    if move >= 0.005:
+    if move >= PDD_MOVE_ESIK:
         return "PUMP", move
     return "YON_BELIRSIZ", move
 
@@ -514,6 +710,141 @@ def realtime_warnings(symbol, trades, close_15m, bids, asks,
     return warns
 
 
+# --- v5.4.0 (ajanB) BILESIK ONCU SKOR — RAPOR-ONLY -------------------------
+# HIPOTEZ: esit agirlik (w = 1/6). Olculmus agirlik YOK; canli olcumle
+# kalibre edilmeden hicbir kanalin ustunlugu iddia edilmez.
+# Skor HICBIR veto/karar kapisina bagli DEGILDIR (rapor-only).
+KOMPOZIT_KANALLAR = ("pump", "tick", "lob", "funding", "yon", "oi")
+KOMPOZIT_AGIRLIK = 1.0 / len(KOMPOZIT_KANALLAR)  # HIPOTEZ: esit agirlik
+KOMPOZIT_MIN_KAPSAM = 0.5  # gorev tanimindan; RAPOR esigi (karar kapisi DEGIL)
+
+
+def composite_leading_score(kanallar):
+    """BILESIK ONCU GOSTERGE SKORU — RAPOR-ONLY, HIPOTEZ.
+
+    Girdi sozlugu (eksik/olculemeyen alan None birakilir):
+      pump_skor : pump_anomaly() skoru (z)   | pump_not: ayni cagrinin notu
+      tick_z    : tick_confirm_score() z'si (son KAPANMIS dakika)
+      obi       : lob_imbalance() OBI'si — (b-a)/(b+a), tanim geregi [-1,+1]
+      funding   : son funding orani (oran; 0.0001 = 1 bps)
+      oi        : acik faiz ANLIK goruntusu (yalniz MEVCUDIYET kanali)
+      yon_move  : pump_dump_direction() hareketi (oran)
+
+    NORMALIZASYON FORMULLERI (acik; olcekler MEVCUT sabitlerden):
+      yon     v = clip(yon_move / PDD_MOVE_ESIK, -1, +1)
+              (PDD_MOVE_ESIK = pump_dump_direction'daki mevcut PUMP/DUMP
+               esigi; v5.4.0'da tekillestirilmis TEK kaynak)
+      pump    v = isaret(yon_move) * clip(max(pump_skor,0)/PUMP_THRESHOLD_Z, 0, 1)
+              (negatif z = sakin hacim, TERS YON KANITI DEGIL -> 0'a kirpilir;
+               yon isareti olculen hareketten alinir — hacim z'si yonsuzdur)
+      tick    v = isaret(yon_move) * clip(max(tick_z,0)/PUMP_TICK_WATCH, 0, 1)
+              (ayni isaret kurali; olcek mevcut hipotez esigi 2.5)
+      lob     v = clip(obi, -1, +1)   (zaten bantta; kirpma yalniz koruma)
+      funding v = -clip(funding*1e4 / FR_TOLERANCE_BPS, -1, +1)
+              (KONTRARYEN ISARET HIPOTEZDIR: pozitif funding = kalabalik
+               long = asagi yonlu oncu baski VARSAYIMI; olculmus dogrulama YOK)
+      oi      YONSUZ kanal: TEK anlik goruntudan yon OLCULEMEZ (fark serisi
+              yok). Mevcutsa yalniz KAPSAMA katilir, skora katilmaz; yokssa
+              kapsami dusurur. Yon icin 0 SAYILMAZ (eksik != notr).
+
+    Kurallar:
+      - Eksik kanal atlanir; kapsam = mevcut kanal agirligi / toplam agirlik.
+      - Skor = mevcut YONLU kanallarin agirlikli ORTALAMASI (bant [-1,+1]).
+      - kapsam < KOMPOZIT_MIN_KAPSAM ise skor rapor edilmez ("VERI YOK").
+      - yon_move tam 0.0 ise bu OLCULMUS sifirdir (eksik degil): yon kanali
+        0 katkiyla mevcuttur, pump/tick isareti 0 olur.
+      - v5.4.0 (B2 — denetci duzeltmesi): YONLU-KAPSAM ("yonlu_kapsam")
+        ayrica dondurulur ve cikti satirinda gosterilir — OI'nin yonsuz
+        mevcudiyeti rapor-esigi paydasini SESSIZCE sisiremesin diye
+        (okur yonlu kanit payini ayrica gorur). OI paydada birakildi:
+        rapor esigi davranisi ve onceden sabitlenmis kabul testleri
+        korunur (test bulguya uydurulamaz, K23); sissirme gorunurlukle
+        cozulur.
+    """
+    def _clip(x, lo, hi):
+        return max(lo, min(hi, float(x)))
+
+    def _isaret(x):
+        return 0.0 if x == 0 else (1.0 if x > 0 else -1.0)
+
+    def _var(x):
+        return x is not None and math.isfinite(float(x))
+
+    k = kanallar or {}
+    pump_skor = k.get("pump_skor")
+    pump_not = k.get("pump_not")
+    tick_z = k.get("tick_z")
+    obi = k.get("obi")
+    funding = k.get("funding")
+    oi = k.get("oi")
+    yon_move = k.get("yon_move")
+
+    degerler = {}          # yonlu kanal -> normalize deger
+    mevcut = set()         # kapsama giren kanallar (oi dahil)
+
+    if _var(yon_move):
+        mevcut.add("yon")
+        degerler["yon"] = _clip(float(yon_move) / PDD_MOVE_ESIK, -1.0, 1.0)
+    if _var(pump_skor) and pump_not not in (None, "VERI_YOK") and _var(yon_move):
+        mevcut.add("pump")
+        degerler["pump"] = _isaret(float(yon_move)) * _clip(
+            max(float(pump_skor), 0.0) / PUMP_THRESHOLD_Z, 0.0, 1.0)
+    if _var(tick_z) and _var(yon_move):
+        mevcut.add("tick")
+        degerler["tick"] = _isaret(float(yon_move)) * _clip(
+            max(float(tick_z), 0.0) / PUMP_TICK_WATCH, 0.0, 1.0)
+    if _var(obi):
+        mevcut.add("lob")
+        degerler["lob"] = _clip(float(obi), -1.0, 1.0)
+    if _var(funding):
+        mevcut.add("funding")
+        degerler["funding"] = -_clip(
+            float(funding) * 1e4 / FR_TOLERANCE_BPS, -1.0, 1.0)
+    if _var(oi):
+        mevcut.add("oi")   # yonsuz: yalniz kapsam, skora katki YOK
+
+    kapsam = len(mevcut) * KOMPOZIT_AGIRLIK
+    # v5.4.0 (B2): yonlu kapsam = yalniz YONLU (skora katki verebilen)
+    # kanallarin agirligi; OI buna girmez. Rapor esigi DEGISMEDI (toplam
+    # kapsam uzerinden) — bu alan yalniz gorunurluk icindir.
+    yonlu_kapsam = len(degerler) * KOMPOZIT_AGIRLIK
+    skor = None
+    katki = {}
+    if degerler:
+        top_w = len(degerler) * KOMPOZIT_AGIRLIK
+        skor = sum(KOMPOZIT_AGIRLIK * v for v in degerler.values()) / top_w
+        katki = {ad: KOMPOZIT_AGIRLIK * v / top_w
+                 for ad, v in degerler.items()}
+    rapor = (kapsam >= KOMPOZIT_MIN_KAPSAM) and (skor is not None)
+    return {
+        "skor": skor if rapor else None,   # rapor edilebilir skor
+        "ham_skor": skor,                  # dusuk kapsamda da hesap izi
+        "kapsam": kapsam,
+        "yonlu_kapsam": yonlu_kapsam,      # v5.4.0 (B2): OI'siz kapsam
+        "katki": katki,                    # toplami == skor (yonlu kanallar)
+        "mevcut": sorted(mevcut),
+        "eksik": sorted(set(KOMPOZIT_KANALLAR) - mevcut),
+        "oi_mevcut": "oi" in mevcut,
+        "rapor": rapor,
+    }
+
+
+def composite_line(sonuc):
+    """signal_engine ciktisina yazilacak TEK bilgi satiri (rapor-only).
+    v5.4.0 (B2): yonlu-kapsam ayrica gosterilir."""
+    kap = sonuc["kapsam"]
+    yk = sonuc["yonlu_kapsam"]
+    if not sonuc["rapor"]:
+        eksik = ",".join(sonuc["eksik"]) or "yok"
+        return (f"BILESIK ONCU SKOR (hipotez, rapor-only): "
+                f"VERI YOK (kapsam {kap:.2f}; yonlu {yk:.2f}; eksik: {eksik})")
+    parca = [f"{ad} {sonuc['katki'][ad]:+.2f}" for ad in sorted(sonuc["katki"])]
+    if sonuc["oi_mevcut"]:
+        parca.append("oi mevcut(yonsuz)")
+    return (f"BILESIK ONCU SKOR (hipotez, rapor-only): {sonuc['skor']:+.2f} | "
+            f"kapsam {kap:.2f} (yonlu {yk:.2f}) | katki: {', '.join(parca)}")
+
+
 # ---------------------------------------------------------------------------
 # 5. REJIM TESPITI — dinamik ATR-marjli
 # ---------------------------------------------------------------------------
@@ -642,14 +973,20 @@ def walkforward_splits(n, k=N_FOLDS, embargo=EMBARGO):
 
 # ---------------------------------------------------------------------------
 # 8. ISLEM SIMULASYONU
+#    v5.4.0 (ajanC CAPA-3): IMZA DEGISTI — simulate(feat, idx, z_th,
+#    rsi_on, direction). Degisiklik SADECE su: rsi_on=True ise tetik ani
+#    feat["rsi"] (shift'li) degerine RSI<30 (LONG) / RSI>70 (SHORT) sarti
+#    eklenir. Giris/cikis/stop/zaman-stopu/ucret mantigi AYNEN korunmustur;
+#    rsi_on=False kurallar icin davranis ESKISIYLE BIREBIR AYNIDIR.
 # ---------------------------------------------------------------------------
-def simulate(feat, idx, z_th, direction):
+def simulate(feat, idx, z_th, rsi_on, direction):
     o = feat["open"][idx]
     cl = feat["close"][idx]
     lo = feat["low"][idx]
     hi = feat["high"][idx]
     z = feat["z"][idx]
     atr = feat["atr"][idx]
+    rs = feat["rsi"][idx]          # YAMA (ajanC): shift'li Wilder RSI
     n = len(o)
     if n < 63:
         return []
@@ -667,6 +1004,16 @@ def simulate(feat, idx, z_th, direction):
         else:
             fired = (zi >= z_th) and (z[i - 1] > zi) and \
                 (zi < float(np.max(z[i - 3:i])))
+        # YAMA (ajanC): RSI filtresi — kural izgarasinin ikinci ekseni.
+        # rsi_on=False kurallar icin davranis ESKISIYLE BIREBIR AYNIDIR.
+        if fired and rsi_on:
+            ri = float(rs[i])
+            if not np.isfinite(ri):
+                fired = False
+            elif direction == "LONG":
+                fired = ri < RSI_LONG_MAX
+            else:
+                fired = ri > RSI_SHORT_MIN
         if not fired:
             i += 1
             continue
@@ -736,22 +1083,54 @@ def execution_router(symbol, direction, target_usd, bids=None, asks=None):
 
 # ---------------------------------------------------------------------------
 # 10. SINYAL MOTORU
+#     v5.4.0 BIRLESIK: ajanA (oz-referans temizligi + lead-lag satiri),
+#     ajanB (bilesik skor satiri + tscore tekillestirme), ajanC (22-kural
+#     izgarasi + canli RSI tetigi). Degismeyen satirlar v5.3.2 ile birebir.
 # ---------------------------------------------------------------------------
 def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
                   target_usd=TARGET_USD):
     print(f"\n=== {symbol} ===")
-    cb = corr_stats(df_15m["close"], btc_15m["close"])
-    if cb:
-        print(f"  Korelasyon alt-BTC: r={cb['r']:.3f} "
-              f"(p={cb['p']:.4f}, n={cb['n']})")
+    if symbol == "BTC/USDT":
+        # v5.4.0 (ajanA G1a): oz-referans temizligi — kendine-korelasyon
+        # olculmez, atlama gerekcesiyle beyan edilir (sessiz atlama yok).
+        print("  Korelasyon alt-BTC: atlandi (sembol referansin kendisi; "
+              "kendine-korelasyon r=1.0 bilgi tasimaz)")
+    else:
+        cb = corr_stats(df_15m["close"], btc_15m["close"])
+        if cb:
+            print(f"  Korelasyon alt-BTC: r={cb['r']:.3f} "
+                  f"(p={cb['p']:.4f}, n={cb['n']})")
+        # v5.4.0 (ajanA G2): lead-lag — RAPOR-ONLY; hicbir kapi/veto
+        # buna baglanmaz.
+        ll = lead_lag_stats(df_15m["close"], btc_15m["close"])
+        if ll:
+            lider = ("BTC oncu" if ll["best_lag"] > 0 else
+                     "alt oncu" if ll["best_lag"] < 0 else "es-anli")
+            print(f"  Lead-lag alt-BTC [RAPOR-ONLY, karara girmez]: "
+                  f"en iyi lag={ll['best_lag']:+d} bar ({lider}) | "
+                  f"r={ll['r']:.3f} (p={ll['p']:.4f}, n={ll['n']}) | "
+                  f"r(lag0)={ll['r0']:.3f} | asimetri={ll['asym']:+.3f} "
+                  f"(+: BTC oncu)")
+        else:
+            print("  Lead-lag alt-BTC: VERI YOK (pencere yetersiz)")
     if symbol != "ETH/USDT":
         ce = corr_stats(df_15m["close"], eth_15m["close"])
         if ce:
             print(f"  Korelasyon alt-ETH: r={ce['r']:.3f} "
                   f"(p={ce['p']:.4f}, n={ce['n']})")
     state, state_conf = regime_detector(df_15m["close"], df_4h["close"])
-    btc_state, _ = regime_detector(btc_15m["close"], btc_4h["close"])
-    print(f"  Rejim: {state} (guven={state_conf:.2f}) | BTC rejimi: {btc_state}")
+    if symbol == "BTC/USDT":
+        # v5.4.0 (ajanA G1b): oz-kiyas atlanir — ayni girdiyle
+        # regime_detector ayni sonucu verir; "uyumsuz" iptali burada daima
+        # uyumlu cikardi (olu kiyas, kosu kanitli). Beyanla kaldirildi;
+        # iptal kapisi diger semboller icin AYNEN korundu (K22).
+        btc_state = state
+        print(f"  Rejim: {state} (guven={state_conf:.2f}) | "
+              f"BTC rejimi: kendisi (oz-kiyas atlandi)")
+    else:
+        btc_state, _ = regime_detector(btc_15m["close"], btc_4h["close"])
+        print(f"  Rejim: {state} (guven={state_conf:.2f}) | "
+              f"BTC rejimi: {btc_state}")
     fr_df, oi = fetch_funding_oi(symbol)
     fr_latest = 0.0
     if not fr_df.empty and "fundingRate" in fr_df.columns:
@@ -764,6 +1143,8 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     bids, asks = fetch_order_book(symbol)
 
     # --- ANLIK UYARILAR (v5.3) — tick/LOB oncu; hacim bileseni kapanmis 15M ---
+    # ajanA G3 kapsam disi beyani: pump_anomaly girdisi HAM hacimdir —
+    # winsorize UYGULANMAZ (spike tespitinin hedefi spike'in kendisi).
     score15, note15 = pump_anomaly(df_15m["volume"])
     # v5.3.2: yon tespiti TEK kez hesaplanir. (v5.3/v5.3.1'de ayni girdiyle
     # iki kez cagriliyordu — git f34721b, eski satirlar 702 ve 721; kaldirildi.)
@@ -776,11 +1157,31 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     else:
         print("  ONCU UYARI: yok (olumlu)")
 
+    # --- v5.4.0 (ajanB) BILESIK ONCU SKOR — RAPOR-ONLY bilgi satiri --------
+    # Hicbir veto/karar kapisina BAGLANMAZ; yalnizca bilgi satiri basar.
+    # tick_confirm_score burada TEK kez hesaplanir; asagidaki mevcut
+    # WATCH-teyit blogu ayni degeri AYNEN kullanir (davranis degismedi;
+    # fonksiyon trades verildiginde saf hesaptir, ag cagrisi yapmaz).
+    tscore = tick_confirm_score(symbol, trades)
+    _obi_var = (bids is not None and asks is not None
+                and not bids.empty and not asks.empty)
+    _fr_var = (not fr_df.empty) and ("fundingRate" in fr_df.columns)
+    komp = composite_leading_score({
+        "pump_skor": score15, "pump_not": note15,
+        "tick_z": tscore,
+        "obi": lob_imbalance(bids, asks)[0] if _obi_var else None,
+        "funding": fr_latest if _fr_var else None,   # bos gecmis = None (0 UYDURULMAZ)
+        "oi": oi if np.isfinite(oi) else None,
+        "yon_move": yon_move,
+    })
+    print(f"  {composite_line(komp)}")
+
     # --- Pump/Dump vetosu (v5.3: tick teyidi artik tanimli) ---
     note = note15
     src = "OHLCV/15M(kapanmis)"
     if note15 in ("NORMAL", "WATCH"):
-        tscore = tick_confirm_score(symbol, trades)
+        # v5.4.0 (ajanB): tscore yukarida (bilesik skor blogu) TEK kez
+        # hesaplandi; burada aynen kullanilir (davranis degismedi).
         if tscore is not None:
             src = "OHLCV/15M(kapanmis) + tick teyit"
             print(f"  Tick teyit: z={tscore:.2f} (esik {PUMP_TICK_WATCH})")
@@ -805,7 +1206,11 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
                   f"(hareket={yon_move * 100:+.2f}%)")
         return
 
-    if state in ("BULL", "BEAR") and btc_state != state:
+    # v5.4.0 (ajanA G1b): BTC uyum kapisi diger semboller icin AYNEN
+    # korunur (K22); BTC'nin kendisi icin oz-kiyas oldugundan uygulanmaz
+    # (ustte beyanli).
+    if symbol != "BTC/USDT" and state in ("BULL", "BEAR") \
+            and btc_state != state:
         print(f"  -> Iptal: BTC {btc_state} ile alt {state} uyumsuz.")
         return
 
@@ -825,54 +1230,96 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     lc = (df["low"] - close.shift(periods=1)).abs()
     tr_df = pd.concat([hl, hc, lc], axis=1).max(axis=1)
     df["atr"] = tr_df.rolling(ATR_LEN).mean().shift(periods=1)
+    # v5.4.0 (ajanC a): Wilder RSI kolonu — z ile ayni .shift(1) sozlesmesi
+    # wilder_rsi() icinde uygulanir.
+    df["rsi"] = wilder_rsi(close, RSI_LEN)
     df["target"] = sma20
-    df = df.dropna(subset=["z", "atr"])
+    # v5.4.0 (ajanC b): "rsi" dropna'ya eklendi. OLCULDU (ajanC kosusu):
+    # z+shift 20 satir NaN dusurur, RSI(14)+shift 15 satir NaN uretir ->
+    # EK satir kaybi yok (dropna kaybi 20'de kalir).
+    df = df.dropna(subset=["z", "atr", "rsi"])
     if len(df) < 700:
         print(f"  -> Yetersiz veri ({len(df)} mum).")
         return
     feat = {k: df[k].to_numpy(dtype=float) for k in
-            ["open", "close", "low", "high", "z", "atr"]}
-    rule_trades = {z: [] for z in Z_GRID}
+            ["open", "close", "low", "high", "z", "atr", "rsi"]}
+
+    # v5.4.0 (ajanC c): kural izgarasi Z_GRID x {RSI yok, RSI var}.
+    # Z_GRID DEGISMEDI; ikinci eksen filtre ac/kapa'dir. m=22 etkisi:
+    # bootstrap kapisi TEK YONLU sertlesir (null maksimumu 22 kural);
+    # BH-FDR'de sira esikleri kuculur ve FDR<=ALPHA garantisi m'den
+    # bagimsiz korunur, ama step-up nedeniyle eslikci kucuk-p kurallar
+    # tek adayin kabulunu kolaylastirabilir (dosya basindaki C3 maddesi
+    # ve olculen karsi-ornek).
+    rule_grid = [(zt, ro) for zt in Z_GRID for ro in (False, True)]
+
+    def _rl(rule):
+        zt, ro = rule
+        return f"z={zt}" + ("+RSI" if ro else "")
+
+    rule_trades = {rule: [] for rule in rule_grid}
     folds = 0
     for train_idx, test_idx in walkforward_splits(len(df), N_FOLDS, EMBARGO):
-        for zt in Z_GRID:
-            rule_trades[zt].extend(simulate(feat, test_idx, zt, direction))
+        for rule in rule_grid:
+            zt, ro = rule
+            rule_trades[rule].extend(simulate(feat, test_idx, zt, ro,
+                                              direction))
         folds += 1
     if folds == 0:
         print("  -> Walk-forward split yok.")
         return
-    stats = {zt: oos_stats(rule_trades[zt]) for zt in Z_GRID}
+    stats = {rule: oos_stats(rule_trades[rule]) for rule in rule_grid}
     pvals = {}
-    for zt, s in stats.items():
+    for rule, s in stats.items():
         if s is not None:
-            pvals[zt] = 2.0 * (1.0 - norm_cdf(abs(s["t"])))
+            pvals[rule] = 2.0 * (1.0 - norm_cdf(abs(s["t"])))
     if not pvals:
         print("  -> Yeterli OOS yok.")
         return
     keys = list(pvals.keys())
     accepted = fdr_bh([pvals[k] for k in keys], ALPHA)
-    accepted_z = [zt for zt, ok in zip(keys, accepted) if ok]
+    accepted_rules = [rule for rule, ok in zip(keys, accepted) if ok]
     p_max = bootstrap_max_t(rule_trades)
+    print(f"  Kural izgarasi: {len(rule_grid)} kural "
+          f"(= {len(Z_GRID)} z x 2 RSI durumu; esik sabitleri degismedi — "
+          f"bootstrap kapisi tek yonlu sertlesir, BH-FDR'de FDR<=ALPHA "
+          f"garantisi m'den bagimsiz korunur)")
     print(f"  WF fold: {folds} (genisleyen pencere+embargo) | BH-FDR kabul: "
-          f"{accepted_z if accepted_z else 'yok'} | "
+          f"{[_rl(k) for k in accepted_rules] if accepted_rules else 'yok'} | "
           f"max-t bootstrap p: {p_max:.3f}")
-    if not accepted_z or p_max >= ALPHA:
+    if not accepted_rules or p_max >= ALPHA:
         print("  -> Anti-overfit kapi kapali.")
         return
-    best_z = max(accepted_z, key=lambda zt: stats[zt]["mean"])
-    best_stat = stats[best_z]
+    # v5.4.0 (ajanC e): secim mekanizmasi AYNI — kabul edilenler icinde en
+    # yuksek OOS ortalama. RSI'li ve RSI'siz kurallar ayni kapilarda yaristi.
+    best_rule = max(accepted_rules, key=lambda rule: stats[rule]["mean"])
+    best_z, best_rsi = best_rule
+    best_stat = stats[best_rule]
     cur = df.iloc[-1]
     prev = df.iloc[-2]
     zi = float(cur["z"])
     atr_i = float(cur["atr"])
+    rsi_i = float(cur["rsi"])   # ajanC: shift'li — son KAPANMIS bar oncesi
     if direction == "LONG":
         fired = (zi <= -best_z) and (zi > -4.0) and (float(prev["z"]) < zi) and \
             (zi > float(np.min(df["z"].iloc[-4:-1])))
     else:
         fired = (zi >= best_z) and (zi < 4.0) and (float(prev["z"]) > zi) and \
             (zi < float(np.max(df["z"].iloc[-4:-1])))
+    # v5.4.0 (ajanC f): canli tetik, secilen kuralin RSI sartini da uygular.
+    # RSI yuzunden dusen tetik ACIKCA raporlanir (sessiz atlama yok).
+    if fired and best_rsi:
+        rsi_ok = np.isfinite(rsi_i) and (
+            rsi_i < RSI_LONG_MAX if direction == "LONG"
+            else rsi_i > RSI_SHORT_MIN)
+        if not rsi_ok:
+            print(f"  -> Kenar onayli; tetik yok: z sarti sagladi "
+                  f"(z={zi:.2f}, esik={best_z}) ama RSI sarti saglanmadi "
+                  f"(rsi={rsi_i:.1f}, kural={_rl(best_rule)}).")
+            return
     if not fired:
-        print(f"  -> Kenar onayli; tetik yok (z={zi:.2f}, esik={best_z}).")
+        print(f"  -> Kenar onayli; tetik yok (z={zi:.2f}, esik={best_z}, "
+              f"kural={_rl(best_rule)}).")
         return
     order_type, ref_px, role, best_bid, best_ask, imb, spread_bps = \
         execution_router(symbol, direction, target_usd, bids, asks)
@@ -880,7 +1327,13 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
     target_px = float(cur["target"])
     sl_px = last_close - ATR_SL_MULT * atr_i if direction == "LONG" \
         else last_close + ATR_SL_MULT * atr_i
-    print(f"  >>> {direction} SINYALI (WF+FDR+bootstrap onayli) <<<")
+    print(f"  >>> {direction} SINYALI (WF+FDR+bootstrap onayli; "
+          f"kural={_rl(best_rule)}) <<<")
+    if best_rsi:
+        kosul = (f"RSI<{RSI_LONG_MAX:.0f}" if direction == "LONG"
+                 else f"RSI>{RSI_SHORT_MIN:.0f}")
+        print(f"  RSI sarti uygulandi: rsi={rsi_i:.1f} ({kosul}; "
+              f"esikler HIPOTEZ etiketli, kural kapilardan gecti)")
     print(f"  Referans (son kapanis): {last_close:.4f}")
     if order_type == "MARKET":
         px_str = f"{ref_px:.4f}" if np.isfinite(ref_px) else f"{last_close:.4f}"
@@ -912,7 +1365,7 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
 # 11. ANA DONGU
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    print("BTC Karargah v5.3.2 — oncu veri katmani (karar-destek; emir gondermez)")
+    print("BTC Karargah v5.4.0 — birlesik surum (karar-destek; emir gondermez)")
     print("=" * 70)
     # v5.3.2 (K25): tamamlanma beyani KOSULSUZ degil — sayilarak verilir.
     tamam, atlanan = 0, 0
@@ -925,8 +1378,15 @@ if __name__ == "__main__":
         eth_15m = fetch_ohlcv("ETH/USDT", TF_15M, LIMIT_15M)
         for alt in SYMBOLS:
             try:
-                a4 = fetch_ohlcv(alt, TF_4H, LIMIT_4H)
-                a15 = fetch_ohlcv(alt, TF_15M, LIMIT_15M)
+                if alt == "BTC/USDT":
+                    # v5.4.0 (ajanA G1 + K39): BTC verisi dongude yeniden
+                    # CEKILMEZ — dongu oncesi cekilen goruntu kullanilir
+                    # (mukerrer fetch + ayni sembolun iki farkli anlik
+                    # goruntusunu kiyaslama riski kalkti).
+                    a4, a15 = btc_4h, btc_15m
+                else:
+                    a4 = fetch_ohlcv(alt, TF_4H, LIMIT_4H)
+                    a15 = fetch_ohlcv(alt, TF_15M, LIMIT_15M)
                 signal_engine(alt, a4, a15, btc_4h, btc_15m,
                               eth_4h, eth_15m, TARGET_USD)
                 tamam += 1
@@ -955,4 +1415,16 @@ if __name__ == "__main__":
 #   (d) hareket olup uyari cikmayan durumlar (sahte negatif).
 # Bu olcumler yapilmadan PUMP_TICK_WATCH / TICK_CONFIRM_* / V_REVERSAL_*
 # degerlerinin "basarili" oldugu iddia EDILEMEZ.
+# v5.4.0 EKI — ayni plan su HIPOTEZ sabitlerini de kapsar:
+#   (e) LEAD_LAG_MAX_LAG / WINSOR_Q_LOW / WINSOR_Q_HIGH (ajanA): taramada
+#       lead-lag dagilimi + best_lag kararliligi + winsorize'li/ham r farki
+#       gercek veride raporlanir; fark sistematikse q sinirlari o olcumle
+#       guncellenir.
+#   (f) KOMPOZIT esit agirlik + KOMPOZIT_MIN_KAPSAM (ajanB): skorun ongoru
+#       gucu olculmeden agirliklar esitlikten ayrilamaz.
+#   (g) RSI_LEN / RSI_LONG_MAX / RSI_SHORT_MIN (ajanC): kalibrasyon yalniz
+#       izgara-ici secim + ayni kapilarla yapilir; sabit serbestce oynanmaz.
+#   (h) CNN-LSTM/derin ogrenme bu surumde YOK (bkz. baslik L1): eğitim/
+#       doğrulama altyapısı kurulmadan eklenmesi olculmemis sayi uretir;
+#       ileri is ayri egitim deposu + walk-forward dogrulama planiyla.
 # --------------------------------------------------------------------
