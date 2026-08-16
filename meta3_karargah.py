@@ -1,4 +1,4 @@
-# META3 KARARGAH v1.0 — Recursive Self-Improving calisma dongusu
+# META3 KARARGAH v1.2 — Recursive Self-Improving calisma dongusu
 # ====================================================================
 # KAYNAK SEMA: "META3 — Nihai Recursive Self-Improving Research System"
 # (kullanicinin yukledigi PDF; metin cikarimi: scratchpad/meta3.txt).
@@ -49,6 +49,9 @@
 #                                      kalan adaylar o kosuda degerlendirilmez
 #                                      ve bu kayda gecer). "repeated failures ->
 #                                      change search" dali karantina ile.
+#   #14    RESEARCH CONTROLLER      -> DAGITIK uygulanir: kesif takvimi
+#                                      (kesif_zamani) + kosu-basi butce +
+#                                      meta2/meta3 kadansi + karantina
 #   #24    BILIMSEL SINIR           -> asagida acikca korunur (garanti yok)
 #
 #   BILINCLI DARALTMALAR (sema bolumune baglanmis, beyansiz degil):
@@ -124,7 +127,15 @@ IMMUTABLE_PLANE = {
     "meta3_min_orneklem": 3,          # meta2 kaydi asgarisi
     "meta3_adim_buyut": 5,            # W buyutme adimi
     "meta3_adim_kucult": 3,           # W kucultme adimi
+    # v1.2 (2. tur denetim bulgusu — eps=0 yutucu durumu): kesif eps=0'a
+    # dussa bile her N kosuda bir ZORUNLU kesif yapilir (PDF #19 "repeated
+    # failures -> CHANGE SEARCH" ruhu: arama kalici olarak OLEMEZ) — HIPOTEZ
+    "zorunlu_kesif_periyodu": 25,
 }
+# NOT (yapisal sabit): "recursive_derinlik" kodda bir denetleyici tarafindan
+# TUKETILMEZ — katman sayisi (META/META2/META3) kodun yapisiyla sabittir;
+# sabit, beyan amaclidir. Katman EKLEYEN bir degisiklik bu sabiti de
+# denetler hale getirmelidir (2. tur denetim notu).
 
 BELLEK_YOLU = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            "meta3_bellek.json")
@@ -147,6 +158,10 @@ def kapi_muhru():
         parcalar.append(f"{ad}={getattr(motor, ad)!r}")
     for ad in sorted(IMMUTABLE_PLANE):
         parcalar.append(f"PLANE.{ad}={IMMUTABLE_PLANE[ad]!r}")
+    # v1.2 (2. tur denetim): VARYANT UZAYI da muhurlu — dis kurcalama arama
+    # uzayini sessizce degistiremesin (filtre listeleri dahil).
+    for ad in sorted(VARYANTLAR):
+        parcalar.append(f"VAR.{ad}={sorted(VARYANTLAR[ad]['filtreler'])!r}")
     return hashlib.sha256("|".join(parcalar).encode()).hexdigest()
 
 
@@ -154,7 +169,15 @@ def kesif_zamani(kosu_sayaci, eps):
     """eps'in FIILI tuketicisi: bu kosuda aday-kesfi yapilacak mi?
     Deterministik hash takvimi (RNG yok — ayni sayac+eps ayni karari verir,
     yeniden uretilebilirlik korunur; HIPOTEZ etiketli tasarim tercihi).
-    eps=0 -> hicbir kosuda kesif; eps=0.3 -> kosularin ~%30'unda kesif."""
+    eps=0.3 -> kosularin ~%30'unda kesif.
+
+    v1.2 (2. tur denetim — eps=0 YUTUCU DURUM giderimi): eps 0'a inse bile
+    her `zorunlu_kesif_periyodu` kosuda bir kesif ACILIR — arama kalici
+    olarak olemez (PDF #19: repeated failures -> CHANGE SEARCH). Periyot
+    HIPOTEZ etiketli plane sabitidir."""
+    per = IMMUTABLE_PLANE["zorunlu_kesif_periyodu"]
+    if kosu_sayaci > 0 and kosu_sayaci % per == 0:
+        return True
     h = int(hashlib.sha256(f"kesif:{kosu_sayaci}".encode()).hexdigest()[:8], 16)
     return (h % 1000) < int(round(eps * 1000))
 
@@ -220,8 +243,50 @@ def _bellek_dogrula(b):
     return b
 
 
+def _akibet_zinciri(onceki_zincir, kayit):
+    """Akibet defteri butunluk zinciri (2. tur KIRMA bulgusu: sahte
+    EMIR-ADAYI akibet enjeksiyonu KEEP fabrikleyebiliyordu). Her kayit,
+    muhur + onceki halka + kaydin kendisi uzerinden SHA256 halkasi tasir;
+    kosu basinda zincir dogrulanir, tutmazsa HALT.
+
+    ACIK SINIR BEYANI (gizlenmez): tuz kod icindedir; dosyaya YAZMA yetkisi
+    olan ve bu kodu okuyabilen bir saldirgan zinciri yeniden hesaplayabilir.
+    Bu koruma kazara bozulmayi ve kaba kurcalamayi YAKALAR, kararli ic
+    saldirgani DURDURAMAZ — dis-sir olmadan dosya duzeyinde kesin butunluk
+    matematiksel olarak mumkun degildir (PDF #24 durustlugu)."""
+    govde = json.dumps({k: v for k, v in kayit.items() if k != "zincir"},
+                       sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(
+        f"{kapi_muhru()}|{onceki_zincir}|{govde}".encode()).hexdigest()[:24]
+
+
+def akibet_zinciri_dogrula(bellek):
+    """Tum akibet defterini zincirle dogrular. Donus: (ok, kirik_indeks)."""
+    onceki = ""
+    for i, a in enumerate(bellek["akibetler"]):
+        beklenen = _akibet_zinciri(onceki, a)
+        if a.get("zincir") != beklenen:
+            return False, i
+        onceki = a["zincir"]
+    return True, None
+
+
+def akibet_ekle(bellek, kayit):
+    onceki = (bellek["akibetler"][-1]["zincir"]
+              if bellek["akibetler"] else "")
+    kayit["zincir"] = _akibet_zinciri(onceki, kayit)
+    bellek["akibetler"].append(kayit)
+
+
 def bellek_yukle():
     if not os.path.exists(BELLEK_YOLU):
+        # v1.2 (2. tur denetim): .bak varken asil dosyanin yoklugu SESSIZ
+        # temiz-baslangic sayilMAZ — kesintili yazim olabilir (K4/K34).
+        if os.path.exists(BELLEK_YOLU + ".bak"):
+            raise BellekBozuk(
+                "asil bellek dosyasi yok ama .bak yedegi var — kesintili "
+                "yazim suphesi; .bak elle geri konmali ya da bilerek "
+                "silinmeli (sessiz gecmis kaybi yasak)")
         return {
             "surum": 1,
             "kapi_muhru": None,
@@ -265,8 +330,9 @@ def deney_kaydi(bellek, optimizer, hipotez, patch, metrikler, maliyet_sn,
         "hypothesis": hipotez,
         "patch": patch,                     # config degisikligi (kod DEGIL)
         "metrics": metrikler,
-        "cost": round(maliyet_sn, 3),
-        "latency": round(gecikme_sn, 3),
+        # v1.2: olculmemis maliyet/gecikme 0.0 DEGIL None yazilir (VERI YOK)
+        "cost": None if maliyet_sn is None else round(maliyet_sn, 3),
+        "latency": None if gecikme_sn is None else round(gecikme_sn, 3),
         "risk": risk,                       # basit sinif etiketi (PDF #12):
                                             # veri_yetersiz|olcum_ustun_degil|...
         "decision": karar,                  # KEEP|REJECT|HOLD|ROLLBACK|STOP|TUT
@@ -328,20 +394,26 @@ def akibet_olc(oneri, df_15m):
             if (yon == "LONG" and lo <= giris) or \
                     (yon == "SHORT" and hi >= giris):
                 dolum = True
+                dolum_bari = True
             else:
                 continue
-        # dolumdan sonra (ayni bar dahil): once STOP kontrolu (muhafazakar)
+        else:
+            dolum_bari = False
+        # Dolumdan sonra: STOP kontrolu HER barda (dolum bari dahil —
+        # muhafazakar). HEDEF ise dolum barinda SAYILMAZ (v1.2, 2. tur
+        # denetim bulgusu: bar-ici sira bilinmezken dolum+hedef ayni barda
+        # HEDEF yazmak iyimserdi); hedef ancak SONRAKI barlarda olculur.
         if yon == "LONG":
             if lo <= stop:
                 return {"sonuc": "STOP", "r": -1.0}
-            if hi >= hedef:
+            if not dolum_bari and hi >= hedef:
                 return {"sonuc": "HEDEF",
                         "r": round(abs(hedef - giris) /
                                    max(abs(giris - stop), 1e-9), 3)}
         else:
             if hi >= stop:
                 return {"sonuc": "STOP", "r": -1.0}
-            if lo <= hedef:
+            if not dolum_bari and lo <= hedef:
                 return {"sonuc": "HEDEF",
                         "r": round(abs(giris - hedef) /
                                    max(abs(stop - giris), 1e-9), 3)}
@@ -606,7 +678,7 @@ def _varyant_akibet_ozeti(bellek, varyant_adi):
     return {"n": len(rler), "ort_r": float(np.mean(rler))}
 
 
-def meta_dongusu(bellek, kosu_suresi_sn, veri_yasi_sn):
+def meta_dongusu(bellek, kosu_suresi_sn, veri_yasi_sn, guvenlik_ok=True):
     """PDF #6: analyze -> hypothesis -> (config) patch -> evaluate ->
     keep/reject. Donus: (karar_str, detay).
 
@@ -620,6 +692,15 @@ def meta_dongusu(bellek, kosu_suresi_sn, veri_yasi_sn):
     """
     P = IMMUTABLE_PLANE
     aktif = bellek["aktif_varyant"]
+    # v1.2 (2. tur denetim — S bileseni artik OLCULUYOR): ic denetim ihlali
+    # varsa S=0 -> bu kosuda KEEP/REJECT verilemez (PDF #19 safety dali);
+    # kayit "guvenlik" sinifiyla dusulur.
+    if not guvenlik_ok:
+        deney_kaydi(bellek, "meta",
+                    "ic denetim ihlali: S=0 — bu kosuda varyant karari yok",
+                    {}, {"S": 0.0}, kosu_suresi_sn, "guvenlik", "HOLD",
+                    veri_yasi_sn)
+        return "HOLD", "ic denetim ihlali (S=0) — evaluator guvenlik dali"
     ozet_aktif = _varyant_akibet_ozeti(bellek, aktif)
     C = min(kosu_suresi_sn / 60.0, 10.0)
     L = min(veri_yasi_sn / 3600.0, 10.0)
@@ -647,6 +728,9 @@ def meta_dongusu(bellek, kosu_suresi_sn, veri_yasi_sn):
                    bellek["karantina"].get(v, 0) < P["karantina_esigi"]]
         degerlendirilen = 0
         for aday in adaylar:
+            # NOT (2. tur denetim): 3-varyantli mevcut uzayda aday tavani
+            # butceye esit oldugundan bu dal FIILEN erisilmez; uzay
+            # buyurse calisir (olculerek gosterildi). Beyanli olu dal.
             if degerlendirilen >= P["kosu_basi_deney_butcesi"]:
                 deney_kaydi(bellek, "meta",
                             f"kosu-basi deney butcesi bitti; {aday} bu "
@@ -743,7 +827,7 @@ def meta2_dongusu(bellek):
     kesifler = [d for d in son if d["decision"] in ("KEEP", "REJECT")]
     if len(kesifler) < P["meta2_min_orneklem"]:
         deney_kaydi(bellek, "meta2", "kesif orneklemi yetersiz", {},
-                    {"n": len(kesifler)}, 0.0, "veri_yetersiz", "HOLD")
+                    {"n": len(kesifler)}, None, "veri_yetersiz", "HOLD", None)
         return "HOLD"
     verim = sum(1 for d in kesifler if d["decision"] == "KEEP") / len(kesifler)
     eski = bellek["eps"]
@@ -755,7 +839,7 @@ def meta2_dongusu(bellek):
     deney_kaydi(bellek, "meta2",
                 f"kesif verimi {verim:.2f} -> eps {eski:.2f}->{yeni:.2f} "
                 f"(bant {P['eps_bant']})", {"eps": bellek["eps"]},
-                {"verim": round(verim, 3)}, 0.0, "olcum",
+                {"verim": round(verim, 3)}, None, "olcum",
                 "KEEP" if yeni != eski else "TUT")
     return "KEEP" if yeni != eski else "TUT"
 
@@ -768,7 +852,7 @@ def meta3_dongusu(bellek):
     m2 = [d for d in bellek["deneyler"] if d["optimizer_version"] == "meta2"]
     if len(m2) < P["meta3_min_orneklem"]:
         deney_kaydi(bellek, "meta3", "meta2 orneklemi yetersiz", {},
-                    {"n": len(m2)}, 0.0, "veri_yetersiz", "HOLD")
+                    {"n": len(m2)}, None, "veri_yetersiz", "HOLD", None)
         return "HOLD"
     # meta2 kararlari hep TUT ise pencere buyutulur (daha seyrek, daha ucuz),
     # sik KEEP ise kucultulur — bant DISINA CIKAMAZ. NOT (beyanli daraltma):
@@ -785,7 +869,7 @@ def meta3_dongusu(bellek):
     bellek["W"] = yeni
     deney_kaydi(bellek, "meta3",
                 f"meta2 son3={son3} -> W {eski}->{yeni} (bant {P['W_bant']})",
-                {"W": yeni}, {"son3": son3}, 0.0, "olcum",
+                {"W": yeni}, {"son3": son3}, None, "olcum",
                 "KEEP" if yeni != eski else "TUT")
     return "KEEP" if yeni != eski else "TUT"
 
@@ -836,7 +920,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("META3 KARARGAH v1.0 — recursive karar dongusu "
+    print("META3 KARARGAH v1.2 — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -863,6 +947,12 @@ def kosu():
               " elinden geldiyse bellek sifirlanmali (meta3_bellek.json sil).")
         return
 
+    zincir_ok, kirik = akibet_zinciri_dogrula(bellek)
+    if not zincir_ok:
+        print(f"!!! HALT: akibet defteri butunlugu bozuk (kayit #{kirik}). "
+              f"Defter elle degistirilmis ya da bozulmus olabilir; olculmus"
+              f" gecmis guvenilmezse KEEP/REJECT verilemez. Yedek: .bak")
+        return
     t_kosu = time.monotonic()
     motor.selftest()
     try:
@@ -891,10 +981,12 @@ def kosu():
             bekleyen.append(oneri)
             continue
         olculen += 1
-        bellek["akibetler"].append({
+        akibet_ekle(bellek, {
             "sembol": oneri["sembol"], "varyant": oneri.get("varyant"),
             "etiket": oneri.get("etiket"), "golge": oneri.get("golge", {}),
             "sonuc": sonuc["sonuc"], "r": sonuc["r"],
+            "oneri_imza": f"{oneri['sembol']}|{oneri['bar_ts']}|"
+                          f"{oneri.get('varyant')}",
         })
         r_str = "R yazilmaz" if sonuc["r"] is None else f"R={sonuc['r']:+.2f}"
         print(f"  {oneri['sembol']}: {sonuc['sonuc']} ({r_str})")
@@ -955,19 +1047,34 @@ def kosu():
                   f"p_max={k['p_max']:.3f}")
         # oneri kaydi: SEVIYESI OLAN her karar akibet defterine girer
         # (BILGI dahil — dogruluk olcumu icin; EMIR-ADAYI ayrica etiketli)
+        # v1.2 (2. tur denetim — MUKERRER KAYIT giderimi): ayni
+        # (sembol, bar_ts, varyant) imzasi bekleyen onerilerde YA DA olculmus
+        # akibetlerde varsa yeniden yazilmaz — ayni bar icinde tekrar kosu
+        # ayni gozlemi cifte sayamaz (n sisirme kapisi kapali).
         if k["giris"] is not None and k["bar_ts"] is not None:
-            bellek["oneriler"].append({
-                "sembol": k["sembol"], "yon": k["yon"], "giris": k["giris"],
-                "stop": k["stop"], "hedef": k["hedef"], "bar_ts": k["bar_ts"],
-                "etiket": k["etiket"], "varyant": aktif,
-                "golge": k["golge"],
-            })
+            imza = f"{k['sembol']}|{k['bar_ts']}|{aktif}"
+            bekleyen_imzalar = {f"{o['sembol']}|{o['bar_ts']}|"
+                                f"{o.get('varyant')}"
+                                for o in bellek["oneriler"]}
+            olculmus_imzalar = {a.get("oneri_imza")
+                                for a in bellek["akibetler"]}
+            if imza in bekleyen_imzalar or imza in olculmus_imzalar:
+                print(f"  (oneri zaten kayitli — ayni bar, mukerrer kayit "
+                      f"yazilmadi)")
+            else:
+                bellek["oneriler"].append({
+                    "sembol": k["sembol"], "yon": k["yon"],
+                    "giris": k["giris"], "stop": k["stop"],
+                    "hedef": k["hedef"], "bar_ts": k["bar_ts"],
+                    "etiket": k["etiket"], "varyant": aktif,
+                    "golge": k["golge"],
+                })
 
     # ---- 4) META / META2 / META3 (PDF #21 sirasi) ----------------------
     kosu_suresi = time.monotonic() - t_kosu
     print("\n[META]")
     if kararlar:
-        m_karar, m_detay = meta_dongusu(bellek, kosu_suresi, veri_yasi_sn)
+        m_karar, m_detay = meta_dongusu(bellek, kosu_suresi, veri_yasi_sn, guvenlik_ok=not ihlaller)
         print(f"  META: {m_karar} — {m_detay}")
         bellek["kosu_sayaci"] += 1
         m2 = meta2_dongusu(bellek)

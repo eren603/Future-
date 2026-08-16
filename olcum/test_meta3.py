@@ -213,8 +213,13 @@ kayit("T5e kesif kapaliyken aday KEEP/REJECT kaydi yok (eps FIILEN okunur)",
       all(d["decision"] not in ("KEEP", "REJECT") for d in son_kayitlar
           if d["optimizer_version"] == "meta"),
       f"({[d['decision'] for d in son_kayitlar]})")
-kayit("T5f eps=0.0 hicbir sayacta kesif acmaz",
-      not any(m3.kesif_zamani(i, 0.0) for i in range(300)))
+# v1.2: eps=0'da bile ZORUNLU kesif periyodu vardir (yutucu-durum giderimi);
+# eps=0 yalniz periyot DISINDA kesif acmaz.
+_per = m3.IMMUTABLE_PLANE["zorunlu_kesif_periyodu"]
+kayit("T5f eps=0.0 periyot disinda kesif acmaz (periyotta ZORUNLU acar)",
+      not any(m3.kesif_zamani(i, 0.0) for i in range(300) if i % _per != 0
+              or i == 0)
+      and m3.kesif_zamani(_per, 0.0))
 
 # T5g — J=None -> HOLD, karantina ARTMAZ (olculmemis ret yasagi) -----------
 bellek["kosu_sayaci"] = KESIF_ACIK
@@ -336,6 +341,78 @@ ihl = m3.ic_denetim(b9, [kk], True)
 kayit("T9d ic_denetim ihlali yakaladi ve etiketi muhurledi",
       len(ihl) > 0 and kk["etiket"].startswith("BILGI (MUHURLU"),
       f"(etiket={kk['etiket']})")
+
+# T10 — v1.2 (2. tur denetim) kapatma testleri ------------------------------
+# T10a: akibet zinciri — sahte kayit enjeksiyonu HALT'a dusurur
+b10 = m3.bellek_yukle()
+m3.akibet_ekle(b10, {"sembol": "X", "etiket": "EMIR-ADAYI", "golge": {},
+                     "sonuc": "HEDEF", "r": 1.5, "oneri_imza": "X|1|V0"})
+ok10, _ = m3.akibet_zinciri_dogrula(b10)
+kayit("T10a zincirli ekleme dogrulaniyor", ok10)
+b10["akibetler"].append({"sembol": "X", "etiket": "EMIR-ADAYI", "golge": {},
+                         "sonuc": "HEDEF", "r": 9.9,
+                         "oneri_imza": "SAHTE"})   # zincirsiz enjeksiyon
+ok10b, kirik = m3.akibet_zinciri_dogrula(b10)
+kayit("T10b zincirsiz sahte kayit YAKALANIYOR", not ok10b and kirik == 1,
+      f"(kirik indeks={kirik})")
+# uctan uca: bozuk zincirli bellek kosuda HALT
+m3.bellek_kaydet(b10)
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    m3.kosu()
+kayit("T10c bozuk zincirle kosu HALT",
+      "akibet defteri butunlugu bozuk" in buf.getvalue())
+os.remove(m3.BELLEK_YOLU)
+if os.path.exists(m3.BELLEK_YOLU + ".bak"):
+    os.remove(m3.BELLEK_YOLU + ".bak")
+# T10d: dolum barinda HEDEF sayilmaz (iyimserlik giderimi) — ayni barda
+# dolum + hedef degdi ama STOP degmedi -> sonuc None (olcum surer)
+b_t10 = sentetik(10, 0.0, 12)
+bt = b_t10.copy()
+bt.iloc[3, bt.columns.get_loc("low")] = 89.0    # dolum (giris 90)
+bt.iloc[3, bt.columns.get_loc("high")] = 130.0  # hedef 120 ayni barda degdi
+bt.iloc[4:, bt.columns.get_loc("high")] = 80.0  # sonraki barlar hedefe degmez
+bt.iloc[4:, bt.columns.get_loc("low")] = 70.0   # stop 60'a da degmez
+o10 = {"sembol": "X", "yon": "LONG", "giris": 90.0, "stop": 60.0,
+       "hedef": 120.0, "bar_ts": int(bt.index[1].value // 1_000_000)}
+s10 = m3.akibet_olc(o10, bt)
+kayit("T10d dolum barindaki hedef SAYILMAZ (bar-ici sira bilinmez)",
+      s10 is None, f"({s10})")
+bt2 = bt.copy()
+bt2.iloc[5, bt2.columns.get_loc("high")] = 121.0  # hedef SONRAKI barda
+s10b = m3.akibet_olc(o10, bt2)
+kayit("T10e sonraki barda hedef SAYILIR",
+      s10b is not None and s10b["sonuc"] == "HEDEF", f"({s10b})")
+# T10f: zorunlu kesif — eps=0 olsa bile periyotta kesif acilir
+per = m3.IMMUTABLE_PLANE["zorunlu_kesif_periyodu"]
+kayit("T10f eps=0'da zorunlu kesif periyodu calisiyor (yutucu durum yok)",
+      m3.kesif_zamani(per, 0.0) and m3.kesif_zamani(2 * per, 0.0)
+      and not any(m3.kesif_zamani(i, 0.0)
+                  for i in range(1, per) if i % per != 0))
+# T10g: S=0 (ic denetim ihlali) -> META HOLD, varyant karari yok
+b10g = m3.bellek_yukle()
+b10g["eps"] = 0.3
+b10g["kosu_sayaci"] = KESIF_ACIK
+for i in range(10):
+    m3.akibet_ekle(b10g, {"sembol": "X", "varyant": "V0_taban",
+                          "etiket": "EMIR-ADAYI",
+                          "golge": {"komposit_uyum": True, "tick_uyum": None},
+                          "sonuc": "HEDEF", "r": 1.0,
+                          "oneri_imza": f"X|{i}|V0"})
+b10g["_son_p_max"] = 0.01
+kr, dt = m3.meta_dongusu(b10g, 1.0, 60.0, guvenlik_ok=False)
+kayit("T10g ic denetim ihlalinde META = HOLD (S=0 olculdu)",
+      kr == "HOLD" and "S=0" in dt, f"({dt})")
+# T10h: .bak varken asil dosya yoksa sessiz sifirlama YOK -> BellekBozuk
+m3.bellek_kaydet(m3.bellek_yukle())
+m3.bellek_kaydet(m3.bellek_yukle())        # .bak olustur
+os.remove(m3.BELLEK_YOLU)                  # asil dosya kayboldu
+try:
+    m3.bellek_yukle()
+    kayit("T10h .bak varken sessiz sifirlama engellendi", False)
+except m3.BellekBozuk:
+    kayit("T10h .bak varken sessiz sifirlama engellendi (BellekBozuk)", True)
+os.remove(m3.BELLEK_YOLU + ".bak")
 
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()

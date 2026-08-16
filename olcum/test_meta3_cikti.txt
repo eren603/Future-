@@ -12,7 +12,7 @@
   GECTI: T5c gerileyen varyant olcumle TABANA doner (KEEP ya da ROLLBACK) (KEEP: aktif varyant V1_komposit_teyit -> V0_taban (olcumle))
   GECTI: T5d aday J olculemezken gerileme -> ROLLBACK dali (ROLLBACK: V1_komposit_teyit -> V0_taban (olculmus gerileme))
   GECTI: T5e kesif kapaliyken aday KEEP/REJECT kaydi yok (eps FIILEN okunur) (['TUT'])
-  GECTI: T5f eps=0.0 hicbir sayacta kesif acmaz 
+  GECTI: T5f eps=0.0 periyot disinda kesif acmaz (periyotta ZORUNLU acar) 
   GECTI: T5g J=None iken REJECT yok, HOLD var, karantina bos (kararlar=['HOLD', 'HOLD'], karantina={})
   GECTI: T6a ilk kosu muhru kaydetti 
   GECTI: T6b sabit degisince HALT (muhur tutmadi) 
@@ -27,7 +27,15 @@
   GECTI: T9b gap'ten gecen LONG dolumu artik OLCULUYOR (lo<=giris) ({'sonuc': 'STOP', 'r': -1.0})
   GECTI: T9c BILGI akibetleri varyant olcumune KARISMAZ ({'n': 4, 'ort_r': 1.0})
   GECTI: T9d ic_denetim ihlali yakaladi ve etiketi muhurledi (etiket=BILGI (MUHURLU — ic denetim ihlali))
+  GECTI: T10a zincirli ekleme dogrulaniyor 
+  GECTI: T10b zincirsiz sahte kayit YAKALANIYOR (kirik indeks=1)
+  GECTI: T10c bozuk zincirle kosu HALT 
+  GECTI: T10d dolum barindaki hedef SAYILMAZ (bar-ici sira bilinmez) (None)
+  GECTI: T10e sonraki barda hedef SAYILIR ({'sonuc': 'HEDEF', 'r': 1.0})
+  GECTI: T10f eps=0'da zorunlu kesif periyodu calisiyor (yutucu durum yok) 
+  GECTI: T10g ic denetim ihlalinde META = HOLD (S=0 olculdu) (ic denetim ihlali (S=0) — evaluator guvenlik dali)
+  GECTI: T10h .bak varken sessiz sifirlama engellendi (BellekBozuk) 
   GECTI: T8a eps ust banttan cikamadi (eps=0.3)
   GECTI: T8b W ust banttan cikamadi (W=50)
 
-SONUC: 31 kontrol, 0 basarisiz.
+SONUC: 39 kontrol, 0 basarisiz.
