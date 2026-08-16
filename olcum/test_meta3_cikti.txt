@@ -11,14 +11,23 @@
   GECTI: T5b olcumle ustun varyant -> KEEP (varyant degisti) (aktif varyant V0_taban -> V1_komposit_teyit (olcumle))
   GECTI: T5c gerileyen varyant olcumle TABANA doner (KEEP ya da ROLLBACK) (KEEP: aktif varyant V1_komposit_teyit -> V0_taban (olcumle))
   GECTI: T5d aday J olculemezken gerileme -> ROLLBACK dali (ROLLBACK: V1_komposit_teyit -> V0_taban (olculmus gerileme))
+  GECTI: T5e kesif kapaliyken aday KEEP/REJECT kaydi yok (eps FIILEN okunur) (['TUT'])
+  GECTI: T5f eps=0.0 hicbir sayacta kesif acmaz 
+  GECTI: T5g J=None iken REJECT yok, HOLD var, karantina bos (kararlar=['HOLD', 'HOLD'], karantina={})
   GECTI: T6a ilk kosu muhru kaydetti 
   GECTI: T6b sabit degisince HALT (muhur tutmadi) 
+  GECTI: T6c PLANE degeri degisince de HALT (muhur kapsami genisledi) 
+  GECTI: T6d bozuk bellek -> temiz HALT (fail-closed) 
   GECTI: T7a .bak anlik goruntusu var 
   GECTI: T7b her deney kaydi PDF #10 alanlarini tasir (2 kayit)
   GECTI: T7c evrim zinciri soy tutuyor 
   GECTI: T2b ciktida BTC/USDT YON satiri var 
   GECTI: T2b ciktida ETH/USDT YON satiri var 
+  GECTI: T9a NaN seviyeli oneri -> GECERSIZ, R=None (zehirleme yok) ({'sonuc': 'GECERSIZ', 'r': None})
+  GECTI: T9b gap'ten gecen LONG dolumu artik OLCULUYOR (lo<=giris) ({'sonuc': 'STOP', 'r': -1.0})
+  GECTI: T9c BILGI akibetleri varyant olcumune KARISMAZ ({'n': 4, 'ort_r': 1.0})
+  GECTI: T9d ic_denetim ihlali yakaladi ve etiketi muhurledi (etiket=BILGI (MUHURLU — ic denetim ihlali))
   GECTI: T8a eps ust banttan cikamadi (eps=0.3)
   GECTI: T8b W ust banttan cikamadi (W=50)
 
-SONUC: 22 kontrol, 0 basarisiz.
+SONUC: 31 kontrol, 0 basarisiz.

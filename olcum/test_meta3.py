@@ -151,14 +151,20 @@ s2 = m3.akibet_olc(o2, bars)
 kayit("T4b ayni pencerede stop+hedef -> muhafazakar STOP",
       s2 is not None and s2["sonuc"] == "STOP" and s2["r"] == -1.0,
       f"({s2})")
-o3 = dict(oneri); o3["giris"] = 1e9   # hic dolmaz
+o3 = dict(oneri); o3["giris"] = 1e-9  # LONG alis limiti fiyatin COK altinda: hic dolmaz
 s3 = m3.akibet_olc(o3, bars)
 kayit("T4c dolmayan oneri TIME_STOP sonrasi IPTAL, R yazilmaz",
       s3 is not None and s3["sonuc"] == "IPTAL" and s3["r"] is None,
       f"({s3})")
 
 # T5 — META: HOLD / KEEP / ROLLBACK ----------------------------------------
+# v1.1: kesif kapisi deterministik hash takvimiyle — testte kesfin ACIK
+# oldugu bir kosu sayaci secilir (eps=0.3, bant ustu)
+KESIF_ACIK = next(i for i in range(500) if m3.kesif_zamani(i, 0.3))
+KESIF_KAPALI = next(i for i in range(500) if not m3.kesif_zamani(i, 0.3))
 bellek = m3.bellek_yukle()
+bellek["eps"] = 0.3
+bellek["kosu_sayaci"] = KESIF_ACIK
 karar, detay = m3.meta_dongusu(bellek, 1.0, 60.0)
 kayit("T5a olculmus akibet yokken META = HOLD", karar == "HOLD", f"({detay})")
 # fikstur: taban icin 10 olculmus akibet (ort R -0.2), V1 alt kumesi ustun
@@ -197,6 +203,33 @@ kayit("T5d aday J olculemezken gerileme -> ROLLBACK dali",
       karar4 == "ROLLBACK" and bellek["aktif_varyant"] == "V0_taban",
       f"({karar4}: {detay4})")
 
+# T5e — kesif takvimi KAPALIYKEN aday degerlendirilmez (eps tuketicisi) ----
+bellek["aktif_varyant"] = "V0_taban"
+bellek["kosu_sayaci"] = KESIF_KAPALI
+onceki_deney_n = len(bellek["deneyler"])
+karar5, detay5 = m3.meta_dongusu(bellek, 1.0, 60.0)
+son_kayitlar = bellek["deneyler"][onceki_deney_n:]
+kayit("T5e kesif kapaliyken aday KEEP/REJECT kaydi yok (eps FIILEN okunur)",
+      all(d["decision"] not in ("KEEP", "REJECT") for d in son_kayitlar
+          if d["optimizer_version"] == "meta"),
+      f"({[d['decision'] for d in son_kayitlar]})")
+kayit("T5f eps=0.0 hicbir sayacta kesif acmaz",
+      not any(m3.kesif_zamani(i, 0.0) for i in range(300)))
+
+# T5g — J=None -> HOLD, karantina ARTMAZ (olculmemis ret yasagi) -----------
+bellek["kosu_sayaci"] = KESIF_ACIK
+bellek["_son_p_max"] = None          # R bileseni VERI YOK -> J=None
+bellek["karantina"] = {}
+onceki_deney_n = len(bellek["deneyler"])
+m3.meta_dongusu(bellek, 1.0, 60.0)
+yeni = [d for d in bellek["deneyler"][onceki_deney_n:]
+        if d["optimizer_version"] == "meta"]
+kayit("T5g J=None iken REJECT yok, HOLD var, karantina bos",
+      all(d["decision"] != "REJECT" for d in yeni)
+      and bellek["karantina"] == {},
+      f"(kararlar={[d['decision'] for d in yeni]}, "
+      f"karantina={bellek['karantina']})")
+
 # T6 — IMMUTABLE muhur ------------------------------------------------------
 veri_kur()
 m3.bellek_kaydet(m3.bellek_yukle())          # temiz bellek + ilk muhur icin
@@ -215,6 +248,29 @@ with contextlib.redirect_stdout(buf):
 motor.ALPHA = eski_alpha
 kayit("T6b sabit degisince HALT (muhur tutmadi)",
       "HALT: kapi sabitleri" in buf.getvalue())
+# T6c — muhur PLANE degerlerini de kapsar (denetim bulgusu kapatildi)
+eski_wq = m3.IMMUTABLE_PLANE["w_Q"]
+m3.IMMUTABLE_PLANE["w_Q"] = 9.9
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    m3.kosu()
+m3.IMMUTABLE_PLANE["w_Q"] = eski_wq
+kayit("T6c PLANE degeri degisince de HALT (muhur kapsami genisledi)",
+      "HALT: kapi sabitleri" in buf.getvalue())
+# T6d — bozuk bellek dosyasi -> yakalanmamis cokme DEGIL, temiz HALT
+with open(m3.BELLEK_YOLU, "w", encoding="utf-8") as f:
+    f.write("{bozuk json!!")
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    m3.kosu()
+kayit("T6d bozuk bellek -> temiz HALT (fail-closed)",
+      "HALT: bellek dosyasi bozuk" in buf.getvalue())
+os.remove(m3.BELLEK_YOLU)          # temiz baslangic (T7 icin)
+if os.path.exists(m3.BELLEK_YOLU + ".bak"):
+    os.remove(m3.BELLEK_YOLU + ".bak")
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    m3.kosu()                       # yeni ilk kosu (muhur yeniden kaydedilir)
 
 # T7 — bellek surumleme + deney alanlari -----------------------------------
 buf = io.StringIO()
@@ -240,6 +296,46 @@ kayit("T7c evrim zinciri soy tutuyor",
 for sym in ("BTC/USDT", "ETH/USDT"):
     kayit(f"T2b ciktida {sym} YON satiri var",
           f"=== {sym} ===" in cikti2 and "YON:" in cikti2)
+
+# T9 — v1.1 denetim-kapatma testleri ---------------------------------------
+# T9a: GECERSIZ oneri (NaN stop) R uydurmaz
+bars9 = sentetik(30, 0.0, 7)
+o9 = {"sembol": "X", "yon": "LONG", "giris": 100.0, "stop": float("nan"),
+      "hedef": 120.0, "bar_ts": int(bars9.index[2].value // 1_000_000)}
+s9 = m3.akibet_olc(o9, bars9)
+kayit("T9a NaN seviyeli oneri -> GECERSIZ, R=None (zehirleme yok)",
+      s9 is not None and s9["sonuc"] == "GECERSIZ" and s9["r"] is None,
+      f"({s9})")
+# T9b: gap dolumu — LONG girisi barin ustunden aciga dusen fiyatta dolar
+gap = sentetik(10, 0.0, 8)
+gv = gap.copy()
+gv.iloc[3, gv.columns.get_loc("low")] = 50.0     # giris 90'in altina gap
+gv.iloc[3, gv.columns.get_loc("high")] = 60.0    # aralik 90'i icermiyor
+gv.iloc[4:, gv.columns.get_loc("low")] = 40.0    # stop kesin gelir
+o9b = {"sembol": "X", "yon": "LONG", "giris": 90.0, "stop": 45.0,
+       "hedef": 200.0, "bar_ts": int(gv.index[1].value // 1_000_000)}
+s9b = m3.akibet_olc(o9b, gv)
+kayit("T9b gap'ten gecen LONG dolumu artik OLCULUYOR (lo<=giris)",
+      s9b is not None and s9b["sonuc"] == "STOP", f"({s9b})")
+# T9c: varyant secim populasyonu YALNIZ EMIR-ADAYI (BILGI karismaz)
+b9 = m3.bellek_yukle()
+b9["akibetler"] = (
+    [{"sembol": "X", "etiket": "EMIR-ADAYI", "golge": {}, "sonuc": "HEDEF",
+      "r": 1.0} for _ in range(4)]
+    + [{"sembol": "X", "etiket": "BILGI", "golge": {}, "sonuc": "STOP",
+        "r": -1.0} for _ in range(50)])
+oz9 = m3._varyant_akibet_ozeti(b9, "V0_taban")
+kayit("T9c BILGI akibetleri varyant olcumune KARISMAZ",
+      oz9["n"] == 4 and oz9["ort_r"] == 1.0, f"({oz9})")
+# T9d: muhur SIRASI — ihlalli karar hem basimda hem BELLEKTE muhurlu
+kk = {"sembol": "T", "yon": "LONG", "yon_kaynak": "test", "kapi": "KAPALI",
+      "kapi_gerekce": "x", "etiket": "EMIR-ADAYI", "giris": 1.0, "stop": 0.9,
+      "hedef": 1.2, "kural": None, "oos": None, "p_max": None,
+      "golge": {}, "bar_ts": 123}
+ihl = m3.ic_denetim(b9, [kk], True)
+kayit("T9d ic_denetim ihlali yakaladi ve etiketi muhurledi",
+      len(ihl) > 0 and kk["etiket"].startswith("BILGI (MUHURLU"),
+      f"(etiket={kk['etiket']})")
 
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()
