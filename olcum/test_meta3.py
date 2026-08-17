@@ -570,6 +570,45 @@ else:
           f"(kapi={k13c['kapi']}, hedef={k13c['hedef']}, "
           f"bar_ts={k13c['bar_ts']})")
 
+# T14 — v2.3 ILK-GECIS yarisi (STRATEJI.md #2 uygulamasi) --------------------
+# T14a: Wilson araligi bagimsiz el hesabıyla (k=30,n=100,z=1.96 klasik degerler)
+wa, wu = m3.wilson_aralik(30, 100)
+kayit("T14a Wilson araligi dogru (30/100 -> [0.219, 0.396])",
+      abs(wa - 0.2189) < 0.005 and abs(wu - 0.3958) < 0.005,
+      f"([{wa:.4f}, {wu:.4f}])")
+kayit("T14b Wilson sinirlari [0,1] icinde ve alt<ust",
+      0.0 <= wa < wu <= 1.0)
+# T14c: guclu yukari trendde LONG yarisi SHORT'tan yuksek p_hedef vermeli
+tr_up = sentetik(800, 0.002, 61)   # belirgin pozitif drift
+ig_l = m3.ilk_gecis_olc(tr_up, "LONG", 2.0, 2.7)
+ig_s = m3.ilk_gecis_olc(tr_up, "SHORT", 2.0, 2.7)
+kayit("T14c yukari trendde p_hedef(LONG) > p_hedef(SHORT) (olculen)",
+      ig_l is not None and ig_s is not None
+      and ig_l["p_hedef"] > ig_s["p_hedef"],
+      f"(LONG {ig_l['p_hedef']} vs SHORT {ig_s['p_hedef']}, n={ig_l['n']})")
+# T14d: EV aritmetigi kayittan yeniden hesaplanabilir (iz surulebilir)
+ev_el = ig_l["p_hedef"] * ig_l["R"] - ig_l["p_stop"] - ig_l["maliyet_R"]
+kayit("T14d EV_nokta = p_h*R - p_s - maliyet birebir",
+      abs(ev_el - ig_l["ev_nokta"]) < 0.01, f"({ev_el:.3f} vs {ig_l['ev_nokta']})")
+kayit("T14e EV_muhafazakar <= EV_nokta (Wilson kotu-ucu)",
+      ig_l["ev_muhafazakar"] <= ig_l["ev_nokta"] + 1e-9)
+# T14f: kucuk orneklem -> None (VERI YOK, uydurma olasilik yok)
+kisa = sentetik(60, 0.0, 62)
+kayit("T14f orneklem<30 -> None (fail-closed)",
+      m3.ilk_gecis_olc(kisa, "LONG", 2.0, 2.7) is None)
+# T14g: karar_uret ciktisinda ilk_gecis ya da yon_olcum alani var
+veri_kur(seed=71)
+k14 = m3.karar_uret("BTC/USDT", VERI[("BTC/USDT", motor.TF_4H)],
+                    VERI[("BTC/USDT", motor.TF_15M)],
+                    VERI[("BTC/USDT", motor.TF_4H)],
+                    VERI[("BTC/USDT", motor.TF_15M)])
+if k14["yon"] in ("LONG", "SHORT") and k14["giris"] is not None:
+    kayit("T14g yonlu kararda ilk-gecis/yon-olcum mevcut (ya da VERI YOK None)",
+          "ilk_gecis" in k14 or "yon_olcum" in k14 or k14["hedef"] is None,
+          f"(hedef={k14['hedef'] is not None})")
+else:
+    kayit("T14g NOTR/verisiz karar — olcum zorunlu degil", True)
+
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()
 b2["kosu_sayaci"] = b2["W"]

@@ -1,4 +1,4 @@
-# KARARGAH TEK v2.2 — motor (v5.4) + META3 katmani (v2.2) TEK DOSYADA
+# KARARGAH TEK v2.3 — motor (v5.4) + META3 katmani (v2.3) TEK DOSYADA
 # ====================================================================
 # Kullanim: python3 karargah_tek.py   (ccxt + numpy + pandas gerekli)
 # Bu dosya iki kaynak dosyanin MEKANIK birlesimidir (elle yeniden yazim
@@ -9,7 +9,7 @@
 # BILGI hedefi artik R-KAPILI — teyitli swingler mesafe sirasiyla taranir,
 # R >= 1.35 (STRATEJI.md) veren ILK swing hedeftir; hicbiri gecmezse
 # "hedef VERI YOK" basilir. BILGI satirinda dar hedef BASILMAZ (aday duser).
-# v2.2 (avci-denetim): EMIR-ADAYI ETIKETI de R-kapili — motor tetigi
+# v2.3 (avci-denetim): EMIR-ADAYI ETIKETI de R-kapili — motor tetigi
 # R<1.35 uretirse geometri korunur (hedef=SMA20; OOS kaniti o geometriye
 # ait) ama etiket TETIK-BILGI'ye duser; EMIR-ADAYI etiketi yalniz R>=1.35
 # ile basilabilir (ic_denetim aksi durumu muhurler). Hedefsiz karar
@@ -19,6 +19,14 @@
 # kendi __main__ tarama blogu dusuruldu — tek giris noktasi kosu();
 # (2) BOLUM 2'nin numpy/pandas import satirlari dusuruldu — isimler
 # BOLUM 1'den baglidir.
+# v2.3 (STRATEJI.md #2 UYGULANDI — finansal-stratejist tamiri): her seviye
+# seti icin AMPIRIK ILK-GECIS YARISI olculur (gecmis barlarda ATR-oranli
+# ayni geometriyle kim once vuruldu: hedef/stop/zaman), Wilson %95 araligi
+# + komisyon-dahil EV raporlanir; EV<=0 ise "ISLEM DEGERI YOK" denir.
+# Hedef yoksa YON standart 1.35R geometriyle yine OLCULUR. Yon kaniti
+# yazi-tura bandindaysa bu ACIKCA soylenir — 0.53 'guven' skoru olasilik
+# DEGILDIR ve oyle sunulmaz. Sinirlar beyanli: ornekleme pencereleri
+# ortusuk (gercek belirsizlik Wilson'dan genis), gecmis garanti degildir.
 # Emir gondermez; yalniz karar-destek. Dogruluk garanti edilmez, OLCULUR.
 # ====================================================================
 # BOLUM 1: MOTOR (btc_karargah_v5_4.py birebir govde)
@@ -1478,6 +1486,7 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
 # ====================================================================
 
 import hashlib
+import math
 import json
 import os
 import sys
@@ -1926,6 +1935,108 @@ def bilgi_hedefi(yon, giris, stop, df_15m, pencere=200):
     return None
 
 
+
+# --------------------------------------------------------------------
+# ILK-GECIS YARISI (v2.3) — STRATEJI.md #2'nin UYGULANMASI:
+# "Taze emir ancak O KOSUNUN olcumu hedef-onceyi favori gosteriyorsa
+#  alinir (MC/analog ilk-gecis yarisinda p_hedef > p_stop)."
+# Bu olcum onceki surumlerde HIC yoktu — seviyeler EV hesabi olmadan
+# basiliyordu. Simdi her seviye seti icin AMPIRIK yaris olculur:
+# gecmis barlarin her `adim`inci kapanisi varsayimsal giris sayilir,
+# ATR-oranli ayni stop/hedef mesafeleriyle ileri yuruyus yapilir
+# (muhafazakar: ayni barda stop+hedef -> STOP), sonuc sayilir.
+# Wilson %95 araligi + komisyon-dahil EV raporlanir.
+# ACIK SINIRLAR (gizlenmez): (1) pencereler ORTUSUK (adim=8 < ufuk=48)
+# -> orneklem bagimli, gercek belirsizlik Wilson'dan GENIS; (2) gecmis
+# dagilim gelecegi garanti etmez (PDF #24); (3) adim/ufuk HIPOTEZ.
+# --------------------------------------------------------------------
+ILK_GECIS_ADIM = 8          # HIPOTEZ — ornekleme adimi (bar)
+STANDART_R_GEOMETRI = 1.35  # kaynak: STRATEJI.md R_min (yon-olcum geometrisi)
+
+
+def wilson_aralik(k, n, z=1.96):
+    """Wilson %95 guven araligi (repo kalibrasyon metodolojisi)."""
+    if n <= 0:
+        return 0.0, 1.0
+    p = k / n
+    payda = 1.0 + z * z / n
+    merkez = p + z * z / (2 * n)
+    yay = z * math.sqrt(p * (1.0 - p) / n + z * z / (4 * n * n))
+    return max(0.0, (merkez - yay) / payda), min(1.0, (merkez + yay) / payda)
+
+
+def ilk_gecis_olc(df_15m, yon, stop_mesafe, hedef_mesafe,
+                  zaman_stop=None, adim=ILK_GECIS_ADIM):
+    """Ampirik ilk-gecis yarisi. Mesafeler giris-ani ATR'sine oranlanir ve
+    her tarihsel giris noktasinda O noktanin ATR'siyle olceklenir (rejim
+    olcegi korunur). Giris = bar kapanisi (bilgi seviyesiyle tutarli);
+    ATR .shift(1) — giris aninda bilinen veri (lookahead yok). Yaris
+    giristen SONRAKI barlarda kosulur; muhafazakar kural: ayni barda
+    stop+hedef -> STOP. Donus: dict ya da None (olculemedi)."""
+    if zaman_stop is None:
+        zaman_stop = motor.TIME_STOP_BARS
+    close = df_15m["close"].astype(float)
+    hl = (df_15m["high"] - df_15m["low"]).abs()
+    hc = (df_15m["high"] - close.shift(periods=1)).abs()
+    lc = (df_15m["low"] - close.shift(periods=1)).abs()
+    tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
+    atr = tr.rolling(motor.ATR_LEN).mean().shift(periods=1)
+    cl = close.to_numpy(dtype=float)
+    hi = df_15m["high"].to_numpy(dtype=float)
+    lo = df_15m["low"].to_numpy(dtype=float)
+    at = atr.to_numpy(dtype=float)
+    atr_simdi = at[-1] if np.isfinite(at[-1]) and at[-1] > 0 else None
+    if atr_simdi is None or stop_mesafe <= 0 or hedef_mesafe <= 0:
+        return None
+    stop_k = stop_mesafe / atr_simdi
+    hedef_k = hedef_mesafe / atr_simdi
+    n_bar = len(cl)
+    sayim = {"hedef": 0, "stop": 0, "zaman": 0}
+    i = motor.ATR_LEN + 1
+    while i < n_bar - 1:
+        a = at[i]
+        if np.isfinite(a) and a > 0:
+            g = cl[i]
+            if yon == "LONG":
+                st, hd = g - stop_k * a, g + hedef_k * a
+            else:
+                st, hd = g + stop_k * a, g - hedef_k * a
+            sonuc = "zaman"
+            for j in range(i + 1, min(i + 1 + zaman_stop, n_bar)):
+                if yon == "LONG":
+                    if lo[j] <= st:
+                        sonuc = "stop"
+                        break
+                    if hi[j] >= hd:
+                        sonuc = "hedef"
+                        break
+                else:
+                    if hi[j] >= st:
+                        sonuc = "stop"
+                        break
+                    if lo[j] <= hd:
+                        sonuc = "hedef"
+                        break
+            sayim[sonuc] += 1
+        i += adim
+    n = sum(sayim.values())
+    if n < 30:   # HIPOTEZ: asgari orneklem — alti VERI YOK
+        return None
+    R = hedef_mesafe / stop_mesafe
+    p_h, p_s = sayim["hedef"] / n, sayim["stop"] / n
+    h_alt, h_ust = wilson_aralik(sayim["hedef"], n)
+    s_alt, s_ust = wilson_aralik(sayim["stop"], n)
+    # komisyon+kayma R-cinsinden (motor sabitlerinden; giris ~ son kapanis)
+    maliyet_R = (2 * motor.FEE_TAKER + 2 * motor.SLIPPAGE) * cl[-1] / stop_mesafe
+    ev_nokta = p_h * R - p_s - maliyet_R           # zaman-cikisi katkisi 0 sayilir (beyanli)
+    ev_muhafazakar = h_alt * R - s_ust - maliyet_R  # Wilson kotu-ucu
+    return {"n": n, "p_hedef": round(p_h, 3), "p_stop": round(p_s, 3),
+            "p_zaman": round(sayim["zaman"] / n, 3),
+            "hedef_alt": round(h_alt, 3), "stop_ust": round(s_ust, 3),
+            "R": round(R, 2), "maliyet_R": round(maliyet_R, 3),
+            "ev_nokta": round(ev_nokta, 3),
+            "ev_muhafazakar": round(ev_muhafazakar, 3)}
+
 # --------------------------------------------------------------------
 # AGENT KATMANI (PDF #3) — v5.4 motorunun VERI donduren sarmali
 # signal_engine print-tabanli oldugundan ayni olcum bloklari burada VERI
@@ -2033,10 +2144,21 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
             sonuc["bar_ts"] = int(df_15m.index[-1].value // 1_000_000)
             sonuc["r"] = round(abs(hedef_px - son_kapanis)
                                / max(abs(sonuc["stop"] - son_kapanis), 1e-12), 2)
+            # v2.3 (STRATEJI.md #2): bu seviye setinin AMPIRIK ilk-gecis
+            # yarisi — p_hedef/p_stop/EV olculur; EV hukmu ciktiya girer.
+            sonuc["ilk_gecis"] = ilk_gecis_olc(
+                df_15m, sonuc["yon"],
+                abs(sonuc["stop"] - son_kapanis),
+                abs(hedef_px - son_kapanis))
         else:
             sonuc["hedef_gerekce"] = ("yon tarafinda R>=1.35 veren teyitli "
                                       "swing yok — dar/uydurma hedef "
                                       "basilmaz (STRATEJI.md)")
+            # hedef yokken YON yine olculur: standart 1.35R geometrisiyle
+            # ilk-gecis yarisi (yalniz yon-kaniti; seviye onerisi DEGIL)
+            st_m = abs(sonuc["stop"] - son_kapanis)
+            sonuc["yon_olcum"] = ilk_gecis_olc(
+                df_15m, sonuc["yon"], st_m, STANDART_R_GEOMETRI * st_m)
 
     # --- VETO / KAPI zinciri (v5.4 signal_engine ile ayni sira) ---------
     note = note15
@@ -2154,6 +2276,10 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
             # OOS kaniti o geometriye ait) ama etiket dusurulur: bu satir
             # emir adayi DEGIL, tetik bilgisidir. Defterde BILGI sinifina
             # girer (varyant secim populasyonuna girmez).
+            sonuc["ilk_gecis"] = ilk_gecis_olc(
+                df_15m, sonuc["yon"],
+                abs(sonuc["stop"] - sonuc["giris"]),
+                abs(sonuc["hedef"] - sonuc["giris"]))
             if sonuc["r"] < R_MIN_STRATEJI:
                 sonuc["etiket"] = "TETIK-BILGI"
                 sonuc["kapi_gerekce"] += (
@@ -2472,7 +2598,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("KARARGAH TEK v2.2 (motor v5.4 + META3 v2.2) — recursive karar dongusu "
+    print("KARARGAH TEK v2.3 (motor v5.4 + META3 v2.3) — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -2588,6 +2714,30 @@ def kosu():
     for k in kararlar:
         print(f"\n=== {k['sembol']} ===")
         print(f"  YON: {k['yon']}  (kaynak: {k['yon_kaynak']})")
+        ig = k.get("ilk_gecis") or k.get("yon_olcum")
+        if ig:
+            baslik = ("ILK-GECIS (bu seviye seti)" if k.get("ilk_gecis")
+                      else "YON-OLCUM (standart 1.35R geometri)")
+            # yon kaniti hukmu: Wilson alt siniri basabas olasiligini
+            # (p* = (p_stop_ust + maliyet) / R ~ EV>0 esigi) asiyor mu?
+            if ig["ev_muhafazakar"] > 0:
+                hukum = "ISLEM DEGERI VAR (olculen, muhafazakar)"
+            elif ig["ev_nokta"] > 0:
+                hukum = ("EV nokta pozitif ama Wilson kotu-ucunda degil — "
+                         "KANIT YETERSIZ (yazi-tura bandi)")
+            else:
+                hukum = "ISLEM DEGERI YOK (olculen EV <= 0)"
+            print(f"  {baslik}: n={ig['n']} | p_hedef={ig['p_hedef']:.2f} "
+                  f"[alt {ig['hedef_alt']:.2f}] | p_stop={ig['p_stop']:.2f} "
+                  f"[ust {ig['stop_ust']:.2f}] | p_zaman={ig['p_zaman']:.2f} "
+                  f"| maliyet={ig['maliyet_R']:.2f}R")
+            print(f"  EV: nokta {ig['ev_nokta']:+.2f}R | muhafazakar "
+                  f"{ig['ev_muhafazakar']:+.2f}R -> {hukum}")
+            print(f"  (sinir: ornekleme penceresi ortusuk, gercek belirsizlik"
+                  f" Wilson'dan genis; gecmis dagilim garanti degildir)")
+        else:
+            print(f"  ILK-GECIS: VERI YOK (orneklem < 30 ya da ATR "
+                  f"olculemedi) — EV hukmu verilemez")
         if k["giris"] is not None and k["hedef"] is not None:
             # v1.5: R olculur ve basilir; R_min=1.35 atfi STRATEJI.md
             # sozlesmesinden (izlenebilir kaynak). Altindaysa acikca DAR
