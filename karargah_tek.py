@@ -7,6 +7,12 @@
 # tek-modul koprusuyle degisti ve bellek-klasoru secimi eklendi).
 # Iki dosyanin tum denetim/test tarihcesi depoda: Future- deposu,
 # claude/btc-karargah-v5-3-oncu-veri-hgsktd dali.
+# Birlesim-denetcisinin kayda gecirdigi iki BILINCLI fark (AST ile olculdu,
+# davranis-esdeger): (1) BOLUM 1'in kendi `if __name__ == "__main__"` tarama
+# blogu dusuruldu — tek giris noktasi kosu()'dur (v5.4'un bagimsiz tarama
+# modu bu dosyada yoktur; istenirse python3 -c "import karargah_tek" ile
+# fonksiyonlar tek tek cagrilabilir); (2) BOLUM 2'nin numpy/pandas import
+# satirlari dusuruldu — isimler BOLUM 1'den baglidir (olculdu: ayni modul).
 # Emir gondermez; yalniz karar-destek. Dogruluk garanti edilmez, OLCULUR.
 # ====================================================================
 # BOLUM 1: MOTOR (btc_karargah_v5_4.py birebir govde)
