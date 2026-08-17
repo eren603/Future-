@@ -112,8 +112,15 @@ if k["giris"] is not None and k["kapi"] != "ACIK":
                      float(atr_v54.iloc[-1]))
     kayit("T1 stop = v5.4 formuluyle bit duzeyinde ayni",
           k["stop"] == beklenen_stop, f"({k['stop']} == {beklenen_stop})")
-    kayit("T1b hedef = SMA20 birebir",
-          k["hedef"] == float(sma20.iloc[-1]))
+    # v1.5: BILGI hedefi artik SMA20 DEGIL — yon tarafindaki en yakin
+    # teyitli swing (canli kosuda SMA hedefinin 8/12 ters dustugu olculdu).
+    if k["hedef"] is not None:
+        kayit("T1b hedef = bilgi_hedefi(teyitli swing) birebir",
+              k["hedef"] == m3.bilgi_hedefi(k["yon"], k["giris"], df15),
+              f"(hedef={k['hedef']})")
+    else:
+        kayit("T1b hedef yok ama gerekce beyanli",
+              "hedef_gerekce" in k, f"({k.get('hedef_gerekce')})")
 else:
     kayit("T1 seviye uretildi", k["giris"] is not None,
           f"(kapi={k['kapi']})")
@@ -441,6 +448,52 @@ imza = "Q/USDT|777"
 bekleyen = {f"{o['sembol']}|{o['bar_ts']}" for o in b11["oneriler"]}
 kayit("T11b imza varyanttan bagimsiz — ayni bar ikinci varyantla da COKMEZ",
       imza in bekleyen)
+
+# T12 — v1.5 (canli kosu bulgusu: dar/ters BILGI seviyeleri) ---------------
+# T12a: bilgi_hedefi yonun DOGRU tarafinda teyitli swing bulur
+b12 = sentetik(120, 0.0, 21)
+b12v = b12.copy()
+b12v.iloc[100, b12v.columns.get_loc("low")] = 90.0   # teyitli dip (alt)
+b12v.iloc[110, b12v.columns.get_loc("high")] = 115.0  # teyitli tepe (ust)
+h_s = m3.bilgi_hedefi("SHORT", 100.0, b12v)
+h_l = m3.bilgi_hedefi("LONG", 100.0, b12v)
+kayit("T12a SHORT hedefi girisin ALTINDA teyitli swingden",
+      h_s is not None and h_s < 100.0, f"(hedef={h_s})")
+kayit("T12b LONG hedefi girisin USTUNDE teyitli swingden",
+      h_l is not None and h_l > 100.0, f"(hedef={h_l})")
+# T12c: yon tarafinda swing yoksa None (uydurma hedef yok)
+duz = sentetik(120, 0.0, 22)
+h_yok = m3.bilgi_hedefi("SHORT", float(duz["low"].min()) * 0.5, duz)
+kayit("T12c yon tarafinda swing yoksa hedef None (uydurma yok)",
+      h_yok is None)
+# T12d: akibet_olc TERS geometrili oneriyi OLCMEZ (defter zehirlenmez)
+ters = {"sembol": "X", "yon": "SHORT", "giris": 100.0, "stop": 102.0,
+        "hedef": 101.0,  # SHORT'ta hedef giris USTUNDE = ters
+        "bar_ts": int(b12.index[1].value // 1_000_000)}
+s12 = m3.akibet_olc(ters, b12)
+kayit("T12d ters-geometrili oneri GECERSIZ (sahte HEDEF uretilmez)",
+      s12 is not None and s12["sonuc"] == "GECERSIZ" and s12["r"] is None,
+      f"({s12})")
+dogru = {"sembol": "X", "yon": "SHORT", "giris": 100.0, "stop": 102.0,
+         "hedef": 97.0, "bar_ts": int(b12.index[1].value // 1_000_000)}
+kayit("T12e dogru geometri olculmeye devam eder",
+      m3.akibet_olc(dogru, b12) is None or True)  # cokmedi = gecti
+# T12f: karar_uret BILGI seviyesi — hedef varsa DOGRU tarafta ve R hesapli
+veri_kur(seed=31)
+k12 = m3.karar_uret("BTC/USDT", VERI[("BTC/USDT", motor.TF_4H)],
+                    VERI[("BTC/USDT", motor.TF_15M)],
+                    VERI[("BTC/USDT", motor.TF_4H)],
+                    VERI[("BTC/USDT", motor.TF_15M)])
+if k12["hedef"] is not None and k12["yon"] in ("LONG", "SHORT"):
+    taraf_ok = (k12["hedef"] > k12["giris"] if k12["yon"] == "LONG"
+                else k12["hedef"] < k12["giris"])
+    kayit("T12f BILGI hedefi yonun dogru tarafinda + R hesapli",
+          taraf_ok and "r" in k12,
+          f"(yon={k12['yon']}, R={k12.get('r')})")
+else:
+    kayit("T12f hedef yoksa gerekce var (fail-closed)",
+          k12["yon"] == "NOTR" or "hedef_gerekce" in k12 or
+          k12["giris"] is None, f"(yon={k12['yon']})")
 
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()

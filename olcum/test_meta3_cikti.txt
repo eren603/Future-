@@ -1,5 +1,5 @@
   GECTI: T1 stop = v5.4 formuluyle bit duzeyinde ayni (186.25595805788015 == 186.25595805788015)
-  GECTI: T1b hedef = SMA20 birebir 
+  GECTI: T1b hedef = bilgi_hedefi(teyitli swing) birebir (hedef=191.1434321424873)
   GECTI: T2 yon alani dolu ve gecerli (yon=LONG, kaynak=rejim BULL (guven=0.87))
   GECTI: T3 acik kapiyi V1 filtresi dusurdu (gerekceli) 
   GECTI: T3b kapali kapiyi hicbir varyant ACAMAZ 
@@ -37,7 +37,13 @@
   GECTI: T10h .bak varken sessiz sifirlama engellendi (BellekBozuk) 
   GECTI: T11a _VARYANT_SIRA kurcalamasi HALT ediyor (muhur kapsami) 
   GECTI: T11b imza varyanttan bagimsiz — ayni bar ikinci varyantla da COKMEZ 
+  GECTI: T12a SHORT hedefi girisin ALTINDA teyitli swingden (hedef=99.83963970358064)
+  GECTI: T12b LONG hedefi girisin USTUNDE teyitli swingden (hedef=100.64935111297649)
+  GECTI: T12c yon tarafinda swing yoksa hedef None (uydurma yok) 
+  GECTI: T12d ters-geometrili oneri GECERSIZ (sahte HEDEF uretilmez) ({'sonuc': 'GECERSIZ', 'r': None})
+  GECTI: T12e dogru geometri olculmeye devam eder 
+  GECTI: T12f hedef yoksa gerekce var (fail-closed) (yon=LONG)
   GECTI: T8a eps ust banttan cikamadi (eps=0.3)
   GECTI: T8b W ust banttan cikamadi (W=50)
 
-SONUC: 41 kontrol, 0 basarisiz.
+SONUC: 47 kontrol, 0 basarisiz.

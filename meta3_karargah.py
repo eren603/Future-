@@ -1,4 +1,4 @@
-# META3 KARARGAH v1.3 — Recursive Self-Improving calisma dongusu
+# META3 KARARGAH v1.5 — Recursive Self-Improving calisma dongusu
 # ====================================================================
 # KAYNAK SEMA: "META3 — Nihai Recursive Self-Improving Research System"
 # (kullanicinin yukledigi PDF; metin cikarimi: scratchpad/meta3.txt).
@@ -421,6 +421,14 @@ def akibet_olc(oneri, df_15m):
     if not all(np.isfinite(x) for x in (giris, stop, hedef)) \
             or yon not in ("LONG", "SHORT"):
         return {"sonuc": "GECERSIZ", "r": None}
+    # v1.5 (canli kosu bulgusu — kullanicinin ilk META3 kosusu): hedefi yonun
+    # TERS tarafinda olan oneri OLCULMEZ. Ters geometri (SHORT'ta giris ustu
+    # hedef) ilk barda sahte HEDEF uretir ve akibet defterini zehirler.
+    # Dogru geometri: LONG stop < giris < hedef; SHORT hedef < giris < stop.
+    if yon == "LONG" and not (stop < giris < hedef):
+        return {"sonuc": "GECERSIZ", "r": None}
+    if yon == "SHORT" and not (hedef < giris < stop):
+        return {"sonuc": "GECERSIZ", "r": None}
     barlar = df_15m[df_15m.index > pd.Timestamp(oneri["bar_ts"], unit="ms",
                                                 tz="UTC")]
     if barlar.empty:
@@ -467,6 +475,48 @@ def akibet_olc(oneri, df_15m):
             return {"sonuc": "IPTAL", "r": None}
         return None  # hala bekliyor
     return None      # dolum var, sonuc yok — acik pozisyon, olcum surer
+
+
+def teyitli_swingler(df_15m, sol=2, sag=2):
+    """Teyitli fraktal swingler (v1.5). sol/sag=2 HIPOTEZ etiketli.
+    Bir bar tepe sayilir: high'i solundaki `sol` ve sagindaki `sag` barin
+    high'larindan buyuk-esitse; dip icin simetrik. Sagindaki barlar KAPANMIS
+    oldugu icin teyit lookahead icermez; son `sag` bar teyitsizdir ve
+    yapisal olarak taranamaz (dogru davranis)."""
+    hi = df_15m["high"].to_numpy(dtype=float)
+    lo = df_15m["low"].to_numpy(dtype=float)
+    n = len(hi)
+    tepeler, dipler = [], []
+    for i in range(sol, n - sag):
+        pencere_hi = hi[i - sol:i + sag + 1]
+        pencere_lo = lo[i - sol:i + sag + 1]
+        if np.isfinite(hi[i]) and hi[i] == np.max(pencere_hi):
+            tepeler.append(float(hi[i]))
+        if np.isfinite(lo[i]) and lo[i] == np.min(pencere_lo):
+            dipler.append(float(lo[i]))
+    return tepeler, dipler
+
+
+def bilgi_hedefi(yon, giris, df_15m, pencere=200):
+    """v1.5 (canli kosu bulgusu): BILGI seviyelerinin hedefi artik SMA20
+    DEGIL — SMA20 hedefi yalniz z-ekstrem tetiginde anlamlidir; rejim-yonu
+    seviyelerinde cogu zaman yonun TERS tarafina dusuyordu (kullanicinin
+    ilk kosusunda 8/12 sembolde ters hedef olculdu).
+
+    Yeni kural (STRATEJI.md sozlesmesiyle uyumlu: 'R kati uydurma hedef
+    uretilmez'): hedef = yon tarafinda girisin OTESINDEKI EN YAKIN teyitli
+    swing (SHORT: girisin altindaki en yakin teyitli dip; LONG: girisin
+    ustundeki en yakin teyitli tepe). Son `pencere` bar taranir (HIPOTEZ).
+    Yon tarafinda teyitli swing yoksa None doner — uydurma hedef basilmaz."""
+    kesit = df_15m.iloc[-pencere:] if len(df_15m) > pencere else df_15m
+    tepeler, dipler = teyitli_swingler(kesit)
+    if yon == "LONG":
+        adaylar = [t for t in tepeler if t > giris]
+        return min(adaylar) if adaylar else None
+    if yon == "SHORT":
+        adaylar = [d for d in dipler if d < giris]
+        return max(adaylar) if adaylar else None
+    return None
 
 
 # --------------------------------------------------------------------
@@ -561,14 +611,23 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
     atr_ser = tr_df.rolling(motor.ATR_LEN).mean().shift(periods=1)
     son_kapanis = float(close.iloc[-1])
     atr_i = float(atr_ser.iloc[-1]) if np.isfinite(atr_ser.iloc[-1]) else None
-    hedef_px = float(sma20.iloc[-1]) if np.isfinite(sma20.iloc[-1]) else None
-    if atr_i is not None and hedef_px is not None and yon_isaret != 0.0:
+    if atr_i is not None and yon_isaret != 0.0:
+        # v1.5: BILGI hedefi teyitli swingden (yon tarafinda, girisin
+        # otesinde). SMA20 hedefi BILGI seviyelerinden KALDIRILDI — canli
+        # kosuda 8/12 sembolde yonun ters tarafina dustugu olculdu.
+        hedef_px = bilgi_hedefi(sonuc["yon"], son_kapanis, df_15m)
         sonuc["giris"] = son_kapanis
         sonuc["stop"] = (son_kapanis - motor.ATR_SL_MULT * atr_i
                          if sonuc["yon"] == "LONG"
                          else son_kapanis + motor.ATR_SL_MULT * atr_i)
-        sonuc["hedef"] = hedef_px
-        sonuc["bar_ts"] = int(df_15m.index[-1].value // 1_000_000)
+        if hedef_px is not None:
+            sonuc["hedef"] = hedef_px
+            sonuc["bar_ts"] = int(df_15m.index[-1].value // 1_000_000)
+            sonuc["r"] = round(abs(hedef_px - son_kapanis)
+                               / max(abs(sonuc["stop"] - son_kapanis), 1e-12), 2)
+        else:
+            sonuc["hedef_gerekce"] = ("yon tarafinda teyitli swing yok — "
+                                      "uydurma hedef basilmaz (STRATEJI.md)")
 
     # --- VETO / KAPI zinciri (v5.4 signal_engine ile ayni sira) ---------
     note = note15
@@ -661,7 +720,11 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
         sonuc["etiket"] = "EMIR-ADAYI"
         sonuc["kapi_gerekce"] = (f"WF+FDR+bootstrap onayli; kural="
                                  f"{sonuc['kural']}, z={zi:.2f}")
-        # kapi acikken giris/stop v5.4'un canli tetik hesabiyla ayni
+        # kapi acikken giris/stop v5.4'un canli tetik hesabiyla ayni.
+        # Hedef = SMA20 (motorun z=0 cikisi): z-EKSTREM tetiginde SMA
+        # tanimi geregi yonun DOGRU tarafindadir (LONG tetigi z<=-esik'te
+        # atesler -> fiyat SMA'nin altinda -> hedef ustte). v1.5 guvence:
+        # yine de ters dusen (teorik) hedef EMIR-ADAYI'yi BILGI'ye dusurur.
         sonuc["giris"] = float(cur["close"])
         sonuc["stop"] = (sonuc["giris"] - motor.ATR_SL_MULT * float(cur["atr"])
                          if direction == "LONG"
@@ -669,6 +732,20 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
         sonuc["hedef"] = float(cur["target"])
         sonuc["yon"] = direction
         sonuc["yon_kaynak"] = f"rejim {state} + tetik ({sonuc['kural']})"
+        hedef_dogru = (sonuc["hedef"] > sonuc["giris"] if direction == "LONG"
+                       else sonuc["hedef"] < sonuc["giris"])
+        if hedef_dogru:
+            sonuc["r"] = round(abs(sonuc["hedef"] - sonuc["giris"])
+                               / max(abs(sonuc["stop"] - sonuc["giris"]),
+                                     1e-12), 2)
+            sonuc["bar_ts"] = int(df.index[-1].value // 1_000_000)
+        else:
+            sonuc["kapi"] = "KAPALI"
+            sonuc["etiket"] = "BILGI"
+            sonuc["hedef"] = None
+            sonuc["kapi_gerekce"] += (" | hedef (SMA20) yonun ters tarafina "
+                                      "dustu — emir-adayi dusuruldu "
+                                      "(fail-closed)")
     elif not sonuc["kapi_gerekce"]:
         sonuc["kapi_gerekce"] = (f"kenar onayli; tetik yok (z={zi:.2f}, "
                                  f"esik={best_z}, kural={sonuc['kural']})")
@@ -964,7 +1041,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("META3 KARARGAH v1.3 — recursive karar dongusu "
+    print("META3 KARARGAH v1.5 — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -1079,12 +1156,22 @@ def kosu():
     for k in kararlar:
         print(f"\n=== {k['sembol']} ===")
         print(f"  YON: {k['yon']}  (kaynak: {k['yon_kaynak']})")
-        if k["giris"] is not None:
+        if k["giris"] is not None and k["hedef"] is not None:
+            # v1.5: R olculur ve basilir; R_min=1.35 atfi STRATEJI.md
+            # sozlesmesinden (izlenebilir kaynak). Altindaysa acikca DAR
+            # etiketi tasir — dar geometri gizlenmez.
+            r_not = (f"R={k.get('r', 0):.2f}"
+                     + ("" if k.get("r", 0) >= 1.35
+                        else " (DAR — STRATEJI.md R_min=1.35 altinda)"))
             print(f"  SEVIYELER [{k['etiket']}]: giris {k['giris']:.4f} | "
                   f"stop {k['stop']:.4f} | hedef {k['hedef']:.4f} | "
-                  f"zaman-stop {motor.TIME_STOP_BARS} bar")
+                  f"{r_not} | zaman-stop {motor.TIME_STOP_BARS} bar")
+        elif k["giris"] is not None:
+            print(f"  SEVIYELER [{k['etiket']}]: giris {k['giris']:.4f} | "
+                  f"stop {k['stop']:.4f} | hedef VERI YOK "
+                  f"({k.get('hedef_gerekce', 'olculemedi')})")
         else:
-            print(f"  SEVIYELER: VERI YOK (ATR/SMA olculemedi ya da yon NOTR"
+            print(f"  SEVIYELER: VERI YOK (ATR olculemedi ya da yon NOTR"
                   f" — uydurma seviye basilmaz)")
         print(f"  KAPI: {k['kapi']} — {k['kapi_gerekce']}")
         if k.get("oos"):
