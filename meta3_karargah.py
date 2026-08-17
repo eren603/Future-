@@ -84,13 +84,52 @@
 import hashlib
 import json
 import os
+import sys
 import time
 import traceback
 
 import numpy as np
 import pandas as pd
 
-import btc_karargah_v5_4 as motor
+# --------------------------------------------------------------------
+# MOTOR YUKLEYICI (Pydroid3/Android uyumu — v1.4)
+# Pydroid3 scripti exec() ile kendi gecici dizininden calistirir; scriptin
+# durdugu klasor sys.path'e girmez ve `import btc_karargah_v5_4` bulunamaz.
+# Cozum: motor dosyasi su ADAY dizinlerde aranir ve bulundugu dizin yola
+# eklenir. Iki dosya AYNI klasorde durmalidir.
+# --------------------------------------------------------------------
+_MOTOR_DOSYA = "btc_karargah_v5_4.py"
+_ADAY_DIZINLER = []
+try:
+    _ADAY_DIZINLER.append(os.path.dirname(os.path.abspath(__file__)))
+except NameError:
+    pass
+_ADAY_DIZINLER += [
+    os.getcwd(),
+    os.path.dirname(os.path.abspath(sys.argv[0])) if sys.argv and sys.argv[0]
+    else "",
+    "/storage/emulated/0/Download",       # Android indirme klasoru (Pydroid)
+    "/storage/emulated/0/Documents",
+]
+for _d in _ADAY_DIZINLER:
+    if _d and os.path.isfile(os.path.join(_d, _MOTOR_DOSYA)):
+        if _d not in sys.path:
+            sys.path.insert(0, _d)
+        break
+try:
+    import btc_karargah_v5_4 as motor
+except ModuleNotFoundError:
+    print("HATA: motor dosyasi bulunamadi: " + _MOTOR_DOSYA)
+    print("Bu iki dosya AYNI klasorde durmali:")
+    print("  1) meta3_karargah.py   (bu dosya)")
+    print("  2) btc_karargah_v5_4.py (motor)")
+    print("Aranan dizinler:")
+    for _d in _ADAY_DIZINLER:
+        if _d:
+            print("  - " + _d)
+    print("Cozum: btc_karargah_v5_4.py dosyasini yukaridaki dizinlerden "
+          "birine (tercihen bu dosyanin yanina) kopyala ve tekrar calistir.")
+    sys.exit(1)
 
 # --------------------------------------------------------------------
 # IMMUTABLE CONTROL PLANE (PDF #17/#22)
@@ -137,10 +176,12 @@ IMMUTABLE_PLANE = {
 # sabit, beyan amaclidir. Katman EKLEYEN bir degisiklik bu sabiti de
 # denetler hale getirmelidir (2. tur denetim notu).
 
-BELLEK_YOLU = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "meta3_bellek.json")
-OVERRIDE_YOLU = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "meta3_override.json")
+# v1.4: bellek/override yollari MOTOR dosyasinin klasorune baglanir —
+# Pydroid3'te __file__ gecici exec dizinini gosterebilir; motorun klasoru
+# ise kullanicinin dosyalarini tuttugu gercek klasordur (hafiza kalici).
+_TABAN_DIZIN = os.path.dirname(os.path.abspath(motor.__file__))
+BELLEK_YOLU = os.path.join(_TABAN_DIZIN, "meta3_bellek.json")
+OVERRIDE_YOLU = os.path.join(_TABAN_DIZIN, "meta3_override.json")
 
 
 def kapi_muhru():
