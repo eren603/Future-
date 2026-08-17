@@ -522,6 +522,54 @@ else:
           k12["yon"] == "NOTR" or "hedef_gerekce" in k12 or
           k12["giris"] is None, f"(yon={k12['yon']})")
 
+# T13 — v2.2 (avci-denetim ihlalleri) ---------------------------------------
+# T13a: akibet_olc None/bozuk tipli kayitla COKMEZ -> GECERSIZ
+b13 = sentetik(30, 0.0, 41)
+bozuk = {"sembol": "X", "yon": "LONG", "giris": 100.0, "stop": 98.0,
+         "hedef": None, "bar_ts": int(b13.index[1].value // 1_000_000)}
+s13 = m3.akibet_olc(bozuk, b13)
+kayit("T13a hedef=None kayit COKERTMEZ -> GECERSIZ",
+      s13 is not None and s13["sonuc"] == "GECERSIZ", f"({s13})")
+# T13b: ic_denetim — EMIR-ADAYI etiketi R<1.35 ile IHLAL + muhur
+k13 = {"sembol": "T", "yon": "LONG", "yon_kaynak": "test", "kapi": "ACIK",
+       "kapi_gerekce": "x", "etiket": "EMIR-ADAYI", "giris": 100.0,
+       "stop": 98.0, "hedef": 100.2, "r": 0.10, "kural": None, "oos": None,
+       "p_max": None, "golge": {}, "bar_ts": 1}
+ihl13 = m3.ic_denetim(m3.bellek_yukle(), [k13], True)
+kayit("T13b EMIR-ADAYI + R<1.35 = IHLAL ve muhurlenir",
+      any("sozlesme ihlali" in i for i in ihl13)
+      and k13["etiket"].startswith("BILGI (MUHURLU"), f"({ihl13})")
+# T13c: karar_uret tetik yolunda R<1.35 -> etiket TETIK-BILGI (EMIR-ADAYI degil)
+veri_kur(seed=51)
+_eski_fdr, _eski_boot = motor.fdr_bh, motor.bootstrap_max_t
+motor.fdr_bh = lambda p, alpha=motor.ALPHA: [True] * len(p)
+motor.bootstrap_max_t = lambda d, B=None, seeds=None: 0.001
+df13 = VERI[("BTC/USDT", motor.TF_15M)]
+cl = df13["close"].to_numpy(float).copy()
+cl[-5] *= 0.97; cl[-4] *= 0.95; cl[-3] *= 0.90; cl[-2] *= 0.905; cl[-1] *= 0.92
+for i, c in enumerate(cl):
+    df13.iloc[i, df13.columns.get_loc("close")] = c
+    df13.iloc[i, df13.columns.get_loc("open")] = c
+    df13.iloc[i, df13.columns.get_loc("high")] = c * 1.003
+    df13.iloc[i, df13.columns.get_loc("low")] = c * 0.997
+k13c = m3.karar_uret("BTC/USDT", VERI[("BTC/USDT", motor.TF_4H)], df13,
+                     VERI[("BTC/USDT", motor.TF_4H)], df13)
+motor.fdr_bh, motor.bootstrap_max_t = _eski_fdr, _eski_boot
+if k13c["kapi"] == "ACIK" and k13c.get("r") is not None:
+    if k13c["r"] < m3.R_MIN_STRATEJI:
+        kayit("T13c tetik R<1.35 -> etiket TETIK-BILGI (EMIR-ADAYI degil)",
+              k13c["etiket"] == "TETIK-BILGI",
+              f"(R={k13c['r']}, etiket={k13c['etiket']})")
+    else:
+        kayit("T13c tetik R>=1.35 -> EMIR-ADAYI mesru",
+              k13c["etiket"] == "EMIR-ADAYI", f"(R={k13c['r']})")
+else:
+    # tetik atesle(ye)mediyse: SMA-ters dali bar_ts'i temizlemis olmali
+    kayit("T13c tetik yok ya da ters dal: hedefsiz kayit yazilamaz",
+          k13c["hedef"] is not None or k13c["bar_ts"] is None,
+          f"(kapi={k13c['kapi']}, hedef={k13c['hedef']}, "
+          f"bar_ts={k13c['bar_ts']})")
+
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()
 b2["kosu_sayaci"] = b2["W"]

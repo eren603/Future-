@@ -1,4 +1,4 @@
-# KARARGAH TEK v2.1 — motor (v5.4) + META3 katmani (v2.1) TEK DOSYADA
+# KARARGAH TEK v2.2 — motor (v5.4) + META3 katmani (v2.2) TEK DOSYADA
 # ====================================================================
 # Kullanim: python3 karargah_tek.py   (ccxt + numpy + pandas gerekli)
 # Bu dosya iki kaynak dosyanin MEKANIK birlesimidir (elle yeniden yazim
@@ -8,7 +8,13 @@
 # v2.1 (kullanicinin 2. canli kosu bulgusu 'araliklar cok dar'):
 # BILGI hedefi artik R-KAPILI — teyitli swingler mesafe sirasiyla taranir,
 # R >= 1.35 (STRATEJI.md) veren ILK swing hedeftir; hicbiri gecmezse
-# "hedef VERI YOK" basilir. Dar hedef sozlesme geregi BASILMAZ (aday duser).
+# "hedef VERI YOK" basilir. BILGI satirinda dar hedef BASILMAZ (aday duser).
+# v2.2 (avci-denetim): EMIR-ADAYI ETIKETI de R-kapili — motor tetigi
+# R<1.35 uretirse geometri korunur (hedef=SMA20; OOS kaniti o geometriye
+# ait) ama etiket TETIK-BILGI'ye duser; EMIR-ADAYI etiketi yalniz R>=1.35
+# ile basilabilir (ic_denetim aksi durumu muhurler). Hedefsiz karar
+# DEFTERE YAZILMAZ (olcusuz kayit yasagi; onceki surumde kalici cokme
+# uretebiliyordu, kapatildi).
 # Bilincli farklar (AST ile olculdu, davranis-esdeger): (1) BOLUM 1'in
 # kendi __main__ tarama blogu dusuruldu — tek giris noktasi kosu();
 # (2) BOLUM 2'nin numpy/pandas import satirlari dusuruldu — isimler
@@ -1567,7 +1573,11 @@ OVERRIDE_YOLU = os.path.join(_TABAN_DIZIN, "meta3_override.json")
 
 def kapi_muhru():
     """Butunluk muhru (SHA256) — KAPSAM ACIKCA: motorun 14 kapi sabiti +
-    IMMUTABLE_PLANE'in TUM degerleri. (Denetim bulgusu: onceki surumde muhur
+    IMMUTABLE_PLANE'in TUM degerleri + VARYANTLAR + _VARYANT_SIRA.
+    BEYANLI KAPSAM DISI: R_MIN_STRATEJI muhurde DEGILDIR — muhre almak
+    mevcut kullanici belleklerini HALT ettirirdi; runtime korumasi
+    ic_denetim'dedir (EMIR-ADAYI etiketi R>=R_MIN_STRATEJI tasimak
+    zorunda, aksi muhurlenir). (Denetim bulgusu: onceki surumde muhur
     yalniz motor sabitlerini kapsiyordu, plane koruma iddiasi muhurden
     genisti; kapsam esitlendi.)
 
@@ -1799,8 +1809,11 @@ def akibet_olc(oneri, df_15m):
     yon = oneri["yon"]
     # Kirma-denetimi bulgusu: sonlu olmayan seviye (NaN/inf) R'yi sessizce
     # zehirliyordu. Gecersiz oneri OLCULMEZ ve acikca isaretlenir.
-    if not all(np.isfinite(x) for x in (giris, stop, hedef)) \
+    if not all(isinstance(x, (int, float)) and np.isfinite(x)
+               for x in (giris, stop, hedef)) \
             or yon not in ("LONG", "SHORT"):
+        # v2.2: tip-guvenli — None/metin tasiyan bozuk kayit TypeError ile
+        # COKERTMEZ, GECERSIZ olarak dusulur (kalici-cokme sinifi kapali).
         return {"sonuc": "GECERSIZ", "r": None}
     # v1.5 (canli kosu bulgusu — kullanicinin ilk META3 kosusu): hedefi yonun
     # TERS tarafinda olan oneri OLCULMEZ. Ters geometri (SHORT'ta giris ustu
@@ -2135,10 +2148,26 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
                                / max(abs(sonuc["stop"] - sonuc["giris"]),
                                      1e-12), 2)
             sonuc["bar_ts"] = int(df.index[-1].value // 1_000_000)
+            # v2.2 (avci-denetim IHLALI kapatildi): STRATEJI.md "R < 1.35
+            # olan reddedilir" kurali EMIR-ADAYI ETIKETI icin de gecerlidir.
+            # Motor tetigi R<1.35 uretirse geometri DEGISMEZ (hedef=SMA20,
+            # OOS kaniti o geometriye ait) ama etiket dusurulur: bu satir
+            # emir adayi DEGIL, tetik bilgisidir. Defterde BILGI sinifina
+            # girer (varyant secim populasyonuna girmez).
+            if sonuc["r"] < R_MIN_STRATEJI:
+                sonuc["etiket"] = "TETIK-BILGI"
+                sonuc["kapi_gerekce"] += (
+                    f" | R={sonuc['r']:.2f} < {R_MIN_STRATEJI}: STRATEJI.md "
+                    f"geregi EMIR-ADAYI etiketi VERILMEDI (motor geometrisi "
+                    f"korunarak tetik bilgi olarak basildi)")
         else:
             sonuc["kapi"] = "KAPALI"
             sonuc["etiket"] = "BILGI"
             sonuc["hedef"] = None
+            # v2.2 (avci-denetim IHLALI kapatildi): bar_ts da temizlenir —
+            # onceki surumde dolu kaliyor, hedefsiz oneri deftere yazilip
+            # sonraki kosuda akibet_olc'u TypeError ile SUREKLI cokertiyordu.
+            sonuc["bar_ts"] = None
             sonuc["kapi_gerekce"] += (" | hedef (SMA20) yonun ters tarafina "
                                       "dustu — emir-adayi dusuruldu "
                                       "(fail-closed)")
@@ -2410,6 +2439,10 @@ def ic_denetim(bellek, kararlar, muhur_ok):
             ihlaller.append(f"{k['sembol']}: NOTR gerekcesiz (yon gizlenemez)")
         if k["etiket"] == "EMIR-ADAYI" and k["kapi"] != "ACIK":
             ihlaller.append(f"{k['sembol']}: kapi acik degilken EMIR-ADAYI")
+        if k["etiket"] == "EMIR-ADAYI" and \
+                (k.get("r") is None or k["r"] < R_MIN_STRATEJI):
+            ihlaller.append(f"{k['sembol']}: EMIR-ADAYI etiketi R<"
+                            f"{R_MIN_STRATEJI} ile (sozlesme ihlali)")
     # bellek tutarliligi: son meta KEEP kayitlari J olcumu tasimali
     for d in bellek["deneyler"][-10:]:
         if d["optimizer_version"] == "meta" and d["decision"] == "KEEP" \
@@ -2439,7 +2472,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("KARARGAH TEK v2.1 (motor v5.4 + META3 v2.1) — recursive karar dongusu "
+    print("KARARGAH TEK v2.2 (motor v5.4 + META3 v2.2) — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -2583,7 +2616,8 @@ def kosu():
         # (sembol, bar_ts, varyant) imzasi bekleyen onerilerde YA DA olculmus
         # akibetlerde varsa yeniden yazilmaz — ayni bar icinde tekrar kosu
         # ayni gozlemi cifte sayamaz (n sisirme kapisi kapali).
-        if k["giris"] is not None and k["bar_ts"] is not None:
+        if k["giris"] is not None and k["bar_ts"] is not None \
+                and k["hedef"] is not None:
             imza = f"{k['sembol']}|{k['bar_ts']}"
             bekleyen_imzalar = {f"{o['sembol']}|{o['bar_ts']}"
                                 for o in bellek["oneriler"]}

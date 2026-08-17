@@ -46,7 +46,10 @@
   GECTI: T12d ters-geometrili oneri GECERSIZ (sahte HEDEF uretilmez) ({'sonuc': 'GECERSIZ', 'r': None})
   GECTI: T12e dogru geometri olculmeye devam eder 
   GECTI: T12f hedef yoksa gerekce var (fail-closed) (yon=LONG)
+  GECTI: T13a hedef=None kayit COKERTMEZ -> GECERSIZ ({'sonuc': 'GECERSIZ', 'r': None})
+  GECTI: T13b EMIR-ADAYI + R<1.35 = IHLAL ve muhurlenir (['T: EMIR-ADAYI etiketi R<1.35 ile (sozlesme ihlali)'])
+  GECTI: T13c tetik R>=1.35 -> EMIR-ADAYI mesru (R=3.25)
   GECTI: T8a eps ust banttan cikamadi (eps=0.3)
   GECTI: T8b W ust banttan cikamadi (W=50)
 
-SONUC: 50 kontrol, 0 basarisiz.
+SONUC: 53 kontrol, 0 basarisiz.
