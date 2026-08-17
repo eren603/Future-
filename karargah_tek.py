@@ -1,18 +1,18 @@
-# KARARGAH TEK v2.0 — motor (v5.4) + META3 katmani (v1.5) TEK DOSYADA
+# KARARGAH TEK v2.1 — motor (v5.4) + META3 katmani (v2.1) TEK DOSYADA
 # ====================================================================
 # Kullanim: python3 karargah_tek.py   (ccxt + numpy + pandas gerekli)
-# Bu dosya iki onceki dosyanin MEKANIK birlesimidir (elle yeniden yazim
+# Bu dosya iki kaynak dosyanin MEKANIK birlesimidir (elle yeniden yazim
 # yok): BOLUM 1 = btc_karargah_v5_4.py govdesi birebir; BOLUM 2 =
 # meta3_karargah.py govdesi birebir (yalniz motor-yukleyici satirlari
 # tek-modul koprusuyle degisti ve bellek-klasoru secimi eklendi).
-# Iki dosyanin tum denetim/test tarihcesi depoda: Future- deposu,
-# claude/btc-karargah-v5-3-oncu-veri-hgsktd dali.
-# Birlesim-denetcisinin kayda gecirdigi iki BILINCLI fark (AST ile olculdu,
-# davranis-esdeger): (1) BOLUM 1'in kendi `if __name__ == "__main__"` tarama
-# blogu dusuruldu — tek giris noktasi kosu()'dur (v5.4'un bagimsiz tarama
-# modu bu dosyada yoktur; istenirse python3 -c "import karargah_tek" ile
-# fonksiyonlar tek tek cagrilabilir); (2) BOLUM 2'nin numpy/pandas import
-# satirlari dusuruldu — isimler BOLUM 1'den baglidir (olculdu: ayni modul).
+# v2.1 (kullanicinin 2. canli kosu bulgusu 'araliklar cok dar'):
+# BILGI hedefi artik R-KAPILI — teyitli swingler mesafe sirasiyla taranir,
+# R >= 1.35 (STRATEJI.md) veren ILK swing hedeftir; hicbiri gecmezse
+# "hedef VERI YOK" basilir. Dar hedef sozlesme geregi BASILMAZ (aday duser).
+# Bilincli farklar (AST ile olculdu, davranis-esdeger): (1) BOLUM 1'in
+# kendi __main__ tarama blogu dusuruldu — tek giris noktasi kosu();
+# (2) BOLUM 2'nin numpy/pandas import satirlari dusuruldu — isimler
+# BOLUM 1'den baglidir.
 # Emir gondermez; yalniz karar-destek. Dogruluk garanti edilmez, OLCULUR.
 # ====================================================================
 # BOLUM 1: MOTOR (btc_karargah_v5_4.py birebir govde)
@@ -1386,7 +1386,7 @@ def signal_engine(symbol, df_4h, df_15m, btc_4h, btc_15m, eth_4h, eth_15m,
 
 
 # ====================================================================
-# BOLUM 2: META3 KATMANI (v1.5 birebir; tek-dosya surumu v2.0)
+# BOLUM 2: META3 KATMANI (birebir; tek-dosya surumu)
 # ====================================================================
 # META3 KARARGAH — Recursive Self-Improving calisma dongusu
 # ====================================================================
@@ -1479,7 +1479,7 @@ import time
 import traceback
 
 # --------------------------------------------------------------------
-# TEK-DOSYA KOPRUSU (v2.0): motor ve META3 ayni dosyada — `motor` adi bu
+# TEK-DOSYA KOPRUSU: motor ve META3 ayni dosyada — `motor` adi bu
 # modulun kendisine baglanir; meta3 kodundaki motor.X referanslari
 # DEGISMEDEN calisir (birlesim mekanik, elle yeniden yazim yok).
 # --------------------------------------------------------------------
@@ -1530,7 +1530,7 @@ IMMUTABLE_PLANE = {
 # sabit, beyan amaclidir. Katman EKLEYEN bir degisiklik bu sabiti de
 # denetler hale getirmelidir (2. tur denetim notu).
 
-# v2.0 (tek dosya): bellek klasoru secimi — SUREKLILIK oncelikli:
+# Tek dosya: bellek klasoru secimi — SUREKLILIK oncelikli:
 # (1) icinde meta3_bellek.json ZATEN OLAN ilk aday (eski defter korunur),
 # (2) yoksa ilk YAZILABILIR aday. Secim kosu basinda ACIKCA basilir.
 def _taban_dizin_sec():
@@ -1545,10 +1545,10 @@ def _taban_dizin_sec():
                 "/storage/emulated/0/Download",
                 "/storage/emulated/0/Documents"]
     adaylar = [a for a in adaylar if a]
-    for a in adaylar:                      # 1) mevcut defter nerede?
+    for a in adaylar:
         if os.path.isfile(os.path.join(a, "meta3_bellek.json")):
             return a
-    for a in adaylar:                      # 2) ilk yazilabilir aday
+    for a in adaylar:
         try:
             p = os.path.join(a, ".meta3_yaz_testi")
             with open(p, "w") as f:
@@ -1557,7 +1557,7 @@ def _taban_dizin_sec():
             return a
         except OSError:
             continue
-    return os.getcwd()                     # son care
+    return os.getcwd()
 
 
 _TABAN_DIZIN = _taban_dizin_sec()
@@ -1878,25 +1878,38 @@ def teyitli_swingler(df_15m, sol=2, sag=2):
     return tepeler, dipler
 
 
-def bilgi_hedefi(yon, giris, df_15m, pencere=200):
-    """v1.5 (canli kosu bulgusu): BILGI seviyelerinin hedefi artik SMA20
-    DEGIL — SMA20 hedefi yalniz z-ekstrem tetiginde anlamlidir; rejim-yonu
-    seviyelerinde cogu zaman yonun TERS tarafina dusuyordu (kullanicinin
-    ilk kosusunda 8/12 sembolde ters hedef olculdu).
+# R alt siniri — KAYNAK: STRATEJI.md ("hedef bandi ... R 1.35-1.50";
+# emir_plani kurali: "R < 1.35 olan reddedilir"). Uydurma degil, depo
+# sozlesmesinin sabiti; burada BILGI hedef SECIMINE de uygulanir.
+R_MIN_STRATEJI = 1.35
 
-    Yeni kural (STRATEJI.md sozlesmesiyle uyumlu: 'R kati uydurma hedef
-    uretilmez'): hedef = yon tarafinda girisin OTESINDEKI EN YAKIN teyitli
-    swing (SHORT: girisin altindaki en yakin teyitli dip; LONG: girisin
-    ustundeki en yakin teyitli tepe). Son `pencere` bar taranir (HIPOTEZ).
-    Yon tarafinda teyitli swing yoksa None doner — uydurma hedef basilmaz."""
+
+def bilgi_hedefi(yon, giris, stop, df_15m, pencere=200):
+    """v2.1 (kullanicinin 2. canli kosu bulgusu — 'araliklar cok dar'):
+    v1.5 yalniz TARAFI duzeltmisti; en yakin swing fiyatin hemen dibinde
+    olabildiginden R=0.05 gibi islem-disi hedefler uretiyordu. STRATEJI.md
+    sozlesmesi acik: R < 1.35 aday REDDEDILIR, uygun likidite yoksa aday
+    DUSER — beyan ('DAR' etiketi) yetmez, gecmeyen aday basilmaz.
+
+    Yeni kural: yon tarafinda girisin otesindeki teyitli swingler MESAFE
+    SIRASIYLA taranir; R = |swing - giris| / |stop - giris| >= R_MIN_STRATEJI
+    saglayan ILK swing hedeftir (en yakin GECERLI likidite). Hicbiri
+    saglamazsa None — hedef VERI YOK denir, dar ya da uydurma hedef
+    BASILMAZ. Swingler olculmus yapidir; R kapisi sozlesme sabitidir.
+    Son `pencere` bar taranir (HIPOTEZ)."""
+    risk = abs(stop - giris)
+    if not np.isfinite(risk) or risk <= 0:
+        return None
     kesit = df_15m.iloc[-pencere:] if len(df_15m) > pencere else df_15m
     tepeler, dipler = teyitli_swingler(kesit)
     if yon == "LONG":
-        adaylar = [t for t in tepeler if t > giris]
-        return min(adaylar) if adaylar else None
-    if yon == "SHORT":
-        adaylar = [d for d in dipler if d < giris]
-        return max(adaylar) if adaylar else None
+        for t in sorted(t for t in tepeler if t > giris):
+            if (t - giris) / risk >= R_MIN_STRATEJI:
+                return t
+    elif yon == "SHORT":
+        for d in sorted((d for d in dipler if d < giris), reverse=True):
+            if (giris - d) / risk >= R_MIN_STRATEJI:
+                return d
     return None
 
 
@@ -1996,19 +2009,21 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
         # v1.5: BILGI hedefi teyitli swingden (yon tarafinda, girisin
         # otesinde). SMA20 hedefi BILGI seviyelerinden KALDIRILDI — canli
         # kosuda 8/12 sembolde yonun ters tarafina dustugu olculdu.
-        hedef_px = bilgi_hedefi(sonuc["yon"], son_kapanis, df_15m)
         sonuc["giris"] = son_kapanis
         sonuc["stop"] = (son_kapanis - motor.ATR_SL_MULT * atr_i
                          if sonuc["yon"] == "LONG"
                          else son_kapanis + motor.ATR_SL_MULT * atr_i)
+        hedef_px = bilgi_hedefi(sonuc["yon"], son_kapanis, sonuc["stop"],
+                                df_15m)
         if hedef_px is not None:
             sonuc["hedef"] = hedef_px
             sonuc["bar_ts"] = int(df_15m.index[-1].value // 1_000_000)
             sonuc["r"] = round(abs(hedef_px - son_kapanis)
                                / max(abs(sonuc["stop"] - son_kapanis), 1e-12), 2)
         else:
-            sonuc["hedef_gerekce"] = ("yon tarafinda teyitli swing yok — "
-                                      "uydurma hedef basilmaz (STRATEJI.md)")
+            sonuc["hedef_gerekce"] = ("yon tarafinda R>=1.35 veren teyitli "
+                                      "swing yok — dar/uydurma hedef "
+                                      "basilmaz (STRATEJI.md)")
 
     # --- VETO / KAPI zinciri (v5.4 signal_engine ile ayni sira) ---------
     note = note15
@@ -2214,7 +2229,9 @@ def meta_dongusu(bellek, kosu_suresi_sn, veri_yasi_sn, guvenlik_ok=True):
                     {"varyant": aktif}, {"akibet": ozet_aktif},
                     kosu_suresi_sn, "veri_yetersiz", "HOLD", veri_yasi_sn)
         return "HOLD", (f"olculmus akibet yetersiz "
-                        f"(n={ozet_aktif['n']}/{P['min_akibet_n']}) — "
+                        f"(EMIR-ADAYI populasyonunda n={ozet_aktif['n']}/"
+                        f"{P['min_akibet_n']}; BILGI kayitlari yon-isabet "
+                        f"olcumune girer, varyant secimine girmez) — "
                         f"evaluator kararsiz, degisiklik yok (fail-closed)")
 
     en_iyi = (aktif, ozet_aktif)
@@ -2422,7 +2439,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("KARARGAH TEK v2.0 (motor v5.4 + META3 v1.5) — recursive karar dongusu "
+    print("KARARGAH TEK v2.1 (motor v5.4 + META3 v2.1) — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -2613,7 +2630,9 @@ def kosu():
         print("\n[IC DENETIM] ihlal yok "
               f"(muhur {bellek['kapi_muhru'][:12]}…, "
               f"{len(bellek['deneyler'])} deney kaydi, "
-              f"{len(bellek['akibetler'])} olculmus akibet)")
+              f"{len(bellek['akibetler'])} akibet kaydi / "
+              f"{len([a for a in bellek['akibetler'] if a.get('r') is not None])}"
+              f" olculmus)")
     bellek_kaydet(bellek)
     n_olc = len([a for a in bellek["akibetler"] if a.get("r") is not None])
     tamam = len(kararlar)

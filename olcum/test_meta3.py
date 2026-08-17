@@ -115,9 +115,13 @@ if k["giris"] is not None and k["kapi"] != "ACIK":
     # v1.5: BILGI hedefi artik SMA20 DEGIL — yon tarafindaki en yakin
     # teyitli swing (canli kosuda SMA hedefinin 8/12 ters dustugu olculdu).
     if k["hedef"] is not None:
-        kayit("T1b hedef = bilgi_hedefi(teyitli swing) birebir",
-              k["hedef"] == m3.bilgi_hedefi(k["yon"], k["giris"], df15),
-              f"(hedef={k['hedef']})")
+        kayit("T1b hedef = bilgi_hedefi(R-kapili teyitli swing) birebir",
+              k["hedef"] == m3.bilgi_hedefi(k["yon"], k["giris"],
+                                            k["stop"], df15),
+              f"(hedef={k['hedef']}, R={k.get('r')})")
+        kayit("T1c basilan hedef R>=1.35 kapisini gecmis",
+              k.get("r") is not None and k["r"] >= m3.R_MIN_STRATEJI,
+              f"(R={k.get('r')})")
     else:
         kayit("T1b hedef yok ama gerekce beyanli",
               "hedef_gerekce" in k, f"({k.get('hedef_gerekce')})")
@@ -455,17 +459,40 @@ b12 = sentetik(120, 0.0, 21)
 b12v = b12.copy()
 b12v.iloc[100, b12v.columns.get_loc("low")] = 90.0   # teyitli dip (alt)
 b12v.iloc[110, b12v.columns.get_loc("high")] = 115.0  # teyitli tepe (ust)
-h_s = m3.bilgi_hedefi("SHORT", 100.0, b12v)
-h_l = m3.bilgi_hedefi("LONG", 100.0, b12v)
-kayit("T12a SHORT hedefi girisin ALTINDA teyitli swingden",
-      h_s is not None and h_s < 100.0, f"(hedef={h_s})")
-kayit("T12b LONG hedefi girisin USTUNDE teyitli swingden",
-      h_l is not None and h_l > 100.0, f"(hedef={h_l})")
+# v2.1: bilgi_hedefi R-kapili — stop da verilir; R>=1.35 veren ilk swing
+h_s = m3.bilgi_hedefi("SHORT", 100.0, 102.0, b12v)   # risk=2.0 -> hedef<=97.3
+h_l = m3.bilgi_hedefi("LONG", 100.0, 98.0, b12v)     # risk=2.0 -> hedef>=102.7
+kayit("T12a SHORT hedefi girisin ALTINDA ve R>=1.35",
+      h_s is not None and h_s < 100.0
+      and (100.0 - h_s) / 2.0 >= m3.R_MIN_STRATEJI, f"(hedef={h_s})")
+kayit("T12b LONG hedefi girisin USTUNDE ve R>=1.35",
+      h_l is not None and h_l > 100.0
+      and (h_l - 100.0) / 2.0 >= m3.R_MIN_STRATEJI, f"(hedef={h_l})")
 # T12c: yon tarafinda swing yoksa None (uydurma hedef yok)
 duz = sentetik(120, 0.0, 22)
-h_yok = m3.bilgi_hedefi("SHORT", float(duz["low"].min()) * 0.5, duz)
+h_yok = m3.bilgi_hedefi("SHORT", float(duz["low"].min()) * 0.5, 
+                        float(duz["low"].min()) * 0.55, duz)
 kayit("T12c yon tarafinda swing yoksa hedef None (uydurma yok)",
       h_yok is None)
+# T12c2 (v2.1 — kullanicinin 'dar' bulgusu): girisin hemen dibindeki YAKIN
+# swing (R<1.35) ATLANIR; R>=1.35 veren daha uzak swing secilir
+yakin = sentetik(120, 0.0, 23)
+yv = yakin.copy()
+yv.iloc[100, yv.columns.get_loc("high")] = 100.4   # yakin tepe: R=0.2 (atla)
+yv.iloc[90, yv.columns.get_loc("high")] = 104.0    # uzak tepe: R=2.0 (sec)
+h21 = m3.bilgi_hedefi("LONG", 100.0, 98.0, yv)
+kayit("T12c2 R<1.35 yakin swing ATLANDI, R>=1.35 swing secildi",
+      h21 is not None and h21 >= 102.7, f"(hedef={h21})")
+# T12c3: yalniz dar swingler varsa hedef None (dar hedef BASILMAZ)
+dar = sentetik(60, 0.0, 24)
+dv = dar.copy()
+dv.iloc[50, dv.columns.get_loc("high")] = 100.3    # tek tepe: R=0.15
+dv.iloc[:, dv.columns.get_loc("low")] = 95.0       # baska swing uretme
+dv.iloc[:, dv.columns.get_loc("high")] = np.minimum(dv["high"], 100.3)
+h_dar = m3.bilgi_hedefi("LONG", 100.0, 98.0, dv)
+kayit("T12c3 yalniz dar swing varsa hedef None (sozlesme: aday duser)",
+      h_dar is None or (h_dar - 100.0) / 2.0 >= m3.R_MIN_STRATEJI,
+      f"(hedef={h_dar})")
 # T12d: akibet_olc TERS geometrili oneriyi OLCMEZ (defter zehirlenmez)
 ters = {"sembol": "X", "yon": "SHORT", "giris": 100.0, "stop": 102.0,
         "hedef": 101.0,  # SHORT'ta hedef giris USTUNDE = ters

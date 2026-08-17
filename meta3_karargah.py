@@ -1,4 +1,4 @@
-# META3 KARARGAH v1.5 — Recursive Self-Improving calisma dongusu
+# META3 KARARGAH v2.1 — Recursive Self-Improving calisma dongusu
 # ====================================================================
 # KAYNAK SEMA: "META3 — Nihai Recursive Self-Improving Research System"
 # (kullanicinin yukledigi PDF; metin cikarimi: scratchpad/meta3.txt).
@@ -497,25 +497,38 @@ def teyitli_swingler(df_15m, sol=2, sag=2):
     return tepeler, dipler
 
 
-def bilgi_hedefi(yon, giris, df_15m, pencere=200):
-    """v1.5 (canli kosu bulgusu): BILGI seviyelerinin hedefi artik SMA20
-    DEGIL — SMA20 hedefi yalniz z-ekstrem tetiginde anlamlidir; rejim-yonu
-    seviyelerinde cogu zaman yonun TERS tarafina dusuyordu (kullanicinin
-    ilk kosusunda 8/12 sembolde ters hedef olculdu).
+# R alt siniri — KAYNAK: STRATEJI.md ("hedef bandi ... R 1.35-1.50";
+# emir_plani kurali: "R < 1.35 olan reddedilir"). Uydurma degil, depo
+# sozlesmesinin sabiti; burada BILGI hedef SECIMINE de uygulanir.
+R_MIN_STRATEJI = 1.35
 
-    Yeni kural (STRATEJI.md sozlesmesiyle uyumlu: 'R kati uydurma hedef
-    uretilmez'): hedef = yon tarafinda girisin OTESINDEKI EN YAKIN teyitli
-    swing (SHORT: girisin altindaki en yakin teyitli dip; LONG: girisin
-    ustundeki en yakin teyitli tepe). Son `pencere` bar taranir (HIPOTEZ).
-    Yon tarafinda teyitli swing yoksa None doner — uydurma hedef basilmaz."""
+
+def bilgi_hedefi(yon, giris, stop, df_15m, pencere=200):
+    """v2.1 (kullanicinin 2. canli kosu bulgusu — 'araliklar cok dar'):
+    v1.5 yalniz TARAFI duzeltmisti; en yakin swing fiyatin hemen dibinde
+    olabildiginden R=0.05 gibi islem-disi hedefler uretiyordu. STRATEJI.md
+    sozlesmesi acik: R < 1.35 aday REDDEDILIR, uygun likidite yoksa aday
+    DUSER — beyan ('DAR' etiketi) yetmez, gecmeyen aday basilmaz.
+
+    Yeni kural: yon tarafinda girisin otesindeki teyitli swingler MESAFE
+    SIRASIYLA taranir; R = |swing - giris| / |stop - giris| >= R_MIN_STRATEJI
+    saglayan ILK swing hedeftir (en yakin GECERLI likidite). Hicbiri
+    saglamazsa None — hedef VERI YOK denir, dar ya da uydurma hedef
+    BASILMAZ. Swingler olculmus yapidir; R kapisi sozlesme sabitidir.
+    Son `pencere` bar taranir (HIPOTEZ)."""
+    risk = abs(stop - giris)
+    if not np.isfinite(risk) or risk <= 0:
+        return None
     kesit = df_15m.iloc[-pencere:] if len(df_15m) > pencere else df_15m
     tepeler, dipler = teyitli_swingler(kesit)
     if yon == "LONG":
-        adaylar = [t for t in tepeler if t > giris]
-        return min(adaylar) if adaylar else None
-    if yon == "SHORT":
-        adaylar = [d for d in dipler if d < giris]
-        return max(adaylar) if adaylar else None
+        for t in sorted(t for t in tepeler if t > giris):
+            if (t - giris) / risk >= R_MIN_STRATEJI:
+                return t
+    elif yon == "SHORT":
+        for d in sorted((d for d in dipler if d < giris), reverse=True):
+            if (giris - d) / risk >= R_MIN_STRATEJI:
+                return d
     return None
 
 
@@ -615,19 +628,21 @@ def karar_uret(symbol, df_4h, df_15m, btc_4h, btc_15m):
         # v1.5: BILGI hedefi teyitli swingden (yon tarafinda, girisin
         # otesinde). SMA20 hedefi BILGI seviyelerinden KALDIRILDI — canli
         # kosuda 8/12 sembolde yonun ters tarafina dustugu olculdu.
-        hedef_px = bilgi_hedefi(sonuc["yon"], son_kapanis, df_15m)
         sonuc["giris"] = son_kapanis
         sonuc["stop"] = (son_kapanis - motor.ATR_SL_MULT * atr_i
                          if sonuc["yon"] == "LONG"
                          else son_kapanis + motor.ATR_SL_MULT * atr_i)
+        hedef_px = bilgi_hedefi(sonuc["yon"], son_kapanis, sonuc["stop"],
+                                df_15m)
         if hedef_px is not None:
             sonuc["hedef"] = hedef_px
             sonuc["bar_ts"] = int(df_15m.index[-1].value // 1_000_000)
             sonuc["r"] = round(abs(hedef_px - son_kapanis)
                                / max(abs(sonuc["stop"] - son_kapanis), 1e-12), 2)
         else:
-            sonuc["hedef_gerekce"] = ("yon tarafinda teyitli swing yok — "
-                                      "uydurma hedef basilmaz (STRATEJI.md)")
+            sonuc["hedef_gerekce"] = ("yon tarafinda R>=1.35 veren teyitli "
+                                      "swing yok — dar/uydurma hedef "
+                                      "basilmaz (STRATEJI.md)")
 
     # --- VETO / KAPI zinciri (v5.4 signal_engine ile ayni sira) ---------
     note = note15
@@ -833,7 +848,9 @@ def meta_dongusu(bellek, kosu_suresi_sn, veri_yasi_sn, guvenlik_ok=True):
                     {"varyant": aktif}, {"akibet": ozet_aktif},
                     kosu_suresi_sn, "veri_yetersiz", "HOLD", veri_yasi_sn)
         return "HOLD", (f"olculmus akibet yetersiz "
-                        f"(n={ozet_aktif['n']}/{P['min_akibet_n']}) — "
+                        f"(EMIR-ADAYI populasyonunda n={ozet_aktif['n']}/"
+                        f"{P['min_akibet_n']}; BILGI kayitlari yon-isabet "
+                        f"olcumune girer, varyant secimine girmez) — "
                         f"evaluator kararsiz, degisiklik yok (fail-closed)")
 
     en_iyi = (aktif, ozet_aktif)
@@ -1041,7 +1058,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("META3 KARARGAH v1.5 — recursive karar dongusu "
+    print("META3 KARARGAH v2.1 — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -1231,7 +1248,9 @@ def kosu():
         print("\n[IC DENETIM] ihlal yok "
               f"(muhur {bellek['kapi_muhru'][:12]}…, "
               f"{len(bellek['deneyler'])} deney kaydi, "
-              f"{len(bellek['akibetler'])} olculmus akibet)")
+              f"{len(bellek['akibetler'])} akibet kaydi / "
+              f"{len([a for a in bellek['akibetler'] if a.get('r') is not None])}"
+              f" olculmus)")
     bellek_kaydet(bellek)
     n_olc = len([a for a in bellek["akibetler"] if a.get("r") is not None])
     tamam = len(kararlar)
