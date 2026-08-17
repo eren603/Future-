@@ -1,4 +1,4 @@
-# KARARGAH TEK v2.3 — motor (v5.4) + META3 katmani (v2.3) TEK DOSYADA
+# KARARGAH TEK v2.4 — motor (v5.4) + META3 katmani (v2.4) TEK DOSYADA
 # ====================================================================
 # Kullanim: python3 karargah_tek.py   (ccxt + numpy + pandas gerekli)
 # Bu dosya iki kaynak dosyanin MEKANIK birlesimidir (elle yeniden yazim
@@ -9,7 +9,7 @@
 # BILGI hedefi artik R-KAPILI — teyitli swingler mesafe sirasiyla taranir,
 # R >= 1.35 (STRATEJI.md) veren ILK swing hedeftir; hicbiri gecmezse
 # "hedef VERI YOK" basilir. BILGI satirinda dar hedef BASILMAZ (aday duser).
-# v2.3 (avci-denetim): EMIR-ADAYI ETIKETI de R-kapili — motor tetigi
+# v2.4 (avci-denetim): EMIR-ADAYI ETIKETI de R-kapili — motor tetigi
 # R<1.35 uretirse geometri korunur (hedef=SMA20; OOS kaniti o geometriye
 # ait) ama etiket TETIK-BILGI'ye duser; EMIR-ADAYI etiketi yalniz R>=1.35
 # ile basilabilir (ic_denetim aksi durumu muhurler). Hedefsiz karar
@@ -19,7 +19,7 @@
 # kendi __main__ tarama blogu dusuruldu — tek giris noktasi kosu();
 # (2) BOLUM 2'nin numpy/pandas import satirlari dusuruldu — isimler
 # BOLUM 1'den baglidir.
-# v2.3 (STRATEJI.md #2 UYGULANDI — finansal-stratejist tamiri): her seviye
+# v2.4 (STRATEJI.md #2 UYGULANDI — finansal-stratejist tamiri): her seviye
 # seti icin AMPIRIK ILK-GECIS YARISI olculur (gecmis barlarda ATR-oranli
 # ayni geometriyle kim once vuruldu: hedef/stop/zaman), Wilson %95 araligi
 # + komisyon-dahil EV raporlanir; EV<=0 ise "ISLEM DEGERI YOK" denir.
@@ -1993,7 +1993,10 @@ def ilk_gecis_olc(df_15m, yon, stop_mesafe, hedef_mesafe,
     n_bar = len(cl)
     sayim = {"hedef": 0, "stop": 0, "zaman": 0}
     i = motor.ATR_LEN + 1
-    while i < n_bar - 1:
+    # v2.4 (kirma-denetimi): kuyruk sansuru kaldirildi — tam 48-bar ufku
+    # olmayan girisler ORNEKLEME ALINMAZ (kesik yaris 'zaman' sayilip
+    # p_stop'u sulandiriyordu; sansurlu gozlem olculmus sayilmaz).
+    while i < n_bar - zaman_stop:
         a = at[i]
         if np.isfinite(a) and a > 0:
             g = cl[i]
@@ -2030,6 +2033,8 @@ def ilk_gecis_olc(df_15m, yon, stop_mesafe, hedef_mesafe,
     maliyet_R = (2 * motor.FEE_TAKER + 2 * motor.SLIPPAGE) * cl[-1] / stop_mesafe
     ev_nokta = p_h * R - p_s - maliyet_R           # zaman-cikisi katkisi 0 sayilir (beyanli)
     ev_muhafazakar = h_alt * R - s_ust - maliyet_R  # Wilson kotu-ucu
+    if not (np.isfinite(ev_nokta) and np.isfinite(ev_muhafazakar)):
+        return None   # v2.4: NaN/inf EV "olculen" etiketiyle BASILAMAZ
     return {"n": n, "p_hedef": round(p_h, 3), "p_stop": round(p_s, 3),
             "p_zaman": round(sayim["zaman"] / n, 3),
             "hedef_alt": round(h_alt, 3), "stop_ust": round(s_ust, 3),
@@ -2598,7 +2603,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("KARARGAH TEK v2.3 (motor v5.4 + META3 v2.3) — recursive karar dongusu "
+    print("KARARGAH TEK v2.4 (motor v5.4 + META3 v2.4) — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -2711,6 +2716,9 @@ def kosu():
 
     # ---- 3) CIKTI: YON + SEVIYELER her sembolde ZORUNLU ---------------
     print("\n[KARARLAR]")
+    print("  (ILK-GECIS siniri — tum semboller icin gecerli: ornekleme "
+          "pencereleri ortusuk oldugundan %95 Wilson araligi gercekte ~%90 "
+          "kapsar [sentetik olcum]; gecmis dagilim gelecegi garanti etmez)")
     for k in kararlar:
         print(f"\n=== {k['sembol']} ===")
         print(f"  YON: {k['yon']}  (kaynak: {k['yon_kaynak']})")
@@ -2722,6 +2730,12 @@ def kosu():
             # (p* = (p_stop_ust + maliyet) / R ~ EV>0 esigi) asiyor mu?
             if ig["ev_muhafazakar"] > 0:
                 hukum = "ISLEM DEGERI VAR (olculen, muhafazakar)"
+                # v2.4 (kirma-denetimi IHLALI kapatildi; STRATEJI.md #5
+                # muhur protokolunun EV karsiligi): kapi ACIK degilse EV
+                # hukmu ISLEME CEVRILEMEZ — niteleme zorunlu.
+                if k["kapi"] != "ACIK":
+                    hukum += (f" — ANCAK KAPI {k['kapi']}: hukum BILGI "
+                              f"niteligindedir, islem onerisi DEGILDIR")
             elif ig["ev_nokta"] > 0:
                 hukum = ("EV nokta pozitif ama Wilson kotu-ucunda degil — "
                          "KANIT YETERSIZ (yazi-tura bandi)")
@@ -2733,8 +2747,6 @@ def kosu():
                   f"| maliyet={ig['maliyet_R']:.2f}R")
             print(f"  EV: nokta {ig['ev_nokta']:+.2f}R | muhafazakar "
                   f"{ig['ev_muhafazakar']:+.2f}R -> {hukum}")
-            print(f"  (sinir: ornekleme penceresi ortusuk, gercek belirsizlik"
-                  f" Wilson'dan genis; gecmis dagilim garanti degildir)")
         else:
             print(f"  ILK-GECIS: VERI YOK (orneklem < 30 ya da ATR "
                   f"olculemedi) — EV hukmu verilemez")
@@ -2777,12 +2789,20 @@ def kosu():
                 print(f"  (oneri zaten kayitli — ayni bar, mukerrer kayit "
                       f"yazilmadi)")
             else:
+                ig_k = k.get("ilk_gecis")
                 bellek["oneriler"].append({
                     "sembol": k["sembol"], "yon": k["yon"],
                     "giris": k["giris"], "stop": k["stop"],
                     "hedef": k["hedef"], "bar_ts": k["bar_ts"],
                     "etiket": k["etiket"], "varyant": aktif,
                     "golge": k["golge"],
+                    # v2.4: EV ozeti kayda girer — hukumler geriye-donuk
+                    # akibetle SINANABILIR (olculemeyen iddia birakilmaz)
+                    "ev": (None if not ig_k else {
+                        "n": ig_k["n"], "p_hedef": ig_k["p_hedef"],
+                        "ev_nokta": ig_k["ev_nokta"],
+                        "ev_muhafazakar": ig_k["ev_muhafazakar"],
+                        "maliyet_R": ig_k["maliyet_R"]}),
                 })
 
     # ---- 4) META / META2 / META3 (PDF #21 sirasi) ----------------------

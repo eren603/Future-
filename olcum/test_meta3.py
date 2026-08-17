@@ -609,6 +609,54 @@ if k14["yon"] in ("LONG", "SHORT") and k14["giris"] is not None:
 else:
     kayit("T14g NOTR/verisiz karar — olcum zorunlu degil", True)
 
+# T15 — v2.4 (kirma-denetimi kapanislari) ------------------------------------
+# T15a: NaN'li seri -> ilk_gecis None (NaN EV "olculen" diye basilamaz)
+nanli = sentetik(600, 0.0, 81)
+nanli.iloc[50:200, nanli.columns.get_loc("high")] = float("nan")
+ig_nan = m3.ilk_gecis_olc(nanli, "LONG", 2.0, 2.7)
+kayit("T15a NaN'li seride sonuc ya None ya tum alanlar sonlu",
+      ig_nan is None or all(np.isfinite(v) for v in
+                            [ig_nan["ev_nokta"], ig_nan["ev_muhafazakar"],
+                             ig_nan["p_hedef"], ig_nan["p_stop"]]),
+      f"({ig_nan})")
+# T15b: kuyruk sansuru yok — tam ufku olmayan giris orneklemde degil
+tam = sentetik(400, 0.0, 82)
+ig_t = m3.ilk_gecis_olc(tam, "LONG", 2.0, 2.7)
+if ig_t is not None:
+    beklenen_max = (400 - motor.TIME_STOP_BARS - motor.ATR_LEN - 1)         // m3.ILK_GECIS_ADIM + 1
+    kayit("T15b orneklem tam-ufuklu girislerle sinirli",
+          ig_t["n"] <= beklenen_max, f"(n={ig_t['n']} <= {beklenen_max})")
+else:
+    kayit("T15b kucuk orneklem None (fail-closed)", True)
+# T15c: VETO'lu kararda "VAR" hukmu nitelemesiz basilamaz — cikti denetimi
+buf15 = io.StringIO()
+veri_kur(seed=91)
+os.path.exists(m3.BELLEK_YOLU) and os.remove(m3.BELLEK_YOLU)
+os.path.exists(m3.BELLEK_YOLU + ".bak") and os.remove(m3.BELLEK_YOLU + ".bak")
+with contextlib.redirect_stdout(buf15):
+    m3.kosu()
+cik15 = buf15.getvalue()
+bloklar15 = cik15.split("=== ")[1:]
+ihlalli_blok = [b.split(" ===")[0] for b in bloklar15
+                if "ISLEM DEGERI VAR" in b and "KAPI: ACIK" not in b
+                and "ANCAK KAPI" not in b]
+kayit("T15c kapi ACIK degilken VAR hukmu daima nitelenmis",
+      not ihlalli_blok, f"(ihlalli={ihlalli_blok})")
+kayit("T15d kosu ciktisinda ILK-GECIS/EV katmani basiliyor",
+      ("ILK-GECIS" in cik15 or "YON-OLCUM" in cik15) and "EV:" in cik15)
+kayit("T15e sinir notu kosu basina BIR kez",
+      cik15.count("ornekleme pencereleri ortusuk") == 1,
+      f"(sayi={cik15.count('ornekleme pencereleri ortusuk')})")
+# T15f: oneri kayitlarina EV ozeti giriyor
+with open(m3.BELLEK_YOLU, encoding="utf-8") as f15:
+    bel15 = json.load(f15)
+if bel15["oneriler"]:
+    kayit("T15f oneri kaydinda ev alani mevcut",
+          all("ev" in o for o in bel15["oneriler"]),
+          f"({len(bel15['oneriler'])} oneri)")
+else:
+    kayit("T15f oneri yok (hedefsiz kosu) — ev alani kosulu bos-dogru", True)
+
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()
 b2["kosu_sayaci"] = b2["W"]

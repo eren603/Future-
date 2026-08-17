@@ -51,12 +51,18 @@
   GECTI: T13c tetik R>=1.35 -> EMIR-ADAYI mesru (R=3.25)
   GECTI: T14a Wilson araligi dogru (30/100 -> [0.219, 0.396]) ([0.2189, 0.3959])
   GECTI: T14b Wilson sinirlari [0,1] icinde ve alt<ust 
-  GECTI: T14c yukari trendde p_hedef(LONG) > p_hedef(SHORT) (olculen) (LONG 0.806 vs SHORT 0.122, n=98)
-  GECTI: T14d EV_nokta = p_h*R - p_s - maliyet birebir (0.519 vs 0.519)
+  GECTI: T14c yukari trendde p_hedef(LONG) > p_hedef(SHORT) (olculen) (LONG 0.828 vs SHORT 0.129, n=93)
+  GECTI: T14d EV_nokta = p_h*R - p_s - maliyet birebir (0.571 vs 0.57)
   GECTI: T14e EV_muhafazakar <= EV_nokta (Wilson kotu-ucu) 
   GECTI: T14f orneklem<30 -> None (fail-closed) 
   GECTI: T14g yonlu kararda ilk-gecis/yon-olcum mevcut (ya da VERI YOK None) (hedef=False)
+  GECTI: T15a NaN'li seride sonuc ya None ya tum alanlar sonlu ({'n': 68, 'p_hedef': 0.176, 'p_stop': 0.632, 'p_zaman': 0.191, 'hedef_alt': 0.104, 'stop_ust': 0.737, 'R': 1.35, 'maliyet_R': np.float64(0.086), 'ev_nokta': np.float64(-0.48), 'ev_muhafazakar': np.float64(-0.682)})
+  GECTI: T15b orneklem tam-ufuklu girislerle sinirli (n=43 <= 43)
+  GECTI: T15c kapi ACIK degilken VAR hukmu daima nitelenmis (ihlalli=[])
+  GECTI: T15d kosu ciktisinda ILK-GECIS/EV katmani basiliyor 
+  GECTI: T15e sinir notu kosu basina BIR kez (sayi=1)
+  GECTI: T15f oneri yok (hedefsiz kosu) — ev alani kosulu bos-dogru 
   GECTI: T8a eps ust banttan cikamadi (eps=0.3)
   GECTI: T8b W ust banttan cikamadi (W=50)
 
-SONUC: 60 kontrol, 0 basarisiz.
+SONUC: 66 kontrol, 0 basarisiz.
