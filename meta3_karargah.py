@@ -1,4 +1,4 @@
-# META3 KARARGAH v1.2 — Recursive Self-Improving calisma dongusu
+# META3 KARARGAH v1.3 — Recursive Self-Improving calisma dongusu
 # ====================================================================
 # KAYNAK SEMA: "META3 — Nihai Recursive Self-Improving Research System"
 # (kullanicinin yukledigi PDF; metin cikarimi: scratchpad/meta3.txt).
@@ -162,6 +162,9 @@ def kapi_muhru():
     # uzayini sessizce degistiremesin (filtre listeleri dahil).
     for ad in sorted(VARYANTLAR):
         parcalar.append(f"VAR.{ad}={sorted(VARYANTLAR[ad]['filtreler'])!r}")
+    # v1.3 (3. tur denetim): aday listesi _VARYANT_SIRA da muhurlu —
+    # arama uzayi liste yoluyla da sessizce bosaltilamaz.
+    parcalar.append(f"VARSIRA={_VARYANT_SIRA!r}")
     return hashlib.sha256("|".join(parcalar).encode()).hexdigest()
 
 
@@ -920,7 +923,7 @@ def override_kontrol():
 # NIHAI CALISMA DONGUSU (PDF #21) — her calistirmada
 # --------------------------------------------------------------------
 def kosu():
-    print("META3 KARARGAH v1.2 — recursive karar dongusu "
+    print("META3 KARARGAH v1.3 — recursive karar dongusu "
           "(karar-destek; emir gondermez)")
     print("=" * 70)
     if override_kontrol() == "HALT":
@@ -985,8 +988,10 @@ def kosu():
             "sembol": oneri["sembol"], "varyant": oneri.get("varyant"),
             "etiket": oneri.get("etiket"), "golge": oneri.get("golge", {}),
             "sonuc": sonuc["sonuc"], "r": sonuc["r"],
-            "oneri_imza": f"{oneri['sembol']}|{oneri['bar_ts']}|"
-                          f"{oneri.get('varyant')}",
+            # v1.3: imza varyanttan BAGIMSIZ — ayni (sembol, bar) gozlemi
+            # varyant degisse de tek kayittir (3. tur denetim: varyant-
+            # degisimli ayni-bar yan kapisi kapatildi)
+            "oneri_imza": f"{oneri['sembol']}|{oneri['bar_ts']}",
         })
         r_str = "R yazilmaz" if sonuc["r"] is None else f"R={sonuc['r']:+.2f}"
         print(f"  {oneri['sembol']}: {sonuc['sonuc']} ({r_str})")
@@ -1052,9 +1057,8 @@ def kosu():
         # akibetlerde varsa yeniden yazilmaz — ayni bar icinde tekrar kosu
         # ayni gozlemi cifte sayamaz (n sisirme kapisi kapali).
         if k["giris"] is not None and k["bar_ts"] is not None:
-            imza = f"{k['sembol']}|{k['bar_ts']}|{aktif}"
-            bekleyen_imzalar = {f"{o['sembol']}|{o['bar_ts']}|"
-                                f"{o.get('varyant')}"
+            imza = f"{k['sembol']}|{k['bar_ts']}"
+            bekleyen_imzalar = {f"{o['sembol']}|{o['bar_ts']}"
                                 for o in bellek["oneriler"]}
             olculmus_imzalar = {a.get("oneri_imza")
                                 for a in bellek["akibetler"]}

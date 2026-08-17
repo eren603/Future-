@@ -414,6 +414,34 @@ except m3.BellekBozuk:
     kayit("T10h .bak varken sessiz sifirlama engellendi (BellekBozuk)", True)
 os.remove(m3.BELLEK_YOLU + ".bak")
 
+# T11 — v1.3 (3. tur denetim kalintilari) ----------------------------------
+# T11a: _VARYANT_SIRA muhurlu — kurcalama HALT
+m3.bellek_kaydet(m3.bellek_yukle())
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    m3.kosu()                                   # muhur kaydet
+eski_sira = m3._VARYANT_SIRA
+m3._VARYANT_SIRA = ["V0_taban"]                 # arama uzayi bosaltildi (test)
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    m3.kosu()
+m3._VARYANT_SIRA = eski_sira
+kayit("T11a _VARYANT_SIRA kurcalamasi HALT ediyor (muhur kapsami)",
+      "HALT: kapi sabitleri" in buf.getvalue())
+os.remove(m3.BELLEK_YOLU)
+if os.path.exists(m3.BELLEK_YOLU + ".bak"):
+    os.remove(m3.BELLEK_YOLU + ".bak")
+# T11b: varyant degisse de ayni (sembol, bar) tek kayit
+b11 = m3.bellek_yukle()
+oneri_ekle_karar = {"sembol": "Q/USDT", "yon": "LONG", "giris": 1.0,
+                    "stop": 0.9, "hedef": 1.2, "bar_ts": 777,
+                    "etiket": "BILGI", "golge": {}}
+b11["oneriler"].append(dict(oneri_ekle_karar, varyant="V0_taban"))
+imza = "Q/USDT|777"
+bekleyen = {f"{o['sembol']}|{o['bar_ts']}" for o in b11["oneriler"]}
+kayit("T11b imza varyanttan bagimsiz — ayni bar ikinci varyantla da COKMEZ",
+      imza in bekleyen)
+
 # T8 — META2/META3 bant disina cikamaz -------------------------------------
 b2 = m3.bellek_yukle()
 b2["kosu_sayaci"] = b2["W"]
