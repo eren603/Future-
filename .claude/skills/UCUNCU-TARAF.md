@@ -16,6 +16,24 @@ Bu dizindeki becerilerin bir kısmı dış depolardan alınmıştır. Proje moto
   `.claude/hooks/superpowers-session-start.sh` yazıldı (yol bağımsız + öncelik
   korkuluğu gömülü). Gerekçe betiğin kendi başlığındadır.
 
+## rebelytics/one-skill-to-rule-them-all — 1 beceri (`task-observer`)
+- Kaynak: https://github.com/rebelytics/one-skill-to-rule-them-all
+- Yazar: **Eoghan Henn / rebelytics.com** — *"One Skill to Rule Them All"*
+- Lisans: **CC BY 4.0** — paylaşma ve uyarlama serbest, **atıf ZORUNLU**.
+  Atıf `SKILL.md` başındaki yazar bloğunda korunmuştur; SİLİNMEZ.
+- Alınma yöntemi: marketplace komutu YOK. Projenin kendi kurulum talimatı
+  (`references/environments.md`) "klasörü `.claude/skills/task-observer/`
+  altına, `references/` alt klasörünü koruyarak koy" der. Dosyalar
+  `raw.githubusercontent.com`'dan `main` dalından indirildi:
+  `SKILL.md` + `references/{environments,skill-authoring,weekly-review}.md`.
+- NOT: yalnız `SKILL.md` kurmak becerinin kendi uyarısına göre "degraded"
+  çalışmadır — üç referans dosyası birlikte tutulur.
+- Tetikleyicisiz çalışması `CLAUDE.md` → "Ek kural (TASK OBSERVER)" yapısal
+  tetikleyicisiyle sağlanır (becerinin kendi tavsiye ettiği yöntem). Aynı
+  bölüm üç sert sınırı da koyar: karar geciktirilemez, sayısal kanıt
+  üretilemez, motor/eşik dosyaları özerk değiştirilemez.
+- Ayrıntı ve diğer dört eklentinin durumu: depo kökündeki `EKLENTILER.md`.
+
 ## vercel-labs/agent-skills — KURULU DEĞİL (kaldırıldı)
 - 2026-08-08'de 9 beceri kuruldu, aynı gün `/doctor` denetiminde **kaldırıldı**.
 - Gerekçe (ölçülmüş): bu depo Python/finans odaklıdır; 9 becerinin tetikleyicisi

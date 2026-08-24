@@ -41,12 +41,13 @@ Bu dosya her oturumda otomatik yüklenir; aşağıdaki disiplin `/komut` bekleme
 
 ## DIŞ BECERİ SİSTEMLERİ ve ÇAKIŞMA ÖNCELİĞİ
 
-Depoda iki beceri ailesi kurulu:
+Depoda üç beceri ailesi kurulu:
 
 | Aile | Kaynak | Ne zaman | Adet |
 |---|---|---|---|
 | **Proje motorları** | bu depo | piyasa analizi/kararı | 13 |
 | **Superpowers** | `obra/superpowers` (MIT) | **depo KODU** değişecekse | 14 |
+| **Gözlemci** | `rebelytics/one-skill-to-rule-them-all` (CC BY 4.0) | her çok-adımlı iş | 1 |
 
 `using-superpowers` becerisi `.claude/hooks/superpowers-session-start.sh` ile her
 oturum başında bağlama enjekte edilir. O beceri "her cevaptan ÖNCE skill çağır"
@@ -57,7 +58,9 @@ der; bu depoda **koşulsuz değildir**. Çelişkide sıra (üstteki kazanır):
 2. **Somut depo kanıtı** — dosya/ölçüm/koşu raporu. Hafızadan iddia yenilir.
 3. **Superpowers iş akışı** — yalnız KOD/MÜHENDİSLİK işlerinde
    (brainstorm → plan → TDD → implement → review → verification).
-4. Genel tercihler.
+4. **`task-observer` gözlemi** — kararı ASLA geciktirmez; arka planda not tutar
+   (aşağıdaki "Ek kural (TASK OBSERVER)" bölümü bağlayıcıdır).
+5. Genel tercihler.
 
 **Somut kural — atlanamaz:** Kullanıcı piyasa verisi gönderdiğinde
 (`piramit_veri_*.json`, kline, CoinGlass paneli, grafik görüntüsü) **VARSAYILAN
@@ -93,6 +96,7 @@ beceriyi uygula.
 | Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
 | Tam analiz / tam boru hattı: 15M+4H kline (+ varsa türev paneli), "bütün motorları çalıştır", "en alttan en üste", çok katmanlı değerlendirme | `piramit-sistem` (**VARSAYILAN YOL** — K1→K5, `scripts/piramit.py`) |
 | Ciddi analiz/karar/değerlendirme, "uzman gibi bak", derin inceleme, profesyonel görüş, strateji, çok-adımlı muhakeme | `uzman-modu` (ÜST-AKIL DİSİPLİNİ) |
+| **Her çok-adımlı iş** (araç kullanılıp çıktı üretilen her oturum) — düzeltme, tekrar eden akış, işe yarayan yöntem yakalama; "gözlem defteri", "beceri iyileştirme", "haftalık inceleme" | `task-observer` (ARKA PLAN GÖZLEMCİSİ — karar akışını GECİKTİRMEZ) |
 
 Ek kural (üst-akıl): Ciddi/analitik her soruda `uzman-modu` arka planda
 uygulanır — rol + niyet + tam bağlam + çok-mercekli muhakeme + araçla üretim +
@@ -101,6 +105,26 @@ uygulanır — rol + niyet + tam bağlam + çok-mercekli muhakeme + araçla üre
 mekanikleştirilemez; sahte-otorite bir denetçiye devredilmez — mekanikleşen
 kontroller `rr_denetim`/`sentez`/motorlar ile, grounding elle.) Süslü/hafızadan/
 dairesel cevap YASAK.
+
+Ek kural (TASK OBSERVER — tetikleyicisiz, arka planda): Araç kullanılıp çıktı
+üretilen HER çok-adımlı oturumda `task-observer` becerisi işe başlamadan önce
+yüklenir. Amacı iş sırasında ortaya çıkan sürtünmeyi (kullanıcının düzeltmeleri,
+tekrar eden akışlar, işe yarayan yöntemler) `skill-observations/log.md` defterine
+yazmak ve bunları HAFTALIK incelemede yeni/güncellenmiş beceriye çevirmektir.
+Bir beceri yüklendiğinde o beceriye etiketli AÇIK gözlemler de okunur ve beceri
+dosyası henüz güncellenmemiş olsa bile o oturumda uygulanır.
+**Üç sert sınır (proje sözleşmesi üstündür):**
+(1) Gözlemci **kararı geciktirmez** — piyasa verisi geldiğinde varsayılan yol
+    yine `piramit-sistem` boru hattıdır; "önce gözlem defterine bakayım" diye
+    araya girilmez, gözlem koşu SIRASINDA/SONRASINDA tutulur.
+(2) Gözlemci **kanıt üretmez** — defterdeki hiçbir not sayısal iddiaya kaynak
+    OLAMAZ. Sayı yalnız motor çıktısından gelir (doğruluk sözleşmesi).
+(3) Beceri **kendiliğinden dosya değiştirmez** — motor/beceri düzenlemesi ancak
+    kullanıcı onayıyla yapılır; `piramit-sistem`, `karar-motoru` ve kapı eşikleri
+    gözlemci tarafından ÖZERK olarak değiştirilemez (aşırı-uyum panzehiri).
+Defter yolu ephemeral bir çalışma kopyasında (worktree/geçici klon) tutulmaz —
+oturumu aşan kararlı yol kullanılır; kayıt yoksa "ilk oturum" denir, geçmiş
+UYDURULMAZ.
 
 Ek kural (orkestratör): Bir soru NİHAİ KARAR gerektirdiğinde `karar-kurulu`
 becerisi devreye girer; ilgili tüm motorları **birlikte (aynı turda, bağımsız
