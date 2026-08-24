@@ -17,7 +17,7 @@ durumunu tutar.
 |---|---------|----------|------------------------------|-------|
 | 1 | **OmniRoute** | Ücretsiz sağlayıcılara yönlendiren yerel AI ağ geçidi | Ortam değişkeni (`ANTHROPIC_BASE_URL`) — **eklenti DEĞİL** | ⛔ yalnız yerel makinede |
 | 2 | **claude-mem** | Oturumlar arası kalıcı hafıza | Kendi kancaları (SessionStart/UserPromptSubmit/PostToolUse/Stop) | ⏳ ayar bekliyor |
-| 3 | **Headroom** | Token sıkıştırma (araç çıktısı/log) | Kendi kancaları (SessionStart + PreToolUse) + yerel `headroom` CLI | ⏳ ayar bekliyor |
+| 3 | **Headroom** | Token sıkıştırma (araç çıktısı/log) | Kendi kancaları (SessionStart + PreToolUse) + yerel `headroom` CLI | ❌ **SINANDI — karar yolunda KULLANILMAZ** |
 | 4 | **claude-code-setup** | Kod tabanını tarayıp otomasyon önerir | Anthropic resmî marketplace eklentisi | 🟡 marketplace kayıtlı, eklenti bekliyor |
 | 5 | **Task Observer** | Tarzı öğrenip becerileri arka planda geliştirir | Beceri + `CLAUDE.md` yapısal tetikleyici | ✅ **KURULDU, ÇALIŞIYOR** |
 
@@ -99,6 +99,59 @@ gerekmez. Eklenti etkinleştirildiği anda tetikleyicisiz çalışır.
 etkinleştirilirse **her Bash çağrısında** kanca hata verir. Önce `pip install`,
 sonra eklenti etkinleştirme.
 
+### SINAV SONUCU — ölçüldü, kabul edilmedi
+
+Kurulum yapıldı (`headroom-ai 0.36.5`) ve sözleşmeye karşı sınandı.
+Sınav aracı depoda: **`.claude/eklenti/headroom_sinav.py`** (tekrar koşulabilir).
+Girdi: gerçek koşu raporu `son_rapor.json` (56 941 B), 3 senaryo
+(varsayılan / 12 tur sonra geride kalmış / agresif ayar).
+
+**1) Sayı bütünlüğü — GEÇTİ.** Kayıp 0, uydurma 0. Rapordaki 252 sayının
+hepsi sıkıştırmadan sonra birebir duruyor; `iddia_denetle.py` bu tarafta
+temiz. Tasarruf: **%27.9** (16 845 → 12 139 token).
+
+> Yöntem notu (dürüstlük gereği): bu sınavın İLK sürümü "2 sayı kayboldu"
+> dedi ve **yanlış alarmdı**. Sebep: Headroom JSON'u minify ediyor, asıl
+> rapor girintili; `iddia_denetle.SAYI` regex'inin aralık koruması
+> (`(?<![\d.,])`) virgülden sonra gelen sayıyı atlıyor. İki taraf aynı
+> biçime getirilince fark sıfırlandı. Araç sürümü bu tuzağı belgeliyor.
+
+**2) Yapı bütünlüğü — BOZULDU.** Asıl bulgu burada. Sıkıştırılmış çıktıdaki
+rapor JSON'u geri ayrıştırılıp asıl raporla **nesne olarak** karşılaştırıldı.
+`router:tool_result:mixed` dönüşümü **ZİRVE katmanından 8 alanı siliyor** —
+üç senaryoda da, varsayılan ayarda dahil:
+
+| Silinen alan | Sözleşmedeki karşılığı |
+|---|---|
+| `iki_satir` | Zorunlu iki-satır çıktı (YÖN + İŞLEM KALİTESİ) |
+| `KIYAS` | "Her yeni veride İLK İŞ, atlanamaz" |
+| `ONCEKI_AKIBET` | HESAP VERME — önceki emrin akıbeti |
+| `CELISKI_TURU` | Adversarial ikinci koşu (fail-closed NÖTR hükmü) |
+| `ILK_GECIS` | STRATEJI.md §2 kapısı: "ölçüm yoksa VERİ YOK → işlem yok" |
+| `EMIR_GEREKCE` | Emrin gerekçesi |
+| `kapi_gerekceleri` | Hangi kapı neden düştü |
+| `_anlik_goruntu` | Koşu anlık görüntüsü |
+
+Sayı bozulmadığı için `iddia_denetle.py` bunu **YAKALAYAMAZ** — kendi
+belgesinde yazdığı gibi o araç ANLAM denetlemez, yalnız sayı kaynağını
+sınar. Yani zarar tam olarak sözleşmenin bilinen kör noktasına düşüyor.
+
+**Hüküm:** Headroom karar yolunda kullanılırsa model KIYAS'ı, ÇELİŞKİ
+TURU'nu, HESAP VERME'yi ve İLK-GEÇİŞ kapısını **göremez**; bu da doğrudan
+gözlemcinin `EKSİK_AKTARIM` ihlalidir (alt katmanda üretilip üst katmana ne
+giren ne gerekçeyle dışlanan sonuç = sessiz kayıp). **%27.9 token tasarrufu
+bu bedele değmez.** Eklenti ETKİNLEŞTİRİLMEDİ.
+
+**Yan maliyet (ölçüldü):** `headroom-ai[all]` ~9 GB disk (torch + CUDA +
+transformers) ve `numpy 2.4.6 / pandas 3.0.5 / scipy 1.17.1` yükseltmesi
+getirir. Yükseltmeden sonra `engine/self_test.py` ve `saglik.py` tekrar
+koşuldu → **tüm testler geçti**, motorlar kırılmadı.
+
+**Kullanılabileceği tek yer:** piyasa kararı ÜRETMEYEN saf kod oturumları.
+O durumda bile eklenti proje kapsamında değil, kişisel kapsamda
+(`--scope user`) etkinleştirilmelidir — yoksa depoyu açan her oturumda
+karar yoluna da girer.
+
 ## 4) claude-code-setup — kod tabanını tarayıp otomasyon önerir
 
 - **Kaynak:** https://github.com/anthropics/claude-plugins-official (Anthropic resmî)
@@ -160,11 +213,15 @@ Aşağıdaki blok mevcut `.claude/settings.json` ile **birleştirilir** (var ola
   },
   "enabledPlugins": {
     "claude-code-setup@claude-plugins-official": true,
-    "claude-mem@thedotmack": true,
-    "headroom@headroom-marketplace": true
+    "claude-mem@thedotmack": true
   }
 }
 ```
+
+> `headroom@headroom-marketplace` **bilerek `enabledPlugins` dışında bırakıldı**
+> — sınavda ZİRVE alanlarını sildiği ölçüldü (yukarıdaki "SINAV SONUCU").
+> Marketplace kaydı duruyor ki saf kod oturumlarında `--scope user` ile
+> etkinleştirilebilsin; proje kapsamında AÇILMAZ.
 
 `extraKnownMarketplaces` + `enabledPlugins` **proje kapsamındadır ve depoya
 işlenir** — yani depoyu açan herkeste eklentiler `/plugin` yazmadan, hiçbir
@@ -178,8 +235,12 @@ claude plugin marketplace add thedotmack/claude-mem        --scope project
 claude plugin marketplace add headroomlabs-ai/headroom     --scope project
 claude plugin install claude-code-setup@claude-plugins-official --scope project
 claude plugin install claude-mem@thedotmack                --scope project
-pip install "headroom-ai[all]"      # ÖNCE CLI — yoksa kanca her Bash'te hata verir
-claude plugin install headroom@headroom-marketplace        --scope project
+
+# Headroom PROJE kapsamında AÇILMAZ (sınav: ZİRVE alanları siliniyor).
+# Yalnız piyasa kararı üretmeyen saf kod oturumları için, kişisel kapsamda:
+#   pip install --ignore-installed pyjwt "headroom-ai[all]"   # ÖNCE CLI
+#   claude plugin install headroom@headroom-marketplace --scope user
+# Kurduktan sonra sınavı tekrar koş: python3 .claude/eklenti/headroom_sinav.py
 ```
 
 ### OmniRoute (yalnız kendi makinenizde, uzak oturumda DEĞİL)
