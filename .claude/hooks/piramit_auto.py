@@ -895,10 +895,7 @@ def _ikinci_job() -> dict | None:
     return job
 
 
-def main() -> int:
-    print(KURAL)
-    _gorev_bas()
-
+def _akis() -> int:
     if not PIRAMIT.exists():
         print("[PİRAMİT] Boru hattı dosyası bulunamadı — elle koşuya düşülür.")
         return 0
@@ -1039,6 +1036,35 @@ def main() -> int:
     except OSError:
         pass
     return 0
+
+
+def _sabit_bas() -> None:
+    """Sabit bağlam (kural + duran görev) — akıştan SONRA basılır.
+
+    Sıra BİLEREK terstir. Ölçüm (2026-08-25): kanca 14280 bayt basıyordu;
+    harness üst sınırı aşınca çıktıyı dosyaya kaydedip bağlama yalnız ~2 KB
+    önizleme koyuyordu. Sabit blok en üstte olduğu için bütçeyi o yiyor,
+    o koşunun YÖN / İŞLEM KALİTESİ / EMİR / GÖZLEMCİ satırları bağlama HİÇ
+    girmiyordu. Ters sırada kesilen kuyruk TEKRARLANAN kural olur — kararın
+    kendisi değil. Kesme eşiği harness'ta; bu düzeltme eşikten BAĞIMSIZ çalışır.
+    """
+    try:
+        print(KURAL)
+        _gorev_bas()
+    except (BrokenPipeError, ValueError, OSError):
+        pass
+
+
+def main() -> int:
+    """Akış ÖNCE (dinamik), sabit bağlam SONRA.
+
+    `finally`: akışın bütün erken `return 0` yolları ve beklenmedik hata da
+    kapsanır — duran görev hiçbir yolda sessizce düşmez.
+    """
+    try:
+        return _akis()
+    finally:
+        _sabit_bas()
 
 
 def _sessiz_cik(kod: int = 0):

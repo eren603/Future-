@@ -15,7 +15,11 @@ Sınananlar:
 """
 from __future__ import annotations
 
+import contextlib
+import importlib
+import io
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -916,6 +920,30 @@ def main() -> int:
                 (not kapsamsiz["olculebilir"]) and kapsamli["olculebilir"]
                 and kapsamli["r"] == 2.0,
                 f"arşivsiz={kapsamsiz['sonuc'][:28]}… | arşivli r={kapsamli.get('r')}")
+
+        # ---- T35: kanca — dinamik özet SABİT kuraldan ÖNCE basılır ---------
+        # Ölçülen kusur (2026-08-25): kanca 14280 bayt basıyor, harness üst
+        # sınırı aşınca bağlama yalnız ~2 KB önizleme giriyor ve YÖN/İŞLEM/
+        # EMİR/GÖZLEMCİ satırlarının TAMAMI kesiliyordu. Sabit kural en üstte
+        # olduğu için bütçeyi o yiyordu. Sıra tersine çevrilir: kesilen kuyruk
+        # TEKRARLANAN kural olur, o koşunun KARARI değil.
+        _env_yedek = os.environ.get("CLAUDE_PROJECT_DIR")
+        tmp_repo = tmp / "kanca_repo"
+        (tmp_repo / "engine" / "girdi").mkdir(parents=True, exist_ok=True)
+        os.environ["CLAUDE_PROJECT_DIR"] = str(tmp_repo)
+        HOOK = importlib.reload(HOOK)        # REPO sabiti yeniden okunsun
+        _b = io.StringIO()
+        with contextlib.redirect_stdout(_b):
+            HOOK.main()
+        _c = _b.getvalue()
+        i_dinamik = _c.find("Boru hattı dosyası bulunamadı")
+        i_kural = _c.find("[PİRAMİT — duran kural")
+        kontrol("T35 kanca: dinamik özet sabit kuraldan ÖNCE basılır",
+                i_dinamik >= 0 and i_kural >= 0 and i_dinamik < i_kural,
+                f"dinamik@{i_dinamik} < kural@{i_kural}")
+        os.environ.pop("CLAUDE_PROJECT_DIR", None)
+        if _env_yedek is not None:
+            os.environ["CLAUDE_PROJECT_DIR"] = _env_yedek
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
         if yedek is not None:
