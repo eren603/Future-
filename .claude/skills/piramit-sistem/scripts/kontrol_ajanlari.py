@@ -87,8 +87,8 @@ SAYI_RE = re.compile(r"-?\d+(?:[.,]\d+)?")
 MAX_ARTEFAKT_BAYT = 2_000_000
 
 
-def _bulgu(kod, adim, kanit, ajan=None):
-    return {"kod": kod, "severity": SEVERITY.get(kod, "P2"), "adim": adim,
+def _bulgu(kod, adim, kanit, ajan=None, severity=None):
+    return {"kod": kod, "severity": severity or SEVERITY.get(kod, "P2"), "adim": adim,
             "ajan": ajan or YOK, "kanit": kanit, "duzeltme": DUZELTME.get(kod, "")}
 
 
@@ -430,8 +430,17 @@ def denetle_piramit(rapor: dict) -> dict:
             b.append(_bulgu("GOREV_SAPMASI", "ZİNCİR",
                             f"job'da BEYAN EDİLEN '{ad}' işi yapılmadı ve gerekçesi yok"))
     for e in (zirve.get("ZORUNLU_EKSIK") or []):
+        # P1, P0 DEĞİL: zorunlu girdi eksikliği ajanın görev sapması değil,
+        # KULLANICI tarafından verilmemiş bir kanaldır. CLAUDE.md sözleşmesi
+        # bunu zaten K1'de tespit edip K4'te çelişki olarak taşıyor ve çıktının
+        # EN ÜSTÜNDE "⚠ ZORUNLU GİRDİ EKSİK" satırıyla gösteriyor; türev kapsamı
+        # düşünce danışman da fail-closed doğrulanmamış sayılıyor. P0 saymak
+        # CoinGlass paneli/görsel elle verilmeyen HER koşuyu mühürler — sözleşmede
+        # olmayan, sistemi kullanılamaz kılan bir davranış. Bulgu GİZLENMEZ,
+        # yalnız mühür yetkisi yoktur.
         b.append(_bulgu("GOREV_SAPMASI", "K1-LLM",
-                        f"zorunlu girdi eksik, görev tam koşulmadı: {str(e)[:80]}"))
+                        f"zorunlu girdi eksik, görev tam koşulmadı: {str(e)[:80]}",
+                        severity="P1"))
 
     # GIZLI_GUNDEM — yön var ama o yönü DOĞRULANMIŞ tek bir danışman bile yok
     yon = str((k5.get("sentez") or {}).get("YON_BIAS", zirve.get("YON_BIAS", ""))).upper()

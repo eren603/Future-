@@ -927,7 +927,7 @@ def main() -> int:
         kodlar = {x["kod"] for x in k_kirli["bulgular"]}
         # gerçek koşu (yukarıdaki tam rapor) yanlış-pozitif üretmemeli
         k_temiz = KA.denetle_piramit(json.loads(json.dumps(r25)))
-        kontrol("T35 kontrol ajanları: kirli koşu mühürlenir, temiz koşu geçer",
+        kontrol("T45 kontrol ajanları: kirli koşu mühürlenir, temiz koşu geçer",
                 k_kirli["muhurlendi"] and {"TIYATRO", "TAKLIT", "GOREV_SAPMASI",
                                            "GIZLI_GUNDEM"} <= kodlar
                 and "KONTROL" in r25 and not k_temiz["muhurlendi"],
