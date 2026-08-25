@@ -43,9 +43,15 @@ python3 ../turev-akis/scripts/turev_akis.py --job turev.json --emit-advisor
 ```
 Çıktı doğrudan bir kurul danışmanıdır: `stance` (yön skorunun işaretinden),
 `confidence` (motorun `guven` alanı = kapsam × netlik), `evidence` (faktör
-dökümü + erken-uyarılar). Bu danışmanı `advisors`'a olduğu gibi ekle; çıktının
-`_verifier_confirmed` alanını `verifier["turev-akis"].confirmed`'e taşı (kapsam
-< 0.5 ise false → çürütme penaltısı otomatik uygulanır). Motor "VERİ YOK"
+dökümü + erken-uyarılar). Bu danışmanı `advisors`'a olduğu gibi ekle.
+**Doğrulama BAĞIMSIZ kaynaktan gelir — motorun kendi `kapsam` beyanından DEĞİL:**
+`verifier["turev-akis"].confirmed`, motorun GİRDİSİNDEN (`turev.json`; üreteci
+`turev_girdi.py` — ayrı bir program) ölçülen kanal kapsamıyla belirlenir
+(kapsam < 0.5 → false, çürütme penaltısı otomatik). Motorun beyan ettiği kapsam
+bu bağımsız ölçümle ÇAPRAZ KONTROL edilir; ayrışma motorun kendi kapsamını
+yanlış raporladığını gösterir → fail-closed çürütme. Gerekçe: motorun kendi
+çıktısıyla doğrulanması DAİRESELDİR ve gözlemcinin `DAIRESEL` kodu bunu yakalar
+(protokol: "hiçbir kaynak kendini doğrulamaz"). Motor "VERİ YOK"
 (danışman None) dönerse kurula **eklenmez** (fail-closed). Böylece türev katkısı
 öznel metin değil, tekrarlanabilir motor çıktısıdır.
 
