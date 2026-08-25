@@ -45,8 +45,9 @@
     },
     "yapi_olayi": {
       "type": "string",
-      "maxLength": 512,
-      "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+      "maxLength": 1024,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "description": "Yapı olayı açıklaması (düz metin). Sınır 1024: kardeş düz-metin alanlarıyla (celiski_notu, not, gozlem) HİZALI. 512 ölçülmemiş bir seçimdi ve gerçek okumayı (545 krk) reddediyordu — görsel danışman kurula giremiyordu. Sınır bir enjeksiyon korkuluğudur (uzunluk), içerik doğrulaması DEĞİLDİR."
     },
     "seviyeler": {
       "type": "object",

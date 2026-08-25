@@ -563,6 +563,9 @@ def _gorev_tam_bas(bolum: str, g: dict | None = None) -> None:
         if not isinstance(g, dict):
             raise TypeError(f"kök tip {type(g).__name__}, sözlük bekleniyordu")
     if bolum == "ek":
+        # KONTROL_KURAL sabittir (1147 krk) ve istemler arası DEĞİŞMEZ; her
+        # istemde basmak çıktı bütçesini yiyordu — KURAL ile aynı sınıf kusur.
+        print(KONTROL_KURAL)
         if g.get("strateji_kurali"):
             print("   strateji: " + str(g.get("strateji_kurali")))
         # BEKLEYEN İŞLER: kullanıcının "sonra yapacağız" dediği maddeler.
@@ -1219,7 +1222,6 @@ def _sabit_bas() -> None:
     """
     try:
         print(KURAL)
-        print(KONTROL_KURAL)
         _gorev_bas()
     except (BrokenPipeError, ValueError, OSError):
         pass
