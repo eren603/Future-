@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# Kanca durum dosyası: oturuma özel damga (her oturumda değişir, paylaşılmaz)
+.claude/skills/piramit-sistem/state/gorev_damga.json
