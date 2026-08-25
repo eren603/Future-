@@ -3,3 +3,9 @@ __pycache__/
 
 # Kanca durum dosyası: oturuma özel damga (her oturumda değişir, paylaşılmaz)
 .claude/skills/piramit-sistem/state/gorev_damga.json
+
+# KARARGAH v2.4 ölçüm kum havuzu ve yerel bellek (paylaşılmaz)
+olcum/_meta3_test_sandik/
+meta3_bellek.json
+meta3_bellek.json.bak
+meta3_override.json
