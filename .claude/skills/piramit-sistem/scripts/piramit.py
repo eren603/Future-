@@ -48,6 +48,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 import gozlemci as GZ  # noqa: E402
+import kontrol_ajanlari as KA  # noqa: E402
 
 
 def _atomik_yaz(hedef: Path, metin: str) -> None:
@@ -1844,8 +1845,30 @@ def kos(job: dict, taban: Path) -> dict:
                     _atomik_yaz(gp, json.dumps(g, ensure_ascii=False, indent=2))
         except (OSError, json.JSONDecodeError):
             pass
+
+    # --- KONTROL AJANLARI: gözlemcinin ÜSTÜNE niyet/gerçeklik denetimi ---
+    # (araştırmasız / taklit / bulaşma / gizli gündem / tiyatro / görev sapması)
+    # Gözlemci mührü UYGULANDIKTAN SONRA koşar: "mühürlüyken emir basılmış"
+    # kontrolü bir gerileme korkuluğudur, koşu sırasına bağlıdır.
+    kontrol = KA.denetle_piramit(rapor)
+    rapor["KONTROL"] = kontrol
+    rapor["ZIRVE"]["KONTROL"] = {
+        "hukum": kontrol["hukum"], "ozet": kontrol["ozet"],
+        "muhurlendi": kontrol["muhurlendi"],
+        "P0": [f"{b['kod']}@{b['adim']}: {b['kanit']}" for b in kontrol["bulgular"]
+               if b["severity"] == "P0"]}
+    if kontrol["muhurlendi"] and not denetim["muhurlendi"]:
+        p0 = rapor["ZIRVE"]["KONTROL"]["P0"]
+        rapor["ZIRVE"]["ISLEM_KALITESI"] = "KONTROL İHLALİ — İŞLEM YOK (mühürlendi)"
+        rapor["ZIRVE"]["EMIR"] = "EMİR YOK — KONTROL MÜHÜRÜ"
+        rapor["ZIRVE"]["EMIR_GEREKCE"] = "kontrol ajanı P0: " + " | ".join(p0)[:200]
+        rapor["ZIRVE"]["emir_adaylari"] = []
+        rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
+            "İŞLEM KALİTESİ: KONTROL İHLALİ — işlem yok. Kontrol ajanı bulguları: "
+            + " | ".join(p0))
+    muhur = denetim["muhurlendi"] or kontrol["muhurlendi"]
     rapor["durum"] = ("TAMAM — piramidin tepesine ulaşıldı"
-                      + (" (DENETİM MÜHÜRÜ)" if denetim["muhurlendi"] else ""))
+                      + (" (DENETİM MÜHÜRÜ)" if muhur else ""))
     _deftere_yaz(rapor)
     return rapor
 
@@ -1960,6 +1983,11 @@ def ozet_metin(rapor: dict) -> str:
             L.append(f"   ⛔ {x[:110]}")
         for x in (d.get("uyari") or [])[:4]:
             L.append(f"   ⚠ {x[:110]}")
+    k = rapor.get("KONTROL") or {}
+    if k:
+        L.append(KA.ozet_metin(k))
+        for pl in (k.get("duzeltme_plani") or [])[:3]:
+            L.append(f"   → düzeltme {pl['sira']} [{pl['severity']}]: {pl['yap'][:96]}")
     L.append("=" * 68)
     L.append("⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.")
     return "\n".join(L)

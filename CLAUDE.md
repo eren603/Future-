@@ -145,6 +145,37 @@ metindeki her sayı koşu raporunda birebir var mı? KAYNAKSIZ çıkan sayı ya
 rapordan düzeltilir ya metinden çıkarılır. Bu araç ANLAM denetlemez (yorum
 doğruluğu elle ikinci-göz işidir) — yalnız uydurma SAYIYA karşı korkuluktur.
 
+Ek kural (KONTROL AJANLARI — HER KONU, her soruda, tetikleyicisiz): Gözlemci
+yalnız piyasa boru hattının KATMANLARINI denetler; kontrol ajanları KONUDAN
+BAĞIMSIZ çalışır ve mimarisi `.claude/kontrol/kontrol_mimari.xml`
+(motor: `piramit-sistem/scripts/kontrol_ajanlari.py`). İki parçası vardır:
+(1) ZİNCİR — her konu şu 6 adımdan geçer ve her adım bir öncekinin ÇIKTISINI
+tüketip YENİ bilgi ekler (birbirini tamamlayan sonuçlarla ilerleme):
+Z1 GÖREV ÇÖZÜMLEME (isteğin her cümlesi bir madde) → Z2 KANIT (okunmadan iddia
+yok) → Z3 ÜRETİM (ajanlar İZOLE, birbirini görmez) → Z4 ÇAPRAZ DOĞRULAMA
+(onaylamak değil ÇÜRÜTMEK görevdir, farklı mercek) → Z5 SENTEZ (güven-ağırlıklı,
+severity sıralı) → Z6 TESLİM (gerçek/varsayım/yorum + düzeltme planı).
+(2) KONTROL AJANLARI — çalışan ajanların yanında koşar ve ARTEFAKTLA sınar:
+araştırmasız mı (ARASTIRMASIZ), hafızadan mı (HAFIZA), uydurma mı (UYDURMA —
+"okudum" denen dosya diskte YOK ya da sayı kaynakta geçmiyor), diğerini taklit
+mi (TAKLIT), birbirinden etkilenmiş mi (BULASMA — beslenmediği akranın
+çıktısına bakmış), dairesel mi (DAIRESEL — kendi iddiasını kendi doğrulamış),
+kullanıcıyı memnun etme mi (MEMNUN_ETME — hiç çürütme yok / itiraz sonrası
+kanıtsız dönüş), görevi TAM mı yaptı (GOREV_SAPMASI — kapsanmayan görev maddesi),
+tünel görüşü mü (TUNEL), beyan dışı gerekçe mi (GIZLI_GUNDEM), gerçekten yaptı
+mı yoksa tiyatro mu (TIYATRO — "geçti" diyen ama çıktı üretmeyen adım/katman),
+ürettiğini taşıdı mı (EKSIK_AKTARIM). Bulgular severity'ye göre sıralanır
+(P0→P1→P2) ve her birine mekanik düzeltme adımı yazılır. **Tek bir P0 TESLİMİ
+MÜHÜRLER:** sonuç yine gösterilir ama "bu haliyle kullanılamaz" denir
+(fail-closed) — piyasa yolunda EMİR de kapanır. Piyasa sorularında denetim boru
+hattında OTOMATİK koşar (`rapor["KONTROL"]`, çıktının altında panel). Diğer
+konularda zincir defteri `.claude/kontrol/zincir/<konu>.json`'a yazılır
+(şablon: `.claude/kontrol/zincir_sablon.json`) ve cevap YAYINLANMADAN
+`kontrol_ajanlari.py --zincir <defter> --ozet` koşulur; panel cevabın altında
+gösterilir. Kontrol ajanı ZİHİN okumaz, ANLAM denetlemez — yorum doğruluğu yine
+ELLE ikinci-göz işidir; bu araç yalnız uydurma/tiyatro/sapma/kopya için
+korkuluktur ve bunu iddia ettiğinden fazlasını YAPTIĞINI SÖYLEMEZ.
+
 Ek kural (HESAP VERME + KIYAS — her yeni veride İLK İŞ, atlanamaz): Yeni veri
 geldiğinde YENİ analizden ÖNCE iki soru cevaplanır (`scripts/kiyas.py`):
 (1) HESAP VERME: bir önceki koşuda verilen giriş/stop/hedef seviyeleri yeni
