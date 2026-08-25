@@ -43,6 +43,52 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/acil_durdur.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/yonlendir.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/kanit_sicili.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/kanit_kapisi.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/yonlendir.sh\"",
+            "asyncRewake": true,
+            "rewakeMessage": "Arka planda bekleyen operatör yönlendirmesi — aşağıdaki yönlendirmeyi uygulayın ya da gerekçesiyle reddedin, sonra kullanıcının asıl isteğine devam edin veya cevabını beklemeye devam edin:",
+            "rewakeSummary": "Operatör yönlendirmesi bekliyor"
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,0 +1,189 @@
+{
+  "depo": "/home/user/Future-",
+  "denetlenen": 271,
+  "ozet": {
+    "hata": 15,
+    "denetlenemedi": 3,
+    "uyari": 3,
+    "bilgi": 8,
+    "aciklama_toplami": 19964,
+    "aciklama_butcesi": 8000
+  },
+  "bulgular": [
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/backtest-motoru/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/data-analysis-deep-scan/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/finansal-modelleme/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/forex-trading-expert/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/grafik-calisma/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "UYARI",
+      "kod": "ACIKLAMA_YAYIN_SINIRI",
+      "yol": ".claude/skills/grafik-calisma/SKILL.md",
+      "mesaj": "description 1243 karakter, yayin siniri 1024 (anthropics/skills quick_validate.py:82-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz yayin sozlesmesi ihlali"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/grafik-cizim/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "UYARI",
+      "kod": "ACIKLAMA_YAYIN_SINIRI",
+      "yol": ".claude/skills/grafik-cizim/SKILL.md",
+      "mesaj": "description 1338 karakter, yayin siniri 1024 (anthropics/skills quick_validate.py:82-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz yayin sozlesmesi ihlali"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/karar-kurulu/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/karar-motoru/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/piramit-sistem/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/portfoy-optimizasyonu/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/risk-yonetimi/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/turev-akis/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/uzman-modu/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "EKSIK_DOSYA",
+      "yol": ".claude/skills/video-isleme/KANIT.md",
+      "mesaj": "KANIT.md yok"
+    },
+    {
+      "seviye": "UYARI",
+      "kod": "ACIKLAMA_BUTCESI_ASILDI",
+      "yol": ".claude/skills",
+      "mesaj": "toplam description 19964 karakter / butce 8000 (250%) — asilirsa aciklamalar TEK TEK kirpilmaz, TAMAMEN dusurulur (geriye yalniz isimler kalir) ve bu SESSIZ olur. Kaynak: anthropics/claude-code issue #64606 (200000*4*0.01=8000). UYARI seviyesi bilerek secildi: sayi bir hata bildiriminden gelir, sartnameden degil — HATA demek olculmemis bir kesinlik iddiasi olurdu"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/izleme-telemetri/SKILL.md",
+      "mesaj": "engine/state/olcum.jsonl — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_DIS_KAYNAK",
+      "yol": ".claude/skills/izleme-telemetri/SKILL.md",
+      "mesaj": "grafana/dashboards/working-dashboard.json — bu depoda olmayan bir agac; dogrulanamadi"
+    },
+    {
+      "seviye": "HATA",
+      "kod": "REF_COZUMLENMEDI",
+      "yol": ".claude/skills/piramit-sistem/SKILL.md",
+      "mesaj": "karar-kurulu/sentez.py -> dosya yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/piramit-sistem/SKILL.md",
+      "mesaj": "state/agirlik.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_DIS_KAYNAK",
+      "yol": ".claude/skills/rubrik-kapisi/SKILL.md",
+      "mesaj": "k12-lesson-planning/rubrics/shared.csv — bu depoda olmayan bir agac; dogrulanamadi"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_DIS_KAYNAK",
+      "yol": ".claude/skills/sema-dogrulama/SKILL.md",
+      "mesaj": "financial-services/scripts/validate.py — bu depoda olmayan bir agac; dogrulanamadi"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/sorusturma/SKILL.md",
+      "mesaj": "state/piramit_defter.jsonl — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "REF_KOSU_ARTEFAKTI",
+      "yol": ".claude/skills/sorusturma/SKILL.md",
+      "mesaj": "state/son_rapor.json — kosuda uretilir, depoda yok"
+    },
+    {
+      "seviye": "BILGI",
+      "kod": "KANCA_YORUMLAYICI",
+      "yol": ".claude/hooks/piramit_auto.py",
+      "mesaj": "+x yok ama yorumlayici ile cagriliyor — sorun degil"
+    },
+    {
+      "seviye": "DENETLENEMEDI",
+      "kod": "OZTEST_YASAK",
+      "yol": ".claude/skills/piramit-sistem/scripts/piramit.py",
+      "mesaj": "boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)"
+    },
+    {
+      "seviye": "DENETLENEMEDI",
+      "kod": "OZTEST_YASAK",
+      "yol": ".claude/skills/piramit-sistem/scripts/saglik.py",
+      "mesaj": "boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)"
+    },
+    {
+      "seviye": "DENETLENEMEDI",
+      "kod": "OZTEST_YASAK",
+      "yol": ".claude/skills/piramit-sistem/scripts/self_test.py",
+      "mesaj": "boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)"
+    }
+  ],
+  "cikis_kodu": 1
+}

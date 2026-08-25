@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  KONTROL AJANLARI MİMARİSİ — Future- deposu
+  Bu dosya SÜS DEĞİL, ÇALIŞAN sözleşmedir:
+    · zincir denetimi  → .claude/skills/piramit-sistem/scripts/kontrol_ajanlari.py
+    · katman denetimi  → .claude/skills/piramit-sistem/scripts/gozlemci.py
+    · sayı denetimi    → .claude/skills/piramit-sistem/scripts/iddia_denetle.py
+  Tetikleyici GEREKMEZ: her soru/analiz bu zincirden geçer (CLAUDE.md duran kural).
+-->
+<kontrol_mimarisi surum="1.0" kapsam="her-soru" tetikleyici="yok" fail="closed">
+
+  <ilke>
+    <madde id="I1">Kontrol ajanı ZİHİN okumaz, ARTEFAKT okur: hangi dosya açıldı,
+      hangi motor koştu, hangi sayı nereden geldi, bir sonraki adıma ne gitti.</madde>
+    <madde id="I2">Çalışan ajanın "yaptım" beyanı KANIT DEĞİLDİR; beyan artefaktla
+      sınanır (dosya diskte var mı, sayı kaynakta geçiyor mu).</madde>
+    <madde id="I3">Her adım bir öncekinin ÇIKTISINI tüketir ve YENİ bilgi ekler.
+      Yeni bilgi eklemeyen adım "koştu" sayılmaz (TIYATRO).</madde>
+    <madde id="I4">P0 bulgu TESLİMİ MÜHÜRLER: sonuç yine gösterilir, ama
+      "bu haliyle kullanılamaz" denir. Gizlenmez, yumuşatılmaz.</madde>
+    <madde id="I5">Kontrol ajanı da denetlenir: bulgusunu kanıt satırı olmadan
+      yazamaz (her bulgu kod + adım + kanıt + düzeltme taşır).</madde>
+  </ilke>
+
+  <!-- ================== 1) ZİNCİR: konudan bağımsız 6 adım ================== -->
+  <zincir id="Z" kural="her adım bir öncekini tüketir; atlanamaz; sessiz daraltma yok">
+    <adim id="Z1" ad="GÖREV ÇÖZÜMLEME" ajan="cozumleyici" bagimsiz="false">
+      <amac>Kullanıcı isteğinin HER cümlesi ayrı bir görev maddesine (M1..Mn)
+        çevrilir. Yorum yok, daraltma yok.</amac>
+      <uretir>gorev_maddeleri[]</uretir>
+      <kapi>Her madde ya bir adıma atanır ya gerekçeyle dışlanır.</kapi>
+      <denetleyen>KA-NIYET (GOREV_SAPMASI)</denetleyen>
+    </adim>
+
+    <adim id="Z2" ad="KANIT TOPLAMA" ajan="kanitci" bagimsiz="false" girdi="Z1">
+      <amac>Her madde için GERÇEK kaynak okunur (dosya / motor çıktısı / araç /
+        arama). Okunmadan iddia üretilmez.</amac>
+      <uretir>artefaktlar[] (tur, ref, okundu, sayilar)</uretir>
+      <kapi>İddia üretecek her adımın en az bir okunmuş artefaktı olmalı.</kapi>
+      <denetleyen>KA-KAYNAK (ARASTIRMASIZ, HAFIZA, UYDURMA)</denetleyen>
+    </adim>
+
+    <adim id="Z3" ad="ÜRETİM" ajan="uretici-1..n" bagimsiz="true" girdi="Z2">
+      <amac>Çalışan ajanlar İZOLE koşar: her biri kendi kanıt ailesinden kendi
+        sonucunu üretir, diğerinin çıktısını GÖRMEZ.</amac>
+      <uretir>iddialar[] (metin, sayilar, kaynak)</uretir>
+      <kapi>Bağımsız ilan edilen ajan, kendisine BESLENMEYEN bir akranın
+        çıktısına bakmamış olmalı; sayı kümeleri birebir örtüşmemeli.</kapi>
+      <denetleyen>KA-BAGIMSIZLIK (BULASMA, TAKLIT)</denetleyen>
+    </adim>
+
+    <adim id="Z4" ad="ÇAPRAZ DOĞRULAMA" ajan="curutucu-1..n" bagimsiz="true" girdi="Z3">
+      <amac>Her iddia BAŞKA bir ajan tarafından ÇÜRÜTÜLMEYE çalışılır; farklı
+        mercek (aile) kullanılır. Onaylamak görev değildir, çürütmek görevdir.</amac>
+      <uretir>dogrulamalar[] (iddia, dogrulayan_ajan, aile, sonuc, gerekce)</uretir>
+      <kapi>Hiç çürütme denenmemişse doğrulama fail-OPEN sayılır; doğrulanmış
+        kanıt tek aileden geliyorsa "tek pencere" etiketi düşer.</kapi>
+      <denetleyen>KA-BAGIMSIZLIK (DAIRESEL) + KA-NIYET (MEMNUN_ETME) + KA-KAPSAM (TUNEL)</denetleyen>
+    </adim>
+
+    <adim id="Z5" ad="SENTEZ" ajan="sentezci" bagimsiz="false" girdi="Z4">
+      <amac>Güven-ağırlıklı birleştirme (çoğunluk oyu DEĞİL). Çelişki gizlenmez,
+        severity'ye göre sıralanır.</amac>
+      <uretir>karar + severity sıralı bulgular</uretir>
+      <kapi>Z3/Z4'te üretilen her sonuç ya sentezde ya gerekçeli dışlama
+        listesinde olmalı (sessiz kayıp yok).</kapi>
+      <denetleyen>KA-KAPSAM (EKSIK_AKTARIM)</denetleyen>
+    </adim>
+
+    <adim id="Z6" ad="TESLİM" ajan="teslimci" bagimsiz="false" girdi="Z5">
+      <amac>Cevap + gerçek/varsayım/yorum ayrımı + düzeltme planı.</amac>
+      <uretir>teslim (metin, sayilar, suruculer[], girdi_id[])</uretir>
+      <kapi>Teslimdeki her sayı/sürücü bir adıma bağlanabilmeli.</kapi>
+      <denetleyen>KA-NIYET (GIZLI_GUNDEM) + KA-GERCEKLIK (TIYATRO)</denetleyen>
+    </adim>
+  </zincir>
+
+  <!-- ============ 2) KONTROL AJANLARI: kim neyi sorar, nasıl ölçer ============ -->
+  <kontrol_ajanlari calisma="çalışan ajanlara PARALEL, her adımdan sonra">
+    <ajan id="KA-KAYNAK" soru="Araştırdı mı, hafızadan mı konuştu, uydurdu mu?">
+      <kod ad="ARASTIRMASIZ" severity="P1">
+        <olcum>Adımda iddia var ama okundu=true artefakt yok; ya da iddianın
+          kaynak alanı boş.</olcum>
+      </kod>
+      <kod ad="HAFIZA" severity="P1">
+        <olcum>İddianın kaynağı "model bilgisi / hafıza / önceki koşu / ezber"
+          kalıplarından biri — bu koşunun verisinden değil.</olcum>
+      </kod>
+      <kod ad="UYDURMA" severity="P0">
+        <olcum>(a) İddiadaki sayı hiçbir okunan artefaktta geçmiyor.
+          (b) "Okudum" denen dosya diskte YOK — beyan sahte.</olcum>
+      </kod>
+    </ajan>
+
+    <ajan id="KA-BAGIMSIZLIK" soru="Diğer ajanı taklit mi etti, birbirinden etkilendi mi, dairesel mi düşündü?">
+      <kod ad="TAKLIT" severity="P1">
+        <olcum>Bağımsız iki ajanın sayı kümesi ≥%90 örtüşüyor (Jaccard) —
+          bağımsız üretim değil, kopya.</olcum>
+      </kod>
+      <kod ad="BULASMA" severity="P0">
+        <olcum>Bağımsız ilan edilen ajan, KENDİSİNE BESLENMEYEN (girdi_id'de
+          olmayan) bir bağımsız akranın çıktısına bakmış — çıpalanmış.
+          Doğrulayıcı, denetlediği çıktıyı girdi olarak BEYAN ettiği sürece
+          bulaşma sayılmaz.</olcum>
+      </kod>
+      <kod ad="DAIRESEL" severity="P0">
+        <olcum>İddiayı üreten ajan ile doğrulayan ajan AYNI.</olcum>
+      </kod>
+    </ajan>
+
+    <ajan id="KA-NIYET" soru="Kullanıcıyı memnun etmek için mi, görevi tam anladı mı, gizli gündemi var mı?">
+      <kod ad="MEMNUN_ETME" severity="P0">
+        <olcum>(a) Doğrulamaların tamamı ONAY, hiç çürütme yok (fail-OPEN).
+          (b) Kullanıcı itirazından sonra YENİ KANIT olmadan konum değişmiş.
+          (c) Mühür varken uygulanabilir çıktı basılmış.</olcum>
+      </kod>
+      <kod ad="GOREV_SAPMASI" severity="P0">
+        <olcum>Görev maddesi hiçbir adımda kapsanmamış ve gerekçeyle
+          dışlanmamış — istek sessizce daraltılmış.</olcum>
+      </kod>
+      <kod ad="GIZLI_GUNDEM" severity="P1">
+        <olcum>Teslimde hiçbir adımın üretmediği sayı/sürücü var — beyan
+          edilmemiş gerekçe.</olcum>
+      </kod>
+    </ajan>
+
+    <ajan id="KA-KAPSAM" soru="Tünel görüşüne girdi mi, ürettiğini taşıdı mı?">
+      <kod ad="TUNEL" severity="P2">
+        <olcum>Doğrulanmış kanıt tek aileden — tek pencereden bakılıyor.</olcum>
+      </kod>
+      <kod ad="EKSIK_AKTARIM" severity="P0">
+        <olcum>Adım sonuç üretti ama ne bir sonraki adıma girdi ne gerekçeyle
+          dışlandı — sessiz kayıp / yarıda kesme.</olcum>
+      </kod>
+    </ajan>
+
+    <ajan id="KA-GERCEKLIK" soru="Gerçekten yaptı mı, gösterip tiyatro mu yaptı?">
+      <kod ad="TIYATRO" severity="P0">
+        <olcum>(a) Adım "geçti" diyor ama ne artefakt ne iddia üretti.
+          (b) Adımın çıktısı girdisiyle BİREBİR aynı — sıfır katkı.
+          (c) Piramitte: katman GEÇTİ ama ne yeni sayı ne yeni YAPISAL çıktı
+          (danışman listesi, doğrulama matrisi vb.) üretti; ya da yükü bir alt
+          katmanla birebir aynı.</olcum>
+      </kod>
+      <kod ad="SIRADAN" severity="P2">
+        <olcum>Adım zorunlu alanları taşımıyor ya da kapı gerekçesi yazılmamış —
+          yarım koşu.</olcum>
+      </kod>
+    </ajan>
+
+    <ajan id="KA-HAKEM" soru="Ne yapılacak?" rol="karar">
+      <kural>Bulgular severity'ye göre sıralanır (P0 → P1 → P2).</kural>
+      <kural>Tek bir P0 varsa TESLİM MÜHÜRLENİR: sonuç gösterilir, "bu haliyle
+        kullanılamaz" denir, düzeltme planı yazılır (fail-closed).</kural>
+      <kural>P1 teslimi engellemez ama çıktının altında AÇIKÇA listelenir.</kural>
+      <kural>Bulgu yoksa "TEMİZ" yazılır — sessiz geçiş yok.</kural>
+    </ajan>
+  </kontrol_ajanlari>
+
+  <!-- ================== 3) KONUYA GÖRE BAĞLANMA ================== -->
+  <baglanma>
+    <yol konu="piyasa/karar" boru_hatti="piramit-sistem/scripts/piramit.py">
+      <eslesme>Z1→K1-LLM, Z2→K1/K2, Z3→K2-AI-AJAN, Z4→K4-AGI (verifier+çelişki),
+        Z5→K5-SI (sentez), Z6→ZİRVE (iki satır + emir)</eslesme>
+      <denetim>gozlemci.denetle(rapor) + kontrol_ajanlari.denetle_piramit(rapor)
+        → tek panelde birleşir</denetim>
+    </yol>
+    <yol konu="diğer-her-konu" boru_hatti="zincir defteri (JSON)">
+      <denetim>kontrol_ajanlari.denetle_zincir(defter)</denetim>
+      <not>Defter, çalışan ajanın kendi beyanıdır; ama artefakt referansları
+        DİSKTE sınandığı için beyanla geçilemez.</not>
+    </yol>
+  </baglanma>
+
+  <!-- ================== 4) ÇIKTI SÖZLEŞMESİ ================== -->
+  <cikti_sozlesmesi>
+    <bolum sira="1">SONUÇ (isteğin kendisi — daraltılmadan)</bolum>
+    <bolum sira="2">KANIT (hangi adım, hangi artefakt, hangi sayı)</bolum>
+    <bolum sira="3">KONTROL PANELİ (bulgular: kod + severity + kanıt + düzeltme)</bolum>
+    <bolum sira="4">HÜKÜM (TEMİZ / UYARI / MÜHÜR)</bolum>
+    <bolum sira="5">gerçek / varsayım / yorum ayrımı</bolum>
+  </cikti_sozlesmesi>
+
+  <sinir>
+    <madde>Mekanikleşen: dosya varlığı, sayı-kaynak eşleşmesi, bağımsızlık,
+      adım-tüketim zinciri, boş adım, kapsam.</madde>
+    <madde>Mekanikleşmeyen: bir YORUMUN doğru olup olmadığı. Anlam denetimi ELLE
+      ikinci-göz işidir; kontrol ajanı bunu YAPTIĞINI İDDİA ETMEZ.</madde>
+    <madde>⚠️ Yalnız karar-destek; canlı/otomatik emir (gerçek para) DAHİL DEĞİL.</madde>
+  </sinir>
+</kontrol_mimarisi>

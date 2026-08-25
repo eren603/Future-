@@ -1,0 +1,18 @@
+BULGU DOĞRULAYICI — öz-test
+[GECTI] temiz-kosu: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] emir-yonu-ters: BULGU VAR — 1 doğrulanmış bulgu (1 aday elendi).
+[GECTI] R-aritmetigi-tutarsiz: BULGU VAR — 1 doğrulanmış bulgu (1 aday elendi).
+[GECTI] muhurlu-emir: BULGU VAR — 1 doğrulanmış bulgu (1 aday elendi).
+[GECTI] bayraksiz-sinif: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] alintisiz-kural-elenir: :44 Clear, unambiguous CLAUDE.md violations where you can qu
+[GECTI] onceden-var-elenir: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] gozlemci-yakalamis-elenir: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] susturulmus-elenir: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] genel-endise-elenir: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] cogunluk-kurali: 1/3 evet→RED, KANIT_YOK aleyhe→RED, tek kanal→RED
+[GECTI] oy-tavani: istenen 9 → kullanılan 2 (kopya kanal sayılmadı)
+[GECTI] yeniden-hesap-mutabik: BULGU YOK — Bulgu yok. Emir/yön tutarlılığı ve CLAUDE.md sözleşmesi denetlendi
+[GECTI] kaynaksiz-danisman: BULGU VAR — 1 doğrulanmış bulgu (1 aday elendi).
+
+14/14 vaka geçti (HEPSİ TAMAM)
+EXIT=0

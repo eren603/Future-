@@ -95,6 +95,26 @@ KURAL = (
     "uydurulmaz. Boru hattı koşamıyorsa elle koşuya düşülür ve bu açıkça söylenir."
 )
 
+# KONTROL AJANLARI: piyasa dışı sorular dahil HER konuda geçerli duran kural.
+# Mimari: .claude/kontrol/kontrol_mimari.xml — motor: scripts/kontrol_ajanlari.py
+KONTROL_KURAL = (
+    "[KONTROL AJANLARI — duran kural, HER konu, tetikleyicisiz] Zincir: "
+    "Z1 GÖREV ÇÖZÜMLEME → Z2 KANIT → Z3 ÜRETİM (izole) → Z4 ÇAPRAZ DOĞRULAMA "
+    "(çürütme) → Z5 SENTEZ → Z6 TESLİM; her adım bir öncekini TÜKETİR ve YENİ "
+    "bilgi ekler. Çalışan ajanların yanında kontrol ajanları koşar ve şunu "
+    "ARTEFAKTLA sınar: araştırmasız mı (ARASTIRMASIZ), hafızadan mı (HAFIZA), "
+    "uydurma mı (UYDURMA), diğerini taklit mi (TAKLIT), birbirinden etkilenmiş "
+    "mi (BULASMA), dairesel mi (DAIRESEL), memnun etme mi (MEMNUN_ETME), görevi "
+    "tam mı yaptı (GOREV_SAPMASI), tünel görüşü mü (TUNEL), beyan dışı gerekçe "
+    "mi (GIZLI_GUNDEM), gerçekten yaptı mı yoksa tiyatro mu (TIYATRO), sonucu "
+    "taşıdı mı (EKSIK_AKTARIM). Piyasa yolunda denetim boru hattında OTOMATİK "
+    "koşar (rapor['KONTROL']). Diğer konularda zincir defteri "
+    "`.claude/kontrol/zincir/<konu>.json`'a yazılır ve cevap YAYINLANMADAN "
+    "`python3 .claude/skills/piramit-sistem/scripts/kontrol_ajanlari.py "
+    "--zincir <defter> --ozet` koşulur. Tek P0 bulgu TESLİMİ MÜHÜRLER: sonuç "
+    "gösterilir ama 'bu haliyle kullanılamaz' denir + düzeltme planı yazılır."
+)
+
 
 # Otomatik yolda okunan OPSİYONEL kanallar: dosya varsa ilgili motor boru
 # hattına KENDİLİĞİNDEN girer, yoksa fail-closed atlanır (uydurma girdi yok).
@@ -543,6 +563,9 @@ def _gorev_tam_bas(bolum: str, g: dict | None = None) -> None:
         if not isinstance(g, dict):
             raise TypeError(f"kök tip {type(g).__name__}, sözlük bekleniyordu")
     if bolum == "ek":
+        # KONTROL_KURAL sabittir (1147 krk) ve istemler arası DEĞİŞMEZ; her
+        # istemde basmak çıktı bütçesini yiyordu — KURAL ile aynı sınıf kusur.
+        print(KONTROL_KURAL)
         if g.get("strateji_kurali"):
             print("   strateji: " + str(g.get("strateji_kurali")))
         # BEKLEYEN İŞLER: kullanıcının "sonra yapacağız" dediği maddeler.

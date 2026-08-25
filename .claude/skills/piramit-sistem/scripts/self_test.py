@@ -74,7 +74,11 @@ def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="piramit_test_"))
     try:
         if agirlik_p.exists():
-            agirlik_p.unlink()   # T1 temiz başlasın (ağırlık 1.0 nötr)
+            # SİLMEK YERİNE TAŞI: eskiden unlink ediliyor ve yalnız `finally`
+            # ile geri yazılıyordu — SIGKILL/zaman aşımı finally'yi atlarsa
+            # ÖĞRENİLMİŞ SI AĞIRLIĞI KALICI KAYBOLUYORDU. Taşıma atomiktir ve
+            # süreç ölse bile dosya diskte durur (elle geri alınabilir).
+            agirlik_p.rename(agirlik_p.with_suffix(".json.oztest_yedek"))
 
         # ---- T1: zirveye tırmanma -----------------------------------------
         (tmp / "state").mkdir(parents=True, exist_ok=True)
@@ -725,6 +729,9 @@ def main() -> int:
                             "gorsel": str(z_dir / "gorsel.json")})
             j = json.loads(jz.read_text(encoding="utf-8"))
             j["state_dir"] = str(tmp / f"z_{ad}")
+            # state_dir HİÇ oluşturulmuyordu: üç senaryo da yazılamayan bir
+            # dizine işaret ediyordu (izolasyon iddiası kanıtsızdı).
+            Path(j["state_dir"]).mkdir(parents=True, exist_ok=True)
             jz.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
             k1z = [k for k in _kos(jz)["katmanlar"] if k["katman"] == "K1-LLM"][0]
             senaryo[ad] = (k1z.get("zorunlu_girdiler", {}).get("likidasyon") is not None,
@@ -909,6 +916,31 @@ def main() -> int:
                 f"ilk yön={ct.get('yon_ilk')} → doğrulanmış kurul="
                 f"{ct.get('yon_dogrulanmis_kurul')} | dayanıksız={ct['yon_dayaniksiz']}")
 
+        # ---- T35: KONTROL AJANLARI boru hatta bağlı mı, mühür işliyor mu ----
+        import kontrol_ajanlari as KA  # noqa: PLC0415
+        pr_kirli = {
+            "sembol": "T35", "_job": {"korelasyon": True},
+            "katmanlar": [
+                {"katman": "K1-LLM", "gecti": True, "kanallar": {"15m": "x"}},
+                {"katman": "K2-AI-AJAN", "gecti": True,
+                 "motor_sonuclari": {"m1": {"skor": 0.3}}},
+                {"katman": "K3-COKLU-AJAN", "gecti": True, "danismanlar": [
+                    {"name": "m1", "stance": "long", "_ham_confidence": 0.5},
+                    {"name": "m2", "stance": "long", "_ham_confidence": 0.5}]},
+                {"katman": "K4-AGI", "gecti": True, "kapi": "geçti", "verifier": {}}],
+            "ZIRVE": {"YON_BIAS": "LONG", "EMIR": "LIMIT LONG @1"},
+            "DENETIM": {"muhurlendi": False, "ihlal": []}}
+        k_kirli = KA.denetle_piramit(pr_kirli)
+        kodlar = {x["kod"] for x in k_kirli["bulgular"]}
+        # gerçek koşu (yukarıdaki tam rapor) yanlış-pozitif üretmemeli
+        k_temiz = KA.denetle_piramit(json.loads(json.dumps(r25)))
+        kontrol("T45 kontrol ajanları: kirli koşu mühürlenir, temiz koşu geçer",
+                k_kirli["muhurlendi"] and {"TIYATRO", "TAKLIT", "GOREV_SAPMASI",
+                                           "GIZLI_GUNDEM"} <= kodlar
+                and "KONTROL" in r25 and not k_temiz["muhurlendi"],
+                f"kirli bulgular={sorted(kodlar)} | gerçek koşu mühür="
+                f"{k_temiz['muhurlendi']} ({k_temiz['ozet']})")
+
         # T12: bar arşivi — karar penceresi kaysa bile akıbet ölçülebilir
         ars = tmp / "arsiv.jsonl"
         AE.arsiv_guncelle(ars, b8)                       # eski pencere arşive girdi
@@ -1075,10 +1107,45 @@ def main() -> int:
         os.environ.pop("CLAUDE_PROJECT_DIR", None)
         if _env_yedek is not None:
             os.environ["CLAUDE_PROJECT_DIR"] = _env_yedek
+        # ---- T35: MEKANİKLEŞTİRME — atlanan motor boru hattını DURDURUR ----
+        # Bu test mekanizmanın KENDİSİNİ sınar: manifestoya var olmayan bir
+        # motor eklenince kapı kapanmalı. Kapanmazsa "hiçbir şey atlanamaz"
+        # güvencesi sözde kalır (kapı kodu bozulsa kimse fark etmezdi).
+        sicil_var = isinstance(r1.get("_MOTOR_SICILI"), list) and r1["_MOTOR_SICILI"]
+        kosan_k1 = {s["motor"] for s in (r1.get("_MOTOR_SICILI") or [])
+                    if s.get("katman") == "K1-LLM"}
+        zorunlu_k1 = set(P.ZORUNLU_MOTOR["K1-LLM"])
+        k1_tam = zorunlu_k1 <= kosan_k1
+
+        _yedek_man = dict(P.ZORUNLU_MOTOR)
+        try:
+            P.ZORUNLU_MOTOR["K1-LLM"] = list(_yedek_man["K1-LLM"]) + ["yok_motor"]
+            r35 = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4)}))
+        finally:
+            P.ZORUNLU_MOTOR.clear()
+            P.ZORUNLU_MOTOR.update(_yedek_man)
+        durdu = str(r35.get("durum", "")).startswith("DURDU — K1-LLM")
+        gerekce = "ZORUNLU HESAP EKSİK" in str(
+            (r35.get("katmanlar") or [{}])[0].get("kapi", ""))
+        # gözlemci de bağımsız olarak yakalamalı (ikinci ağ)
+        r36 = json.loads(json.dumps(r1, default=str))
+        r36["_MOTOR_SICILI"] = [s for s in r36["_MOTOR_SICILI"]
+                               if s.get("motor") != "eleme"]
+        d36 = GZ.denetle(r36)
+        gozlemci_yakaladi = any("ZORUNLU motor koşmadı" in str(b)
+                                for b in (d36.get("ihlal") or []))
+        kontrol("T35 mekanikleştirme: atlanan zorunlu motor kapıyı KAPATIR",
+                bool(sicil_var) and k1_tam and durdu and gerekce
+                and gozlemci_yakaladi,
+                f"sicil kaydı={bool(sicil_var)}, K1 zorunlular koştu={k1_tam}, "
+                f"eksikte durdu={durdu}, gerekçe yazıldı={gerekce}, "
+                f"gözlemci bağımsız yakaladı={gozlemci_yakaladi}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        tasinan = agirlik_p.with_suffix(".json.oztest_yedek")
         if yedek is not None:
             agirlik_p.write_text(yedek, encoding="utf-8")
+            tasinan.unlink(missing_ok=True)      # taşınan kopya artık gereksiz
         elif agirlik_p.exists():
             agirlik_p.unlink()
 

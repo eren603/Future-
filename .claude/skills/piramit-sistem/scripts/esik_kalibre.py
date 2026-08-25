@@ -20,7 +20,10 @@ yani tek bir sabit eşiğin "doğru" olduğu bir dünya yok.
         Aynı yöne bakan kurul → küçük SE → düşük eşik; bölünmüş kurul →
         büyük SE → yüksek eşik. Koşudan koşuya değişir.
       · uzlaşı ve yön-ağırlığı tabanı YAPISALDIR: çoğunluk kuralı (0.5 pay,
-        mutlak ölçekte 0.5 × toplam etkin ağırlık). Bu veriden türetilmez ve
+        mutlak ölçekte 0.5 × toplam HAM GÜVEN). Ölçek ETKİN ağırlıktan
+        alınmaz: çürütme penaltısı hem side_weight'i hem eşiği birlikte
+        küçültüp SADELEŞİYOR, çürütülmüş kurul doğrulanmışla aynı kapıdan
+        geçiyordu (2026-07 denetimi). Bu veriden türetilmez ve
         çıktıda öyle etiketlenir. Yan fayda: sabit 0.60 bir ÖLÇEK HATASIYDI —
         yön ağırlığı mutlak toplamdır, danışman sayısı arttıkça kapı kendiliğinden
         gevşiyordu (4 danışmanda toplam ≈ 2.2 iken eşik 0.60).
@@ -117,8 +120,12 @@ def varyans_orani(kapanis: list, q: int) -> dict:
     Saf rassal yürüyüşte q-periyot getiri varyansı = q × 1-periyot varyansı,
     yani VR(q)=1. VR>1 pozitif otokorelasyon (trend), VR<1 negatif (dönüş).
     """
+    # PAY da korunur: koşul yalnız paydayı koruyordu, kapanış 0/negatif olunca
+    # math.log(0.0) ValueError fırlatıp esikler() içindeki tek try'ı tetikliyor
+    # ve TÜM kalibrasyon statik korkuluğa düşüyordu (sessiz eşik kaybı).
     r = [math.log(kapanis[i] / kapanis[i - 1])
-         for i in range(1, len(kapanis)) if kapanis[i - 1] > 0]
+         for i in range(1, len(kapanis))
+         if kapanis[i - 1] > 0 and kapanis[i] > 0]
     n = len(r)
     if n < max(20, 2 * q):
         return {"durum": f"{YOK} — {n} getiri < gerek {max(20, 2 * q)}"}
@@ -271,7 +278,7 @@ def bootstrap_taban(rows: list, alpha: float, n_boot: int, seed: int) -> dict:
                    büyük SE → yüksek eşik. Küçük kurulda da dejenere olmaz.
     uzlaşı eşiği : 0.5 — YAPISAL çoğunluk kuralı (ağırlığın yarısından fazlası
                    tek tarafta). Veriden türetilmez, açıkça etiketlenir.
-    yön ağırlığı : 0.5 × toplam etkin ağırlık — aynı çoğunluk kuralının MUTLAK
+    yön ağırlığı : 0.5 × toplam HAM güven (çürütme penaltısı sadeleşmesin) — aynı çoğunluk kuralının MUTLAK
                    ölçekteki karşılığı. Sabit 0.60 ölçek hatasıydı: danışman
                    sayısı arttıkça mutlak toplam büyüdüğü için kapı kendiliğinden
                    gevşiyordu (4 danışmanda toplam ~2.2 iken eşik 0.60).
@@ -304,10 +311,15 @@ def bootstrap_taban(rows: list, alpha: float, n_boot: int, seed: int) -> dict:
             "toplam_etkin_agirlik": round(toplam_w, 4),
             "score": round(z * se, 4),
             "min_agreement": 0.5,
-            "min_side_weight": round(0.5 * toplam_w, 4),
+            # Ölçek HAM güven toplamından gelir, ETKİN ağırlıktan değil.
+            # Eskiden 0.5×Σeff idi: çürütme cezası eff'i düşürünce hem
+            # side_weight hem eşik birlikte küçülüyor, ceza SADELEŞİYOR ve
+            # çürütülmüş kurul doğrulanmış kurulla AYNI kapıdan geçiyordu.
+            # Ham güvene bağlanınca eşik sabit kalır → çürütülen kurul düşer.
+            "min_side_weight": round(0.5 * sum(r["confidence"] for r in rows), 4),
             "yorum": ("score = z×SE_bootstrap (sinyal kendi gürültüsünü aşmalı); "
-                      "uzlaşı/yön ağırlığı = çoğunluk kuralı (yapısal, "
-                      "veriden türetilmedi — ölçek TOPLAM AĞIRLIKTAN gelir)")}
+                      "uzlaşı = çoğunluk kuralı (yapısal); yön ağırlığı eşiği "
+                      "HAM güven toplamından (çürütme penaltısı sadeleşmesin)")}
 
 
 def _quantile(xs: list, q: float) -> float:

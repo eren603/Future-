@@ -1,0 +1,68 @@
+  GECTI: T1 stop = v5.4 formuluyle bit duzeyinde ayni (186.25595805788015 == 186.25595805788015)
+  GECTI: T1b hedef = bilgi_hedefi(R-kapili teyitli swing) birebir (hedef=191.53994775023148, R=1.39)
+  GECTI: T1c basilan hedef R>=1.35 kapisini gecmis (R=1.39)
+  GECTI: T2 yon alani dolu ve gecerli (yon=LONG, kaynak=rejim BULL (guven=0.87))
+  GECTI: T3 acik kapiyi V1 filtresi dusurdu (gerekceli) 
+  GECTI: T3b kapali kapiyi hicbir varyant ACAMAZ 
+  GECTI: T3c taban varyant acik kapiya dokunmaz 
+  GECTI: T4a acik pozisyon: sonuc None (uydurma kapanis yok) 
+  GECTI: T4b ayni pencerede stop+hedef -> muhafazakar STOP ({'sonuc': 'STOP', 'r': -1.0})
+  GECTI: T4c dolmayan oneri TIME_STOP sonrasi IPTAL, R yazilmaz ({'sonuc': 'IPTAL', 'r': None})
+  GECTI: T5a olculmus akibet yokken META = HOLD (olculmus akibet yetersiz (EMIR-ADAYI populasyonunda n=0/8; BILGI kayitlari yon-isabet olcumune girer, varyant secimine girmez) — evaluator kararsiz, degisiklik yok (fail-closed))
+  GECTI: T5b olcumle ustun varyant -> KEEP (varyant degisti) (aktif varyant V0_taban -> V1_komposit_teyit (olcumle))
+  GECTI: T5c gerileyen varyant olcumle TABANA doner (KEEP ya da ROLLBACK) (KEEP: aktif varyant V1_komposit_teyit -> V0_taban (olcumle))
+  GECTI: T5d aday J olculemezken gerileme -> ROLLBACK dali (ROLLBACK: V1_komposit_teyit -> V0_taban (olculmus gerileme))
+  GECTI: T5e kesif kapaliyken aday KEEP/REJECT kaydi yok (eps FIILEN okunur) (['TUT'])
+  GECTI: T5f eps=0.0 periyot disinda kesif acmaz (periyotta ZORUNLU acar) 
+  GECTI: T5g J=None iken REJECT yok, HOLD var, karantina bos (kararlar=['HOLD', 'HOLD'], karantina={})
+  GECTI: T6a ilk kosu muhru kaydetti 
+  GECTI: T6b sabit degisince HALT (muhur tutmadi) 
+  GECTI: T6c PLANE degeri degisince de HALT (muhur kapsami genisledi) 
+  GECTI: T6d bozuk bellek -> temiz HALT (fail-closed) 
+  GECTI: T7a .bak anlik goruntusu var 
+  GECTI: T7b her deney kaydi PDF #10 alanlarini tasir (2 kayit)
+  GECTI: T7c evrim zinciri soy tutuyor 
+  GECTI: T2b ciktida BTC/USDT YON satiri var 
+  GECTI: T2b ciktida ETH/USDT YON satiri var 
+  GECTI: T9a NaN seviyeli oneri -> GECERSIZ, R=None (zehirleme yok) ({'sonuc': 'GECERSIZ', 'r': None})
+  GECTI: T9b gap'ten gecen LONG dolumu artik OLCULUYOR (lo<=giris) ({'sonuc': 'STOP', 'r': -1.0})
+  GECTI: T9c BILGI akibetleri varyant olcumune KARISMAZ ({'n': 4, 'ort_r': 1.0})
+  GECTI: T9d ic_denetim ihlali yakaladi ve etiketi muhurledi (etiket=BILGI (MUHURLU — ic denetim ihlali))
+  GECTI: T10a zincirli ekleme dogrulaniyor 
+  GECTI: T10b zincirsiz sahte kayit YAKALANIYOR (kirik indeks=1)
+  GECTI: T10c bozuk zincirle kosu HALT 
+  GECTI: T10d dolum barindaki hedef SAYILMAZ (bar-ici sira bilinmez) (None)
+  GECTI: T10e sonraki barda hedef SAYILIR ({'sonuc': 'HEDEF', 'r': 1.0})
+  GECTI: T10f eps=0'da zorunlu kesif periyodu calisiyor (yutucu durum yok) 
+  GECTI: T10g ic denetim ihlalinde META = HOLD (S=0 olculdu) (ic denetim ihlali (S=0) — evaluator guvenlik dali)
+  GECTI: T10h .bak varken sessiz sifirlama engellendi (BellekBozuk) 
+  GECTI: T11a _VARYANT_SIRA kurcalamasi HALT ediyor (muhur kapsami) 
+  GECTI: T11b imza varyanttan bagimsiz — ayni bar ikinci varyantla da COKMEZ 
+  GECTI: T12a SHORT hedefi girisin ALTINDA ve R>=1.35 (hedef=90.0)
+  GECTI: T12b LONG hedefi girisin USTUNDE ve R>=1.35 (hedef=102.80773461269041)
+  GECTI: T12c yon tarafinda swing yoksa hedef None (uydurma yok) 
+  GECTI: T12c2 R<1.35 yakin swing ATLANDI, R>=1.35 swing secildi (hedef=104.0)
+  GECTI: T12c3 yalniz dar swing varsa hedef None (sozlesme: aday duser) (hedef=None)
+  GECTI: T12d ters-geometrili oneri GECERSIZ (sahte HEDEF uretilmez) ({'sonuc': 'GECERSIZ', 'r': None})
+  GECTI: T12e dogru geometri olculmeye devam eder 
+  GECTI: T12f hedef yoksa gerekce var (fail-closed) (yon=LONG)
+  GECTI: T13a hedef=None kayit COKERTMEZ -> GECERSIZ ({'sonuc': 'GECERSIZ', 'r': None})
+  GECTI: T13b EMIR-ADAYI + R<1.35 = IHLAL ve muhurlenir (['T: EMIR-ADAYI etiketi R<1.35 ile (sozlesme ihlali)'])
+  GECTI: T13c tetik R>=1.35 -> EMIR-ADAYI mesru (R=3.25)
+  GECTI: T14a Wilson araligi dogru (30/100 -> [0.219, 0.396]) ([0.2189, 0.3959])
+  GECTI: T14b Wilson sinirlari [0,1] icinde ve alt<ust 
+  GECTI: T14c yukari trendde p_hedef(LONG) > p_hedef(SHORT) (olculen) (LONG 0.828 vs SHORT 0.129, n=93)
+  GECTI: T14d EV_nokta = p_h*R - p_s - maliyet birebir (0.571 vs 0.57)
+  GECTI: T14e EV_muhafazakar <= EV_nokta (Wilson kotu-ucu) 
+  GECTI: T14f orneklem<30 -> None (fail-closed) 
+  GECTI: T14g yonlu kararda ilk-gecis/yon-olcum mevcut (ya da VERI YOK None) (hedef=False)
+  GECTI: T15a NaN'li seride sonuc ya None ya tum alanlar sonlu ({'n': 68, 'p_hedef': 0.176, 'p_stop': 0.632, 'p_zaman': 0.191, 'hedef_alt': 0.104, 'stop_ust': 0.737, 'R': 1.35, 'maliyet_R': np.float64(0.086), 'ev_nokta': np.float64(-0.48), 'ev_muhafazakar': np.float64(-0.682)})
+  GECTI: T15b orneklem tam-ufuklu girislerle sinirli (n=43 <= 43)
+  GECTI: T15c kapi ACIK degilken VAR hukmu daima nitelenmis (ihlalli=[])
+  GECTI: T15d kosu ciktisinda ILK-GECIS/EV katmani basiliyor 
+  GECTI: T15e sinir notu kosu basina BIR kez (sayi=1)
+  GECTI: T15f oneri yok (hedefsiz kosu) — ev alani kosulu bos-dogru 
+  GECTI: T8a eps ust banttan cikamadi (eps=0.3)
+  GECTI: T8b W ust banttan cikamadi (W=50)
+
+SONUC: 66 kontrol, 0 basarisiz.

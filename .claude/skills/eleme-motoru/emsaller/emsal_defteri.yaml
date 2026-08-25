@@ -1,0 +1,618 @@
+# EMSAL DEFTERİ — eleme-motoru
+#
+# Kaynak: Anthropic "claude-code-security-review" harness'ının eleme boru hattı
+#   - claudecode/claude_api_client.py  (sha 32b5ca67c3d2, 376 satır)
+#       satır 243-259  -> HARD EXCLUSIONS   (16 madde)
+#       satır 261-265  -> SIGNAL QUALITY CRITERIA
+#       satır 267-284  -> PRECEDENTS        (17 madde)
+#       satır 292-295  -> "Assign a confidence score from 1-10"
+#   - claudecode/findings_filter.py    (sha a18eb6a21120, 343 satır)
+#       satır 16-24  -> FilterStats
+#       satır 31-79  -> desen aileleri
+#       satır 81-154 -> get_exclusion_reason (+ .md kapısı, C/C++ ve HTML bağlam kapıları)
+#
+# Kaynakta 33 madde vardır (16 sert dışlama + 17 emsal). HEPSİ tek tek ele
+# alınmıştır. Bu alana çevrilemeyen madde ATLANMAZ; `uygulanamaz: true` ile ve
+# gerekçesiyle deftere yazılır (sessiz kayıp yasak — gozlemci.py EKSIK_AKTARIM).
+#
+# ALAN ÇEVİRİSİ: kaynakta "bulgu" = güvenlik bulgusu (file/title/description).
+# Bu depoda "bulgu" = DANIŞMAN/MOTOR İDDİASI — karar-kurulu/scripts/sentez.py'nin
+# danışman şeması: name / stance / confidence / evidence (+ _verifier_confirmed).
+# `kaynak` alanı, kaynaktaki `file` alanının karşılığıdır (iddiayı üreten motor
+# dosyası). `baslik`+`evidence` birleşimi, kaynaktaki `title`+`description`
+# birleşiminin karşılığıdır (findings_filter.py:105).
+#
+# katman: 1 = sert kural (regex, deterministik, bağlamsız)
+#         2 = bağlam-duyarlı kapı (rejim/kapsam/aile/tazelik)
+#         3 = emsal denetimi (bu defterin `kontrol` bloğu makineyle koşar)
+#         0 = defter kaydı; makine denetimi YOK (elle ikinci-göz işi)
+#
+# kontrol.desen         : küçültülmüş "baslik + evidence" metnine karşı regex
+# kontrol.istisna_desen : eşleşirse iddia ELENMEZ (emsalin istisnası)
+# kontrol.kosul         : eleme.py'de tanımlı adlandırılmış yüklem
+#                         (kaynak_motor / elle_kaynak / guven_bandi_orta_sayisiz)
+
+surum: 1
+kaynak_deposu: "claude-code-security-review (claudecode/)"
+madde_sayisi: 33
+
+emsaller:
+
+  # ======================================================================
+  # HARD EXCLUSIONS — claude_api_client.py:243-259 (16 madde)
+  # ======================================================================
+
+  - id: SERT-01
+    kaynak_konum: "claude_api_client.py:244"
+    kaynak_alinti: "Denial of Service (DOS) vulnerabilities or resource exhaustion attacks"
+    kural: "Ölçülmemiş genel felaket/tükenme iddiası elenir."
+    gerekce: >-
+      Kaynakta DOS bulguları "düşük sinyal" sayılır çünkü her sistem için
+      söylenebilir ve eyleme çevrilmez. Bu alanda karşılığı, her piyasada her
+      an söylenebilen ve hiçbir seviyeye bağlanmayan felaket cümlesidir.
+    bu_depodaki_karsiligi: >-
+      "Piyasa çökebilir", "likidite kuruyabilir", "sonsuz düşüş" gibi hiçbir
+      ölçüme (ATR, seviye, skor) bağlanmayan iddia kurula danışman olarak
+      giremez — CLAUDE.md doğruluk sözleşmesi: her sayısal iddia bir dayanağa
+      bağlanır.
+    katman: 1
+    desen_ailesi: "_GENEL_RISK_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-02
+    kaynak_konum: "claude_api_client.py:245"
+    kaynak_alinti: "Secrets/credentials stored on disk (these are managed separately)"
+    kural: "Anahtar/kimlik bilgisi iddiaları bu boru hattının konusu değildir."
+    gerekce: >-
+      Kaynak bunları "ayrı yönetiliyor" diye eler. Bu depo karar-desteğidir;
+      canlı/otomatik emir DAHİL DEĞİLDİR (CLAUDE.md), dolayısıyla borsa
+      anahtarı/kimlik bilgisi bir yön bulgusu üretemez.
+    bu_depodaki_karsiligi: >-
+      "API anahtarı diskte", "cüzdan anahtarı" türü iddialar işletim ailesine
+      düşer ve yön kuruluna girmez.
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-03
+    kaynak_konum: "claude_api_client.py:246"
+    kaynak_alinti: "Rate limiting concerns or service overload scenarios (services don't need to implement rate limiting)"
+    kural: "Seviyesiz genel tavsiye elenir."
+    gerekce: >-
+      Kaynak "rate limit ekleyin" tipi genel öneriyi bulgu saymaz. Bu alanda
+      karşılığı, hiçbir ölçülmüş seviye taşımayan genel öğüttür.
+    bu_depodaki_karsiligi: >-
+      "Stop kullanılmalı", "pozisyon küçültülmeli", "risk yönetimi uygulanmalı"
+      gibi seviyesiz öneri bir danışman iddiası değildir; emir seviyeleri
+      emir_plani.py'den ÖLÇÜLEREK gelir (CLAUDE.md emir çıktısı kuralı).
+    katman: 1
+    desen_ailesi: "_GENEL_TAVSIYE_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-04
+    kaynak_konum: "claude_api_client.py:247"
+    kaynak_alinti: "Memory consumption or CPU exhaustion issues"
+    kural: "Motorun çalışma performansına dair şikâyet yön bulgusu değildir."
+    gerekce: >-
+      Kaynakta kaynak tüketimi güvenlik açığı sayılmaz. Burada da motorun
+      yavaşlığı/bellek kullanımı piyasa yönü hakkında hiçbir şey söylemez.
+    bu_depodaki_karsiligi: >-
+      "Boru hattı yavaş", "bellek şişti", "CPU doldu" iddiaları işletim
+      ailesine düşer; sentez.py'ye danışman olarak girmez.
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-05
+    kaynak_konum: "claude_api_client.py:248"
+    kaynak_alinti: "Lack of input validation on non-security-critical fields without proven security impact"
+    kural: "Etkisi gösterilmemiş 'alan doğrulanmıyor' iddiası elenir."
+    gerekce: >-
+      Kaynak, kanıtlanmış etkisi olmayan doğrulama eksikliğini elemektedir.
+      Karşılığı: yön skorunu değiştirdiği gösterilmemiş alan eksikliği.
+    bu_depodaki_karsiligi: >-
+      "Şu alan doğrulanmıyor / kontrol edilmiyor" iddiası, o alanın yon_skoru
+      veya kapsam üzerinde ölçülmüş etkisi gösterilmedikçe elenir. Gerçek
+      şema kapısı ayrı bir yüzeydir (elle gelen girdinin doğrulanması).
+    katman: 1
+    desen_ailesi: "_GENEL_TAVSIYE_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-06
+    kaynak_konum: "claude_api_client.py:249"
+    kaynak_alinti: "Input sanitization concerns for github action workflows"
+    kural: "(Bu alana taşınamaz.)"
+    gerekce: >-
+      Kaynak, CI iş akışı (github action) yüzeyine dair girdi temizliği
+      iddialarını eler. Bu depoda bir "bulgu" piyasa iddiasıdır; CI/kanca
+      yüzeyi bir yön iddiası üretmez. Ayrıca `.claude/hooks/` bu becerinin
+      yetki alanı DIŞINDADIR — o yüzeye kural yazmak sahte otorite olur.
+    bu_depodaki_karsiligi: "YOK — alan dışı yüzey (CI/kanca), piyasa iddiası değil."
+    katman: 0
+    desen_ailesi: null
+    uygulanamaz: true
+    kontrol: null
+
+  - id: SERT-07
+    kaynak_konum: "claude_api_client.py:250"
+    kaynak_alinti: "A lack of hardening measures. Code is not expected to implement all security best practices, just avoid obvious vulnerabilities."
+    kural: "'En iyi uygulama eksik' türü iddia elenir."
+    gerekce: >-
+      Kaynak, her ideal önlemin uygulanmasını beklemez. Burada da bir motorun
+      her olası göstergeyi hesaplamamış olması, kararın yanlış olduğunu
+      göstermez.
+    bu_depodaki_karsiligi: >-
+      "İdeal olarak şu gösterge de bakılmalıydı", "best practice değil" gibi
+      iddialar elenir; eksik kanal zaten kapsam düşüşüyle (turev_akis kapsam,
+      fail-closed) mekanik olarak cezalandırılır.
+    katman: 1
+    desen_ailesi: "_GENEL_TAVSIYE_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-08
+    kaynak_konum: "claude_api_client.py:251"
+    kaynak_alinti: "Race conditions or timing attacks that are theoretical rather than practical issues. Only report a race condition if it is extremely problematic."
+    kural: "Teorik zamanlama iddiası elenir; ölçülmüş olan kalır."
+    gerekce: >-
+      Kaynak teorik yarış durumunu eler, pratik olanı tutar. Burada karşılığı:
+      "aynı barda şu da olabilirdi" türü kuramsal zamanlama spekülasyonu.
+    bu_depodaki_karsiligi: >-
+      "Teorik olarak fitil önce stopa değebilirdi" gibi ölçülmemiş zamanlama
+      iddiası elenir. Ölçülmüş karşılığı akibet_etiketle.simule_et'in
+      MUHAFAZAKÂR kuralıdır (aynı barda stop+hedef → STOP) ve o bir iddia
+      değil, uygulanan kuraldır — elenmez.
+    katman: 1
+    desen_ailesi: "_DUSUK_ETKI_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-09
+    kaynak_konum: "claude_api_client.py:252"
+    kaynak_alinti: "Vulnerabilities related to outdated third-party libraries. These are managed separately and should not be reported here."
+    kural: "Veri/kaynak eskiliği ayrı mekanizmada ele alınır; danışman iddiası olarak taşınmaz."
+    gerekce: >-
+      Kaynak "ayrı yönetiliyor" gerekçesiyle eler. Bu depoda tazelik AYRI ve
+      MEKANİK bir kapıdır (piramit.py zorunlu_damga_tolerans_dk=240, BAYAT
+      işareti) — aynı şeyi bir de serbest metin iddiası olarak taşımak çift
+      sayım olur.
+    bu_depodaki_karsiligi: >-
+      "Veri eski", "panel bayat" cümlesi bir danışman iddiası değildir; BAYAT
+      hükmünü 2. katman tazelik kapısı verir (bkz. SERT-13 bağlam kapıları).
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-10
+    kaynak_konum: "claude_api_client.py:253"
+    kaynak_alinti: "Memory safety issues such as buffer overflows or use-after-free-vulnerabilities are impossible in rust. Do not report memory safety issues in rust code."
+    kural: "Bir iddia, üretebilecek yapıda olmayan motordan geliyorsa geçersizdir."
+    gerekce: >-
+      Kaynağın mantığı: dilin yapısı gereği imkânsız olan bulgu rapor edilmez
+      (findings_filter.py:133-143 aynı mantığın C/C++ kapısı). Bu depoda
+      birebir karşılığı vardır: karar-motoru YALNIZ kline görür; OI/funding/
+      CVD/likidasyona KÖRDÜR (engine/README.md, turev_akis.py:4-8).
+    bu_depodaki_karsiligi: >-
+      Fiyat-yapısı ailesinden (karar-motoru / grafik-calisma / smc_tespit) gelen
+      bir TÜREV iddiası yapısal olarak imkânsızdır → elenir. Aile eşlemesi
+      gozlemci.py AILE sözlüğünden alınır.
+    katman: 2
+    desen_ailesi: "_TUREV_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-11
+    kaynak_konum: "claude_api_client.py:254"
+    kaynak_alinti: "Files that are only unit tests or only used as part of running tests."
+    kural: "Test/öz-test kaynaklı iddia gerçek koşu bulgusu sayılmaz."
+    gerekce: >-
+      Kaynak yalnız testte kullanılan dosyaların bulgularını eler. Burada
+      karşılığı öz-test ve kum-havuzu koşularıdır.
+    bu_depodaki_karsiligi: >-
+      Kaynağı self_test.py / *_test.py / örnek job / kum havuzu olan iddia
+      elenir — CLAUDE.md kum havuzu koşusunun gerçek hafızaya yazılmaması
+      kuralının eleme tarafındaki karşılığı.
+    katman: 1
+    desen_ailesi: "kaynak_kapisi"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-12
+    kaynak_konum: "claude_api_client.py:255"
+    kaynak_alinti: "Log spoofing concerns. Outputing un-sanitized user input to logs is not a vulnerability."
+    kural: "Kullanıcı beyanının rapora yansıması bulgu değildir."
+    gerekce: >-
+      Kaynakta kullanıcı girdisinin loga geçmesi başlı başına açık değildir.
+      Burada karşılığı: kullanıcının cümlesinin çıktıda tekrarlanması bir
+      ölçüm üretmez.
+    bu_depodaki_karsiligi: >-
+      "Kullanıcı yükseleceğini söylüyor" bir danışman iddiası DEĞİLDİR —
+      CLAUDE.md sert yasak 3: kullanıcının iddiası dahil hiçbir iddia
+      doğrulanmadan kabul edilmez (memnun etme yasağı).
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-13
+    kaynak_konum: "claude_api_client.py:256"
+    kaynak_alinti: "SSRF vulnerabilities that only control the path. SSRF is only a concern if it can control the host or protocol."
+    kural: "Kararı oynatmayan kısmi sinyal bulgu sayılmaz."
+    gerekce: >-
+      Kaynak, yalnız yolu kontrol eden SSRF'i "yeterince kritik değil" diye
+      eler; hükmü ancak host/protokol kontrolü varsa verir. Karşılığı:
+      dayandığı faktör okunamamışken verilen bayrak.
+    bu_depodaki_karsiligi: >-
+      Likidasyon kaskadı / squeeze bayrağı, turev_akis.py'nin `liquidation`
+      faktörü VERİ YOK iken (skor None) ileri sürülemez — dayanağı olmayan
+      bayrak yön skorunu oynatmaz.
+    katman: 2
+    desen_ailesi: "_SQUEEZE_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-14
+    kaynak_konum: "claude_api_client.py:257"
+    kaynak_alinti: "Including user-controlled content in AI system prompts is not a vulnerability. In general, the inclusion of user input in an AI prompt is not a vulnerability."
+    kural: "Kullanıcı verisinin motora girdi olması başlı başına kusur değildir."
+    gerekce: >-
+      Kaynak, kullanıcı içeriğinin modele girmesini tek başına açık saymaz.
+      Bu depoda kullanıcı verisi (kline paketi) motorun ASIL girdisidir.
+    bu_depodaki_karsiligi: >-
+      "Kullanıcı verisi doğrudan motora veriliyor" bir bulgu değildir; paket
+      alımı zaten SHA defteri + gerileme (eski paket yeni veriyi geri saramaz)
+      korkuluklarından geçer (CLAUDE.md veri alımı kuralı).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '(kullanıcı|kullanici)\s+(verisi|girdisi|kline).{0,40}(motora|modele|boru hattına)\s*(veriliyor|giriyor|aktarılıyor)'
+      istisna_desen: null
+      kosul: null
+      eleme_gerekcesi: "Kullanıcı verisinin motora girdi olması kusur değil (paket alımı SHA + gerileme korkuluklarından geçer)"
+
+  - id: SERT-15
+    kaynak_konum: "claude_api_client.py:258"
+    kaynak_alinti: "Do not report issues related to adding a dependency to a project that is not available from the relevant package repository. Depending on internal libraries that are not publicly available is not a vulnerability."
+    kural: "Dış kaynağa erişilememesi bir yön bulgusu değildir."
+    gerekce: >-
+      Kaynak, erişilemeyen bağımlılığı açık saymaz. Burada karşılığı: ağ
+      kapalıyken Binance genel uçlarından funding/LSR gelmemesi.
+    bu_depodaki_karsiligi: >-
+      "Funding çekilemedi / uç erişilemedi" işletim bulgusudur; yön etkisi
+      zaten kapsam düşüşüyle mekanik olarak fiyatlanır (turev_akis kapsam
+      normalizasyonu + kapsam_esigi 0.5 fail-closed).
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: SERT-16
+    kaynak_konum: "claude_api_client.py:259"
+    kaynak_alinti: "Do not report issues that cause the code to crash, but are not actually a vulnerability. E.g. a variable that is undefined or null is not a vulnerability."
+    kural: "Motor hatası / boş alan tek başına yön bulgusu değildir."
+    gerekce: >-
+      Kaynak, çökme üreten ama açık olmayan durumları eler. Burada karşılığı:
+      bir motorun hata vermesi ya da alanın None olması.
+    bu_depodaki_karsiligi: >-
+      "Motor çöktü", "alan None" iddiası yön kuruluna girmez; doğru davranış
+      o alanı VERİ YOK işaretleyip fail-closed davranmaktır (CLAUDE.md
+      doğruluk sözleşmesi) — iddia olarak taşımak değil.
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  # ======================================================================
+  # PRECEDENTS — claude_api_client.py:267-284 (17 madde)
+  # ======================================================================
+
+  - id: EMSAL-01
+    kaynak_konum: "claude_api_client.py:268"
+    kaynak_alinti: "Logging high value secrets in plaintext is a vulnerability. Otherwise, do not report issues around theoretical exposures of secrets. Logging URLs is assumed to be safe. Logging request headers is assumed to be dangerous since they likely contain credentials."
+    kural: "Sıradan kayıt iddiası elenir; GİZLİ KALAN eşik/sabit iddiası tutulur."
+    gerekce: >-
+      Kaynak, kaydın kendisini değil YÜKSEK DEĞERLİ gizli bilginin açığa
+      çıkmasını bulgu sayar. Bu alanda "yüksek değerli gizli", etiketlenmemiş
+      karar eşiğidir: kararı sessizce belirler ve denetlenemez.
+    bu_depodaki_karsiligi: >-
+      "Şu ara değer loglanıyor" elenir; "eşik etiketsiz / esik_kaynagi yok /
+      gizli sabit" TUTULUR — CLAUDE.md: "etiketsiz gizli eşik yasak".
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '\b(log|loglama|kayıt düşülüyor|günlüğe|çıktıya yazılıyor)\b'
+      istisna_desen: '(etiketsiz|gizli)\s+(eşik|esik|sabit)|esik_kaynagi'
+      kosul: null
+      eleme_gerekcesi: "Sıradan kayıt/log iddiası (etiketsiz gizli eşik iddiası değil)"
+
+  - id: EMSAL-02
+    kaynak_konum: "claude_api_client.py:269"
+    kaynak_alinti: "UUIDs can be assumed to be unguessable and do not need to be validated. If a vulnerabilities requires guessing a UUID, it is not a valid vulnerability."
+    kural: "(Bu alana taşınamaz.)"
+    gerekce: >-
+      Emsal, tahmin edilemez tanımlayıcı (UUID) kavramına dayanır. Bu depoda
+      bir iddianın geçerliliği hiçbir noktada bir tanımlayıcının tahmin
+      edilebilirliğine bağlı değildir; zorlama bir karşılık uydurmak
+      CLAUDE.md sert yasak 1 (uydurma kural) olurdu.
+    bu_depodaki_karsiligi: "YOK — tahmin edilemezlik varsayımının piyasa karşılığı yok."
+    katman: 0
+    desen_ailesi: null
+    uygulanamaz: true
+    kontrol: null
+
+  - id: EMSAL-03
+    kaynak_konum: "claude_api_client.py:270"
+    kaynak_alinti: "Audit logs are not a critical security feature and should not be reported as a vulnerability if they are missing or modified."
+    kural: "(Bu alana taşınamaz — TERS YÖNDE.)"
+    gerekce: >-
+      Kaynak denetim kaydını kritik saymaz. Bu depoda TAM TERSİ geçerlidir:
+      sicil ve hesap verme KRİTİKTİR — CLAUDE.md "HESAP VERME + KIYAS (her
+      yeni veride İLK İŞ, atlanamaz)" ve gozlemci.py: kayıt varken akıbet
+      ölçülmemişse EKSIK_AKTARIM ihlali. Emsali taşımak depo sözleşmesini
+      çiğnerdi; bu yüzden BİLEREK uygulanmıyor.
+    bu_depodaki_karsiligi: "YOK — depo sözleşmesi ters yönde (sicil/kıyas atlanamaz)."
+    katman: 0
+    desen_ailesi: null
+    uygulanamaz: true
+    kontrol: null
+
+  - id: EMSAL-04
+    kaynak_konum: "claude_api_client.py:271"
+    kaynak_alinti: "Environment variables and CLI flags are trusted values. Attackers are not able to modify them in a secure environment. Any attack that relies on controlling an environment variable is invalid."
+    kural: "Motorun kendi ölçtüğü değerler GÜVENİLİRDİR; 'manipüle edilebilir' itirazı geçersizdir."
+    gerekce: >-
+      Kaynak, ortam değişkenini güvenilir taban kabul eder ve buna dayanan
+      itirazı geçersiz sayar. Bu alanda güvenilir taban, motorun kullanıcının
+      KENDİ kline'ından hesapladığı değerlerdir (ATR, ADX, CVD; CVD çevrimdışı
+      hesaplanır — turev_girdi.py, 12 alanlı kline'ın 9. alanı).
+    bu_depodaki_karsiligi: >-
+      Motor çıktısındaki ölçülmüş değere "manipüle edilebilir / güvenilmez"
+      itirazı elenir. Bu güvence ELLE panel/görsel okumasına UZANMAZ: o okuma
+      ölçüm değildir, güveni gorsel_tavan=0.50 ile sınırlıdır (piramit.py:105).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '\b(manipüle|manipule|değiştirilebilir|kandırılabilir|güvenilmez|sahte olabilir)\b'
+      istisna_desen: null
+      kosul: "kaynak_motor"
+      eleme_gerekcesi: "Motorun kendi kline'ından ölçtüğü değer güvenilir taban sayılır (elle okuma değil)"
+
+  - id: EMSAL-05
+    kaynak_konum: "claude_api_client.py:272"
+    kaynak_alinti: "Resource management issues such as memory or file descriptor leaks are not valid."
+    kural: "Kaynak/işletim yönetimi iddiaları geçersizdir."
+    gerekce: "Kaynakla aynı: işletim sorunu yön/karar bulgusu değildir."
+    bu_depodaki_karsiligi: >-
+      Dosya/bağlantı/bellek sızıntısı türü iddialar işletim ailesinde elenir
+      (SERT-04 ile aynı aile; kaynak da bu maddeyi iki kez söyler).
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: EMSAL-06
+    kaynak_konum: "claude_api_client.py:273"
+    kaynak_alinti: "Subtle or low impact web vulnerabilities such as tabnabbing, XS-Leaks, prototype pollution, and open redirects are not valid."
+    kural: "Düşük etkili mikro-yapı iddiaları geçersizdir."
+    gerekce: >-
+      Kaynak, etkisi küçük ve dolaylı olan sınıfları toptan eler. Karşılığı,
+      yön skorunu oynatmayan tek-bar mikro gözlemleridir.
+    bu_depodaki_karsiligi: >-
+      "Tek fitil", "1 tick sapma", "spread gürültüsü", "yuvarlak rakam etkisi"
+      gibi iddialar elenir — ölçek ATR'ye göre anlamsızdır (rr_denetim.py'nin
+      ATR-ölçek disiplini ile aynı mantık).
+    katman: 1
+    desen_ailesi: "_DUSUK_ETKI_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: EMSAL-07
+    kaynak_konum: "claude_api_client.py:274"
+    kaynak_alinti: "Vulnerabilities related to outdated third-party libraries. These are managed separately and should not be reported here."
+    kural: "Eskilik/tazelik ayrı mekanizmada ele alınır (SERT-09 ile aynı kural)."
+    gerekce: >-
+      Kaynak bu maddeyi hem sert dışlama (9) hem emsal (7) olarak tekrar eder;
+      defter bunu gizlemez — aynı kural iki kez kayıtlıdır.
+    bu_depodaki_karsiligi: >-
+      Bkz. SERT-09. Tazelik hükmü 2. katman damga kapısındadır
+      (zorunlu_damga_tolerans_dk=240, piramit.py:114).
+    katman: 1
+    desen_ailesi: "_ISLETIM_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: EMSAL-08
+    kaynak_konum: "claude_api_client.py:275"
+    kaynak_alinti: "React is generally secure against XSS. React does not need to sanitize or escape user input unless it is using dangerouslySetInnerHTML or similar methods. Do not report XSS vulnerabilities in React components or tsx files unless they are using unsafe methods."
+    kural: "Motor çıktısı yapı gereği kaynaklıdır; 'uydurma seviye' itirazı yalnız ELLE kurulan seviyeye yöneltilebilir."
+    gerekce: >-
+      Kaynağın kalıbı: çerçeve varsayılan olarak güvenlidir, İSTİSNA açıkça
+      tehlikeli yolu kullanmasıdır. Karşılığı: seviyeler smc_tespit /
+      emir_plani'nden ölçülerek gelir (yuvarlak/uydurma seviye yasak,
+      CLAUDE.md emir çıktısı kuralı); tehlikeli yol = elle kurulan seviye.
+    bu_depodaki_karsiligi: >-
+      Motor kaynaklı seviyeye "uydurma" itirazı elenir; ELLE kurulan
+      stop/hedef için itiraz GEÇERLİDİR ve rr_denetim.py'den geçmelidir
+      (şişirilmiş R yasağı).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '\b(uydurma|yuvarlak|keyfi|rastgele)\s+(seviye|fiyat|stop|hedef)'
+      istisna_desen: null
+      kosul: "kaynak_motor"
+      eleme_gerekcesi: "Motorun ölçtüğü seviyeye 'uydurma' itirazı geçersiz (itiraz yalnız ELLE kurulan seviyeye yöneltilebilir)"
+
+  - id: EMSAL-09
+    kaynak_konum: "claude_api_client.py:276"
+    kaynak_alinti: "Most vulnerabilities in github action workflows are not exploitable in practice. Before validating a github action workflow vulnerability ensure it is concrete and has a very specific attack path."
+    kural: "(Bu alana taşınamaz.)"
+    gerekce: >-
+      SERT-06 ile aynı yüzey: CI/kanca. Bu depoda bulgu piyasa iddiasıdır ve
+      `.claude/hooks/` bu becerinin yetki alanı dışındadır. İki maddeye iki
+      farklı karşılık uydurmak sahte ayrım olurdu.
+    bu_depodaki_karsiligi: "YOK — alan dışı yüzey (CI/kanca)."
+    katman: 0
+    desen_ailesi: null
+    uygulanamaz: true
+    kontrol: null
+
+  - id: EMSAL-10
+    kaynak_konum: "claude_api_client.py:277"
+    kaynak_alinti: "A lack of permission checking or authentication in client-side TS code is not a vulnerability. Client-side code is not trusted and does not need to implement these checks, they are handled on the server-side. The same applies to all flows that send untrusted data to the backend, the backend is responsible for validating and sanitizing all inputs."
+    kural: "Sunum katmanının kapı uygulamaması bulgu değildir; kapılar karar katmanındadır."
+    gerekce: >-
+      Kaynağın mantığı: kontrol, güvenilen katmanın (sunucu) sorumluluğudur;
+      istemcide yokluğu bulgu değildir. Karşılığı: çizim/metin sunumu kapı
+      uygulamaz; kapılar sentez.py + motor kapılarındadır.
+    bu_depodaki_karsiligi: >-
+      "Grafik/SVG çıktısı R kapısını uygulamıyor" bir bulgu değildir —
+      CLAUDE.md: "Grafik bir KARAR DEĞİLDİR; yön/işlem hükmü piramit-sistem/
+      karar-kurulu sentezinden gelir."
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '(grafik|çizim|svg|rapor metni|sunum)[^.]{0,60}(kapı|kapi|doğrulama|dogrulama|kontrol)[^.]{0,20}(yok|uygulanmıyor|uygulamıyor|eksik)'
+      istisna_desen: null
+      kosul: null
+      eleme_gerekcesi: "Sunum katmanının kapı uygulamaması bulgu değil (kapılar sentez/motor katmanında)"
+
+  - id: EMSAL-11
+    kaynak_konum: "claude_api_client.py:278"
+    kaynak_alinti: "Only include MEDIUM findings if they are obvious and concrete issues."
+    kural: "Orta güvenli iddia yalnız SOMUT (sayısal) kanıt taşıyorsa tutulur."
+    gerekce: >-
+      Kaynak orta şiddetli bulguları yalnız açık ve somutsa tutar; güven
+      bandı da kaynağın kendi ölçeğidir (claude_api_client.py:292-295,
+      "4-6: Medium confidence, needs investigation").
+    bu_depodaki_karsiligi: >-
+      Güven skoru 4-6 bandındaki bir danışman iddiası, kanıtında hiçbir sayı
+      (seviye/skor/oran) taşımıyorsa elenir — "akıcı anlatı otomatik daha
+      kaliteli sayılmaz" (CLAUDE.md, narrative-fluency yanılgısı).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: null
+      istisna_desen: null
+      kosul: "guven_bandi_orta_sayisiz"
+      eleme_gerekcesi: "Orta güven bandı (4-6) + kanıtta sayısal dayanak yok (somut değil)"
+
+  - id: EMSAL-12
+    kaynak_konum: "claude_api_client.py:279"
+    kaynak_alinti: "Most vulnerabilities in ipython notebooks (*.ipynb files) are not exploitable in practice. Before validating a notebook vulnerability ensure it is concrete and has a very specific attack path."
+    kural: "Deneme/kum-havuzu yüzeyinden gelen iddia somut değilse geçersizdir (SERT-11 ile aynı yüzey)."
+    gerekce: >-
+      Kaynakta not defteri "gerçekte koşmayan" yüzeydir. Burada karşılığı
+      öz-test / örnek job / kum havuzu koşusudur.
+    bu_depodaki_karsiligi: >-
+      Bkz. SERT-11 — kaynak kapısı bu yüzeyi 1. katmanda eler; kum havuzu
+      koşusu zaten gerçek hafızaya yazılmaz (CLAUDE.md).
+    katman: 1
+    desen_ailesi: "kaynak_kapisi"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: EMSAL-13
+    kaynak_konum: "claude_api_client.py:280"
+    kaynak_alinti: "Logging non-PII data is not a vulnerability even if the data may be sensitive. Only report logging vulnerabilities if they expose sensitive information such as secrets, passwords, or personally identifiable information (PII)."
+    kural: "Motorun ara değerlerinin görünmesi bulgu değildir; KAYNAKSIZ sayı bulgudur."
+    gerekce: >-
+      Kaynak, hassas görünse de PII olmayan kaydı eler ve eşiği "gerçekten
+      gizli bilgi"ye çeker. Karşılığı: ara hesapların çıktıda görünmesi
+      zararsızdır; asıl ihlal kaynağı olmayan sayıdır.
+    bu_depodaki_karsiligi: >-
+      "Ara değer / hesap dökümü çıktıda" elenir; "kaynaksız sayı / rapora
+      dayanmayan değer" TUTULUR — iddia_denetle.py'nin yakaladığı UYDURMA
+      ihlali (gozlemci.py KRITIK küme).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '\b(ara değer|ara hesap|iç hesap|hesap dökümü|debug çıktısı)\b'
+      istisna_desen: 'kaynaksız|kaynağı yok|kaynagi yok|uydurma sayı'
+      kosul: null
+      eleme_gerekcesi: "Ara/iç hesabın görünmesi bulgu değil (bulgu olan: kaynaksız sayı = UYDURMA)"
+
+  - id: EMSAL-14
+    kaynak_konum: "claude_api_client.py:281"
+    kaynak_alinti: "Command injection vulnerabilities in shell scripts are generally not exploitable in practice since shell scripts generally do not run with untrusted user input. Only report command injection vulnerabilities in shell scripts if they are concrete and have a very specific attack path."
+    kural: "'Kullanıcı motoru kandırır' iddiası somut bir yol göstermedikçe geçersizdir."
+    gerekce: >-
+      Kaynağın mantığı: girdi güvenilir akıştan geliyorsa iddia somut bir
+      saldırı yolu gerektirir. Karşılığı: motorlara giden job dosyaları
+      serbest metinden değil, doğrulanmış paketten üretilir.
+    bu_depodaki_karsiligi: >-
+      "Kullanıcı metniyle motor kandırılabilir" iddiası somut yol
+      göstermedikçe elenir: paket alımı SHA defteri + gerileme korkuluğundan
+      geçer (CLAUDE.md veri alımı kuralı).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '(kullanıcı|kullanici)[^.]{0,50}(motoru|job|iş dosyası|boru hattını)[^.]{0,30}(kandır|zorla|enjekte|yanılt)'
+      istisna_desen: '(sha|paket|gerileme|somut yol)'
+      kosul: null
+      eleme_gerekcesi: "Somut yol gösterilmemiş 'motor kandırılır' iddiası (paket alımı SHA + gerileme korkuluğundan geçiyor)"
+
+  - id: EMSAL-15
+    kaynak_konum: "claude_api_client.py:282"
+    kaynak_alinti: "SSRF (Server-Side Request Forgery) vulnerabilities in client-side JavaScript/TypeScript files (.js, .ts, .tsx, .jsx) are not valid since client-side code cannot make server-side requests that would bypass firewalls or access internal resources. Only report SSRF in server-side code (e.g. Python or JS that is known to run on the server-side). The same logic applies to path-traversal attacks, they are not a problem in client-side JS."
+    kural: "Bir iddia yalnız onu ÜRETEBİLEN yüzeyden geçerlidir (SERT-10 ile aynı kapı, kaynakta da tekrar)."
+    gerekce: >-
+      Kaynak aynı mantığı ikinci kez, dosya-tipi kapısı olarak kurar
+      (findings_filter.py:145-152 HTML kapısı). Burada karşılığı motor
+      ailesidir: türev iddiası yalnız türev ailesinden geçerlidir.
+    bu_depodaki_karsiligi: >-
+      Bkz. SERT-10 (2. katman aile kapısı) + kapsam kapısı: turev-akis kaynaklı
+      olsa bile kapsam < 0.5 ise iddia doğrulanmamıştır (turev_akis.py
+      kapsam_esigi, fail-closed).
+    katman: 2
+    desen_ailesi: "_TUREV_DESENLERI"
+    uygulanamaz: false
+    kontrol: null
+
+  - id: EMSAL-16
+    kaynak_konum: "claude_api_client.py:283"
+    kaynak_alinti: "Path traversal attacks using ../ are generally not a problem when triggering HTTP requests. These are generally only relevant when reading files where the ../ may allow accessing unintended files."
+    kural: "(Bu alana taşınamaz.)"
+    gerekce: >-
+      Emsal tamamen dosya yolu semantiğine dayanır (../ ile istenmeyen dosyaya
+      erişim). Piyasa iddiası alanında bir karşılığı yoktur; zorlama bir
+      analoji uydurma kural olurdu (CLAUDE.md sert yasak 1).
+    bu_depodaki_karsiligi: "YOK — dosya yolu semantiğinin piyasa karşılığı yok."
+    katman: 0
+    desen_ailesi: null
+    uygulanamaz: true
+    kontrol: null
+
+  - id: EMSAL-17
+    kaynak_konum: "claude_api_client.py:284"
+    kaynak_alinti: "Injecting into log queries is generally not an issue. Only report this if the injection will definitely lead to exposing sensitive data to external users."
+    kural: "Kullanıcı metninin rapora karışması bulgu değildir; KESİN sonuç doğuruyorsa bulgudur."
+    gerekce: >-
+      Kaynak, sonucu kesin olmayan enjeksiyonu eler ("only report ... if it
+      will definitely lead to"). Karşılığı: kullanıcı anlatısının rapor
+      metnine sızması, KESİN bir kaynaksız sayı doğurmadıkça bulgu değildir.
+    bu_depodaki_karsiligi: >-
+      "Kullanıcının cümlesi rapora karıştı" elenir; o cümle rapor metnine
+      KAYNAKSIZ BİR SAYI soktuysa elenmez — iddia_denetle.py bunu birebir
+      denetler (metindeki her sayı koşu raporunda var mı).
+    katman: 3
+    desen_ailesi: null
+    uygulanamaz: false
+    kontrol:
+      desen: '(kullanıcı|kullanici)[^.]{0,50}(metni|cümlesi|anlatısı|yorumu)[^.]{0,30}(rapora|çıktıya|metne)[^.]{0,20}(karış|sız|geç)'
+      istisna_desen: 'kaynaksız sayı|kaynaksız değer|iddia_denetle'
+      kosul: null
+      eleme_gerekcesi: "Kullanıcı anlatısının rapora karışması bulgu değil (bulgu: kesin kaynaksız sayı → iddia_denetle)"

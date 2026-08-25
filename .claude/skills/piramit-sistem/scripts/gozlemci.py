@@ -43,6 +43,22 @@ YOK = "VERİ YOK"
 KRITIK = {"UYDURMA", "DAIRESEL", "EKSIK_AKTARIM", "MEMNUN_ETME"}
 
 # Kanıt aileleri — tünel görüşü ölçümü için (aynı aile = aynı kör nokta)
+def _zorunlu_manifesto() -> dict:
+    """piramit.ZORUNLU_MOTOR'u ÇAĞRI ANINDA okur.
+
+    Modül seviyesinde okunamaz: piramit → gozlemci → piramit döngüsünde
+    gozlemci yüklenirken piramit HENÜZ YARIM olur ve manifesto boş kalır
+    (ölçüldü: denetim sessizce devre dışıydı — self_test T35 yakaladı).
+    Kopya da tutulmaz: iki ayrı liste, biri güncellenip diğeri unutulduğunda
+    denetimi sessizce zayıflatırdı.
+    """
+    try:
+        import piramit as _P  # noqa: PLC0415
+        return dict(getattr(_P, "ZORUNLU_MOTOR", {}) or {})
+    except Exception:  # noqa: BLE001 — gözlemci piramit'siz de koşabilmeli
+        return {}
+
+
 AILE = {
     "karar-motoru": "fiyat-yapisi",
     "grafik-calisma": "fiyat-yapisi",
@@ -291,7 +307,10 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
         if ad in str(g) and not [k for k in kaynaklar if k != ad]:
             dairesel.append(f"{ad} ← {str(g)[:70]}")
     if dairesel:
-        b.append(_bulgu("DAIRESEL", "UYARI",
+        # İHLAL (UYARI değil): DAIRESEL, KRITIK kümesindedir ve mühür yalnız
+        # İHLAL satırlarını sayar — UYARI olarak kalırsa kritik ihlal ASLA
+        # mühürlenemez (kapı sözleşmede var, kodda ölüydü).
+        b.append(_bulgu("DAIRESEL", "İHLAL",
                         "kendi çıktısıyla doğrulanan danışman: " + "; ".join(dairesel),
                         "çapraz doğrulayıcı ekle (başka motor onaylasın)"))
     else:
@@ -340,7 +359,16 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
     # 4) rr denetimi seviye taşıyan her danışmana uygulandı mı?
     rr = k4.get("rr_denetimi") or {}
     seviyeli = set((k3.get("seviyeler") or {}))
-    atlanan = seviyeli - set(rr)
+    # ANAHTAR VARLIĞI YETMEZ, SONUÇ denetlenir. Ölçüt `verdict` VARLIĞIDIR:
+    # rr_denetim yalnız gerçekten koştuğunda verdict üretir
+    # (TUTARLI/ŞİŞİRİLMİŞ/GEÇERSİZ). piramit.py iki ayrı başarısızlık kaydı
+    # yazıyor — "VERİ YOK — … denetim yapılamadı" (829) ve "denetim ÇALIŞMADI"
+    # (836); ikisinde de verdict yok. Önceki ölçüt ("VERİ YOK" dizgesi)
+    # ikincisini KAÇIRIYORDU: alt süreç çöktüğünde/zaman aşımına uğradığında,
+    # yani kapının en çok gerektiği anda, EKSIK_AKTARIM "TEMİZ" diyordu.
+    kosan = {a for a, v in rr.items()
+             if isinstance(v, dict) and v.get("verdict")}
+    atlanan = seviyeli - kosan
     if atlanan:
         b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
                         f"seviye taşıyan {atlanan} için rr_denetim koşmadı"))
@@ -462,10 +490,15 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
     # 0d) ÇELİŞKİ TURU: koştu mu, sonucu karara yansıdı mı?
     ct = k5.get("celiski_turu")
     if isinstance(ct, dict):
-        if ct.get("yon_dayaniksiz") and str(sentez.get("YON_BIAS")) != "NÖTR":
+        # KARAR'a bakılır, YON_BIAS'a DEĞİL. Sözleşme gereği yön asla
+        # saklanmaz: fail-closed uygulandığında bile YON_BIAS yönlü KALIR
+        # (piramit.py:1056) ve kapanan şey KARAR'dır. Koşul YON_BIAS'a
+        # baktığı için fail-closed her DOĞRU çalıştığında sistem kendine
+        # sahte MEMNUN_ETME ihlali (ve kritik mühür) yazıyordu.
+        if ct.get("yon_dayaniksiz") and str(sentez.get("KARAR")) != "NÖTR-BEKLE":
             b.append(_bulgu("MEMNUN_ETME", "İHLAL",
-                            "çelişki turu yönü DAYANIKSIZ buldu ama karar hâlâ "
-                            f"{sentez.get('YON_BIAS')} — fail-closed uygulanmamış"))
+                            "çelişki turu yönü DAYANIKSIZ buldu ama KARAR hâlâ "
+                            f"{sentez.get('KARAR')} — fail-closed uygulanmamış"))
         else:
             b.append(_bulgu("MEMNUN_ETME", "TEMİZ", str(ct.get("hukum", YOK))[:110]))
 
@@ -562,6 +595,40 @@ def denetle(rapor: dict) -> dict:
             katman_bulgu["K5-SI"].append(_bulgu(
                 "EKSIK_AKTARIM", "TEMİZ",
                 "önceki kayıt yok → kıyas yapılmadı (ilk analiz, uydurma yok)"))
+
+    # --- MOTOR SİCİLİ: beyan edilen her motor GERÇEKTEN koştu mu? ------------
+    # İkinci ağ. piramit.py'nin kapıları zaten durduruyor; bu denetim kapının
+    # KENDİSİNİN atlanmadığını artefakttan doğrular (kapı kodu değişirse ya da
+    # bir katman sicilsiz koşarsa burada yakalanır).
+    sicil = rapor.get("_MOTOR_SICILI")
+    if sicil is None:
+        hedef = "K5-SI" if "K5-SI" in katman_bulgu else (
+            next(iter(katman_bulgu), None))
+        if hedef:
+            katman_bulgu[hedef].append(_bulgu(
+                "EKSIK_AKTARIM", "İHLAL",
+                "motor sicili YOK: hangi motorun koştuğu artefakttan "
+                "doğrulanamıyor (sessiz atlama tespit edilemez)"))
+    else:
+        kosan = {}
+        for kayit in sicil:
+            kosan.setdefault(kayit.get("katman"), set()).add(kayit.get("motor"))
+        manifesto = _zorunlu_manifesto()
+        if not manifesto:
+            hedef = "K5-SI" if "K5-SI" in katman_bulgu else next(iter(katman_bulgu), None)
+            if hedef:
+                katman_bulgu[hedef].append(_bulgu(
+                    "EKSIK_AKTARIM", "UYARI",
+                    "zorunlu motor manifestosu okunamadı → sicil denetimi "
+                    "YAPILAMADI (fail-closed: 'temiz' sayılmaz)"))
+        for kat, beklenen in manifesto.items():
+            if kat not in katman_bulgu:
+                continue      # o katmana hiç ulaşılmadı (kapı önce kapandı)
+            eksik = [m for m in beklenen if m not in kosan.get(kat, set())]
+            katman_bulgu[kat].append(_bulgu(
+                "EKSIK_AKTARIM", "İHLAL" if eksik else "TEMİZ",
+                (f"ZORUNLU motor koşmadı: {', '.join(eksik)}" if eksik else
+                 f"zorunlu motorların hepsi sicilde: {len(beklenen)}/{len(beklenen)}")))
 
     ihlaller = [(kat, b) for kat, bl in katman_bulgu.items() for b in bl
                 if b["durum"] == "İHLAL"]

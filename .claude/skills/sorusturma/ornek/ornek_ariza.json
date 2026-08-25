@@ -1,0 +1,59 @@
+{
+  "kaynak": "ÖRNEK ARIZA KAYDI — sorusturma.py --self-test içindir (gerçek koşu değildir)",
+  "beklenen": "a001 + a003 gerçek arıza; a002 a001'in kopyası; a004 (kapı düşmesi) ve a005 (BEKLE) YP kuralıyla düşer; a006 yerelleştirilemez",
+  "arizalar": [
+    {
+      "kod": "EKSIK_AKTARIM",
+      "durum": "İHLAL",
+      "ozet": "Kıyas motoru koşmadı: hesap verme başlığı boş kaldı",
+      "kanit": "K5-SI/EKSIK_AKTARIM: önceki kayıt VAR ama kıyas koşmadı — kıyas motoru sessizce atlandı, hesap verme başlığı boş kaldı",
+      "artefakt": "ornek/ornek_rapor.json",
+      "katman": "K5-SI",
+      "senaryo": "önceki_kosu.json mevcutken boru hattını koştur; KIYAS bloğu 'KIYASLANDI' yerine boş döner",
+      "kosullar": [],
+      "duzeltme": "piramit.py içinde kiyas.kiyasla çağrısı istisna yutuyor olabilir; try bloğunun gerekçesi rapora taşınmalı",
+      "guven": 0.9
+    },
+    {
+      "kod": "EKSIK_AKTARIM",
+      "durum": "İHLAL",
+      "ozet": "Hesap verme satırı çıktının en üstünde görünmedi",
+      "kanit": "kullanıcıya sunulan çıktıda ÖNCEKİ KARAR AKIBETİ / KIYAS başlıkları yok; K5 raporunda da kıyas sessizce atlanmış",
+      "artefakt": "ornek/ornek_rapor.json",
+      "katman": "K5-SI"
+    },
+    {
+      "kod": "SICIL_EZILME",
+      "durum": "İHLAL",
+      "ozet": "Kapanan karar defterde yeniden yazıldı, gerçekleşen R iptal edildi",
+      "kanit": "defter satırında duzeltme_notu ile eski sonuç ezildi ve r_iptal_nedeni yazıldı; kalibrasyon o satırı artık göremiyor",
+      "artefakt": "ornek/ornek_defter.jsonl",
+      "katman": "duzeltme_notu",
+      "senaryo": "ikinci sembol (ETH) koşusunda aynı bar için iki kez karar yazılınca defter satırı üzerine yazılıyor",
+      "kosullar": ["ikinci sembol koşusu açık olmalı"],
+      "guven": 0.85
+    },
+    {
+      "kod": "KAPI",
+      "durum": "İHLAL",
+      "ozet": "Boru hattı K2'de durdu, zirve üretilmedi",
+      "kanit": "K2 kapısı GEÇİLMEDİ: yalnız 1 motor sonuç üretti (asgari 2). Boru hattı DURDU — K2-AI-AJAN; ZIRVE bölümü NÖTR-BEKLE ile kapandı",
+      "artefakt": "ornek/ornek_rapor.json",
+      "katman": "K2-AI-AJAN"
+    },
+    {
+      "kod": "KARAR",
+      "durum": "UYARI",
+      "ozet": "Motor işlem vermedi",
+      "kanit": "Karar motoru BEKLE verdi; işlem kalitesi 'temiz giriş yok' dedi ve emir üretilmedi",
+      "artefakt": "ornek/ornek_rapor.json",
+      "katman": "K5-SI"
+    },
+    {
+      "kod": "BELIRSIZ",
+      "durum": "UYARI",
+      "ozet": "Bir şeyler ters gitti",
+      "kanit": "koşu bana yanlış geldi ama hangi dosyada olduğunu bilmiyorum"
+    }
+  ]
+}

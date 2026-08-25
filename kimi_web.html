@@ -1,0 +1,216 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kimi Konsol — Piramit (tarayıcı)</title>
+<!--
+KURULUMSUZ KİMİ KONSOL — sunucu YOK, Termux YOK; bu dosya tarayıcıda açılır.
+· Motor kararları depodaki SON koşudan, raw.githubusercontent.com üzerinden
+  çekilir (CORS açık). Sayfa hiçbir sayı ÜRETMEZ; rapor neyse onu gösterir.
+· Kimi çağrısı DOĞRUDAN tarayıcıdan yapılır. Anahtar yalnız localStorage'da.
+· kimi-k3 (TEZ) → kimi-code (ANTİTEZ, tezi çürütür) → savunma → HÜKÜM →
+  NİHAİ KARAR (motor — bağlayıcı; LLM yazamaz).
+· Basitleştirilmiş sayı denetimi: modellerin metnindeki sayılar kanıtta yoksa
+  KAYNAKSIZ diye işaretlenir (iddia_denetle.py'nin tarayıcı hafifletmesi).
+· SINIR: Kimi'nin ucu tarayıcı çağrısına (CORS) izin vermezse bu sayfadan
+  çağrı YAPILAMAZ — sayfa bunu açıkça söyler, karar uydurmaz. Görüntü okuma
+  yok. ⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.
+-->
+<style>
+:root{color-scheme:dark}
+body{margin:0;font:15px/1.5 system-ui,sans-serif;background:#101014;color:#e8e8ec}
+header{padding:10px 12px;background:#17171d;border-bottom:1px solid #2a2a33;
+ position:sticky;top:0;z-index:2}
+header b{color:#9ecbff}
+.sira{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+input,select,textarea,button{font:inherit;border-radius:8px;border:1px solid #33333d;
+ background:#1d1d24;color:#e8e8ec;padding:8px 10px}
+input{flex:1;min-width:180px}
+button{cursor:pointer;background:#24435f}button:active{background:#2c527a}
+#kutu{max-width:900px;margin:0 auto;padding:12px}
+.kart{background:#17171d;border:1px solid #2a2a33;border-radius:10px;
+ padding:10px 12px;margin:10px 0;white-space:pre-wrap;overflow-x:auto}
+.k-soru{border-color:#3d5a80}.k-tez{border-color:#3a5f3a}
+.k-anti{border-color:#7a4040}.k-sav{border-color:#3a5f3a}
+.k-hukum{border-color:#8a7a2a}.k-motor{border-color:#9ecbff;background:#131a22}
+.k-uyari{border-color:#aa4444;color:#ffb3b3}
+.rozet{font-size:12px;color:#9aa0aa;margin-bottom:4px}
+form{display:flex;gap:8px;margin:12px 0}
+textarea{flex:1;min-height:60px;resize:vertical}
+footer{color:#8a8f99;font-size:12px;text-align:center;padding:14px}
+</style></head><body>
+<header>
+ <b>KİMİ KONSOL</b> · kimi-k3 (tez) ↔ kimi-code (antitez) · kurulumsuz
+ <div class="sira">
+  <input id="anahtar" type="password" placeholder="KIMI API anahtarı (sk-…)">
+  <button onclick="anahtarKaydet()">Kaydet</button>
+  <select id="uc">
+   <option value="ma">moonshot.ai · Anthropic-uyumlu</option>
+   <option value="mo">moonshot.ai · OpenAI-uyumlu</option>
+   <option value="kc">kimi.com · coding ucu</option>
+  </select>
+ </div>
+</header>
+<div id="kutu">
+ <div id="durum" class="kart">Motor kararları GitHub'dan yükleniyor…</div>
+ <form onsubmit="sor(event)">
+  <textarea id="soru" placeholder="Sorunu yaz — örn: karar nedir, giriş çıkış ver"></textarea>
+  <button>Sor</button></form>
+ <div id="akis"></div>
+</div>
+<footer>Anahtar yalnız bu tarayıcıda (localStorage) durur; hiçbir sunucuya
+kaydedilmez, depoya girmez. · Motor kararı depodaki SON koşudandır; yeni koşu
+bu sayfadan YAPILAMAZ (kurulumsuz sınırı). · Görüntü okuma yok. ·
+⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.</footer>
+<script>
+'use strict';
+const RAW='https://raw.githubusercontent.com/eren603/Future-/claude/new-session-wtmu3n/';
+const DOSYA={btc:'.claude/skills/piramit-sistem/state/son_rapor.json',
+             eth:'.claude/skills/piramit-sistem/state/son_rapor_eth.json',
+             plan:'engine/state/plan_kosullu.json',
+             devir:'engine/state/devir_teslim.json'};
+const MODEL_TEZ='kimi-k3', MODEL_ANTITEZ='kimi-k2.7-code', LLM_TAVAN=0.5;
+const YOK='VERİ YOK';
+const KURAL='Türkçe cevap ver. SANA VERİLEN ÖLÇÜMLER dışında hiçbir sayı '+
+ 'kullanma, üretme, tahmin etme. Giriş, stop, hedef seviyesi ÜRETME — '+
+ 'bağlayıcı emir motorundur ve sana verildi; sen yalnız yorumlar ve sınarsın. '+
+ 'Eksik olana VERİ YOK de. Hikâye anlatma. Cevabının EN SON satırı TEK '+
+ 'BAŞINA şu JSON olsun: {"yon":"long|short|flat","guven":0.0-1.0}';
+const ROL_TEZ='Sen bu deponun piyasa analiz danışmanısın (TEZ). Kullanıcının '+
+ 'SORUSUNA, verilen ölçülmüş motor çıktılarıyla en fazla 10 cümlede cevap ver. '+KURAL;
+const ROL_ANTI='Sen ŞÜPHECİ denetçisin (ANTİTEZ). Aynı ölçümler ve TEZ cevabı '+
+ 'verildi; görevin tezi ÇÜRÜTMEYE çalışmak. Kanıt tezi gerçekten destekliyorsa '+
+ 'katıl — muhalefet için muhalefet etme. En fazla 8 cümle. '+KURAL;
+const ROL_SAV='Sen TEZ danışmanısın; antitezin eleştirisi verildi. En fazla 4 '+
+ 'cümlede kapanış: haklıysa kabul et, değilse kanıt göster, NİHAİ duruşunu bildir. '+KURAL;
+
+const $=id=>document.getElementById(id);
+let RAPOR={}, KANIT_STR='';
+$('anahtar').value=localStorage.getItem('kimi_anahtar')||'';
+$('uc').value=localStorage.getItem('kimi_uc')||'ma';
+$('uc').onchange=()=>localStorage.setItem('kimi_uc',$('uc').value);
+function anahtarKaydet(){localStorage.setItem('kimi_anahtar',
+ $('anahtar').value.trim());kart('k-hukum','','Anahtar bu tarayıcıya kaydedildi.')}
+function kart(cls,rozet,metin){const d=document.createElement('div');
+ d.className='kart '+cls;const r=rozet?`<div class="rozet">${rozet}</div>`:'';
+ d.innerHTML=r+String(metin).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ $('akis').prepend(d);return d}
+
+function ozet(d){const z=(d&&d.ZIRVE)||{};const den=z.DENETIM||{};
+ return {YON:z.YON_BIAS||YOK,skor:z.yon_skoru,islem:z.ISLEM_KALITESI||YOK,
+  EMIR:z.EMIR||YOK,alt:(z.emir_adaylari||[]).slice(1,4).map(a=>
+   `${a.emir_tipi} @${a.giris} | stop ${a.stop} | T1 ${a.hedef} | R ${a.R}`),
+  red:(z.emir_red_nedenleri||[]).slice(0,3),
+  denetim:den.ozet||YOK,muhur:!!den.muhurlendi,
+  kiyas:z.KIYAS,celiski:z.CELISKI_TURU}}
+function motorBlok(){let s=[];for(const [et,d] of [['BTCUSDT',RAPOR.btc],['ETHUSDT',RAPOR.eth]]){
+ if(!d){s.push(`${et}: ${YOK} — rapor çekilemedi`);continue}
+ const o=ozet(d);s.push(`${et} → YÖN ${o.YON} (${o.skor}) | ${o.islem}`);
+ s.push(`   EMİR: ${o.EMIR}`);o.alt.forEach(a=>s.push('   ↳ '+a));
+ s.push(`   Gözlemci: ${o.denetim}${o.muhur?'  ⛔ MÜHÜRLÜ':''}`)}
+ s.push('⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.');
+ return s.join('\n')}
+function kanitDerle(){const k={motor_karari:{}};
+ for(const [et,d] of [['BTCUSDT',RAPOR.btc],['ETHUSDT',RAPOR.eth]]){
+  if(!d)continue;k.motor_karari[et]=ozet(d);
+  const kat=(d.katmanlar||[]).find(x=>x.katman==='K3-COKLU-AJAN');
+  if(kat)k[et+'_danismanlar']=(kat.danismanlar||[]).map(x=>
+   ({ad:x.name,durus:x.stance,guven:x.confidence}))}
+ if(RAPOR.plan){k.edge_olcumu=RAPOR.plan.edge_olcumu;
+  k.portfoy_olcumu=RAPOR.plan.portfoy_olcumu}
+ if(RAPOR.devir)k.onceki_pencere={BTCUSDT:RAPOR.devir.BTCUSDT,ETHUSDT:RAPOR.devir.ETHUSDT};
+ return k}
+
+async function yukle(){const iler=[];
+ for(const [ad,yol] of Object.entries(DOSYA)){
+  try{const r=await fetch(RAW+yol,{cache:'no-store'});
+   if(r.ok){RAPOR[ad]=await r.json();iler.push(ad)}
+  }catch(e){/* rapor yoksa VERİ YOK kalır — uydurulmaz */}}
+ KANIT_STR=JSON.stringify(kanitDerle());
+ let bar='';try{const k1=(RAPOR.eth.katmanlar||[]).find(x=>x.katman==='K1-LLM');
+  bar=new Date(k1.olcumler.m15_son_bar).toISOString().slice(0,16).replace('T',' ')+' UTC';
+ }catch(e){bar=YOK}
+ $('durum').textContent=`SON KOŞU (bar ${bar}) — kaynak: depo, çekilen: `+
+  `${iler.join(', ')||'HİÇBİRİ'}\n\n`+motorBlok();}
+
+function ucler(){const m=$('uc').value;
+ if(m==='kc')return [['https://api.kimi.com/coding/v1/messages','anthropic']];
+ if(m==='mo')return [['https://api.moonshot.ai/v1/chat/completions','openai']];
+ return [['https://api.moonshot.ai/anthropic/v1/messages','anthropic'],
+         ['https://api.moonshot.ai/v1/chat/completions','openai']]}
+async function kimi(model,sistem,kullanici){const anahtar=
+ localStorage.getItem('kimi_anahtar')||'';if(!anahtar)throw Error('anahtar girilmedi');
+ let sonHata=null;
+ for(const [url,tip] of ucler()){
+  const govde=tip==='anthropic'
+   ?{model,max_tokens:1500,system:sistem,messages:[{role:'user',content:kullanici}]}
+   :{model,max_tokens:1500,messages:[{role:'system',content:sistem},
+                                     {role:'user',content:kullanici}]};
+  const basliklar={'content-type':'application/json',
+   'authorization':'Bearer '+anahtar};
+  if(tip==='anthropic'){basliklar['x-api-key']=anahtar;
+   basliklar['anthropic-version']='2023-06-01';
+   basliklar['anthropic-dangerous-direct-browser-access']='true'}
+  try{const r=await fetch(url,{method:'POST',headers:basliklar,
+    body:JSON.stringify(govde)});
+   if(!r.ok){sonHata=Error(`HTTP ${r.status}: ${(await r.text()).slice(0,160)}`);continue}
+   const d=await r.json();
+   const metin=tip==='anthropic'
+    ?((d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(''))
+    :(((d.choices||[])[0]||{}).message||{}).content||'';
+   if(!metin.trim())throw Error('model boş metin döndürdü');
+   return metin.trim();
+  }catch(e){sonHata=(e instanceof TypeError)
+   ?Error('ağ/CORS: uç tarayıcı çağrısına izin vermiyor olabilir — '+
+          'üstteki uç seçiciden diğerini dene ('+url+')')
+   :e}}
+ throw sonHata||Error('bilinmeyen hata')}
+
+function kuyruk(metin){const s=metin.lastIndexOf('{'),e=metin.lastIndexOf('}');
+ if(s<0||e<=s)return null;
+ try{const d=JSON.parse(metin.slice(s,e+1));const yon=String(d.yon||'').toLowerCase();
+  const g=parseFloat(d.guven);
+  if(!['long','short','flat'].includes(yon)||!(g>=0&&g<=1))return null;
+  return {yon,guven:Math.min(g,LLM_TAVAN)}}catch(e){return null}}
+function govdesiz(m){const s=m.lastIndexOf('{');return s>0?m.slice(0,s).trim():m}
+function sayiDenetimi(metin){ // basitleştirilmiş iddia_denetle: sayı kaynağı var mı?
+ const cek=t=>(t.match(/-?\d+(?:[.,]\d+)?/g)||[]).map(x=>parseFloat(x.replace(',','.')));
+ const kaynak=new Set(cek(KANIT_STR).map(x=>x.toString()));
+ const kayip=[];for(const n of cek(metin)){
+  if(Math.abs(n)<=10)continue;               // sayaç/sıra sayıları yapısaldır
+  if(!kaynak.has(n.toString())&&!KANIT_STR.includes(String(n)))
+   if(!kayip.includes(n))kayip.push(n)}
+ return kayip}
+
+async function sor(ev){ev.preventDefault();
+ const soru=$('soru').value.trim();if(!soru)return;
+ $('soru').value='';kart('k-soru','sen',soru);
+ const taban='ÖLÇÜLMÜŞ MOTOR ÇIKTILARI (tek kaynak budur):\n'+
+  KANIT_STR.slice(0,12000)+'\n\nKULLANICININ SORUSU: '+soru;
+ const bek=kart('k-hukum','','Kimi kurulu tartışıyor…');
+ let tez=null,anti=null,sav=null;const hatalar=[];
+ try{tez=await kimi(MODEL_TEZ,ROL_TEZ,taban)}
+ catch(e){hatalar.push(MODEL_TEZ+': '+e.message)}
+ if(tez){try{anti=await kimi(MODEL_ANTITEZ,ROL_ANTI,
+   taban+'\n\nTEZİN CEVABI (çürütmeye çalış):\n'+tez)}
+  catch(e){hatalar.push(MODEL_ANTITEZ+': '+e.message)}}
+ if(tez&&anti){try{sav=await kimi(MODEL_TEZ,ROL_SAV,
+   taban+'\n\nSENİN TEZİN:\n'+tez+'\n\nANTİTEZİN ELEŞTİRİSİ:\n'+anti)}
+  catch(e){hatalar.push('savunma: '+e.message)}}
+ bek.remove();
+ kart('k-motor','NİHAİ KARAR — motor (bağlayıcı)',motorBlok());
+ const jt=kuyruk(sav||tez||''),ja=kuyruk(anti||'');
+ let hukum=YOK;
+ if(jt&&ja)hukum=jt.yon===ja.yon?`UZLAŞI — iki model de ${jt.yon}`
+  :(jt.yon==='flat'||ja.yon==='flat')?`KISMİ AYRIŞMA — ${jt.yon} vs ${ja.yon}`
+  :`ÇELİŞKİ — ${jt.yon} vs ${ja.yon}; bağlayıcı olan motor kararıdır (fail-closed)`;
+ else if(jt||ja)hukum='TEK TARAFLI — karşı model cevap veremedi';
+ kart('k-hukum','HÜKÜM (mekanik)',hukum);
+ const kayip=sayiDenetimi([tez,anti,sav].filter(Boolean).map(govdesiz).join('\n'));
+ if(kayip.length)kart('k-uyari','sayı denetimi (basitleştirilmiş)',
+  'KAYNAKSIZ SAYI: '+kayip.join(', ')+' — kanıtta yok, dikkate alma');
+ if(sav)kart('k-sav',MODEL_TEZ+' · savunma',govdesiz(sav));
+ if(anti)kart('k-anti',MODEL_ANTITEZ+' · antitez',govdesiz(anti));
+ if(tez)kart('k-tez',MODEL_TEZ+' · tez',govdesiz(tez));
+ hatalar.forEach(h=>kart('k-uyari','hata',h));
+ if(!tez&&!hatalar.length)kart('k-uyari','hata',YOK)}
+yukle();
+</script></body></html>

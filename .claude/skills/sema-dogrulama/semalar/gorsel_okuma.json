@@ -1,0 +1,116 @@
+{
+  "_not": "engine/girdi/gorsel_okuma.json şeması. Alan adları depodaki GERÇEK dosyadan ve onu okuyan piramit.py'den alınmıştır (uydurma yok). Desen kaynağı reader.yaml:31-34 — 'String fields are length-capped and character-class-restricted so injected instructions cannot survive intact.' Görsel okuma UNTRUSTED serbest metindir (Claude'un ekran görüntüsünden okuduğu); enjekte edilmiş talimatın bütün hâlde hayatta kalmaması için her string alan uzunluk-kapaklı ve karakter-sınıfı-kısıtlıdır.",
+  "_kaynak_alanlar": {
+    "trend": "piramit.py:361 — str(g.get('trend','')).lower() in ('bull','bear','yatay')",
+    "guven": "piramit.py:105,724-725 — gorsel_tavan 0.50 tavanı",
+    "zaman_utc": "piramit.py:142 _DAMGA_ALAN + piramit.py:165 damga regex",
+    "zaman_dilimi/yapi_olayi/seviyeler/not": "piramit.py:726-728 kanıt metni",
+    "sembol/gozlem/h4_trend/celiski_notu/zaman_yerel/damga_kaynagi/kaynak": "engine/girdi/gorsel_okuma.json gerçek dosya"
+  },
+  "type": "object",
+  "required": [
+    "trend",
+    "zaman_utc"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kaynak": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+    },
+    "sembol": {
+      "type": "string",
+      "maxLength": 20,
+      "pattern": "^[A-Z0-9]{4,20}$"
+    },
+    "zaman_dilimi": {
+      "type": "string",
+      "maxLength": 4,
+      "pattern": "^[0-9]{1,2}[mhdwM]$"
+    },
+    "trend": {
+      "enum": [
+        "bull",
+        "bear",
+        "yatay"
+      ]
+    },
+    "h4_trend": {
+      "enum": [
+        "bull",
+        "bear",
+        "yatay"
+      ]
+    },
+    "yapi_olayi": {
+      "type": "string",
+      "maxLength": 1024,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "description": "Yapı olayı açıklaması (düz metin). Sınır 1024: kardeş düz-metin alanlarıyla (celiski_notu, not, gozlem) HİZALI. 512 ölçülmemiş bir seçimdi ve gerçek okumayı (545 krk) reddediyordu — görsel danışman kurula giremiyordu. Sınır bir enjeksiyon korkuluğudur (uzunluk), içerik doğrulaması DEĞİLDİR."
+    },
+    "seviyeler": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direnc": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "destek": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "gozlem": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "maxLength": 1024,
+        "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+      }
+    },
+    "celiski_notu": {
+      "type": "string",
+      "maxLength": 1024,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+    },
+    "not": {
+      "type": "string",
+      "maxLength": 1024,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+    },
+    "guven": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "_not": "Tavan (gorsel_tavan=0.50) burada REDDETME olarak DEĞİL, piramit.py k3_coklu icinde _clamp ile KIRPMA olarak uygulanir. CLAUDE.md: 'guveni gorsel_tavan (0.50) ile SINIRLIDIR' = kirpilir. Semada 0.5'te reddetmek 0.9 yazan gecerli bir gorsel okumayi tumden dusururdu (gorsel kanal sessizce kapanirdi) — olculdu: piramit self_test T19 bu yuzden dusuyordu."
+    },
+    "zaman_utc": {
+      "type": "string",
+      "maxLength": 19,
+      "minLength": 16,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}(:[0-9]{2})?$"
+    },
+    "zaman_yerel": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}[^\\x00-\\x1f\\x7f]*$"
+    },
+    "damga_kaynagi": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+    }
+  }
+}

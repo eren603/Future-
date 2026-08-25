@@ -1,0 +1,68 @@
+{
+  "arac": "rapor.py --self-test",
+  "olcum_dosyasi": "/home/user/Future-/.claude/skills/izleme-telemetri/ornek/olcum_ornek.jsonl",
+  "rapor_dosyasi": "/home/user/Future-/.claude/skills/izleme-telemetri/ornek/rapor_ornek.md",
+  "rapor_satir": 181,
+  "olay_sayisi": 72,
+  "bagimsiz_sayim": {
+    "kosu": 3,
+    "kapi_durdu": 1,
+    "muhur": 1,
+    "ihlal": 1,
+    "zorunlu_eksik": 6,
+    "dogrulanmadi": 4,
+    "determinizm_kirik": 1
+  },
+  "kontroller": [
+    {
+      "ad": "olcum öz-testi geçti",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "rapor dosyası yazıldı",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "koşu sayısı raporda doğru",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "kapı durdurma sayısı doğru",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "mühür sayısı doğru",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "ihlal sayısı doğru",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "zorunlu girdi eksiği doğru",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "doğrulanmayan danışman sayısı doğru",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "determinizm kırığı raporlandı",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "kaynak bölümleri eksiksiz",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "mermaid görselleştirme var",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "uydurma sayı yok: tüm katman adları defterden",
+      "sonuc": "GEÇTİ"
+    }
+  ],
+  "gecen": "12/12",
+  "SONUC": "GEÇTİ"
+}

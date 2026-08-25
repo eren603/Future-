@@ -1,0 +1,97 @@
+{
+  "arac": "olcum.py --self-test",
+  "dosya": "/home/user/Future-/.claude/skills/izleme-telemetri/ornek/olcum_ornek.jsonl",
+  "olay_sayisi": 72,
+  "metrik_adlari": [
+    "piramit.danisman.dogrulandi",
+    "piramit.danisman.dogrulanmadi",
+    "piramit.determinizm",
+    "piramit.emir.uretildi",
+    "piramit.gozlemci.ihlal",
+    "piramit.gozlemci.uyari",
+    "piramit.kapi.durdu",
+    "piramit.kapi.gecti",
+    "piramit.katman.sure_ms",
+    "piramit.kosu.sayisi",
+    "piramit.kosu.sure_ms",
+    "piramit.motor.hata",
+    "piramit.motor.sure_ms",
+    "piramit.muhur",
+    "piramit.turev.kapsam",
+    "piramit.zorunlu_girdi.eksik"
+  ],
+  "sure_ozet_ms": {
+    "n": 13,
+    "ortalama": 30.126,
+    "en_uzun": 30.182
+  },
+  "kontroller": [
+    {
+      "ad": "bozuk satır yok",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "3 koşu sayacı",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "13 katman süresi (5+5+3)",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "2 motor hatası sayacı (turev-akis ×3 sarmalama + 3 rapor hatası)",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "1 kapı durdurma (ETH/K3)",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "2 koşuda doğrulanmayan grafik-calisma",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "1 UYDURMA ihlali",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "1 mühür",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "6 zorunlu girdi eksiği (3 koşu × 2)",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "3 türev kapsam ölçümü",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "3 determinizm ölçümü",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "BTC ikinci koşusu determinizm KIRIK (0.0)",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "süreler pozitif ve gerçek ölçüm",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "defter dışı metrik reddedildi",
+      "sonuc": "GEÇTİ"
+    },
+    {
+      "ad": "sayısal olmayan değer reddedildi",
+      "sonuc": "GEÇTİ"
+    }
+  ],
+  "SONUC": "GEÇTİ",
+  "gecen": "15/15",
+  "kosu_idler": [
+    "88f7b76e1ad3",
+    "04e68a7ad491",
+    "1af9d2122202"
+  ]
+}

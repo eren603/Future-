@@ -1,0 +1,106 @@
+==============================================================================
+RUBRİK KAPISI — koşu kalitesi notu | sembol: engine/girdi/eth
+koşu durumu: TAMAM — piramidin tepesine ulaşıldı
+==============================================================================
+① KRİTER-BAŞINA DÖKÜM (BİRİNCİL)
+
+  [G — Girdi]
+   ✔ G1   GEÇTİ       Fiyat kanalı ölçüldü (K1 kapısı)
+        ↳ gecti=True, m15_bar=200, h4_bar=200, ohlcv profili=yok
+   ✔ G2   GEÇTİ       K1 çıkarım yapmadı (taban katman yalnız ölçer)
+        ↳ K1'de çıkarım alanı: yok (gozlemci.py:105 ile aynı liste)
+   ✔ G3   GEÇTİ       Zorunlu girdilerin İKİSİ de geldi
+        ↳ zorunlu_girdiler=['gorsel', 'likidasyon'], zorunlu_eksik=0 madde
+   ✔ G4   GEÇTİ       Elle gelen girdi TAZE ve damgalı
+        ↳ 2 tazelik satırı, bayat/damgasız: yok (tolerans 240 dk)
+   ✔ G5   GEÇTİ       Eksik kanal sessizce düşmedi
+        ↳ gerekçesiz düşen kanal: yok (3 gerekçe)
+   ✔ G6   GEÇTİ       HESAP VERME — önceki kararın akıbeti ölçüldü
+        ↳ ölçülemedi ama gerekçe yazılı: VERİ YOK — bekleme penceresi henüz dolmadı (veri kısa)
+
+  [KP — Kapı]
+   ✔ KP1  GEÇTİ       K2 çoklu motor kapısı
+        ↳ motor_sayisi=7 (kapı >= 2), gecti=True
+   ✔ KP2  GEÇTİ       K3 danışman kurulu kapısı
+        ↳ danışman=4 (kapı >= 2): ['karar-motoru', 'grafik-calisma', 'turev-akis', 'gorsel-teyit']
+   ✔ KP3  GEÇTİ       Motor çıktısı şema derinliğini karşıladı
+        ↳ 7 şemalı motor denetlendi; eksik alan: yok
+   ✔ KP4  GEÇTİ       Sessiz kayıp yok — koşan motor ya kurulda ya gerekçe
+        ↳ gerekçesiz düşen motor: yok; eksik gerekçeli hata kaydı: 0
+   ✔ KP5  GEÇTİ       Karar eşikleri veriden türetildi ve AYNEN uygulandı
+        ↳ kalibre={'score': 0.5822, 'min_agreement': 0.5091, 'min_side_weight': 0.4522} | uygulanan={'score': 0.5822, 'min_agreement': 0.5091, 'min_side_weight'
+   ✔ KP6  GEÇTİ       İşlem kalitesi kapısı fail-closed işledi
+        ↳ hüküm=TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE; engel gerekçesi=0 madde; ozet=var
+   ✔ E2   GEÇTİ       Emir yönü kararın yönüyle aynı
+        ↳ YON_BIAS=SHORT, aday yönleri=['SHORT', 'SHORT', 'SHORT', 'SHORT', 'SHORT', 'SHORT']
+   ✔ E3   GEÇTİ       Her aday rr_denetim'den TUTARLI geçti
+        ↳ 6 aday; TUTARLI olmayan: yok
+   ✔ E4   GEÇTİ       Her adayın R'si R_min kapısını geçti
+        ↳ R_min=1.35; kapıyı geçmeyen: yok | R'ler=[1.35, 1.35, 1.35, 1.35, 1.35, 1.35]
+   ✔ E9   GEÇTİ       Sabit-USDT profili beyan edildiyse 5 kapıdan geçti
+        ↳ 6 aday; usd_hedef kapısını geçmeyen: yok
+
+  [D — Doğrulama]
+   ✔ D1   GEÇTİ       Doğrulanmamış görüş tam ağırlık almadı (fail-closed)
+        ↳ 3 doğrulanmamış danışman, penaltı=0.25; kural dışı: yok
+   ✔ D2   GEÇTİ       Doğrulama seçici — herkes onaylanmadı
+        ↳ çürütme=['karar-motoru', 'grafik-calisma'], verifier'da kapsanmayan=['turev-akis'], onay=['gorsel-teyit']
+   – D3   ATLANDI     Şişirilmiş-R denetimi her seviyeye uygulandı
+        ↳ koşul sağlanmadı (seviye-uretildi): k3.seviyeler=boş
+   ✖ D4   DÜŞTÜ       Tünel görüşü yok — en az iki kanıt ailesi doğrulandı
+        ↳ onaylı danışman=['gorsel-teyit'] → aile=['gorsel'] (gerek >= 2)
+   ✔ D5   GEÇTİ       Dairesel doğrulama yok
+        ↳ 3 doğrulama gerekçesi; dairesel: yok
+   ✔ D6   GEÇTİ       Çelişki turu koştu ve hükmü uygulandı
+        ↳ ÇELİŞKİ TURU: yön DAYANIKLI — doğrulanmış 1 danışmanla da SHORT
+   ✔ D7   GEÇTİ       Görsel okuma mekanik ölçümle karşılıklı teyide bağla
+        ↳ ham güven=0.5 (tavan 0.5), teyit='mekanik smc_tespit trend=bear vs görsel okuma trend=bear — UYUMLU', uyumsuzluk bayrağı=gerekmedi
+   ✔ D8   GEÇTİ       Türev kanalı KAPSAMIYLA birlikte raporlandı
+        ↳ kapsam=0.66 (eşik 0.5) → beklenen doğrulama=True, danışmanda=True
+   ✔ D9   GEÇTİ       Çapraz-varlık riski ölçüldü ve risk çarpanına çevril
+        ↳ ρ=0.8939, HUKUM=KOPYA POZİSYON, risk çarpanı=2.0 (kopya eşiği 0.85), K4'e taşındı=True
+   ✔ E8   GEÇTİ       Emir gözlemci mührüyle çelişmiyor
+        ↳ DENETIM.muhurlendi=False; kritik ihlal=0
+
+  [Ç — Çıktı]
+   ✔ Ç1   GEÇTİ       İki satır sözleşmesi (YÖN + İŞLEM KALİTESİ)
+        ↳ YON_BIAS=SHORT; 1_YON=dolu, 2_ISLEM_KALITESI=dolu
+   ✔ Ç2   GEÇTİ       YÖN mekanik türedi (beklentiye göre ayarlanmadı)
+        ↳ yon_skoru=-0.6482 → beklenen yön=SHORT, basılan=SHORT
+   ✔ Ç3   GEÇTİ       Çıktı hikâye değil EMİR
+        ↳ emir biçimi sözleşmeye uygun: LIMIT SHORT @1881.72 | stop 1915.053333 | T1 1836.72 | R 1.35
+   ✔ Ç4   GEÇTİ       Geçersizlik koşulu taşındı
+        ↳ gecersizlik=VERİ YOK
+   ✔ Ç5   GEÇTİ       Zorunlu girdi eksiği en üstte VE çelişkiye taşınmış
+        ↳ 0 zorunlu eksik; K4 çelişkilerine taşınmayan: yok
+   ✔ Ç6   GEÇTİ       Gözlemci mührü uygulandı
+        ↳ mühür yok; kritik ihlal=0; özet=26 denetim, 0 ihlal, 2 uyarı
+   ✔ Ç7   GEÇTİ       KIYAS koştu (eski veri → yeni veri)
+        ↳ KIYAS.durum=KIYASLANDI, etiket=DEVAM (SHORT → SHORT)
+   ✔ Ç8   GEÇTİ       Zirvedeki her sayının alt katmanda kaynağı var
+        ↳ zirvede 3 sayı denetlendi; alt katmanda karşılığı olmayan: yok
+   ✔ Ç9   GEÇTİ       Kalibrasyon ölçülmüş defterden ve sınırları içinde
+        ↳ 1 motor defteri: karar-motoru(n=0→1.0) | kural dışı: yok
+   ✔ E1   GEÇTİ       Emir biçimi sözleşmeye uygun
+        ↳ EMIR='LIMIT SHORT @1881.72 | stop 1915.053333 | T1 1836.72 | R 1.35' → kalıp uydu
+   ✔ E5   GEÇTİ       Seviyeler ÖLÇÜLEN yapıdan (uydurma/yuvarlak seviye y
+        ↳ 6 aday; gerekçesi ölçüme bağlanmayan: yok
+   ✔ E6   GEÇTİ       MARKET yalnız fiyat giriş bölgesindeyken verildi
+        ↳ fiyat=1879.79, ATR15=4.5264, tolerans=0.4526; tutarsız: yok
+   ✔ E7   GEÇTİ       Her adayda geçersizlik cümlesi var
+        ↳ 6 aday; geçersizlik cümlesi eksik/stopsuz: yok
+
+------------------------------------------------------------------------------
+② KOVA BAŞINA GEÇME ORANI (BİRİNCİL)
+   G — Girdi        6/6 geçti (oran 1.0) | atlandı 0
+   KP — Kapı        10/10 geçti (oran 1.0) | atlandı 0
+   D — Doğrulama    8/9 geçti (oran 0.8889) | atlandı 1 | düşen: D4
+   Ç — Çıktı        13/13 geçti (oran 1.0) | atlandı 0
+------------------------------------------------------------------------------
+③ TOPLAM (İKİNCİL — tek başına okunmaz)
+   37 geçti / 1 düştü / 1 atlandı  → geçme oranı 0.9737
+   ⚠ İKİNCİL ÖLÇÜM — toplam geçme oranı anlamlı boşlukları maskeleyebilir; kriter-başına dökümü okumadan karar verme.
+------------------------------------------------------------------------------
+BİRİNCİL ÖLÇÜM kriter-başına geçme oranıdır. Kaynak rubrik sözleşmesi: "aggregate pass rates can mask meaningful gaps" — toplam skor tek başına sunulmaz. Koşulu sağlanmayan kriter ATLANDI'dır, DÜŞMÜŞ SAYILMAZ.
+⚠️ Bu bir KOŞU KALİTESİ notudur; piyasa yönü/kararı değildir. Canlı/otomatik emir DAHİL DEĞİL.
+==============================================================================

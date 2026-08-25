@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 
 DEFAULTS = {"max_frames": 12, "mode": "scene", "scene_esik": 0.3}
+AZAMI_KARE = 240      # job'dan gelen max_frames için sert tavan (kaynak korkuluğu)
 
 
 class VideoError(Exception):
@@ -107,7 +108,10 @@ def isle(job: dict) -> dict:
         raise VideoError(f"Girdi dosyası yok: {src}")
     out_dir = Path(str(p.get("out_dir") or (src.parent / "frames"))).expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
-    max_frames = int(p["max_frames"])
+    # ÜST SINIR: max_frames job JSON'undan geliyordu ve hiçbir tavana bağlı
+    # değildi; her kare ayrı bir ffmpeg alt süreci başlattığı için 100000
+    # kare = sınırsız süreç + disk (S8 kaynak tüketimi).
+    max_frames = max(1, min(int(p["max_frames"]), AZAMI_KARE))
 
     kurulum = ensure_ffmpeg()
     meta = probe(src)

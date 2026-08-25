@@ -48,6 +48,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 import gozlemci as GZ  # noqa: E402
+import kontrol_ajanlari as KA  # noqa: E402
 
 
 def _atomik_yaz(hedef: Path, metin: str) -> None:
@@ -96,6 +97,66 @@ MOTOR = {
     "esik_kalibre": SKILL_DIR / "scripts" / "esik_kalibre.py",
     "emir_plani": SKILL_DIR / "scripts" / "emir_plani.py",
     "ilk_gecis": SKILL_DIR / "scripts" / "ilk_gecis.py",
+    # --- DENETİM KATMANLARI: artık boru hattının İÇİNDE, elle çağrılmıyor ---
+    "sema_dogrula": SKILLS / "sema-dogrulama" / "scripts" / "sema_dogrula.py",
+    "katman_denetle": SKILLS / "guven-katmanlama" / "scripts" / "katman_denetle.py",
+    "eleme": SKILLS / "eleme-motoru" / "scripts" / "eleme.py",
+    "kademe": SKILLS / "dogrulama-zinciri" / "scripts" / "kademe.py",
+    "bulgu_dogrula": SKILLS / "dogrulama-zinciri" / "scripts" / "bulgu_dogrula.py",
+    "rubrik": SKILLS / "rubrik-kapisi" / "scripts" / "rubrik.py",
+    "butunluk": SKILLS / "butunluk-denetimi" / "scripts" / "butunluk.py",
+    "olcum": SKILLS / "izleme-telemetri" / "scripts" / "olcum.py",
+    "sorusturma": SKILLS / "sorusturma" / "scripts" / "sorusturma.py",
+}
+
+# --------------------------------------------------------------------------
+# MOTOR SİCİLİ + ZORUNLULUK MANİFESTOSU
+# --------------------------------------------------------------------------
+# Sorun: bir motorun ÇAĞRILMAMASI sessizdi. `_job` beyanı vardı ama beyan
+# edilmeyen motor hiç denetlenmiyordu; kod bir çağrıyı atlarsa rapor eksik
+# ama "TAMAM" görünüyordu. Çözüm: HER `_kos()` çağrısı sicile YAZILIR (kayıt
+# `_kos`'un içindedir — çağıran taraf atlayamaz) ve her katmanın sonunda
+# manifesto sicile karşı denetlenir. Eksik varsa katman kapısı KAPANIR.
+#
+# Bu bir konvansiyon değil MEKANİZMADIR: manifestoya bir motor eklendiği anda
+# koşmaması boru hattını durdurur.
+_SICIL: list = []          # [{"motor","katman","kod","ok","not"}]
+_AKTIF_KATMAN = "?"        # _kos() kaydı bunu kullanır
+
+
+def _sicil_sifirla(katman: str = "?") -> None:
+    global _AKTIF_KATMAN
+    _SICIL.clear()
+    _AKTIF_KATMAN = katman
+
+
+def _katman_ac(katman: str) -> None:
+    global _AKTIF_KATMAN
+    _AKTIF_KATMAN = katman
+
+
+def _sicil_yaz(motor: str, kod, ok: bool, notu: str = "") -> None:
+    """Motor çalıştırma kaydı. `_kos` dışından da çağrılabilir (in-process
+    modüller için) — ölçüt 'subprocess koştu' değil 'hesap YAPILDI'."""
+    _SICIL.append({"motor": motor, "katman": _AKTIF_KATMAN,
+                   "kod": kod, "ok": bool(ok), "not": notu})
+
+
+def _kosanlar(katman: str) -> set:
+    return {k["motor"] for k in _SICIL if k["katman"] == katman}
+
+
+# Katman → o katmanda KOŞMASI ZORUNLU motorlar. Koşmazsa kapı kapanır.
+# "Koşmak" = sicile kayıt düşmek; motor VERİ YOK dese bile kayıt düşer —
+# denetlenen şey sonucun olumlu olması değil, hesabın YAPILMIŞ olmasıdır.
+ZORUNLU_MOTOR = {
+    "K1-LLM": ["sema_dogrula:gorsel", "sema_dogrula:likidasyon",
+               "katman_denetle", "butunluk"],
+    "K2-AI-AJAN": ["smc_tespit", "karar_motoru", "turev_akis"],
+    "K3-COKLU-AJAN": ["eleme"],
+    "K4-AGI": [],
+    "K5-SI": ["esik_kalibre", "sentez"],
+    "ZIRVE": ["kademe", "bulgu_dogrula", "rubrik", "olcum"],
 }
 
 # --------------------------------------------------------------------------
@@ -216,12 +277,20 @@ def _yaz_dizin(p, varsayilan: Path) -> Path:
 
 
 def _kos(script: Path, args: list, girdi_job: dict | None = None,
-         calisma: Path | None = None) -> dict:
+         calisma: Path | None = None, sicil_ad: str | None = None) -> dict:
     """Motoru subprocess ile koştur. JSON stdout bekler; metin çıktıyı da saklar.
 
     Dönen: {"ok", "cikti"(dict|None), "metin", "hata", "kod", "motor"}
+
+    HER çağrı `_SICIL`e yazılır. Kayıt burada — çağıran tarafta DEĞİL — çünkü
+    çağıran taraf kaydı unutabilirdi; unutulan kayıt "motor koşmadı" demektir
+    ve kapıyı yanlışlıkla kapatırdı ya da (daha kötüsü) eklenen bir çağrı
+    denetimsiz kalırdı. Motorun adı `sicil_ad` ile ayrıştırılabilir (aynı
+    motor farklı girdilerle birden çok kez koşuyorsa: sema_dogrula:gorsel).
     """
+    ad = sicil_ad or script.stem
     if not script.exists():
+        _sicil_yaz(ad, -1, False, f"motor dosyası yok: {script}")
         return {"ok": False, "cikti": None, "metin": "", "kod": -1,
                 "hata": f"Motor dosyası yok: {script}", "motor": script.name}
     tmp = None
@@ -236,6 +305,7 @@ def _kos(script: Path, args: list, girdi_job: dict | None = None,
         pr = subprocess.run(argv, capture_output=True, text=True,
                             cwd=str(calisma or script.parent), timeout=900)
     except Exception as e:  # noqa: BLE001 — motor çökmesi rapora girer, gizlenmez
+        _sicil_yaz(ad, -1, False, f"{type(e).__name__}: {e}")
         return {"ok": False, "cikti": None, "metin": "", "kod": -1,
                 "hata": f"{type(e).__name__}: {e}", "motor": script.name}
     out = pr.stdout.strip()
@@ -245,9 +315,131 @@ def _kos(script: Path, args: list, girdi_job: dict | None = None,
             obj = json.loads(out)
         except json.JSONDecodeError:
             obj = None
+    _sicil_yaz(ad, pr.returncode, pr.returncode == 0,
+               (pr.stderr.strip()[-160:] if pr.returncode else ""))
     return {"ok": pr.returncode == 0, "cikti": obj, "metin": out,
             "kod": pr.returncode, "hata": (pr.stderr.strip()[-800:] or None),
             "motor": script.name}
+
+
+def _ms_to_utc(ms) -> str:
+    """epoch-ms → 'YYYY-MM-DD HH:MM' (UTC). Çevrilemezse VERİ YOK."""
+    n = _num(ms)
+    if n is None:
+        return YOK
+    try:
+        import datetime as _dt  # noqa: PLC0415
+        return _dt.datetime.fromtimestamp(
+            n / 1000.0, _dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
+    except (OverflowError, OSError, ValueError):
+        return YOK
+
+
+def _hesap_ver(katman: str, gerekceler: dict | None = None) -> None:
+    """Koşmayan zorunlu motorun GEREKÇESİNİ sicile yazar.
+
+    Ölçüt 'motor koştu' değil 'hesabı VERİLDİ'dir: veri yoksa motor koşamaz,
+    ama o zaman koşmama sebebinin makine tarafından okunabilir bir kaydı
+    olmalıdır. Gerekçe UYDURULMAZ — katmanın kendi hata/sonuç yapısından
+    gelir. Ne kayıt ne gerekçe varsa bu SESSİZ ATLAMA'dır ve kapı kapanır.
+    """
+    ger = gerekceler or {}
+    kosan = _kosanlar(katman)
+    for m in ZORUNLU_MOTOR.get(katman) or []:
+        if m in kosan:
+            continue
+        if m in ger:
+            _sicil_yaz(m, "ATLANDI", False, f"ATLANDI: {ger[m]}"[:300])
+
+
+def _zorunlu_kapi(katman: str) -> tuple:
+    """(gecti, mesaj) — manifestodaki her motorun bu katmanda hesabı var mı?
+
+    Bu kapı sonucun OLUMLU olmasını değil, hesabın VERİLMİŞ olmasını arar:
+    motor 'VERİ YOK' dese ya da gerekçeyle atlansa bile sicilde kaydı olduğu
+    için geçer. Yakaladığı şey SESSİZ ATLAMA'dır — beyan edilmiş bir hesabın
+    ne yapılması ne de yapılmama sebebinin kayda geçmesi.
+    """
+    beklenen = ZORUNLU_MOTOR.get(katman) or []
+    kosan = _kosanlar(katman)
+    eksik = [m for m in beklenen if m not in kosan]
+    if eksik:
+        return False, (f"{katman} ZORUNLU HESAP EKSİK: {', '.join(eksik)} → "
+                       "boru hattı DURUR (motor ne koştu ne de koşmama "
+                       "gerekçesi kayda geçti; eksik hesapla karar üretilmez).")
+    atlanan = [k["motor"] for k in _SICIL
+               if k["katman"] == katman and k["kod"] == "ATLANDI"]
+    ek = f" ({len(atlanan)} gerekçeli atlama: {', '.join(atlanan)})" if atlanan else ""
+    return True, (f"{katman} zorunlu hesapların hepsi verildi "
+                  f"({len(beklenen)}/{len(beklenen)}){ek}.")
+
+
+def _girdi_kapisi(job: dict, taban: Path) -> dict:
+    """K1 GİRDİ KAPISI — şema doğrulama + güven katmanlama + bütünlük.
+
+    Üçü de KOŞULSUZ koşar. Girdi dosyası yoksa motor 'GIRDI YOK' kaydıyla yine
+    sicile yazılır: koşullu manifesto, atlamayı meşrulaştıran bir kapı olurdu.
+    """
+    sonuc = {"sema": {}, "izolasyon": {}, "butunluk": {}}
+    # YOL ÇÖZÜMLEMESİ k1_llm ile AYNI kaynaktan gelir (job["veri"]). Ayrı bir
+    # çözümleme yazmak = ikinci doğruluk kaynağı: kapı bir dosyaya, danışman
+    # başka dosyaya bakar ve gerçek girdi sessizce denetimsiz kalırdı.
+    veri = job.get("veri") or {}
+    p_gor = _yol((veri.get("gorsel") or "engine/girdi/gorsel_okuma.json"), taban)
+    p_lik = _yol((veri.get("likidasyon")
+                  or "engine/girdi/turev_ham/likidasyon.json"), taban)
+
+    # --- 1) ŞEMA: güvenilmez (elle/panel/görsel) girdiler --------------------
+    semalar = SKILLS / "sema-dogrulama" / "semalar"
+    for etiket, dosya, sema in (
+            ("gorsel", p_gor, semalar / "gorsel_okuma.json"),
+            ("likidasyon", p_lik, semalar / "likidasyon.json")):
+        ad = f"sema_dogrula:{etiket}"
+        if dosya is None or not Path(dosya).is_file():
+            dosya = dosya or "VERİ YOK"
+            # Dosya yok: hesap YAPILDI (yokluk tespit edildi), sonuç olumsuz.
+            _sicil_yaz(ad, 2, True, "GIRDI YOK — zorunlu girdi dosyası yok")
+            sonuc["sema"][etiket] = {"durum": "GIRDI YOK", "gecerli": False,
+                                     "dosya": str(dosya)}
+            continue
+        r = _kos(MOTOR["sema_dogrula"], [str(dosya), str(sema)], sicil_ad=ad)
+        sonuc["sema"][etiket] = {
+            "durum": "GECERLI" if r["kod"] == 0 else "GECERSIZ",
+            "gecerli": r["kod"] == 0, "dosya": str(dosya),
+            "mesaj": (r.get("hata") or r.get("metin") or "")[:300]}
+
+    # --- 2) İZOLASYON: güvenilmez girdiyi okuyan sicile YAZAMAZ -------------
+    # İş tanımı BU koşunun gerçek yerleşiminden kurulur (uydurma değil).
+    p_m15 = _yol((veri.get("m15") or "engine/girdi/m15.json"), taban)
+    p_h4 = _yol((veri.get("h4") or "engine/girdi/h4.json"), taban)
+    izolasyon_job = {
+        "bilesenler": [
+            {"ad": "gorsel_okuma", "katman": "okuyucu",
+             "girdiler": [str(p_gor or YOK), str(p_lik or YOK)],
+             "araclar": ["Read"]},
+            {"ad": "piramit_denetci", "katman": "denetci",
+             "girdiler": [str(p_m15 or YOK), str(p_h4 or YOK)],
+             "araclar": ["Read"]},
+            {"ad": "piramit_yazici", "katman": "yazici",
+             "girdiler": [], "araclar": ["Read", "Write"]},
+        ]
+    }
+    r = _kos(MOTOR["katman_denetle"], [], girdi_job=izolasyon_job)
+    ic = r.get("cikti") or {}
+    sonuc["izolasyon"] = {
+        "hukum": ic.get("hukum") or ("KOŞTU" if r["ok"] else "MOTOR HATASI"),
+        "ihlal": ic.get("ihlaller") or ic.get("bulgular") or [],
+        "kod": r["kod"]}
+
+    # --- 3) BÜTÜNLÜK: beceri/kanca/ajan yapısı sağlam mı --------------------
+    # `--oztest-kosma`: diğer motorların öz-testlerini burada KOŞTURMAYIZ
+    # (koşu içinde koşu = süre patlaması + sicil kirlenmesi riski).
+    r = _kos(MOTOR["butunluk"], ["--depo", str(REPO), "--json", "--oztest-kosma"])
+    bc = (r.get("cikti") or {}).get("ozet") or {}
+    sonuc["butunluk"] = {"ozet": bc, "kod": r["kod"],
+                         "aciklama_butcesi": (r.get("cikti") or {}).get("ozet", {})
+                         .get("aciklama_toplami")}
+    return sonuc
 
 
 def _klines_to_candles(path: Path) -> list:
@@ -427,6 +619,9 @@ def k1_llm(job: dict, taban: Path) -> dict:
         except Exception as e:  # noqa: BLE001 — ölçüm hatası gizlenmez
             akibet = {"durum": f"ölçüm HATASI ({type(e).__name__}: {e})"}
 
+    # --- GİRDİ KAPISI: şema + izolasyon + bütünlük (koşulsuz, atlanamaz) ----
+    girdi_kapisi = _girdi_kapisi(job, taban)
+
     m15_ok = isinstance(olcumler.get("m15_bar"), int) and olcumler["m15_bar"] > 0
     h4_ok = isinstance(olcumler.get("h4_bar"), int) and olcumler["h4_bar"] > 0
     gecti = (m15_ok and h4_ok) or bool(p_csv)
@@ -434,11 +629,35 @@ def k1_llm(job: dict, taban: Path) -> dict:
             if gecti else
             "K1 kapısı KAPALI: ne (m15+h4) ne de ohlcv_csv okunabildi → "
             "üst katmanlar KOŞMAZ (uydurma veriyle karar üretilmez).")
+
+    # GEÇERSİZ ŞEMA = O GİRDİ YOK SAYILIR. Enjeksiyona dayanıklılık burada
+    # mekanikleşir: şemadan geçmeyen elle okuma danışman olarak kurula GİREMEZ.
+    for etiket, s in (girdi_kapisi.get("sema") or {}).items():
+        # "GIRDI YOK" hâli k1'in kendi okuma bloğunda ZATEN zorunlu_eksik'e
+        # yazıldı; burada tekrar eklemek aynı eksiği iki kez sayardı.
+        # Yalnız DOSYA VAR AMA ŞEMADAN GEÇMEDİ durumu yeni bir bulgudur.
+        if s.get("durum") == "GECERSIZ":
+            anahtar = {"gorsel": "gorsel", "likidasyon": "likidasyon"}.get(etiket)
+            if anahtar:
+                zorunlu.pop(anahtar, None)   # kurula GİRMEZ
+            zorunlu_eksik.append(
+                f"{etiket}: şema kapısından GEÇEMEDİ → kurula girmez "
+                f"({str(s.get('mesaj') or '')[:120]})")
+
+    # ZORUNLU MOTOR denetimi kapının parçasıdır: hesap yapılmadıysa geçilmez.
+    zk_ok, zk_msg = _zorunlu_kapi("K1-LLM")
+    if not zk_ok:
+        gecti = False
+        kapi = zk_msg
+    else:
+        kapi += "  " + zk_msg
+
     return {"katman": "K1-LLM", "rol": "ham veri + bütünlük denetimi (çıkarım yok)",
             "kanallar": kanal, "olcumler": olcumler, "profil": profil,
             "veri_sozlesmesi": sozlesme, "video": video, "eksikler": eksik,
             "zorunlu_girdiler": zorunlu, "zorunlu_eksik": zorunlu_eksik,
             "zorunlu_tazelik": tazelik or [f"{YOK} — zorunlu girdi dosyası yok"],
+            "girdi_kapisi": girdi_kapisi,
             "onceki_karar_akibeti": akibet, "onceki_kayit_var": bool(onceki_kayit),
             "gecti": gecti, "kapi": kapi}
 
@@ -773,8 +992,12 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
         kanit = (f"Görsel okuma ({g.get('zaman_dilimi', '?')}): trend={trend}, "
                  f"yapı={g.get('yapi_olayi', YOK)}, seviyeler={g.get('seviyeler', YOK)}. "
                  f"{g.get('not', '')}".strip())
+        # zaman_utc DANIŞMANA taşınır: eleme motorunun tazelik kapısı damgayı
+        # bulgunun ÜSTÜNDE arar. Taşımazsak taze bir okuma "damgasız → BAYAT"
+        # diye elenirdi (ölçüldü: self_test T19 bu yüzden düşüyordu).
         danismanlar.append({"name": "gorsel-teyit", "stance": stance,
                             "confidence": round(conf, 4), "evidence": kanit,
+                            "zaman_utc": g.get("zaman_utc"),
                             "_kaynak": "ELLE GÖRSEL OKUMA (ölçüm değil)"})
         notlar.append(f"gorsel-teyit güveni {KONVANSIYON['gorsel_tavan']} tavanıyla "
                       "sınırlandı: elle okuma mekanik ölçümle eş tutulmaz")
@@ -793,14 +1016,86 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
     # sayılır (NÖTR uzlaşı meşru çıktıdır; yön zorunlu satırı korunur).
     olculen = [d for d in danismanlar if not str(d.get("_kaynak", "")).startswith("ELLE")]
     gecti = len(olculen) >= KONVANSIYON["min_danisman_k3"]
+    # --- ELEME: iddialar sentez.py'ye GİRMEDEN üç katmandan geçer -----------
+    # Elenen danışman kurula GİRMEZ (yalnız raporlanmaz — gerçekten çıkarılır).
+    # Bağlam kapıları bu koşunun ÖLÇÜLEN alanlarından beslenir, uydurma yok.
+    _katman_ac("K3-COKLU-AJAN")
+    ta = (k2.get("motor_sonuclari") or {}).get("turev_akis") or {}
+    tc = ta.get("cikti") if isinstance(ta, dict) else None
+    tc = tc if isinstance(tc, dict) else {}
+    sm = (k2.get("motor_sonuclari") or {}).get("smc_tespit") or {}
+    sc = sm.get("cikti") if isinstance(sm, dict) else None
+    sc = sc if isinstance(sc, dict) else {}
+    eleme_job = {
+        "bulgular": danismanlar,
+        "baglam": {
+            "rejim": {"durum": sc.get("durum", YOK),
+                      "adx": _num((sc.get("olcumler") or {}).get("adx")),
+                      "yuksek_vol": sc.get("yuksek_vol")},
+            "turev_kapsam": _num(tc.get("kapsam")),
+            "turev_faktorler": tc.get("faktorler") or [],
+            # eleme'nin tazelik kapısı UTC DAMGA METNİ bekler. Ham epoch-ms
+            # verilirse ayrıştıramaz ve duvar saatine düşer → o koşunun verisi
+            # taze olsa bile "BAYAT" der (ölçüldü: taze okuma 948 dk eski
+            # sayılıyordu). Referans zaman DUVAR SAATİ DEĞİL, bu koşunun son
+            # barıdır — geçmiş veriyle koşulan analiz de doğru değerlendirilsin.
+            "son_bar_utc": _ms_to_utc(
+                (k1.get("olcumler") or {}).get("m15_son_bar")),
+        },
+    }
+    # --guven-bandi-kapali: emsal katmanının "1-3 bandı = gürültü" kuralı bu
+    # boru hattında KAPALI. Gerekçe: güven burada zaten sentez.py'de AĞIRLIK
+    # olarak kullanılıyor; bandı ayrıca uygulamak aynı sinyali iki kez
+    # cezalandırır ve kurulu boşaltıp kararı sahte bir "veri yok"a çevirir
+    # (ölçüldü: gerçek koşuda turev-akis 2.5 bandına düşüyor). Emsal
+    # denetiminin geri kalanı ve iki katman AÇIK.
+    er = _kos(MOTOR["eleme"], ["--guven-bandi-kapali"], girdi_job=eleme_job)
+    ec = er.get("cikti") or {}
+
+    def _elenen_kaydi(b):
+        # eleme.py şeması (eleme.py:546/556/570 — üç katmanda AYNI anahtar):
+        #   {"bulgu": {...}, "sira":.., "eleme_gerekcesi":.., "katman":..,
+        #    "guven_skoru": (yalnız 3-emsal katmanında)}
+        ic = b.get("bulgu") if isinstance(b.get("bulgu"), dict) else b
+        return {"name": ic.get("name", YOK),
+                "katman": b.get("katman", YOK),
+                "guven_skoru": b.get("guven_skoru"),
+                "gerekce": b.get("eleme_gerekcesi", YOK)}
+
+    eleme_raporu = {
+        "kod": er["kod"],
+        "istatistik": ec.get("istatistik") or {},
+        "elenen": [_elenen_kaydi(b) for b in (ec.get("elenen_bulgular") or [])],
+        "uyarilar": ec.get("uyarilar") or [],
+        "guven_bandi": "KAPALI — güven sentez.py'de ağırlık olarak kullanılıyor",
+    }
+    if er["ok"] and isinstance(ec.get("tutulan_bulgular"), list):
+        danismanlar = ec["tutulan_bulgular"]
+        eleme_raporu["uygulandi"] = True
+    else:
+        # fail-closed: eleme koşamadıysa kurul ELENMEMİŞ kabul edilir ve bu
+        # AÇIKÇA yazılır — sessizce "eleme yapıldı" denmez.
+        eleme_raporu["uygulandi"] = False
+        eleme_raporu["not"] = ("ELEME KOŞAMADI — kurul elenmemiş iddialarla "
+                               "kuruldu; K4 bunu çelişki olarak taşır.")
+
+    yonlu = [d for d in danismanlar if d.get("stance") != "flat"]
+    gecti = len(danismanlar) >= KONVANSIYON["min_danisman_k3"]
     kapi = (f"K3 kapısı GEÇİLDİ: {len(danismanlar)} danışman "
             f"({len(olculen)} ölçülen, {len(yonlu)} yönlü)." if gecti else
             f"K3 kapısı KAPALI: {len(olculen)} ölçülen danışman < "
             f"{KONVANSIYON['min_danisman_k3']} → kurul kurulamaz.")
+    zk_ok, zk_msg = _zorunlu_kapi("K3-COKLU-AJAN")
+    if not zk_ok:
+        gecti = False
+        kapi = zk_msg
+    else:
+        kapi += "  " + zk_msg
     return {"katman": "K3-COKLU-AJAN",
             "rol": "motorlar → danışman kurulu; güven K5 ağırlıklarıyla ölçeklenir",
             "danismanlar": danismanlar, "seviyeler": seviyeler,
             "agirlik_kaynagi": agir, "notlar": notlar,
+            "eleme": eleme_raporu,
             "gecti": gecti, "kapi": kapi}
 
 
@@ -1347,6 +1642,15 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
             # kaynak etiketi gözlemci/mühür temizliği için ayırt edicidir
             "giris": emir0.get("giris"), "stop": emir0.get("stop"),
             "hedef": emir0.get("hedef"),
+            # BÖLGE ALANLARI BU DALDA DA ZORUNLU: yukarıdaki gerekçe (giriş
+            # bölgesi kaybolursa akıbet ölçümü tetiklenmemiş işleme R yazar)
+            # emir_plani dalı için de geçerlidir. Emir tek fiyat veriyorsa
+            # bölge o fiyata çökertilir (alt=üst=giriş) — UYDURULMAZ, ölçülen
+            # emir seviyesinin kendisidir. `iptal` yoksa geçersizlik cümlesi
+            # yerine stop kullanılır (emir planının kendi çıkış seviyesi).
+            "giris_alt": _num(emir0.get("giris_alt", emir0.get("giris"))),
+            "giris_ust": _num(emir0.get("giris_ust", emir0.get("giris"))),
+            "iptal": _num(emir0.get("iptal", emir0.get("stop"))),
             "giris_tipi": str(emir0.get("emir_tipi", "limit")).lower(),
             "kaynak": "emir_plani",
         } if emir0 else {})),
@@ -1674,6 +1978,112 @@ def _kalibre_et(job: dict, taban: Path, k2: dict) -> dict:
 # ==========================================================================
 # Orkestrasyon
 # ==========================================================================
+def _zirve_denetimleri(rapor: dict, job: dict, taban: Path) -> dict:
+    """Karar kullanıcıya YAZILMADAN önce koşan denetimler (koşulsuz).
+
+    kademe → bulgu_dogrula → rubrik → olcum. Üçü de raporun KENDİSİNİ okur,
+    bu yüzden rapor geçici bir dosyaya yazılır. Sicili kirletmemek için
+    geçici dosya STATE_DIR altındadır (koşu artığı, gitignore'da).
+    """
+    _katman_ac("ZIRVE")
+    out = {"dogrulama": {}, "rubrik": {}, "telemetri": {}}
+    tmp_dir = STATE_DIR / "_zirve"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    rp = tmp_dir / "kosu_raporu.json"
+    try:
+        rp.write_text(json.dumps(rapor, ensure_ascii=False, default=str, indent=2),
+                      encoding="utf-8")
+    except OSError as e:
+        out["dogrulama"] = {"durum": f"RAPOR YAZILAMADI ({e})"}
+        return out
+
+    # 1) MALİYET KADEMESİ — pahalı doğrulamadan önce ucuz ön eleme
+    # kademe.py çıktı şeması: {"KARAR": "DEVAM|DUR", "gerekce": [...], "ozet":..}
+    kr = _kos(MOTOR["kademe"], ["--rapor", str(rp), "--kok", str(REPO)])
+    kc = kr.get("cikti") or {}
+    out["dogrulama"]["kademe"] = {"KARAR": kc.get("KARAR", YOK),
+                                  "gerekce": kc.get("gerekce") or [],
+                                  "muafiyet": kc.get("muafiyet"),
+                                  "kod": kr["kod"]}
+
+    # 2) BULGU DOĞRULAYICI — her iddia bağımsız çoklu-oy; doğrulanmayan elenir
+    # bulgu_dogrula.py şeması: {"KARAR","aday_sayisi","dogrulanan","elenen",..}
+    br = _kos(MOTOR["bulgu_dogrula"], ["--rapor", str(rp)])
+    bc = br.get("cikti") or {}
+    dogrulanan = bc.get("dogrulanan") or []
+    out["dogrulama"]["bulgu_dogrula"] = {
+        "KARAR": bc.get("KARAR", YOK),
+        "aday_sayisi": bc.get("aday_sayisi"),
+        "dogrulanan_sayi": len(dogrulanan),
+        "elenen_sayi": len(bc.get("elenen") or []),
+        "ozet_satiri": bc.get("ozet_satiri"),
+        "kod": br["kod"]}
+    out["dogrulama"]["dogrulanan_bulgu"] = [
+        f"{b.get('kod', YOK)}: {str(b.get('aciklama', ''))[:140]}"
+        for b in dogrulanan if isinstance(b, dict)]
+
+    # 3) RUBRİK — koşuyu kriterlerle notla (BİRİNCİL: kriter-başına geçme oranı)
+    # Çıkış kodu 2 = "en az bir kriter DÜŞTÜ" (rubrik.py:1258) — araç HATASI
+    # DEĞİL, kalite sinyalidir; veri olarak okunur, hata gibi işlenmez.
+    rr = _kos(MOTOR["rubrik"], ["--rapor", str(rp), "--json"])
+    rc = rr.get("cikti") or {}
+    top = rc.get("toplam") or {}
+    dusen = [f"{k.get('ID')}: {k.get('Criterion')}" for k in (rc.get("kriterler") or [])
+             if k.get("durum") == "DÜŞTÜ"]
+    out["rubrik"] = {"gecme_orani": top.get("gecme_orani"),
+                     "gecti": top.get("GEÇTİ"), "dustu": top.get("DÜŞTÜ"),
+                     "atlandi": top.get("ATLANDI"),
+                     "puanlanmadi": top.get("PUANLANMADI"),
+                     "dusen_kriterler": dusen[:12],
+                     "kova_ozeti": rc.get("kova_ozeti"),
+                     "kod": rr["kod"],
+                     "not": "BİRİNCİL ölçüm kriter-başına geçme oranıdır; "
+                            "toplam skor ikincildir (maskeleyebilir)."}
+
+    # 4) TELEMETRİ — koşunun kendisi ölçülür (rapordan sayaç çıkarımı)
+    tr = _kos(MOTOR["olcum"], ["--rapor", str(rp),
+                               "--sembol", str(job.get("sembol") or YOK)])
+    out["telemetri"] = {"kod": tr["kod"],
+                        "yazilan": (tr.get("cikti") or {}).get("yazilan")
+                        if isinstance(tr.get("cikti"), dict) else None}
+    return out
+
+
+def _sorusturma_kos(rapor: dict, katman: str, kapi: str) -> dict:
+    """Boru hattı bir kapıda DURDUĞUNDA kök-neden soruşturması KENDİLİĞİNDEN
+    koşar. Yalnız ARTEFAKT okur; boru hattını yeniden KOŞTURMAZ (yeniden koşmak
+    engine/state + hafıza'yı kirletir = soruşturma kendi kanıtını bozar)."""
+    _katman_ac("ARIZA")
+    tmp_dir = STATE_DIR / "_ariza"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    # ARIZA KAYDI UYDURULMAZ: sorusturma.py'nin kendi rapor-alım yolu
+    # (`_rapordan_bulgular`, :338-391) DURAN RAPORUN KENDİSİNDEN bulgu türetir
+    # — katman, kapı gerekçesi, zorunlu eksikler, gözlemci ihlalleri. Elle
+    # bulgu yazmak ikinci bir doğruluk kaynağı olurdu; ayrıca her bulgunun
+    # ÇÖZÜLEBİLİR bir artefakt yolu olması gerekiyor (doğrulama artefakt
+    # okumaya dayanır) ve o yol raporun kendisidir.
+    ap = tmp_dir / "duran_rapor.json"
+    try:
+        ap.write_text(json.dumps(rapor, ensure_ascii=False, default=str,
+                                 indent=2), encoding="utf-8")
+    except OSError as e:
+        return {"durum": f"ARIZA KAYDI YAZILAMADI ({e})"}
+    # calisma=REPO zorunlu: sorusturma.py depo kökünü ÇALIŞMA DİZİNİNDEN
+    # bulur ve kök dışına yazmayı reddeder (doğru bir korkuluk). Varsayılan
+    # cwd motorun kendi dizini olduğu için kök `.../sorusturma/scripts`
+    # sanılıyor ve kendi çıktı dizinimiz "dışarısı" sayılıp exit 2 dönüyordu.
+    r = _kos(MOTOR["sorusturma"], [str(ap), "--auto", "--depo", str(REPO),
+                                   "--cikti-dizini", str(tmp_dir)],
+             calisma=REPO)
+    c = r.get("cikti") or {}
+    return {"kod": r["kod"],
+            "gercek_ariza": c.get("gercek_ariza") or c.get("gercek_arizalar"),
+            "yanlis_pozitif": c.get("yanlis_pozitif"),
+            "ozet": (c.get("ozet") or r.get("metin", ""))[:400]
+            if isinstance(c.get("ozet") or r.get("metin"), str) else None,
+            "cikti_dizini": str(tmp_dir)}
+
+
 def kos(job: dict, taban: Path) -> dict:
     rapor = {
         "sistem": "PİRAMİT — LLM→AI AJAN→ÇOKLU-AJAN→AGI→SI",
@@ -1704,13 +2114,27 @@ def kos(job: dict, taban: Path) -> dict:
                       "_ikinci_sembol")
                      if job.get(k)}
 
+    _sicil_sifirla("K1-LLM")
     k1 = k1_llm(job, taban)
     rapor["katmanlar"].append(k1)
     if not k1["gecti"]:
         return _durdur(rapor, "K1-LLM", k1["kapi"])
 
+    _katman_ac("K2-AI-AJAN")
     k2 = k2_ajan(job, taban, k1)
     rapor["katmanlar"].append(k2)
+    # K2 hesap verme: koşmayan zorunlu motorun gerekçesi katmanın KENDİ hata
+    # listesinden okunur (uydurma değil). Gerekçesi de olmayan = sessiz atlama.
+    _katman_ac("K2-AI-AJAN")
+    _hesap_ver("K2-AI-AJAN", {
+        h.get("motor", "").replace("-", "_"): str(h.get("hata", ""))[:200]
+        for h in (k2.get("hatalar") or []) if isinstance(h, dict)})
+    zk_ok, zk_msg = _zorunlu_kapi("K2-AI-AJAN")
+    if not zk_ok:
+        k2["gecti"] = False
+        k2["kapi"] = zk_msg
+    else:
+        k2["kapi"] = str(k2.get("kapi", "")) + "  " + zk_msg
     if not k2["gecti"]:
         return _durdur(rapor, "K2-AI-AJAN", k2["kapi"])
 
@@ -1722,11 +2146,25 @@ def kos(job: dict, taban: Path) -> dict:
     if not k3["gecti"]:
         return _durdur(rapor, "K3-COKLU-AJAN", k3["kapi"])
 
+    _katman_ac("K4-AGI")
     k4 = k4_agi(job, k1, k2, k3)
     rapor["katmanlar"].append(k4)
+    # Eleme koşamadıysa bu bir ÇELİŞKİdir — K4 taşır, sessizce yutulmaz.
+    el = (k3.get("eleme") or {})
+    if el and not el.get("uygulandi"):
+        k4.setdefault("celiskiler", []).append(
+            "ELEME KOŞMADI: danışman iddiaları üç katmandan geçirilmeden "
+            "sentezlendi (fail-closed uyarı — kurul elenmemiş kabul edilir).")
 
+    _katman_ac("K5-SI")
     k5 = k5_si(job, taban, k1, k2, k3, k4)
     rapor["katmanlar"].append(k5)
+    zk_ok, zk_msg = _zorunlu_kapi("K5-SI")
+    if not zk_ok:
+        k5["gecti"] = False
+        k5["kapi"] = zk_msg
+    else:
+        k5["kapi"] = str(k5.get("kapi", "")) + "  " + zk_msg
     if not k5["gecti"]:
         return _durdur(rapor, "K5-SI", k5["kapi"])
 
@@ -1808,6 +2246,40 @@ def kos(job: dict, taban: Path) -> dict:
     except OSError as e:
         rapor["ZIRVE"]["_anlik_goruntu"] = f"YAZILAMADI ({e})"
 
+    # --- ZİRVE DENETİMLERİ: karar YAZILMADAN önce, koşulsuz ----------------
+    rapor["ZIRVE"]["ELEME"] = (k3.get("eleme") or {})
+    rapor["_MOTOR_SICILI"] = list(_SICIL)
+    zirve = _zirve_denetimleri(rapor, job, taban)
+    rapor["ZIRVE"]["DOGRULAMA_ZINCIRI"] = zirve["dogrulama"]
+    rapor["ZIRVE"]["RUBRIK"] = zirve["rubrik"]
+    rapor["TELEMETRI"] = zirve["telemetri"]
+    rapor["_MOTOR_SICILI"] = list(_SICIL)
+
+    zk_ok, zk_msg = _zorunlu_kapi("ZIRVE")
+    rapor["ZIRVE"]["ZORUNLU_MOTOR_KAPISI"] = zk_msg
+    if not zk_ok:
+        # Zirvede eksik hesap: YÖN gösterilir, İŞLEM fail-closed kapatılır.
+        rapor["ZIRVE"]["ISLEM_KALITESI"] = ("ZORUNLU HESAP EKSİK — İŞLEM YOK "
+                                            "(fail-closed)")
+        rapor["ZIRVE"]["EMIR"] = "EMİR YOK — ZORUNLU HESAP EKSİK"
+        rapor["ZIRVE"]["emir_adaylari"] = []
+        rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
+            "İŞLEM KALİTESİ: " + zk_msg)
+        rapor["ZIRVE"]["kapi_gerekceleri"] = (
+            rapor["ZIRVE"].get("kapi_gerekceleri") or []) + [zk_msg]
+
+    # Doğrulanmış bulgu varsa işlem MÜHÜRLENİR (yön gizlenmez).
+    dz = zirve["dogrulama"]
+    if dz.get("dogrulanan_bulgu"):
+        rapor["ZIRVE"]["ISLEM_KALITESI"] = ("DOĞRULANMIŞ BULGU — İŞLEM YOK "
+                                            "(fail-closed)")
+        rapor["ZIRVE"]["EMIR"] = "EMİR YOK — DOĞRULAMA ZİNCİRİ BULGUSU"
+        rapor["ZIRVE"]["emir_adaylari"] = []
+        rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
+            "İŞLEM KALİTESİ: doğrulama zinciri "
+            f"{len(dz['dogrulanan_bulgu'])} bulguyu DOĞRULADI — "
+            + " | ".join(str(b)[:120] for b in dz["dogrulanan_bulgu"][:3]))
+
     # --- GÖZLEMCİ AJANLAR: her katmanın çalışması artefaktla denetlenir ---
     denetim = GZ.denetle(rapor)
     rapor["DENETIM"] = denetim
@@ -1844,8 +2316,30 @@ def kos(job: dict, taban: Path) -> dict:
                     _atomik_yaz(gp, json.dumps(g, ensure_ascii=False, indent=2))
         except (OSError, json.JSONDecodeError):
             pass
+
+    # --- KONTROL AJANLARI: gözlemcinin ÜSTÜNE niyet/gerçeklik denetimi ---
+    # (araştırmasız / taklit / bulaşma / gizli gündem / tiyatro / görev sapması)
+    # Gözlemci mührü UYGULANDIKTAN SONRA koşar: "mühürlüyken emir basılmış"
+    # kontrolü bir gerileme korkuluğudur, koşu sırasına bağlıdır.
+    kontrol = KA.denetle_piramit(rapor)
+    rapor["KONTROL"] = kontrol
+    rapor["ZIRVE"]["KONTROL"] = {
+        "hukum": kontrol["hukum"], "ozet": kontrol["ozet"],
+        "muhurlendi": kontrol["muhurlendi"],
+        "P0": [f"{b['kod']}@{b['adim']}: {b['kanit']}" for b in kontrol["bulgular"]
+               if b["severity"] == "P0"]}
+    if kontrol["muhurlendi"] and not denetim["muhurlendi"]:
+        p0 = rapor["ZIRVE"]["KONTROL"]["P0"]
+        rapor["ZIRVE"]["ISLEM_KALITESI"] = "KONTROL İHLALİ — İŞLEM YOK (mühürlendi)"
+        rapor["ZIRVE"]["EMIR"] = "EMİR YOK — KONTROL MÜHÜRÜ"
+        rapor["ZIRVE"]["EMIR_GEREKCE"] = "kontrol ajanı P0: " + " | ".join(p0)[:200]
+        rapor["ZIRVE"]["emir_adaylari"] = []
+        rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
+            "İŞLEM KALİTESİ: KONTROL İHLALİ — işlem yok. Kontrol ajanı bulguları: "
+            + " | ".join(p0))
+    muhur = denetim["muhurlendi"] or kontrol["muhurlendi"]
     rapor["durum"] = ("TAMAM — piramidin tepesine ulaşıldı"
-                      + (" (DENETİM MÜHÜRÜ)" if denetim["muhurlendi"] else ""))
+                      + (" (DENETİM MÜHÜRÜ)" if muhur else ""))
     _deftere_yaz(rapor)
     return rapor
 
@@ -1858,10 +2352,15 @@ def sentez_gecersizlik(s: dict):
 
 def _durdur(rapor: dict, katman: str, kapi: str) -> dict:
     rapor["durum"] = f"DURDU — {katman}"
+    rapor["_MOTOR_SICILI"] = list(_SICIL)
     rapor["ZIRVE"] = {"ulasilan_katman": katman, "neden": kapi,
                       "YON_BIAS": YOK, "ISLEM_KALITESI": "NÖTR-BEKLE (fail-closed)",
                       "not": "Alt katman kapısı geçilmeden üst katman koşmaz; "
                              "eksik veriyle karar UYDURULMAZ."}
+    # ARIZA HÂLİNDE soruşturma OTOMATİK koşar — "sonra bakarız" diye bir yol yok.
+    rapor["SORUSTURMA"] = _sorusturma_kos(rapor, katman, kapi)
+    rapor["ZIRVE"]["SORUSTURMA"] = rapor["SORUSTURMA"].get("ozet") or YOK
+    rapor["_MOTOR_SICILI"] = list(_SICIL)
     _deftere_yaz(rapor)
     return rapor
 
@@ -1960,6 +2459,11 @@ def ozet_metin(rapor: dict) -> str:
             L.append(f"   ⛔ {x[:110]}")
         for x in (d.get("uyari") or [])[:4]:
             L.append(f"   ⚠ {x[:110]}")
+    k = rapor.get("KONTROL") or {}
+    if k:
+        L.append(KA.ozet_metin(k))
+        for pl in (k.get("duzeltme_plani") or [])[:3]:
+            L.append(f"   → düzeltme {pl['sira']} [{pl['severity']}]: {pl['yap'][:96]}")
     L.append("=" * 68)
     L.append("⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.")
     return "\n".join(L)

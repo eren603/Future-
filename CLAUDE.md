@@ -93,6 +93,15 @@ beceriyi uygula.
 | Nihai KARAR (al/sat/bekle, yön, "ne yapmalıyım"), "hepsini birleştir", kurul kararı, çok-yönlü sentez | `karar-kurulu` (ORKESTRATÖR) |
 | Tam analiz / tam boru hattı: 15M+4H kline (+ varsa türev paneli), "bütün motorları çalıştır", "en alttan en üste", çok katmanlı değerlendirme | `piramit-sistem` (**VARSAYILAN YOL** — K1→K5, `scripts/piramit.py`) |
 | Ciddi analiz/karar/değerlendirme, "uzman gibi bak", derin inceleme, profesyonel görüş, strateji, çok-adımlı muhakeme | `uzman-modu` (ÜST-AKIL DİSİPLİNİ) |
+| Elle/panel/görsel okumadan üretilmiş bir girdi dosyası motora girecekse; şema, doğrulama, enjeksiyon, untrusted girdi | `sema-dogrulama` (GİRDİ KAPISI — koşudan ÖNCE) |
+| Güvenilmez girdiyi (panel metni, ekran görüntüsü, elle likidasyon) okuyan bileşenin yazma yetkisi; izolasyon, karantina, allowlist, devir/handoff | `guven-katmanlama` (GİRDİ KAPISI — koşudan ÖNCE) |
+| Danışman/motor iddiası sentezden önce elenecekse; yanlış pozitif, gürültü, emsal, sinyal kalitesi | `eleme-motoru` (KOŞU İÇİ — `sentez.py`'den ÖNCE) |
+| "Bu karar doğru mu", ikinci göz, bulgu doğrulama, PASS/NEEDS_WORK, ön eleme/triage | `dogrulama-zinciri` (KARAR SONRASI — çıktıdan ÖNCE) |
+| "Bu koşu kaliteli mi", iş bitti mi, kriter, rubrik, kalite notu, geçme oranı | `rubrik-kapisi` (KARAR SONRASI — çıktıdan ÖNCE) |
+| Boru hattı ARIZASI: kapıda durdu, gözlemci ihlali, sicil ezildi, "nerede bozuldu", kök neden, postmortem | `sorusturma` (ARIZA HÂLİNDE) |
+| "Koşu ne kadar sürdü", hangi katman yavaş, hangi kapı düştü, determinizm, telemetri, metrik | `izleme-telemetri` (BAKIM — koşu dışı) |
+| "Beceriler sağlam mı", SKILL.md geçerli mi, referans kopmuş mu, öz-test geçiyor mu, depo denetimi | `butunluk-denetimi` (BAKIM — koşu dışı) |
+| Yeni beceri yazma/düzeltme, SKILL.md şablonu, frontmatter, "beceri yüklenmiyor", description sınırı | `dokuman-uretimi` (BAKIM — koşu dışı) |
 
 Ek kural (üst-akıl): Ciddi/analitik her soruda `uzman-modu` arka planda
 uygulanır — rol + niyet + tam bağlam + çok-mercekli muhakeme + araçla üretim +
@@ -145,6 +154,37 @@ metindeki her sayı koşu raporunda birebir var mı? KAYNAKSIZ çıkan sayı ya
 rapordan düzeltilir ya metinden çıkarılır. Bu araç ANLAM denetlemez (yorum
 doğruluğu elle ikinci-göz işidir) — yalnız uydurma SAYIYA karşı korkuluktur.
 
+Ek kural (KONTROL AJANLARI — HER KONU, her soruda, tetikleyicisiz): Gözlemci
+yalnız piyasa boru hattının KATMANLARINI denetler; kontrol ajanları KONUDAN
+BAĞIMSIZ çalışır ve mimarisi `.claude/kontrol/kontrol_mimari.xml`
+(motor: `piramit-sistem/scripts/kontrol_ajanlari.py`). İki parçası vardır:
+(1) ZİNCİR — her konu şu 6 adımdan geçer ve her adım bir öncekinin ÇIKTISINI
+tüketip YENİ bilgi ekler (birbirini tamamlayan sonuçlarla ilerleme):
+Z1 GÖREV ÇÖZÜMLEME (isteğin her cümlesi bir madde) → Z2 KANIT (okunmadan iddia
+yok) → Z3 ÜRETİM (ajanlar İZOLE, birbirini görmez) → Z4 ÇAPRAZ DOĞRULAMA
+(onaylamak değil ÇÜRÜTMEK görevdir, farklı mercek) → Z5 SENTEZ (güven-ağırlıklı,
+severity sıralı) → Z6 TESLİM (gerçek/varsayım/yorum + düzeltme planı).
+(2) KONTROL AJANLARI — çalışan ajanların yanında koşar ve ARTEFAKTLA sınar:
+araştırmasız mı (ARASTIRMASIZ), hafızadan mı (HAFIZA), uydurma mı (UYDURMA —
+"okudum" denen dosya diskte YOK ya da sayı kaynakta geçmiyor), diğerini taklit
+mi (TAKLIT), birbirinden etkilenmiş mi (BULASMA — beslenmediği akranın
+çıktısına bakmış), dairesel mi (DAIRESEL — kendi iddiasını kendi doğrulamış),
+kullanıcıyı memnun etme mi (MEMNUN_ETME — hiç çürütme yok / itiraz sonrası
+kanıtsız dönüş), görevi TAM mı yaptı (GOREV_SAPMASI — kapsanmayan görev maddesi),
+tünel görüşü mü (TUNEL), beyan dışı gerekçe mi (GIZLI_GUNDEM), gerçekten yaptı
+mı yoksa tiyatro mu (TIYATRO — "geçti" diyen ama çıktı üretmeyen adım/katman),
+ürettiğini taşıdı mı (EKSIK_AKTARIM). Bulgular severity'ye göre sıralanır
+(P0→P1→P2) ve her birine mekanik düzeltme adımı yazılır. **Tek bir P0 TESLİMİ
+MÜHÜRLER:** sonuç yine gösterilir ama "bu haliyle kullanılamaz" denir
+(fail-closed) — piyasa yolunda EMİR de kapanır. Piyasa sorularında denetim boru
+hattında OTOMATİK koşar (`rapor["KONTROL"]`, çıktının altında panel). Diğer
+konularda zincir defteri `.claude/kontrol/zincir/<konu>.json`'a yazılır
+(şablon: `.claude/kontrol/zincir_sablon.json`) ve cevap YAYINLANMADAN
+`kontrol_ajanlari.py --zincir <defter> --ozet` koşulur; panel cevabın altında
+gösterilir. Kontrol ajanı ZİHİN okumaz, ANLAM denetlemez — yorum doğruluğu yine
+ELLE ikinci-göz işidir; bu araç yalnız uydurma/tiyatro/sapma/kopya için
+korkuluktur ve bunu iddia ettiğinden fazlasını YAPTIĞINI SÖYLEMEZ.
+
 Ek kural (HESAP VERME + KIYAS — her yeni veride İLK İŞ, atlanamaz): Yeni veri
 geldiğinde YENİ analizden ÖNCE iki soru cevaplanır (`scripts/kiyas.py`):
 (1) HESAP VERME: bir önceki koşuda verilen giriş/stop/hedef seviyeleri yeni
@@ -165,11 +205,14 @@ Ek kural (ÇAPRAZ-VARLIK + SABİT KISIT — boru hattı içinde, elle koşulmaz)
 İkinci bir sembol varsa `korelasyon.py` K2'de koşar ve K4'te risk çarpanına
 çevrilir: |ρ| ≥ 0.85 → KOPYA POZİSYON, aynı yönde ikinci pozisyon bağımsız
 bahis DEĞİLDİR, toplam risk ×2 sayılır. Dolar cinsi kısıt (kontrat + sabit
-stop + hedef bandı) varsa `usd_hedef.py` K5'te koşar; ATR ve likidite
-KURULUM ÖLÇEĞİ yapısından (`smc_tespit_h4`) gelir — stop/ATR ∈ [0.8, 2.0]
-olan dilim kurulum ölçeğidir, alt dilim yalnız TETİK içindir. Her iki motor
-da job'da BEYAN EDİLİP koşmazsa gözlemci EKSİK_AKTARIM ihlali verir (sessiz
-atlama yok).
+stop + hedef bandı) varsa `usd_hedef.py` K5'te koşar; KURULUM ÖLÇEĞİ ATR'si
+**TEK KAYNAKTAN — `emir_plani.yapi_ozeti.atr4h`** ölçümünden gelir (likidite
+`smc_tespit_h4`'ten). Gerekçe: `emir_plani` aday başına AYNI usd_hedef
+kapılarını kendi ATR'siyle sınıyor; ikinci bir ATR kaynağı kullanıldığında aynı
+kapı iki zıt hüküm verebiliyordu. ATR okunamazsa `smc_tespit_h4`'e DÜŞÜLMEZ,
+fail-closed VERİ YOK denir. stop/ATR ∈ [0.8, 2.0] olan dilim kurulum ölçeğidir,
+alt dilim yalnız TETİK içindir. Her iki motor da job'da BEYAN EDİLİP koşmazsa
+gözlemci EKSİK_AKTARIM ihlali verir (sessiz atlama yok).
 
 Ek kural (ZORUNLU GİRDİLER — her koşuda, atlanamaz): Bir piyasa analizi
 üretilecekse şu üçü BİRLİKTE beklenir ve hiçbiri sessizce atlanamaz:
@@ -309,6 +352,62 @@ geçmiş değerdir (`r_etiketi`). Grafik bir KARAR DEĞİLDİR — yön/işlem h
 yine `piramit-sistem`/`karar-kurulu` sentezinden gelir; çıktı `SendUserFile`
 ile gönderilir.
 
+Ek kural (MEKANİKLEŞTİRME — atlama artık İMKÂNSIZ, talimat değil KOD):
+Aşağıdaki katmanlar `piramit.py`'nin İÇİNDE çağrılır; elle uygulanmaları
+beklenmez ve unutulmaları mümkün değildir. Mekanizma üç parçadır:
+(1) **MOTOR SİCİLİ** — her `_kos()` çağrısı kaydı `_kos`'un kendi içinde
+tutar; çağıran taraf kaydı atlayamaz. Sicil rapora `_MOTOR_SICILI` olarak
+girer.
+(2) **ZORUNLULUK MANİFESTOSU** (`ZORUNLU_MOTOR`) — katman → o katmanda hesabı
+verilmesi zorunlu motorlar. Kapı, motorun BAŞARILI olmasını değil hesabının
+VERİLMİŞ olmasını arar: motor ya koşar ya da koşmama gerekçesi (`ATLANDI:
+<sebep>`, katmanın kendi hata yapısından — uydurma değil) sicile yazılır.
+Ne kayıt ne gerekçe varsa bu SESSİZ ATLAMA'dır ve **katman kapısı KAPANIR**.
+(3) **GÖZLEMCİ İKİNCİ AĞI** — manifestoyu `piramit.py`'den çağrı anında okur
+(kopya tutmaz) ve sicille karşılaştırır; eksik varsa EKSİK_AKTARIM ihlali.
+Manifesto okunamazsa "sicil denetimi YAPILAMADI" uyarısı düşer (fail-closed).
+Bağlanan yerler: K1 = `sema_dogrula` (görsel + likidasyon) + `katman_denetle`
++ `butunluk`; K2 = `smc_tespit` + `karar_motoru` + `turev_akis`; K3 = `eleme`
+(elenen danışman kurula GİRMEZ); K5 = `esik_kalibre` + `sentez`; ZİRVE =
+`kademe` + `bulgu_dogrula` + `rubrik` + `olcum`; ARIZA = `sorusturma`
+(kapı kapanınca kendiliğinden, duran raporun KENDİSİNDEN bulgu türeterek).
+Zirvede hesap eksikse ya da `bulgu_dogrula` bir bulguyu DOĞRULARSA işlem
+fail-closed kapanır (YÖN yine gösterilir). Şemadan geçemeyen elle okuma
+kurula GİRMEZ. Öz-test T35 mekanizmanın kendisini sınar: manifestoya var
+olmayan bir motor eklenince boru hattı DURMALIDIR.
+
+Ek kural (EKLENEN DENETİM KATMANLARI — boru hattındaki YERLERİNE bağlıdır,
+tetikleyicisiz): Bu becerileri gelişigüzel çağırma; her biri boru hattının
+belirli bir anına aittir ve o an gelmeden koşmaz:
+1. **Koşudan ÖNCE (girdi kapısı):** zorunlu girdiler (`gorsel_okuma.json`,
+   `turev_ham/likidasyon.json`) boru hattına girmeden `sema-dogrulama`'dan
+   geçer — geçersizse girdi EKSİK sayılır, koşu uydurma veriyle sürmez.
+   Güvenilmez girdiyi okuyan bileşenin motor siciline yazamadığı
+   `guven-katmanlama` ile mekanik doğrulanır.
+2. **Koşu içi, sentezden ÖNCE:** danışman/motor iddiaları `sentez.py`'ye
+   girmeden `eleme-motoru`'nun üç katmanından geçer (sert kural → bağlam
+   kapısı → emsal). Elenen iddia kurula GİRMEZ; eleme gerekçesi gizlenmez.
+3. **Karar sonrası, kullanıcıya YAZILMADAN ÖNCE:** `dogrulama-zinciri`
+   kararı ucuzdan pahalıya inceler (kademe → bulgu doğrulayıcı → şüpheci
+   `degerlendirici` ajanı). `rubrik-kapisi` koşuyu 39 kriterle notlar;
+   BİRİNCİL ölçüm kriter-başına geçme oranıdır, toplam skor ikincildir.
+   Bu iki adım kararın YÖNÜNÜ değiştirmez; İŞLEM KALİTESİ hükmünü besler.
+4. **Arıza hâlinde:** boru hattı bir kapıda durduysa, gözlemci ihlali
+   çıktıysa ya da akıbet ölçümü kararla tutarsızsa `sorusturma` koşar —
+   yalnız ARTEFAKT okur, boru hattını KOŞTURMAZ, sicili DEĞİŞTİRMEZ
+   (yeniden koşmak `engine/state`+`hafiza`'yı kirletir = soruşturma kendi
+   kanıtını bozar).
+5. **Bakım (koşu dışı, karar üretmez):** `izleme-telemetri` boru hattının
+   kendisini ölçer; `butunluk-denetimi` beceri/kanca/ajan bütünlüğünü
+   denetler (kendisi dahil, muafiyet yok); `dokuman-uretimi` yeni/düzeltilen
+   SKILL.md'nin resmî şartname disiplinine uymasını sağlar.
+Kancalar bu katmanları mekanikleştirir: `kanit_sicili.sh` (hangi kanıt
+okundu), `kanit_kapisi.sh` (kanıt okunmadan karar dosyası yazılamaz),
+`acil_durdur.sh` (AGENT_STOP varken araç çağrısı durur), `yonlendir.sh`
+(koşu ortasında yönlendirme). ⚠️ Bu katmanlar karar-desteğin DENETİMİDİR;
+yön hükmü yine `piramit-sistem`/`karar-kurulu` sentezinden gelir ve
+canlı/otomatik emir DAHİL DEĞİLDİR.
+
 Kurallar:
 1. Soru birden fazla kategoriye giriyorsa ilgili becerilerin **hepsini** birlikte
    uygula (örn. "şu kripto grafiğini analiz et" → `grafik-calisma` +
@@ -350,3 +449,15 @@ Kurallar:
 3. **Kullanıcıyı memnun etme / gerekçesiz geri adım:** kullanıcının iddiası dahil
    HİÇBİR iddia doğrulanmadan kabul edilmez. İtiraz gelince kanıtsız fikir
    değiştirilmez; kanıt desteklerse kabul, desteklemezse gerekçeyle itiraz edilir.
+
+## Ek kural (BAĞ-KURMA — tetikleyicisiz, her pencerede otomatik)
+
+Bir soru/analiz birden fazla olay, problem, veri ya da sinyal içeriyorsa
+`bag-kurma` becerisi (.claude/skills/bag-kurma/SKILL.md) OTOMATİK uygulanır —
+kullanıcı hiçbir komut yazmaz. Dört yöntem grubundan (nedensel zincir, analojik
+eşleme, düğüm-bağ haritası, zaman bağları) EN AZ İKİSİ denenir; her bağ hipotezi
+Pre-Mortem → Steelman → Red Team döngüsünden geçer; hafızadan bağ, dairesel
+doğrulama, tünel görüş ve taraflılık YASAKTIR. Çıktı kanıt-etiketli BAĞ
+HARİTASIDIR; harita karar değildir, karar ilgili motor/kapıların işidir.
+Ciddi çıktılar yayın öncesi .claude/agents/denetci.md yönergesiyle bağımsız
+denetimden geçer.
