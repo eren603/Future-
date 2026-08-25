@@ -348,8 +348,7 @@ function isAuthorized(req) {
     }
   }
   const cookie = parseCookies(req.headers['cookie'])[COOKIE_NAME];
-  if (cookie && timingSafeEqualStr(cookie, TOKEN)) return true;
-  return false;
+  return Boolean(cookie && timingSafeEqualStr(cookie, TOKEN));
 }
 
 function pathnameOf(url) {
