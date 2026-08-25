@@ -39,6 +39,11 @@ else
   echo "[PİRAMİT] Boru hattı dosyası YOK — motorlar elle koşulur."
 fi
 
+# --- Duran görev damgası: YENİ pencere görevi TAM görmeli (ikinci emniyet).
+# UserPromptSubmit kancası damgayı oturum kimliğiyle tutar; ortam değişkeni
+# yoksa damga burada sıfırlanır ki duran görev sessizce kaybolmasın. ---
+rm -f "${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/state/gorev_damga.json"
+
 # Only run in Claude Code on the web (remote) environment.
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0

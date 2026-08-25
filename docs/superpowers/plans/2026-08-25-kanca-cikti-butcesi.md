@@ -24,7 +24,7 @@
 |---|---|---|
 | `.claude/hooks/piramit_auto.py` | Kanca akışı + çıktı sırası + damga | `main()` → `_akis()`; yeni `_sabit_bas()`, `_gorev_damgasi()`, `_oturum_kimligi()`; `_gorev_bas()` ikiye ayrılır (sabit / dinamik) |
 | `.claude/hooks/session-start.sh` | Oturum açılışı | Damga dosyasını siler (ikinci emniyet) |
-| `.claude/skills/piramit-sistem/scripts/self_test.py` | Regresyon kilidi | T30 (sıra), T31 (damga), T32 (bayt tavanı) |
+| `.claude/skills/piramit-sistem/scripts/self_test.py` | Regresyon kilidi | T35 (sıra), T36 (damga), T37 (bayt tavanı), T38 (çökme sırası) |
 | `.claude/skills/piramit-sistem/state/gorev_damga.json` | Damga durumu (üretilen) | yeni, git'e girmez (state) |
 
 ---
@@ -33,7 +33,7 @@
 
 **Files:**
 - Modify: `.claude/hooks/piramit_auto.py:898-900` (`main()` başı), dosya sonu (`main` sarmalayıcısı)
-- Test: `.claude/skills/piramit-sistem/scripts/self_test.py` (T30)
+- Test: `.claude/skills/piramit-sistem/scripts/self_test.py` (T35)
 
 **Interfaces:**
 - Consumes: mevcut `KURAL` sabiti, `_gorev_bas()`
@@ -56,14 +56,14 @@
         cikti = buf.getvalue()
         i_dinamik = cikti.find("Boru hattı dosyası bulunamadı")
         i_kural = cikti.find("[PİRAMİT — duran kural")
-        kontrol("T30 kanca: dinamik özet sabit kuraldan ÖNCE basılır",
+        kontrol("T35 kanca: dinamik özet sabit kuraldan ÖNCE basılır",
                 i_dinamik >= 0 and i_kural >= 0 and i_dinamik < i_kural,
                 f"dinamik@{i_dinamik} kural@{i_kural}")
 ```
 
 - [ ] **Step 2: Testi koş, DÜŞTÜĞÜNÜ gör**
 
-Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep T30`
+Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep T35`
 Expected: FAIL — `dinamik@<büyük> kural@0` (kural şu an EN ÜSTTE basılıyor)
 
 - [ ] **Step 3: Asgari uygulamayı yaz**
@@ -97,8 +97,8 @@ def main() -> int:
 
 - [ ] **Step 4: Testi koş, GEÇTİĞİNİ gör**
 
-Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep -E "T30|SELF_TEST"`
-Expected: `T30 ... ✔` ve `SELF_TEST_OK`
+Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep -E "T35|SELF_TEST"`
+Expected: `T35 ... ✔` ve `SELF_TEST_OK`
 
 - [ ] **Step 5: Sağlık kontrolü + commit**
 
@@ -115,14 +115,14 @@ git commit -m "kanca: dinamik özet sabit kuraldan önce basılır (A)"
 **Files:**
 - Modify: `.claude/hooks/piramit_auto.py:485-565` (`_gorev_bas`), sabitler bölümü (satır ~58)
 - Modify: `.claude/hooks/session-start.sh` (damga silme)
-- Test: `.claude/skills/piramit-sistem/scripts/self_test.py` (T31, T32)
+- Test: `.claude/skills/piramit-sistem/scripts/self_test.py` (T36, T37, T38)
 
 **Interfaces:**
 - Consumes: `GOREV` (Path), `SKILL` (Path), Task 1'in `_sabit_bas()`i
 - Produces: `DAMGA: Path`, `_oturum_kimligi() -> str`, `_gorev_damgasi() -> bool`
   (True = TAM bas, False = işaretçi bas), `_gorev_bas()` imzası değişmez
 
-- [ ] **Step 1: Failing test yaz** — T31 + T32
+- [ ] **Step 1: Failing test yaz** — T36 + T37
 
 ```python
         # ---- T31/T32: kanca — duran görev damgası + bayt tavanı ------------
@@ -138,18 +138,18 @@ git commit -m "kanca: dinamik özet sabit kuraldan önce basılır (A)"
         with contextlib.redirect_stdout(b2):
             HOOK.main()
         ilk, ikinci = b1.getvalue(), b2.getvalue()
-        kontrol("T31 kanca: duran görev ilk istemde TAM, ikincide işaretçi",
+        kontrol("T36 kanca: duran görev ilk istemde TAM, ikincide işaretçi",
                 "sıra: " in ilk and "sıra: " not in ikinci
                 and "engine/gorev.json" in ikinci,
                 f"ilk={len(ilk)}B ikinci={len(ikinci)}B")
-        kontrol("T32 kanca: değişmemiş görevde çıktı ≤ 2048 bayt",
+        kontrol("T37 kanca: değişmemiş görevde çıktı ≤ 2048 bayt",
                 len(ikinci.encode("utf-8")) <= 2048,
                 f"{len(ikinci.encode('utf-8'))} bayt")
 ```
 
 - [ ] **Step 2: Testi koş, DÜŞTÜĞÜNÜ gör**
 
-Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep -E "T31|T32"`
+Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep -E "T36|T37"`
 Expected: ikisi de FAIL — ikinci koşu da tam metni basıyor (`sıra: ` var, >2048 bayt)
 
 - [ ] **Step 3: Asgari uygulamayı yaz**
@@ -217,7 +217,7 @@ rm -f "${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/state/gorev_damga.
 
 - [ ] **Step 4: Testi koş, GEÇTİĞİNİ gör**
 
-Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep -E "T30|T31|T32|SELF_TEST"`
+Run: `python3 .claude/skills/piramit-sistem/scripts/self_test.py 2>&1 | grep -E "T35|T36|T37|T38|SELF_TEST"`
 Expected: üçü de ✔, `SELF_TEST_OK`
 
 - [ ] **Step 5: Gerçek depoda ölç (kanıt), sağlık, commit**
@@ -266,3 +266,29 @@ git push -u origin claude/weapon-commands-config-169rlo
 **2. Placeholder scan:** TBD/TODO yok; her adımda gerçek kod var.
 
 **3. Type consistency:** `_akis() -> int` (Task 1) Task 2'de değişmiyor. `_sabit_bas()` Task 1'de tanımlanıp Task 2'de değişmeden kullanılıyor. `_gorev_damgasi() -> bool` (True=TAM) Task 2 Step 3'te tek yerde tüketiliyor. `_sunulan_karar_bas()` Task 2'de tanımlanıp aynı task içinde iki yerden çağrılıyor. `_atomik_yaz` ve `hashlib` dosyada zaten mevcut (satır 53, import bölümü).
+
+---
+
+## Uygulama Sonucu (2026-08-25, ölçüldü)
+
+| Ölçüm | Önce | Sonra | Kaynak |
+|---|---|---|---|
+| Kanca çıktısı (kararlı durum) | 14.280 B | **6.910 B** (−%51) | `piramit_auto.py \| wc -c` |
+| Sabit blok payı | 8.871 B (%62) | 1.500 B (%22) | satır bölümlemesi |
+| Dinamik özet konumu | çıktının sonunda (kesiliyordu) | **çıktının başında** | `head -6` |
+| Öz-test | 37/37 | **40/40** | `self_test.py` |
+| `saglik.py --tam` | 12/12 GEÇTİ | 12/12 GEÇTİ | taze koşu |
+| Çıkış kodu sözleşmesi | 0 | 0 (şema dışı REPO + boru kırılması altında da) | doğrulama koşusu |
+
+**Plandan sapma (kayda geçer):** T30–T32 numaraları `self_test.py`'de doluydu
+(esik_kalibre / rejim / R testleri); yeni testler **T35, T36, T37** oldu.
+Ayrıca planda olmayan **T38** eklendi: `_akis()` çökerse tanı mesajı
+`__main__`'de, yani sabit bloğun ARDINDAN basılıyordu — kesme altında ilk
+kaybolan o olurdu (düzeltilen kusurun aynısı). Tanı `main()` içine alındı,
+çıkış kodu 0 sözleşmesi korundu.
+
+**Açık kalan (dürüstlük):** harness kesme EŞİĞİ bilinmiyor (VERİ YOK —
+gözlenen tek nokta 12,8 KB'ın aştığı). 6.910 bayt eşiğin altında mı, bir
+sonraki istemde görülecek: kanca çıktısı bağlama TAM girerse eşik aşılmamış
+demektir. Aşılsa bile (A) garantisi ayakta: kesilen kuyruk tekrarlanan
+kuraldır, kararın kendisi değil.

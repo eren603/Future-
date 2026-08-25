@@ -941,6 +941,59 @@ def main() -> int:
         kontrol("T35 kanca: dinamik özet sabit kuraldan ÖNCE basılır",
                 i_dinamik >= 0 and i_kural >= 0 and i_dinamik < i_kural,
                 f"dinamik@{i_dinamik} < kural@{i_kural}")
+
+        # ---- T36/T37: kanca — duran görev damgası + çıktı bayt tavanı ------
+        # Sabit blok her istemde YENİDEN basılıyordu (gorev.json 13 KB; sıra
+        # 2081 + strateji 2001 + bekleyen_isler 3375 bayt). İstemler arası
+        # DEĞİŞMEYEN metin bütçeyi yiyordu. Damga: içerik ya da oturum
+        # değişince TAM, aksi halde tek satır işaretçi. Fail-open: damga
+        # okunamazsa TAM basılır (duran görevin sessizce kaybolması
+        # EKSİK_AKTARIM ihlalidir).
+        os.environ["CLAUDE_PROJECT_DIR"] = str(tmp_repo)
+        (tmp_repo / "engine" / "gorev.json").write_text(json.dumps(
+            {"gorev": "test duran görevi", "sira": ["1) bir", "2) iki"],
+             "strateji_kurali": "S" * 2000}, ensure_ascii=False), encoding="utf-8")
+        HOOK = importlib.reload(HOOK)
+        def _kanca_cikti():
+            _bb = io.StringIO()
+            with contextlib.redirect_stdout(_bb):
+                HOOK.main()
+            return _bb.getvalue()
+        c_ilk = _kanca_cikti()            # damga YOK → TAM
+        c_iki = _kanca_cikti()            # damga aynı → işaretçi
+        (tmp_repo / "engine" / "gorev.json").write_text(json.dumps(
+            {"gorev": "DEĞİŞTİ", "sira": ["1) yeni"],
+             "strateji_kurali": "S" * 2000}, ensure_ascii=False), encoding="utf-8")
+        c_uc = _kanca_cikti()             # içerik değişti → yeniden TAM
+        kontrol("T36 kanca: duran görev damgası — değişmedikçe tek satır",
+                "sıra: " in c_ilk and "sıra: " not in c_iki
+                and "engine/gorev.json" in c_iki and "sıra: " in c_uc,
+                f"ilk={len(c_ilk)}B tam | ikinci={len(c_iki)}B işaretçi | "
+                f"değişince={len(c_uc)}B tam")
+        kontrol("T37 kanca: değişmemiş görevde çıktı ≤ 2048 bayt",
+                len(c_iki.encode("utf-8")) <= 2048,
+                f"{len(c_iki.encode('utf-8'))} bayt (önce {len(c_ilk.encode('utf-8'))})")
+
+        # ---- T38: kanca ÇÖKERSE tanı da sabit bloktan ÖNCE basılır ---------
+        # Çökme mesajı __main__'de, yani kuralın ARDINDAN basılıyordu; kesme
+        # olursa tam da o tanı kaybolurdu (sessiz başarısızlık = düzeltilen
+        # kusurun aynısı). Kanca sözleşmesi korunur: çıkış kodu 0.
+        _gercek_akis = HOOK._akis
+        def _patlat():
+            raise RuntimeError("test çökmesi")
+        HOOK._akis = _patlat
+        try:
+            _bc = io.StringIO()
+            with contextlib.redirect_stdout(_bc):
+                _kod = HOOK.main()
+            _cc = _bc.getvalue()
+        finally:
+            HOOK._akis = _gercek_akis
+        i_hata = _cc.find("kanca hatası")
+        i_k2 = _cc.find("[PİRAMİT — duran kural")
+        kontrol("T38 kanca: çökme tanısı sabit bloktan ÖNCE, çıkış kodu 0",
+                i_hata >= 0 and i_k2 >= 0 and i_hata < i_k2 and _kod == 0,
+                f"hata@{i_hata} < kural@{i_k2} | çıkış={_kod}")
         os.environ.pop("CLAUDE_PROJECT_DIR", None)
         if _env_yedek is not None:
             os.environ["CLAUDE_PROJECT_DIR"] = _env_yedek

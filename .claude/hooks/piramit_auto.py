@@ -57,6 +57,7 @@ PIRAMIT = SKILL / "scripts" / "piramit.py"
 GIRDI = REPO / "engine" / "girdi"
 DURUM = SKILL / "state" / "otomatik.json"
 GOREV = REPO / "engine" / "gorev.json"          # duran görev (yeni pencere okur)
+DAMGA = SKILL / "state" / "gorev_damga.json"     # duran görev tekrar-basım damgası
 PAKET_DEFTER = SKILL / "state" / "alinan_paketler.json"
 ZAMAN_ASIMI = 240          # saniye — boru hattı ölçülen koşuda ~1.6 s
 MAX_OZET = 4000            # enjekte edilen özet için üst sınır (bağlam korunur)
@@ -482,6 +483,86 @@ def _acik_emri_olc(kayit: dict, girdi_dizin: Path, state_dizin: Path) -> dict:
             "cikis_bar_utc": s.get("cikis_bar_utc") or s.get("cikis_bar")}
 
 
+def _sunulan_karar_bas(g: dict) -> None:
+    """Açık/kapanan sunulan emir + hafıza — HER İSTEMDE basılır.
+
+    Damgaya BAĞLANAMAZ: bu satırlar `sunulan_karar.json`dan ve hafıza
+    dosyalarından gelir, istemler arası DEĞİŞİR. Damgalanırsa hesap
+    verme (açık emrin ölçülen durumu) sessizce kaybolurdu.
+    """
+    for _ad, _sk, _gd, _st in (
+            ("BTCUSDT", REPO / "engine" / "state" / "sunulan_karar.json",
+             GIRDI, REPO / "engine" / "state"),
+            ("ETHUSDT", IKINCI["state"] / "sunulan_karar.json",
+             IKINCI["girdi"], IKINCI["state"])):
+        try:
+            if _sk.exists():
+                _s = json.loads(_sk.read_text(encoding="utf-8"))
+                _sonuc = _acik_emri_olc(_s, _gd, _st)
+                if _sonuc.get("kapandi"):
+                    # KAPANDI: kayıt DÜŞÜLÜR ve sonuç görünür kılınır. Eskiden
+                    # bu ölçüm HİÇ yapılmıyordu (dosya yalnız basılıyordu):
+                    # 2026-07-28 16:45'te stop olan ETH emri günlerce "AÇIK"
+                    # görünüp kullanıcıya var olmayan pozisyon raporluyordu.
+                    print(f"   ✔ KAPANDI [{_ad}]: {_s.get('yon')} @{_s.get('giris')} → "
+                          f"{_sonuc['sonuc']}"
+                          + (f" | gerçekleşen R = {_sonuc['r']}"
+                             if _sonuc.get("r") is not None else "")
+                          + f" (karar barı {_s.get('karar_bari_utc')}) — kayıt düşüldü")
+                    _arsiv = _sk.with_name("kapanan_kararlar.jsonl")
+                    try:
+                        with _arsiv.open("a", encoding="utf-8") as _f:
+                            _f.write(json.dumps({**_s, "kapanis": _sonuc},
+                                                ensure_ascii=False) + "\n")
+                        _sk.unlink()
+                    except OSError:
+                        pass
+                else:
+                    print(f"   AÇIK SUNULAN EMİR [{_ad}]: {_s.get('yon')} "
+                          f"@{_s.get('giris')} | stop {_s.get('stop')} | "
+                          f"T1 {_s.get('t1')} (karar barı {_s.get('karar_bari_utc')}; "
+                          f"ÖLÇÜLDÜ: {_sonuc.get('sonuc', 'VERİ YOK')})")
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            print(f"   ⚠ {_sk.name} [{_ad}] okunamadı — açık emir kaydı elle kontrol edilmeli")
+    _hafiza_bas(g)
+
+
+def _oturum_kimligi() -> str:
+    """Oturum kimliği — YENİ pencere duran görevi tekrar TAM görmeli.
+
+    Ortam değişkeni yoksa boş dize döner; o durumda ikinci emniyet devrededir
+    (`session-start.sh` damga dosyasını siler).
+    """
+    for ad in ("CLAUDE_CODE_SESSION_ID", "CLAUDE_SESSION_ID"):
+        v = os.environ.get(ad)
+        if v:
+            return v
+    return ""
+
+
+def _gorev_damgasi() -> bool:
+    """True = duran görev TAM basılmalı, False = tek satır işaretçi yeter.
+
+    FAIL-OPEN: damga okunamaz/yazılamazsa TAM basılır. Duran görevin sessizce
+    kaybolması EKSİK_AKTARIM ihlalidir; gereksiz tekrar basmak yalnız bayt
+    maliyetidir — iki hatanın maliyeti asimetriktir.
+    """
+    try:
+        ham = GOREV.read_bytes() if GOREV.is_file() else b"YOK"
+    except OSError:
+        return True
+    yeni = {"sha": hashlib.sha256(ham).hexdigest(), "oturum": _oturum_kimligi()}
+    try:
+        eski = json.loads(DAMGA.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        eski = None
+    try:
+        _atomik_yaz(DAMGA, json.dumps(yeni, ensure_ascii=False))
+    except OSError:
+        return True
+    return not (isinstance(eski, dict) and eski == yeni)
+
+
 def _gorev_bas() -> None:
     """Duran görevi bağlama bas — yeni pencere görevi/hedefi tekrar sormaz.
 
@@ -495,6 +576,14 @@ def _gorev_bas() -> None:
         g = json.loads(GOREV.read_text(encoding="utf-8"))
         if not isinstance(g, dict):
             raise TypeError(f"kök tip {type(g).__name__}, sözlük bekleniyordu")
+        # DAMGA KAPISI: sabit metin istemler arası DEĞİŞMEZ; her istemde
+        # yeniden basmak çıktı bütçesini yiyor (ölçüm: 8871 bayt / %62).
+        # Dinamik satırlar (_sunulan_karar_bas) bu kapının ARDINDAN da basılır.
+        if not _gorev_damgasi():
+            print("[PİRAMİT — DURAN GÖREV] değişmedi (bu oturumda basıldı) → "
+                  "tam metin: engine/gorev.json")
+            _sunulan_karar_bas(g)
+            return
         prof = g.get("eth_profili")
         prof = prof if isinstance(prof, dict) else {}
         sira = g.get("sira")
@@ -526,41 +615,7 @@ def _gorev_bas() -> None:
                 print(f"      ölçülen durum: {_b['olculen_durum']}")
             if _b.get("on_kosul"):
                 print(f"      ön koşul: {_b['on_kosul']}")
-        for _ad, _sk, _gd, _st in (
-                ("BTCUSDT", REPO / "engine" / "state" / "sunulan_karar.json",
-                 GIRDI, REPO / "engine" / "state"),
-                ("ETHUSDT", IKINCI["state"] / "sunulan_karar.json",
-                 IKINCI["girdi"], IKINCI["state"])):
-            try:
-                if _sk.exists():
-                    _s = json.loads(_sk.read_text(encoding="utf-8"))
-                    _sonuc = _acik_emri_olc(_s, _gd, _st)
-                    if _sonuc.get("kapandi"):
-                        # KAPANDI: kayıt DÜŞÜLÜR ve sonuç görünür kılınır. Eskiden
-                        # bu ölçüm HİÇ yapılmıyordu (dosya yalnız basılıyordu):
-                        # 2026-07-28 16:45'te stop olan ETH emri günlerce "AÇIK"
-                        # görünüp kullanıcıya var olmayan pozisyon raporluyordu.
-                        print(f"   ✔ KAPANDI [{_ad}]: {_s.get('yon')} @{_s.get('giris')} → "
-                              f"{_sonuc['sonuc']}"
-                              + (f" | gerçekleşen R = {_sonuc['r']}"
-                                 if _sonuc.get("r") is not None else "")
-                              + f" (karar barı {_s.get('karar_bari_utc')}) — kayıt düşüldü")
-                        _arsiv = _sk.with_name("kapanan_kararlar.jsonl")
-                        try:
-                            with _arsiv.open("a", encoding="utf-8") as _f:
-                                _f.write(json.dumps({**_s, "kapanis": _sonuc},
-                                                    ensure_ascii=False) + "\n")
-                            _sk.unlink()
-                        except OSError:
-                            pass
-                    else:
-                        print(f"   AÇIK SUNULAN EMİR [{_ad}]: {_s.get('yon')} "
-                              f"@{_s.get('giris')} | stop {_s.get('stop')} | "
-                              f"T1 {_s.get('t1')} (karar barı {_s.get('karar_bari_utc')}; "
-                              f"ÖLÇÜLDÜ: {_sonuc.get('sonuc', 'VERİ YOK')})")
-            except (OSError, json.JSONDecodeError, TypeError, ValueError):
-                print(f"   ⚠ {_sk.name} [{_ad}] okunamadı — açık emir kaydı elle kontrol edilmeli")
-        _hafiza_bas(g)
+        _sunulan_karar_bas(g)
     except Exception as e:  # noqa: BLE001 — görev bloğu boru hattını DÜŞÜREMEZ
         print(f"[PİRAMİT] ⚠ DURAN GÖREV OKUNAMADI ({type(e).__name__}: {e}) — "
               f"{GOREV} yok ya da şema dışı. Görev/hedef/ETH profili bağlama "
@@ -1063,6 +1118,17 @@ def main() -> int:
     """
     try:
         return _akis()
+    except BrokenPipeError:
+        raise                 # boru kırıldı: __main__ sessizce 0 ile çıkar
+    except Exception as e:    # noqa: BLE001 — istem asla bloklanmaz
+        # Tanı BURADA basılır, __main__'de DEĞİL: orada basılırsa sabit bloğun
+        # ARDINDA kalır ve harness kesmesinde ilk kaybolan o olur — yani
+        # düzeltilen kusurun aynısı (sessiz başarısızlık).
+        try:
+            print(f"[PİRAMİT] kanca hatası ({type(e).__name__}: {e})")
+        except (BrokenPipeError, ValueError, OSError):
+            pass
+        return 0
     finally:
         _sabit_bas()
 
