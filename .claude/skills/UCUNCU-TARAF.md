@@ -16,6 +16,33 @@ Bu dizindeki becerilerin bir kısmı dış depolardan alınmıştır. Proje moto
   `.claude/hooks/superpowers-session-start.sh` yazıldı (yol bağımsız + öncelik
   korkuluğu gömülü). Gerekçe betiğin kendi başlığındadır.
 
+## Instagram'daki 5 eklenti — KURULU DEĞİL (denendi, ölçüldü, kaldırıldı)
+2026-08-24'te bir Instagram videosunda önerilen beş Claude Code eklentisi
+araştırıldı; ikisi fiilen kuruldu, biri sözleşmeye karşı sınandı, **hepsi
+kaldırıldı**. Gerekçe tek satırda: beşi de modelin ETRAFINDAKİ boruları
+değiştiriyor; bu depoda tavanı belirleyen şey borular değil, türev veri
+kapsamı (`STRATEJI.md §4`: OI eksiği kapsamı 0.66'da bıraktı) ve **elle
+ikinci-göz** (`CLAUDE.md`: grounding mekanikleştirilemez).
+
+| Eklenti | Kaynak | Kaldırma gerekçesi (ölçülmüş) |
+|---|---|---|
+| **Headroom** | `headroomlabs-ai/headroom` | **Sınandı.** Sayı bütünlüğü GEÇTİ (252/252 birebir, %27.9 tasarruf) ama YAPI bütünlüğü BOZULDU: `router:tool_result:mixed` dönüşümü ZİRVE'den 8 alanı siliyor — `iki_satir`, `KIYAS`, `ONCEKI_AKIBET`, `CELISKI_TURU`, `ILK_GECIS`, `EMIR_GEREKCE`, `kapi_gerekceleri`, `_anlik_goruntu`. Varsayılan ayarda dahi. Sayı bozulmadığı için `iddia_denetle.py` YAKALAYAMAZ → gözlemcinin `EKSİK_AKTARIM` ihlali. Ayrıca ~9 GB disk + numpy/pandas/scipy yükseltmesi. |
+| **claude-mem** | `thedotmack/claude-mem` | Karşılığı zaten var ve daha sıkı: `engine/state/devir_teslim.json` + `defter.jsonl` + `hafiza/agirlik.json` (Wilson-kalibreli, fail-closed). claude-mem kaynaksız düzyazı enjekte eder → `gozlemci.py`'nin `HAFIZA` ihlal sınıfıyla çelişir. |
+| **task-observer** | `rebelytics/one-skill-to-rule-them-all` | Kuruldu, sonra kaldırıldı. Gerçek ama dar bir boşluk dolduruyordu (oturum gözlemi); `gozlemci.py` zaten boru hattı artefaktını denetliyor. Maliyet ölçüldü: **976 karakter ≈ 244 token/oturum** beceri listesinde. Faydası yalnız haftalık inceleme yapılırsa doğuyor. |
+| **claude-code-setup** | `anthropics/claude-plugins-official` | Salt-okunur önyükleme öneri aracı. Bu depoda 28 beceri, 3 kanca, 20/20 motor, sağlık denetçisi ve yazılı çakışma-önceliği zaten var — var olanı önerir. |
+| **OmniRoute** | `diegosouzapw/OmniRoute` | Claude Code eklentisi DEĞİL (`.claude-plugin/marketplace.json` → HTTP 404); yerel vekil sunucu. Zayıflattığı şey mekanik yarı değil, tam da muhakeme/ikinci-göz yarısı. Ayrıca istemler ve strateji kodu üçüncü taraf sağlayıcılara gider. |
+
+- Kaldırılanlar: `.claude/skills/task-observer/`, `EKLENTILER.md`,
+  `.claude/eklenti/headroom_sinav.py`, `settings.json`'daki
+  `extraKnownMarketplaces`, `headroom-ai` paketi, marketplace kayıtları.
+- **Headroom sınav aracı ve tam ölçüm raporu git geçmişindedir** (commit
+  `7c2fe5e`). Konu tekrar açılırsa oradan geri alınır — hüküm anlatı değil,
+  tekrar koşulabilir ölçümdür.
+- NOT: `headroom-ai` kurulumunun getirdiği `numpy 2.4.6 / pandas 3.0.5 /
+  scipy 1.17.1` yükseltmesi geri alınmadı (paket kaldırıldı, bağımlılıklar
+  kaldı). Yükseltmeden sonra `engine/self_test.py` ve `saglik.py` koşuldu →
+  geçti. Konteyner geçici olduğu için bu yükseltme kalıcı da değildir.
+
 ## vercel-labs/agent-skills — KURULU DEĞİL (kaldırıldı)
 - 2026-08-08'de 9 beceri kuruldu, aynı gün `/doctor` denetiminde **kaldırıldı**.
 - Gerekçe (ölçülmüş): bu depo Python/finans odaklıdır; 9 becerinin tetikleyicisi
