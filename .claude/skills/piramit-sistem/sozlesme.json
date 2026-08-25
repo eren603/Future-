@@ -1,0 +1,40 @@
+{
+  "surum": 1,
+  "aciklama": "SÖZLEŞME KÜTÜĞÜ — hangi kuralın hangi dosyada yazılı KALMASI gerektiği. saglik.py her oturum açılışında bunu denetler; bir kural kaybolursa KIRIK denir. Amaç: bir kural hem CLAUDE.md'den hem işaret ettiği beceri dosyasından SESSİZCE kaybolamasın.",
+  "katman_anlami": {
+    "RESIDENT": "CLAUDE.md'de olmak ZORUNDA. Gerekçe: kanca boru hattını subprocess olarak koşturur ve hiçbir SKILL.md gövdesini bağlama YÜKLEMEZ (bir SKILL.md gövdesi yalnız Skill aracı o beceriyi çağırırsa yüklenir). Varsayılan tetikleyicisiz yolda Skill aracı çağrılmaz — bu yüzden davranış hükmü ve güvenlik yasağı CLAUDE.md'de kalmalıdır.",
+    "BECERI": "Bir beceri dosyasında olması yeterli. Gerekçe: yalnızca o beceri fiilen çağrıldığında gereken MEKANİK ayrıntı (tablo, formül, iç eşik). Bunları CLAUDE.md'de tutmak her oturumda bedel ödetir."
+  },
+  "dizge_politikasi": "Dizgeler KISA ve KARARLI seçilir: teknik ad (rr_denetim), sabit (0.1×ATR15) ya da tek anahtar kelime. Uzun cümle seçilmez — kullanıcı metni yeniden yazınca haksız KIRIK verir. Denetim beyaz boşluğu tek boşluğa indirger (satır sarması dizgeyi bölemez), büyük/küçük harfe DUYARLIDIR (MÜHÜRLENİR/EMİR YOK gibi kipler bilinçlidir).",
+  "olu_referans_yasagi": "Hiçbir SKILL.md 'bkz. CLAUDE.md' diye çapraz referans vermez. Gerekçe: CLAUDE.md kırpıldığında bu referanslar sessizce ölü bağlantıya döner (2026-07 kırpmasında grafik-cizim/SKILL.md'de tam olarak bu oldu). Kural ya beceri dosyasında birebir yazılır ya da başka bir beceri dosyasına işaret eder.",
+  "kurallar": [
+    { "ad": "GÜVENLİK: canlı emir yok", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "canlı/otomatik emir", "neden": "Gerçek parayla emir yasağı — her oturumda yüklü olmalı, tembel yüklemeye devredilemez." },
+    { "ad": "Uydurma yasağı / VERİ YOK", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "VERİ YOK", "neden": "Eksik veri işaretlenir; doğruluk sözleşmesinin çekirdeği." },
+    { "ad": "Fail-closed kapılar", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "fail-closed", "neden": "Zayıf/çelişkili sinyalde karar NÖTR-BEKLE'dir; kapılar açık kalamaz." },
+    { "ad": "Sert yasaklar / karantina", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "karantina", "neden": "Uydurma sayı ve uydurma kıdem yasağının yaptırım kipi." },
+    { "ad": "TAZELİK: zaman damgası", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "zaman_utc", "neden": "Elle gelen okuma hangi veriye ait olduğunu kanıtlar; hiçbir beceri dosyasında karşılığı YOK." },
+    { "ad": "TAZELİK: bayat veri", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "BAYAT", "neden": "Eski panel okuması yeni kline ile birleştirilemez (sahte güncellik yasağı)." },
+    { "ad": "Zorunlu girdi: görsel okuma dosyası", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "gorsel_okuma.json", "neden": "TAZELİK kuralının öncülü: hangi üç girdinin damgalanacağı resident metinden okunabilmeli." },
+    { "ad": "Zorunlu girdi: likidasyon elle gelir", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "yalnız elle panelden", "neden": "Likidasyon otomatik ÜRETİLMEZ; 'kendiliğinden üretilir' genellemesi türev kapsamını sessizce 0.85'te bırakır." },
+    { "ad": "Şişirilmiş R denetimi", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "rr_denetim", "neden": "Tek-kaynaklı olmayan her R bu denetimden geçmeden yayınlanamaz." },
+    { "ad": "R eşiği", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "1.35", "neden": "İşlem kalitesi kapısı; eşik metinden silinirse kapı görünmez olur." },
+    { "ad": "Emir sözleşmesi: boş bırakılmaz", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "EMİR YOK", "neden": "Hiçbir aday geçemezse düşen kapı yazılır — analiz emirsiz bitemez." },
+    { "ad": "Gözlemci uyarıları listelenir", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "gizlenmez", "neden": "Kritik olmayan ihlaller mühürleme tetiklemez; listeleme yükümlülüğü olmazsa sessizce kaybolur." },
+    { "ad": "Kritik ihlalde mühürleme", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "MÜHÜRLENİR", "neden": "YÖN gösterilir ama işlem verilmez — yaptırım ayağı." },
+    { "ad": "Görsel okuma güven tavanı", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "gorsel_tavan", "neden": "Kullanıcı yalnız ekran görüntüsü gönderdiğinde piramit koşmaz; tavan resident olmazsa gözle okunan seviye ölçüm sanılır." },
+    { "ad": "Korelasyon: kopya pozisyon", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "KOPYA POZİSYON", "neden": "İki sembolde aynı yön bağımsız bahis değildir; risk ×2 sayılır." },
+    { "ad": "Hesap verme / kıyas en üstte", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "EN ÜSTÜNDE", "neden": "Önceki kararın akıbeti YÖN satırından önce gösterilir; sunum sırası hükmü." },
+    { "ad": "YÖN zorunlu", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "YON_BIAS", "neden": "Yön BEKLE ardına saklanamaz; ağırlıklı kanıttan okunur." },
+    { "ad": "Yükleme mekaniği doğru anlatılsın", "katman": "RESIDENT", "dosya": "CLAUDE.md", "dizge": "SKILL.md'yi OKUMAZ", "neden": "Kanca subprocess koşturur; 'boru hattı koşunca SKILL.md yüklenir' iddiası YANLIŞTI ve bu yanlış gerekçeyle kural silinmesini engeller." },
+    { "ad": "Gözlemcinin 8 ihlali", "katman": "BECERI", "dosya": ".claude/skills/piramit-sistem/SKILL.md", "dizge": "ÇARPIŞMA", "neden": "Sekizinci ihlal türü; tablo eksilirse denetim kapsamı sessizce daralır." },
+    { "ad": "Kurulum ölçeği bandı", "katman": "BECERI", "dosya": ".claude/skills/piramit-sistem/SKILL.md", "dizge": "[0.8, 2.0]", "neden": "Hangi dilimin kurulum, hangisinin yalnız tetik olduğu; kırpmada BÜTÜN md dosyalarından kaybolmuştu." },
+    { "ad": "Emir seviyeleri münhasır", "katman": "BECERI", "dosya": ".claude/skills/piramit-sistem/SKILL.md", "dizge": "Başka kaynak karışamaz", "neden": "Seviyeler YALNIZ ölçülen yapıdan gelir; münhasırlık kaybolursa karışım yasağı görünmez olur." },
+    { "ad": "MARKET emri eşiği", "katman": "BECERI", "dosya": ".claude/skills/piramit-sistem/SKILL.md", "dizge": "0.1×ATR15", "neden": "MARKET yalnız fiyat giriş bölgesindeyse verilir; aksi halde LIMIT." },
+    { "ad": "Türev kanalı: likidasyon elle", "katman": "BECERI", "dosya": ".claude/skills/piramit-sistem/SKILL.md", "dizge": "Yalnız panelden elle", "neden": "Kanal tablosunun tek elle-gelen satırı; CLAUDE.md özetiyle çelişmemeli." },
+    { "ad": "Görsel tavan mekaniği", "katman": "BECERI", "dosya": ".claude/skills/piramit-sistem/SKILL.md", "dizge": "gorsel_tavan", "neden": "Tavanın sayısal değeri ve çapraz teyit mekaniği." },
+    { "ad": "5 danışman merceği", "katman": "BECERI", "dosya": ".claude/skills/karar-kurulu/SKILL.md", "dizge": "Muhalif", "neden": "Kurulun ilk merceği; mercek listesi eksilirse kör nokta taraması daralır." },
+    { "ad": "Gerçekçi R", "katman": "BECERI", "dosya": ".claude/skills/karar-kurulu/SKILL.md", "dizge": "R_gercekci", "neden": "Şişirilmiş R yerine kullanılacak değerin adı." },
+    { "ad": "Çizim: görsel ölçüm değildir", "katman": "BECERI", "dosya": ".claude/skills/grafik-cizim/SKILL.md", "dizge": "gorsel_tavan", "neden": "grafik-cizim tek başına yüklenebilir; tavan orada da birebir yazılı olmalı (ölü referans yerine)." },
+    { "ad": "karar-motoru defter tetikleyicisi", "katman": "BECERI", "dosya": ".claude/skills/karar-motoru/SKILL.md", "dizge": "defter", "neden": "'defteri göster / isabet ne durumda' istemlerini beceriye bağlayan tetikleyici; frontmatter description'da olmalı." }
+  ]
+}

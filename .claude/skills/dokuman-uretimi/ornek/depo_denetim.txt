@@ -1,0 +1,41 @@
+OK    backtest-motoru            hata=0 uyari=0
+OK    butunluk-denetimi          hata=0 uyari=0
+OK    data-analysis-deep-scan    hata=0 uyari=2
+        [UYARI/DEPO EKI] TETIKLEYICI_SOZLESME (kaynakta YOK — KANIT.md D4)
+            depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez
+        [UYARI/DEPO EKI] KATLANMIS_BLOK_ONER (kaynakta YOK — KANIT.md D5)
+            uzun description tek satirda; depo geleneği katlanmis blok (description: >-) — 22 beceriden 21'i boyle.
+OK    dogrulama-zinciri          hata=0 uyari=0
+OK    dokuman-uretimi            hata=0 uyari=0
+OK    eleme-motoru               hata=0 uyari=0
+OK    finansal-modelleme         hata=0 uyari=0
+OK    forex-trading-expert       hata=0 uyari=1
+        [UYARI/DEPO EKI] TETIKLEYICI_SOZLESME (kaynakta YOK — KANIT.md D4)
+            depo sozlesmesi ifadesi eksik: OTOMATİK devreye girer, slash komutu gerekmez
+OK    grafik-calisma             hata=0 uyari=1
+        [UYARI/KAYNAK] DESC_YAYIN_SINIRI (quick_validate.py:83-84 — yayin siniri 1024)
+            Description 1243 karakter, yayin siniri 1024 (quick_validate.py:83-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz anthropics/skills yayin sozlesmesi ihlali.
+OK    grafik-cizim               hata=0 uyari=1
+        [UYARI/KAYNAK] DESC_YAYIN_SINIRI (quick_validate.py:83-84 — yayin siniri 1024)
+            Description 1338 karakter, yayin siniri 1024 (quick_validate.py:83-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz anthropics/skills yayin sozlesmesi ihlali.
+OK    guven-katmanlama           hata=0 uyari=0
+OK    izleme-telemetri           hata=0 uyari=0
+OK    karar-kurulu               hata=0 uyari=0
+OK    karar-motoru               hata=0 uyari=0
+OK    piramit-sistem             hata=0 uyari=0
+OK    portfoy-optimizasyonu      hata=0 uyari=0
+OK    risk-yonetimi              hata=0 uyari=0
+OK    rubrik-kapisi              hata=0 uyari=0
+OK    sema-dogrulama             hata=0 uyari=0
+OK    sorusturma                 hata=0 uyari=0
+OK    turev-akis                 hata=0 uyari=0
+OK    uzman-modu                 hata=0 uyari=0
+OK    video-isleme               hata=0 uyari=0
+
+ACIKLAMA BUTCESI: toplam 19964 karakter / butce 8000 (250%)
+        [UYARI/KAYNAK] DESC_BUTCE_ASILDI (claude-code issue #64606 — 200000*4*0.01=8000)
+            Butce asildi: aciklamalar TEK TEK kirpilmaz, TAMAMEN dusurulur (geriye yalniz beceri isimleri kalir), SESSIZCE.
+            UYARI seviyesi bilerek: sayi bir hata bildiriminden gelir, sartnameden degil — HATA demek olculmemis kesinlik olurdu.
+
+TOPLAM: 23 beceri, 0 HATA, 6 UYARI
+Cikis kodu: 0

@@ -1,0 +1,157 @@
+{
+  "sembol": "BTCUSDT",
+  "durum": "TAMAM — piramidin tepesine ulaşıldı",
+  "varsayimlar": [
+    "eşikler bu koşudan kalibre edildi"
+  ],
+  "not": "Yalnız karar-destek. Canlı/otomatik emir DAHİL DEĞİL.",
+  "katmanlar": [
+    {
+      "katman": "K1-LLM",
+      "gecti": true,
+      "onceki_kayit_var": true,
+      "onceki_karar_akibeti": {
+        "durum": "ÖLÇÜLEMEDİ"
+      }
+    },
+    {
+      "katman": "K2-AI-AJAN",
+      "gecti": true,
+      "motor_sonuclari": {
+        "karar-motoru": {},
+        "grafik-calisma": {},
+        "turev-akis": {
+          "rapor": {
+            "kapsam": 0.75
+          }
+        }
+      }
+    },
+    {
+      "katman": "K3-COKLU-AJAN",
+      "gecti": true,
+      "danismanlar": [
+        {
+          "name": "karar-motoru",
+          "stance": "flat"
+        },
+        {
+          "name": "grafik-calisma",
+          "stance": "short"
+        },
+        {
+          "name": "turev-akis",
+          "stance": "short"
+        }
+      ]
+    },
+    {
+      "katman": "K4-AGI",
+      "gecti": true,
+      "verifier": {
+        "karar-motoru": {
+          "confirmed": false
+        }
+      },
+      "rr_denetimi": {}
+    },
+    {
+      "katman": "K5-SI",
+      "gecti": true,
+      "sentez": {
+        "KARAR": "NÖTR-BEKLE",
+        "YON_BIAS": "SHORT",
+        "yon_skoru": -0.5712,
+        "guven_skoru": 0.2039,
+        "esik_kaynagi": "VERİDEN TÜRETİLDİ",
+        "not": "Karar-destek çıktısıdır. Canlı emir DAHİL DEĞİL.",
+        "danisman_ozeti": [
+          {
+            "ad": "karar-motoru"
+          },
+          {
+            "ad": "grafik-calisma"
+          },
+          {
+            "ad": "turev-akis"
+          }
+        ]
+      },
+      "esik_kalibrasyonu": {
+        "kaynak": "VERİDEN TÜRETİLDİ"
+      },
+      "emir_plani": {
+        "EMIR": "LIMIT SHORT @63990.7 | stop 64234.1 | T1 63461.2 | R 2.18",
+        "yon": "SHORT",
+        "birincil": {
+          "emir_tipi": "LIMIT",
+          "yon": "SHORT",
+          "giris": 63990.7,
+          "stop": 64234.1,
+          "hedef": 63461.2,
+          "R": 2.18,
+          "rr_denetim": "TUTARLI",
+          "giris_gerekcesi": "4H teyitli swing direnci"
+        },
+        "adaylar": [
+          {
+            "emir_tipi": "LIMIT",
+            "yon": "SHORT",
+            "giris": 63990.7,
+            "stop": 64234.1,
+            "hedef": 63461.2,
+            "R": 2.18,
+            "rr_denetim": "TUTARLI",
+            "giris_gerekcesi": "4H teyitli swing direnci"
+          }
+        ],
+        "red_nedenleri": [],
+        "not": "Canlı emir DAHİL DEĞİL."
+      }
+    }
+  ],
+  "ZIRVE": {
+    "YON_BIAS": "LONG",
+    "sentez_karari": "NÖTR-BEKLE",
+    "ISLEM_KALITESI": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
+    "yon_skoru": 0.42,
+    "guven_skoru": 0.2039,
+    "kapi_gerekceleri": [
+      "|skor|=0.57 < eşik 0.66"
+    ],
+    "ZORUNLU_EKSIK": [],
+    "EMIR": "LIMIT SHORT @63990.7 | stop 64234.1 | T1 63461.2 | R 2.18",
+    "EMIR_GEREKCE": "",
+    "emir_red_nedenleri": [],
+    "emir_adaylari": [
+      {
+        "emir_tipi": "LIMIT",
+        "yon": "SHORT",
+        "giris": 63990.7,
+        "stop": 64234.1,
+        "hedef": 63461.2,
+        "R": 2.18,
+        "rr_denetim": "TUTARLI",
+        "giris_gerekcesi": "4H teyitli swing direnci"
+      }
+    ],
+    "ONCEKI_AKIBET": {
+      "durum": "ÖLÇÜLEMEDİ"
+    },
+    "iki_satir": {
+      "1_YON": "YÖN (bias): SHORT",
+      "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: …"
+    }
+  },
+  "KIYAS": {
+    "YON_DEGISIMI": {
+      "etiket": "DEVAM"
+    }
+  },
+  "DENETIM": {
+    "ozet": "25 denetim, 0 ihlal, 2 uyarı",
+    "muhurlendi": false,
+    "ihlal": [],
+    "uyari": []
+  }
+}

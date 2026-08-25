@@ -1,0 +1,91 @@
+---
+name: BECERI-ADI
+description: >-
+  BIR CUMLE: beceri ne yapar. Bir soru KONU-1, KONU-2, KONU-3 ile ilgili
+  olduğunda ya da kullanıcı VERI-TURU gönderdiğinde OTOMATİK devreye girer —
+  slash komutu gerekmez. Çalışan motor: scripts/MOTOR.py (BAGIMLILIK; öz-test:
+  --self-test, N vaka). Tetikleyici kelimeler (TR/EN): tr-kelime-1, tr-kelime-2,
+  en-word-1, en-word-2. UYARI-SATIRI-VARSA
+---
+
+# BECERI-ADI — TEK CUMLELIK KONUM
+
+## Ne zaman devreye girer (tetikleyici gerekmez)
+
+| Durum | Eylem |
+|---|---|
+| DURUM-1 | EYLEM-1 |
+| DURUM-2 | EYLEM-2 |
+| Kullanıcı "TETIKLEYICI-CUMLE" dedi | doğrudan koştur |
+
+## Neden var
+
+NEDEN: hangi boşluğu kapatıyor, hangi motor bu işi YAPMIYOR. Kaynak varsa
+birebir alıntıyla ve dosya:satır atfıyla göster; parafraz yazma.
+
+## Kullanım (motor koşar, elle yapılmaz)
+
+```bash
+# gerçek koşu
+python3 .claude/skills/BECERI-ADI/scripts/MOTOR.py --GIRDI-BAYRAGI YOL
+
+# öz-test (N vaka; geçici dizine yazar, çalışma ağacını kirletmez)
+python3 .claude/skills/BECERI-ADI/scripts/MOTOR.py --self-test
+```
+
+Çıkış kodu: `0` = temiz, `1` = ihlal var (fail-closed).
+
+## Çıktı
+
+CIKTININ ALANLARI — motorun GERÇEKTEN bastığı alanlar; uydurma alan yazma.
+
+## Sözleşme (gevşetilmez)
+
+- Eksik veri "VERİ YOK" işaretlenir; uydurma sayı yasak.
+- Gerçek / varsayım / yorum ayrılır.
+- Denetlenemeyen "GEÇTİ" sayılmaz (fail-closed).
+- Kaynakta olmayan her kural `[VARSAYIM]` ya da "DEPO EKİ" diye ETİKETLENİR.
+
+## Sınırlar (dürüstlük)
+
+- YAPMADIGI-SEY-1 (ör. ağa çıkmaz, boru hattını koşturmaz).
+- YAPMADIGI-SEY-2.
+- ⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.
+  (BU SATIR YALNIZ piyasa kararına dokunan beceriler için; değilse SİL.)
+
+---
+
+## Şablonun doldurma kuralları (bu bölüm üretilen dosyada SİLİNİR)
+
+1. `name` = dizin adı, birebir aynı. kebab-case, en çok 64 karakter,
+   yalnız `[a-z0-9-]`; başta/sonda tire ve `--` yasak.
+   (kaynak: `quick_validate.py:65-71`)
+2. `description` en çok **1024 karakter** (kaynak: `quick_validate.py:83-84`,
+   `improve_description.py:132`), açı parantezi `<` `>` İÇEREMEZ
+   (kaynak: `quick_validate.py:80-81`), yaklaşık 100-200 kelime
+   (kaynak: `improve_description.py:132`).
+3. `description` DAİMA katlanmış blok (`>-`) ile yazılır. Düz skalerde
+   `": "` geçerse frontmatter AYRIŞMAZ ve beceri HİÇ YÜKLENMEZ.
+   (DEPO EKİ — kaynakta yok; bu depoda gerçekten oldu.)
+4. Frontmatter'da yalnız şu anahtarlar: `name`, `description`, `license`,
+   `allowed-tools`, `metadata`, `compatibility`.
+   (kaynak: `quick_validate.py:42`)
+5. "Ne zaman tetiklenir" bilgisinin TAMAMI `description`'a yazılır, gövdeye
+   değil. (kaynak: `skill-creator/SKILL.md:67` — "All 'when to use' info goes
+   here, not in the body.")
+6. `scripts/` varsa en az bir motor `--self-test` taşır ya da
+   `scripts/self_test.py` bulunur. Öz-test takipli dosyaya YAZMAZ.
+   (DEPO EKİ)
+7. Gövde 500 satırın altında kalır; aşarsa `references/` katmanı açılır.
+   (kaynak: `skill-creator/SKILL.md:96`)
+8. Yazım emir kipinde. (kaynak: `skill-creator/SKILL.md:117` — "Prefer using
+   the imperative form in instructions.")
+9. Kaynaktan üretilen beceri `KANIT.md` taşır: birebir alıntı tablosu +
+   taşınmayan kurallar + sapmalar. (DEPO EKİ)
+
+Doldurduktan sonra ZORUNLU:
+
+```bash
+python3 .claude/skills/dokuman-uretimi/scripts/beceri_dogrula.py \
+    --beceri .claude/skills/BECERI-ADI
+```

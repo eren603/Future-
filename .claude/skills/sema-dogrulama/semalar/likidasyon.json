@@ -1,0 +1,24 @@
+{
+  "_not": "engine/girdi/turev_ham/likidasyon.json şeması. Alan adları depodaki GERÇEK dosyadan ve onu okuyan piramit.py:341-345'ten alınmıştır (uydurma yok). Desen kaynağı reader.yaml:31-34 — 'String fields are length-capped and character-class-restricted so injected instructions cannot survive intact.' Bu dosya CoinGlass panelinden ELLE yapıştırılır (untrusted); `kaynak`/`birim` serbest metindir, bu yüzden kapaklı ve karakter-sınıfı-kısıtlıdır.",
+  "_kaynak_alanlar": {
+    "liq_long/liq_short": "piramit.py:341-343 — _num(d.get('liq_long')) ve _num(d.get('liq_short')) sayısal olmalı",
+    "kaynak": "piramit.py:344 — str(d.get('kaynak','elle/CoinGlass'))",
+    "zaman_utc": "piramit.py:142 _DAMGA_ALAN + piramit.py:165 damga regex (_taze → BAYAT kontrolü)",
+    "birim/zaman_yerel/damga_kaynagi": "engine/girdi/turev_ham/likidasyon.json gerçek dosya"
+  },
+
+  "type": "object",
+  "required": ["liq_long", "liq_short", "zaman_utc"],
+  "additionalProperties": false,
+  "properties": {
+    "liq_long":  { "type": "number", "minimum": 0 },
+    "liq_short": { "type": "number", "minimum": 0 },
+    "birim":     { "type": "string", "maxLength": 128, "pattern": "^[^\\x00-\\x1f\\x7f]+$" },
+    "kaynak":    { "type": "string", "maxLength": 512, "pattern": "^[^\\x00-\\x1f\\x7f]+$" },
+    "zaman_utc": { "type": "string", "maxLength": 19, "minLength": 16,
+                   "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}(:[0-9]{2})?$" },
+    "zaman_yerel": { "type": "string", "maxLength": 128,
+                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}[^\\x00-\\x1f\\x7f]*$" },
+    "damga_kaynagi": { "type": "string", "maxLength": 512, "pattern": "^[^\\x00-\\x1f\\x7f]+$" }
+  }
+}

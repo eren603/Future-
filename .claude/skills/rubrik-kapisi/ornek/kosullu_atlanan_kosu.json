@@ -1,0 +1,261 @@
+{
+  "sistem": "PİRAMİT",
+  "soru": "öz-test",
+  "sembol": "TEST-KOSULLU",
+  "katmanlar": [
+    {
+      "katman": "K1-LLM",
+      "kanallar": {
+        "m15": "/veri/m15.json",
+        "h4": "/veri/h4.json",
+        "video": "VERİ YOK"
+      },
+      "olcumler": {
+        "m15_bar": 180,
+        "m15_son_bar": 1785000000000,
+        "h4_bar": 150
+      },
+      "eksikler": [
+        "video: VERİ YOK"
+      ],
+      "zorunlu_girdiler": {
+        "likidasyon": {
+          "liq_long": 5.0,
+          "liq_short": 4.0
+        }
+      },
+      "zorunlu_eksik": [
+        "görsel okuma: grafik ekran görüntüsü/video GELMEDİ"
+      ],
+      "zorunlu_tazelik": [
+        "likidasyon: taze (son bara göre 30 dk)"
+      ],
+      "onceki_karar_akibeti": {
+        "durum": "VERİ YOK — önceki koşu kaydı yok (ilk analiz)"
+      },
+      "onceki_kayit_var": false,
+      "gecti": true,
+      "kapi": "K1 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K2-AI-AJAN",
+      "motor_sonuclari": {
+        "karar-motoru": {
+          "karar": {
+            "karar": "BEKLE",
+            "zincir": 3,
+            "r": 0.8
+          },
+          "son_bar_utc": "2026-07-28 06:45",
+          "rejim_4h": {
+            "rejim": "FLAT"
+          }
+        },
+        "smc_tespit": {
+          "trend": "yatay",
+          "atr": 88.2,
+          "rejim": {
+            "durum": "range",
+            "adx": 14.0
+          }
+        },
+        "grafik-calisma": {
+          "KARAR": "NÖTR-BEKLE",
+          "confluence_skoru": 0.42,
+          "kapi_gerekceleri": [
+            "R:R 0.9 < 2.0"
+          ]
+        },
+        "setup_dogrulama": {
+          "SONUC": "VERİ YETERSİZ",
+          "sinyal_izni": false,
+          "gerekce": "işlem 6 < taban 10"
+        }
+      },
+      "hatalar": [
+        {
+          "motor": "turev-akis",
+          "hata": "türev paneli VERİ YOK"
+        }
+      ],
+      "motor_sayisi": 4,
+      "gecti": true,
+      "kapi": "K2 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K3-COKLU-AJAN",
+      "danismanlar": [
+        {
+          "name": "karar-motoru",
+          "stance": "flat",
+          "confidence": 0.4,
+          "_ham_confidence": 0.4,
+          "_agirlik": 1.0,
+          "evidence": "BEKLE"
+        },
+        {
+          "name": "grafik-calisma",
+          "stance": "flat",
+          "confidence": 0.42,
+          "_ham_confidence": 0.42,
+          "_agirlik": 1.0,
+          "evidence": "NÖTR-BEKLE"
+        }
+      ],
+      "seviyeler": {},
+      "notlar": [],
+      "agirlik_kaynagi": {
+        "agirliklar": {},
+        "kaynak": "agirlik.json VERİ YOK — ilk koşu"
+      },
+      "gecti": true,
+      "kapi": "K3 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K4-AGI",
+      "verifier": {
+        "karar-motoru": {
+          "confirmed": false
+        },
+        "grafik-calisma": {
+          "confirmed": false,
+          "reason": "işlem 6 < taban 10"
+        }
+      },
+      "dogrulama_gerekceleri": {
+        "karar-motoru": "R=0.8 vs R_MIN=1.35",
+        "grafik-calisma": "setup_dogrulama: VERİ YETERSİZ — işlem 6 < taban 10"
+      },
+      "rr_denetimi": {},
+      "celiskiler": [
+        "ZORUNLU GİRDİ EKSİK — görsel okuma: grafik ekran görüntüsü/video GELMEDİ",
+        "KLİNE KÖRLÜĞÜ AÇIK: türev kanalı kurula girmedi"
+      ],
+      "mercekler": {},
+      "baglanmayan_mercekler": [
+        "genisletici"
+      ],
+      "gecti": true,
+      "kapi": "K4 kapısı GEÇİLDİ"
+    },
+    {
+      "katman": "K5-SI",
+      "sentez": {
+        "YON_BIAS": "NÖTR",
+        "KARAR": "NÖTR-BEKLE",
+        "guven_skoru": 0.0,
+        "yon_skoru": 0.0,
+        "uzlasi": 1.0,
+        "esikler": {
+          "score": 0.25,
+          "min_agreement": 0.5,
+          "min_side_weight": 0.5,
+          "refute_penalty": 0.25
+        },
+        "danisman_ozeti": [
+          {
+            "ad": "karar-motoru",
+            "yon": "nötr",
+            "guven": 0.4,
+            "dogrulandi": false,
+            "etkin_agirlik": 0.1,
+            "kanit": "BEKLE",
+            "curutme": null
+          },
+          {
+            "ad": "grafik-calisma",
+            "yon": "nötr",
+            "guven": 0.42,
+            "dogrulandi": false,
+            "etkin_agirlik": 0.105,
+            "kanit": "NÖTR-BEKLE",
+            "curutme": "işlem 6 < taban 10"
+          }
+        ]
+      },
+      "esik_kalibrasyonu": {
+        "esikler": null,
+        "kaynak": "KALİBRE EDİLEMEDİ (örneklem küçük) → sentez STATİK KORKULUK kullanır (etiketli)"
+      },
+      "celiski_turu": {
+        "kostu": false,
+        "yon_dayaniksiz": false,
+        "hukum": "ÇELİŞKİ TURU: gerekmedi — doğrulanmış danışman yok"
+      },
+      "emir_plani": {
+        "EMIR": "EMİR YOK",
+        "yon": "NÖTR",
+        "gerekce": "yön NÖTR — yönsüz kurulumda giriş/stop tanımsız",
+        "red_nedenleri": [
+          "yön NÖTR — yönsüz kurulumda giriş/stop tanımsız"
+        ],
+        "adaylar": []
+      },
+      "islem_kalitesi": {
+        "hukum": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
+        "ozet": "Yön NÖTR ve motorlardan giriş/stop/hedef seti gelmedi (VERİ YOK)",
+        "adaylar": [],
+        "engeller": [],
+        "seviyeler": {},
+        "rr_denetimi": {}
+      },
+      "kalibrasyon": {
+        "ayrinti": {
+          "karar-motoru": {
+            "n": 0,
+            "wins": 0,
+            "kaynak": "/engine/state/defter.jsonl",
+            "agirlik": 1.0,
+            "durum": "VERİ YOK — ölçülmüş sonuç 0 < n_taban 10"
+          }
+        }
+      },
+      "gecti": true,
+      "kapi": "K5 kapısı GEÇİLDİ"
+    }
+  ],
+  "ZIRVE": {
+    "YON_BIAS": "NÖTR",
+    "ISLEM_KALITESI": "TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE",
+    "sentez_karari": "NÖTR-BEKLE",
+    "guven_skoru": 0.0,
+    "yon_skoru": 0.0,
+    "uzlasi": 1.0,
+    "muhalefet": [],
+    "kapi_gerekceleri": [],
+    "gecersizlik": "VERİ YOK",
+    "seviyeler": {},
+    "ulasilan_katman": "K5-SI (zirve)",
+    "ZORUNLU_EKSIK": [
+      "görsel okuma: grafik ekran görüntüsü/video GELMEDİ"
+    ],
+    "zorunlu_girdiler": [
+      "likidasyon"
+    ],
+    "EMIR": "EMİR YOK",
+    "EMIR_GEREKCE": "yön NÖTR — yönsüz kurulumda giriş/stop tanımsız",
+    "emir_adaylari": [],
+    "emir_red_nedenleri": [
+      "yön NÖTR — yönsüz kurulumda giriş/stop tanımsız"
+    ],
+    "CELISKI_TURU": "ÇELİŞKİ TURU: gerekmedi",
+    "iki_satir": {
+      "1_YON": "YÖN (bias): NÖTR — ağırlıklı yön skoru 0.0 (gerçek berabere)",
+      "2_ISLEM_KALITESI": "İŞLEM KALİTESİ: temiz giriş yok"
+    }
+  },
+  "_job": {},
+  "KIYAS": {
+    "durum": "VERİ YOK — kıyas için önceki koşu kaydı yok (ilk analiz)"
+  },
+  "DENETIM": {
+    "ozet": "22 denetim, 0 ihlal, 2 uyarı",
+    "ihlal": [],
+    "uyari": [
+      "K4-AGI/TUNEL: doğrulanmış kanıt yalnız {} ailesinden"
+    ],
+    "kritik_ihlal": [],
+    "muhurlendi": false
+  },
+  "durum": "TAMAM — piramidin tepesine ulaşıldı"
+}

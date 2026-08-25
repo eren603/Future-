@@ -142,7 +142,9 @@ ve `uyarilar`a "VERİ YOK" gerekçesiyle yazılır — **uydurulmaz**.
 3. **Grafik karar değildir.** Çıktı karar-desteğidir; yön/işlem hükmü
    `karar-kurulu` / `piramit-sistem` sentezinden gelir.
 4. Görsel bir **ölçüm değildir**: kullanıcının ekran görüntüsünden okunan
-   seviyeler `gorsel_tavan` disiplinine tabidir (bkz. CLAUDE.md).
+   seviyelerin güveni `gorsel_tavan` = **0.50** ile tavanlıdır ve `smc_tespit`
+   yapısıyla uyuşmazsa çürütülür ("GÖRSEL-MEKANİK ÇELİŞKİSİ"). Mekanik ayrıntı:
+   `piramit-sistem/SKILL.md` §"Zorunlu girdiler".
 
 ## Ne zaman hangi mod
 

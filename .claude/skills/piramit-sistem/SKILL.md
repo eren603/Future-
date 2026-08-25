@@ -155,7 +155,7 @@ Her koşu sonunda `onceki_kosu.json` anlık görüntüsü yazılır. Kayıt yoks
 | Motor | Katman | İşi |
 |---|---|---|
 | `korelasyon.py` | K2 → K4 | İki varlığın hizalı log getirileri → ρ, beta, R², kararlılık. \|ρ\|≥0.85 → **KOPYA POZİSYON**, K4'te "toplam risk ×2" çelişkisi |
-| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; ATR ve likidite **4H yapı motorundan** (`smc_tespit_h4`) gelir |
+| `usd_hedef.py` | K5 | Dolar kısıtını (kontrat/sabit stop/hedef bandı) fiyat mesafesine çevirir; ATR ve likidite **4H yapı motorundan** (`smc_tespit_h4`) gelir. **stop/ATR ∈ [0.8, 2.0] olan dilim KURULUM ÖLÇEĞİDİR; alt dilim yalnız TETİK içindir** (kodla hizalı: `usd_hedef.py` `min_stop_atr` 0.8 / `max_stop_atr` 2.0) |
 
 İkisi de **beyan edilip koşmazsa** gözlemci `EKSİK_AKTARIM` ihlali verir —
 elle koşu artık gerekmez ve sessiz atlama mümkün değildir.
@@ -179,6 +179,36 @@ Kritik ihlalde (UYDURMA/DAİRESEL/EKSİK_AKTARIM/MEMNUN_ETME) **işlem kalitesi
 mühürlenir**: YÖN gösterilir, işlem verilmez. `scripts/iddia_denetle.py` ise
 sunulacak metindeki her sayının raporda karşılığı var mı diye bakar.
 
+## Kontrol ajanları (gözlemcinin üstünde, HER konu için)
+
+`scripts/kontrol_ajanlari.py` — mimari: `.claude/kontrol/kontrol_mimari.xml`.
+Gözlemci piramit KATMANLARINI denetler; kontrol ajanları **konudan bağımsız
+ZİNCİRİ** denetler (Z1 GÖREV → Z2 KANIT → Z3 ÜRETİM → Z4 ÇAPRAZ DOĞRULAMA →
+Z5 SENTEZ → Z6 TESLİM) ve gözlemcinin görmediği 6 soruyu ekler:
+
+| Kod | Soru | Ölçüm |
+|---|---|---|
+| **ARASTIRMASIZ** (P1) | araştırmadan mı üretti | iddia var, okunmuş artefakt yok |
+| **TAKLIT** (P1) | diğer ajanı taklit mi etti | bağımsız iki ajanın sayı kümesi ≥%90 örtüşüyor |
+| **BULASMA** (P0) | birbirinden etkilendi mi | beslenmediği akranın çıktısına bakmış |
+| **GOREV_SAPMASI** (P0) | görevi tam mı yaptı | kapsanmayan + gerekçesiz görev maddesi |
+| **GIZLI_GUNDEM** (P1) | beyan dışı gerekçe var mı | teslimde hiçbir adımın üretmediği sayı/sürücü |
+| **TIYATRO** (P0) | gerçekten yaptı mı | "geçti" diyen ama çıktı üretmeyen adım/katman |
+
+Kullanım — piyasa yolunda **kendiliğinden** koşar (`rapor["KONTROL"]`, özetin
+altında panel). Diğer konularda:
+
+```bash
+python3 scripts/kontrol_ajanlari.py --zincir defter.json --ozet   # ya da --xml
+python3 scripts/kontrol_ajanlari.py --rapor rapor.json --xml
+python3 scripts/kontrol_ajanlari.py --oz-test                     # 15 bozma senaryosu
+```
+
+Tek bir **P0** bulgu teslimi MÜHÜRLER (sonuç gösterilir, "bu haliyle
+kullanılamaz" denir + düzeltme planı). Defter şablonu:
+`.claude/kontrol/zincir_sablon.json`. Kontrol ajanı ANLAM denetlemez — yorumun
+doğruluğu elle ikinci-göz işidir.
+
 ## Zorunlu girdiler (her koşuda — atlanamaz)
 
 | # | Girdi | Nereye | Ne açar |
@@ -200,5 +230,31 @@ K4'te çelişki olur, çıktının en üstünde `⚠ ZORUNLU GİRDİ EKSİK` ile
 - Determinist: rastgelelik ve duvar-saati yok (zaman damgası veriden).
 - 5 mercek **kanıta bağlanır**; bağlanamayan mercek `BAĞLANMADI` işaretlenir —
   anlatı için sayı uydurulmaz.
+
+## Çelişki turu (adversarial ikinci koşu, tetikleyicisiz)
+
+Sentez bittikten sonra `_celiski_turu` aynı kurulu YALNIZ doğrulanmış
+danışmanlarla yeniden sentezler. Yön değişiyorsa karar doğrulanmamış kanıta
+yaslanıyordur → **fail-closed NÖTR** (yön yine gösterilir, işleme çevrilmez).
+Değişmiyorsa "yön DAYANIKLI" diye raporlanır. Gözlemci, dayanıksız bulguya
+rağmen kararın yönlü kalmasını MEMNUN_ETME ihlali sayar.
+
+## Emir çıktısı (hikâye değil, emir; tetikleyicisiz)
+
+Her karar analizinin sonunda `emir_plani.py` koşar ve kararı UYGULANABİLİR emre
+çevirir: `<MARKET|LIMIT> <LONG|SHORT> @giriş | stop | T1 | R`.
+
+| Alan | Kaynak | Kural |
+|---|---|---|
+| **Seviyeler** | **YALNIZ** ölçülen yapı: açık 15M FVG kenarları + teyitli swingler | Başka kaynak karışamaz; yuvarlak/uydurma seviye **yasak** |
+| **Stop** | Sabit-USDT profili varsa mesafe profilden (usdt/kontrat) | Yoksa girişin ötesindeki EN YAKIN teyitli swing |
+| **Hedef** | Profil varsa profilin kazanç bandı | Yoksa yön tarafındaki İLK teyitli likidite — yoksa aday **DÜŞER** ("R katı" uydurma hedef üretilmez) |
+| **Emir tipi** | `MARKET` yalnız fiyat giriş bölgesindeyse (`\|giriş−fiyat\| ≤ 0.1×ATR15`) | Aksi halde `LIMIT` |
+
+Her aday `rr_denetim` (ATR ölçeği) ve profil varsa `usd_hedef` 5 kapısından
+geçer; **ŞİŞİRİLMİŞ** ya da `R < 1.35` olan reddedilir. Hiçbir aday geçemezse
+**"EMİR YOK"** + düşen kapı yazılır — boş bırakılmaz. Gözlemci: emir seviyeleri
+denetimden geçmemişse UYDURMA, emir yönü kararla çelişiyorsa MEMNUN_ETME
+ihlali verir.
 
 ⚠️ Yalnız karar-destek. Canlı/otomatik emir (gerçek para) **DAHİL DEĞİL**.

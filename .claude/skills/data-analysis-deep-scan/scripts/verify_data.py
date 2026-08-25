@@ -60,8 +60,20 @@ def _compare(actual: Any, operator: str, expected: Any, *, rtol: float, atol: fl
     raise DataContractError(f"Unsupported comparison operator: {operator}")
 
 
+KNOWN_COLUMN_RULES = {"required", "nullable", "unique", "type",
+                      "min", "max", "allowed_values", "regex"}
+
+
 def validate_column(frame: pd.DataFrame, name: str, rules: dict[str, Any]) -> list[dict[str, Any]]:
     outputs: list[dict[str, Any]] = []
+    # TANINMAYAN KURAL SESSİZCE YOK SAYILMAZ: yazım hatası olan bir anahtar
+    # (ör. "not_null", "uniq", "minimum") hiçbir uyarı üretmeden atlanıyordu —
+    # sözleşme yazan kişi kuralın uygulandığını sanıyor, oysa hiç koşmuyordu.
+    unknown = sorted(set(rules) - KNOWN_COLUMN_RULES)
+    if unknown:
+        raise DataContractError(
+            f"column {name} has unknown rule keys: {unknown} "
+            f"(known: {sorted(KNOWN_COLUMN_RULES)})")
     required_field = bool(rules.get("required", True))
     if name not in frame.columns:
         outputs.append(_result(f"column:{name}:exists", not required_field, required=required_field, missing=True))
@@ -128,6 +140,7 @@ def validate_column(frame: pd.DataFrame, name: str, rules: dict[str, Any]) -> li
 
 
 def scalar_check(frame: pd.DataFrame, check: dict[str, Any], index: int) -> dict[str, Any]:
+    sayim: dict[str, int] = {}          # yalnız float toplam/ortalama dalında dolar
     kind = str(check.get("kind", ""))
     required = bool(check.get("required", True))
     operator = str(check.get("operator", "eq"))
@@ -159,10 +172,28 @@ def scalar_check(frame: pd.DataFrame, check: dict[str, Any], index: int) -> dict
                 passed = abs(actual - expected) <= tolerance
                 return _result(str(check.get("name", f"check:{index}:{kind}")), passed, required=required, actual=actual, expected=expected, tolerance=tolerance)
         else:
+            # PAYDA RAPORLANIR: .dropna() sayıya çevrilemeyen her hücreyi
+            # SESSİZCE düşürüyordu ve sonuç yalnız actual/expected ile
+            # raporlanıyordu — yarısı çöp olan bir sütunun toplamı "geçti"
+            # diyebiliyordu. Kaç satır kullanıldı / kaç satır dışlandı artık
+            # kanıta yazılır; dışlama varsa denetim fail-closed DÜŞER
+            # (sözleşme `allow_excluded: true` derse bilinçli izin sayılır).
             values = numeric_series(frame, str(column)).dropna()
             if values.empty:
                 raise DataContractError(f"check {index} has no finite numeric values")
+            kullanilan = int(values.shape[0])
+            dislanan = int(frame[column].notna().sum()) - kullanilan
             actual = float(values.sum()) if kind == "sum" else float(values.mean())
+            # Sayılar izin verilse de kanıta YAZILIR (gizli payda kalmasın).
+            sayim = {"rows_used": kullanilan, "rows_excluded": dislanan}
+            if dislanan > 0 and not bool(check.get("allow_excluded", False)):
+                return _result(str(check.get("name", f"check:{index}:{kind}")), False,
+                               required=required, actual=actual, expected=expected,
+                               operator=operator, rows_used=kullanilan,
+                               rows_excluded=dislanan,
+                               reason=(f"{dislanan} non-null row(s) were not numeric and "
+                                       "were dropped — the denominator changed silently; "
+                                       "set allow_excluded:true to accept this"))
     else:
         raise DataContractError(f"check {index} has unsupported scalar kind {kind!r}")
     if not isinstance(actual, Decimal):
@@ -171,7 +202,9 @@ def scalar_check(frame: pd.DataFrame, check: dict[str, Any], index: int) -> dict
         except (TypeError, ValueError) as exc:
             raise DataContractError(f"check {index} expected must be numeric") from exc
     passed = _compare(actual, operator, expected, rtol=rtol, atol=atol)
-    return _result(str(check.get("name", f"check:{index}:{kind}")), passed, required=required, actual=actual, expected=expected, operator=operator, rtol=rtol, atol=atol)
+    return _result(str(check.get("name", f"check:{index}:{kind}")), passed, required=required,
+                   actual=actual, expected=expected, operator=operator, rtol=rtol, atol=atol,
+                   **sayim)
 
 
 def relation_check(frame: pd.DataFrame, check: dict[str, Any], index: int) -> dict[str, Any]:
@@ -391,8 +424,13 @@ def main() -> int:
         report = run_contract(contract, input_override=args.input, contract_base=contract_path.parent)
         write_json(report, args.output)
         return 0 if report["status"] == "VERIFIED" else 2
-    except (DataContractError, json.JSONDecodeError, OSError) as exc:
-        write_json({"status": "QUARANTINE", "error": str(exc)}, args.output)
+    # HER hata yolunda karantina kaydı ZORUNLU: dar yakalama (yalnız
+    # DataContractError/JSONDecodeError/OSError) beklenmedik bir istisnada
+    # --output dosyasını HİÇ yazmıyordu → çağıran taraf eski/olmayan rapora
+    # bakıp "sözleşme geçti" sanabiliyordu (sessiz fail-OPEN).
+    except Exception as exc:  # noqa: BLE001
+        write_json({"status": "QUARANTINE",
+                    "error": f"{type(exc).__name__}: {exc}"}, args.output)
         return 2
 
 

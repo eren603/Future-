@@ -1,0 +1,189 @@
+{
+  "_aciklama": "KOŞULLU PLAN — 2026-07-26 17:00 UTC barında üretildi. Bir sonraki koşuda HESAP VERME bu dosyadan da ölçülür: hangi dal tetiklendi, seviye tutuldu mu.",
+  "sembol": "ETHUSDT",
+  "uretildigi_bar_utc": "2026-07-26 17:00",
+  "uretildigi_fiyat": 1913.5,
+  "kaynak": "usd_hedef.py taraması (1820-1965, 0.5 puan adım, eth_profil.json ile) + smc_tespit_h4 yapı + grafik-calisma golden zone",
+  "aktif_emir": {
+    "tip": "LIMIT",
+    "yon": "LONG",
+    "sembol": "ETHUSDT",
+    "kontrat": 3.0,
+    "giris": 1897.0,
+    "stop": 1863.6667,
+    "cikis": 1945.365,
+    "R": 1.45,
+    "sertifika": {
+      "usd_hedef": "UYGUN 5/5, düşen kapı yok",
+      "rr_denetim": "TUTARLI, R_rapor 1.45, R_gercekci 1.45, stop_atr 1.75, hedef_atr 2.54",
+      "portfoy": "max_sharpe BTC 0.0 / ETH 1.0 (sharpe 22.0175, 199 gözlem)"
+    },
+    "iptal_sarti": "BTC 64288.599231 altında 15M gövde kapanışı",
+    "gecersizlik": "1874.570651 altında 15M gövde kapanışı → pozisyonu kapat",
+    "kovalama_yok": "fiyat 1907.99 üstünde kalırsa emir dolmaz",
+    "karsi_kanit": "eth_ret ortalamasının %95 bootstrap GA'sı sıfırı içeriyor (üst uç 0.000294216602); backtest 4H PF 0.3442, Monte Carlo prob_profit 0.0; Kelly 4H full_kelly -0.3465 → kurulum geometrik olarak temiz, istatistiksel olarak kanıtsız"
+  },
+  "dallar": {
+    "DAL2_yukari_devam": {
+      "tetik": "fiyat 1913.39-1930.74 arz bloğunda kalır ya da yukarı gider",
+      "long": "YOK — 1913.75 üstünde profil-geçerli giriş yok (1958.75 üstünde gerçek likidite kalmıyor)",
+      "short_penceresi": {
+        "giris_band": [
+          1956.0,
+          1960.5
+        ],
+        "stop_band": [
+          1989.3333,
+          1993.8333
+        ],
+        "hedef": 1910.88
+      }
+    },
+    "DAL3_fvg_dolar": {
+      "tetik": "1887.0 altında 15M gövde kapanışı",
+      "olu_bolge": "1866-1895 arasında profil-geçerli LONG YOK",
+      "sonraki_long": {
+        "giris_band": [
+          1861.0,
+          1865.5
+        ],
+        "stop_band": [
+          1827.6667,
+          1832.1667
+        ],
+        "hedef": 1910.88,
+        "not": "4H talep bloğu 1850.95-1873.15 içinde, stop yapının ötesinde"
+      }
+    },
+    "DAL4_yapi_kirilir": {
+      "tetik": "1874.570651 altında 15M gövde kapanışı",
+      "short_pencereleri": [
+        {
+          "giris_band": [
+            1875.0,
+            1879.5
+          ],
+          "stop_band": [
+            1908.3333,
+            1912.8333
+          ],
+          "hedef": 1829.5733
+        },
+        {
+          "giris_band": [
+            1855.0,
+            1859.5
+          ],
+          "stop_band": [
+            1888.3333,
+            1892.8333
+          ],
+          "hedef": 1809.9625
+        }
+      ]
+    },
+    "DAL5_sikisma": {
+      "tetik": "fiyat 1898.5-1909.0 arasında kalır",
+      "islem": "YOK — iki pencere arasındaki ölü bölge, bant içi likidite yok"
+    }
+  },
+  "edge_olcumu": {
+    "_not": "backtest-motoru ve risk-yonetimi ilk kez koşuldu; setup_dogrulama'nın 'örneklem yetersiz' hükmü sayıyla dolduruldu",
+    "backtest_4h_sma5_30": {
+      "profit_factor": 0.3442,
+      "win_rate": 0.1818,
+      "sharpe": -5.337,
+      "total_return": -0.183519,
+      "max_drawdown": -0.192509
+    },
+    "monte_carlo_4h": {
+      "runs": 2000,
+      "prob_profit": 0.0,
+      "final_return_p50": -0.131965,
+      "max_dd_p50": -0.140847
+    },
+    "backtest_15m_sma5_30": {
+      "profit_factor": 1.5271,
+      "win_rate": 0.3,
+      "total_return": 0.006118
+    },
+    "backtest_rsi_4h": {
+      "profit_factor": 0.0,
+      "total_return": -0.111983
+    },
+    "backtest_rsi_15m": {
+      "profit_factor": 0.0,
+      "total_return": -0.024842
+    },
+    "walk_forward": "dört koşunun dördünde consistent=false",
+    "kelly_4h_kurulum_olcegi": {
+      "full_kelly": -0.3465,
+      "applied_fraction": 0.0,
+      "hukum": "Negatif Kelly: kenar yok, pozisyon açma"
+    },
+    "kelly_15m_tetik_olcegi": {
+      "full_kelly": 0.1035,
+      "applied_fraction": 0.0518
+    },
+    "sabit_kesir": {
+      "risk_amount": 100.0,
+      "units": 2.87081614,
+      "notional": 5445.9382
+    },
+    "sinir": "backtest MA-kesişimi ve RSI vekillerini test etti, SMC+FVG kurulumunun kendisini DEĞİL (motorda SMC strateji tipi yok)"
+  },
+  "degismeyen_kisit": "setup_dogrulama işlem 5 < taban 10 + backtest/Kelly ölçümü negatif — kurulum ölçeğinde ölçülebilir kenar YOK; motorun bağlayıcı çıktısı bu bar için EMİR YOK",
+  "uyari": "Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.",
+  "portfoy_olcumu": {
+    "max_sharpe": {
+      "BTC": 0.0,
+      "ETH": 1.0,
+      "sharpe": 22.0175,
+      "volatility": 0.208059,
+      "expected_return": 4.580942
+    },
+    "min_var": {
+      "BTC": 0.5,
+      "ETH": 0.5,
+      "volatility": 0.162386
+    },
+    "hrp": {
+      "BTC": 0.709985,
+      "ETH": 0.290015,
+      "volatility": 0.147371
+    },
+    "observations": 199
+  },
+  "veri_denetimi": {
+    "satir": 199,
+    "eksik": 0,
+    "cift_kayit": 0,
+    "pearson_r": 0.804308338329,
+    "p_value": 0.0,
+    "fisher_z_ga": [
+      0.749011182993,
+      0.848478020528
+    ],
+    "not": "korelasyon.py'nin 0.8043 değerini bağımsız ikinci motor teyit etti"
+  },
+  "atr_hatasi_duzeltildi": {
+    "tarih_bar_utc": "2026-07-26 17:00",
+    "hata": "emir_plani.yapi_oku._atr son 14 TR'nin BASİT ortalamasını alıyordu; smc_tespit ise Wilder yumuşatması kullanıyor. Aynı 4H barları için iki farklı ATR: ETH 15.26857142857146 vs 19.03247562.",
+    "etki": "usd_hedef ve rr_denetim kapıları (stop 0.8-2.0×ATR, hedef 3.0×ATR) yanlış ölçekte değerlendiriliyordu. Sabit-USDT profilinin 33.3333 puanlık stopu basit ortalamayla 2.1831×ATR (bant DIŞI), Wilder ile 1.7514×ATR (bant İÇİ) → ETH profili emir_plani'nden HİÇBİR ZAMAN geçemiyordu.",
+    "duzeltme": "_atr Wilder yumuşatmasına çevrildi (tohum: ilk 14 TR ortalaması, sonra yinelemeli). Artık smc_tespit ile aynı tanım.",
+    "dogrulama": {
+      "self_test_once": "34/35 (T33 KALDI)",
+      "self_test_sonra": "35/35",
+      "eth_emir_once": "EMİR YOK (0 aday)",
+      "eth_emir_sonra": "MARKET LONG @1913.5 | stop 1880.166667 | T1 1958.5 | R 1.35 (6 aday)",
+      "btc_emir_once": "EMİR YOK",
+      "btc_emir_sonra": "EMİR YOK (R 0.79→0.95, 0.25→0.30 — kapı yine kapalı)",
+      "yon_skorlari_degismedi": {
+        "BTC": 0.5262,
+        "ETH": 0.6219
+      },
+      "gozlemci": "BTC 25 denetim 0 ihlal, ETH 26 denetim 0 ihlal — öncesi/sonrası aynı"
+    },
+    "not": "Motor artık ETH'de emir üretiyor. Motorun 1 numaralı adayı MARKET @1913.5 — bu, 4H arz order block'unun (1913.39-1930.74) içinde. emir_plani arz bloğunu görmez. Motorun 5. adayı LIMIT @1895.23, yapısal analizde seçilen 1897.0 ile aynı bölge."
+  }
+}
