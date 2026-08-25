@@ -145,6 +145,23 @@ def kontrol_hizli() -> list[str]:
         if not (REPO / ".claude" / "hooks" / h).exists():
             kirik.append(f"KANCA: hooks/{h} YOK")
 
+    # YENİ PENCERE SÖZLEŞMESİ: duran görev SessionStart'ta TAM basılır. Kanca
+    # dosyası var olmak yetmez — GÖREVİ ÇAĞIRIYOR mu? `--gorev ana` satırı
+    # düşerse yeni pencere görevi sessizce göremez (EKSİK_AKTARIM) ve hiçbir
+    # test bunu yakalamaz: kanca yine "kayıtlı ve var" görünür. Görev iki
+    # bölümdür (harness enjeksiyon eşiği KARAKTER cinsinden ölçüldü: 13069 krk
+    # kesildi, 6290 krk geçti; tek parça görev 7731 krk = kanıtlanmamış bant).
+    for dosya, bayrak, ne in (
+            ("session-start.sh", "--gorev ana", "duran görev ANA bölümü"),
+            ("session-start-gorev-ek.sh", "--gorev ek", "duran görev EK bölümü")):
+        yol = REPO / ".claude" / "hooks" / dosya
+        try:
+            if bayrak not in yol.read_text(encoding="utf-8"):
+                kirik.append(f"KANCA: hooks/{dosya} içinde `{bayrak}` YOK — "
+                             f"{ne} yeni pencerede basılmaz (sessiz kayıp)")
+        except OSError:
+            kirik.append(f"KANCA: hooks/{dosya} okunamadı — {ne} garanti EDİLEMEZ")
+
     for p, ad, liste in ((ENGINE / "gorev.json", "duran görev", False),
                          (ENGINE / "girdi" / "m15.json", "BTC 15M kline", True),
                          (ENGINE / "girdi" / "h4.json", "BTC 4H kline", True)):

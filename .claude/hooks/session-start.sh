@@ -39,10 +39,19 @@ else
   echo "[PİRAMİT] Boru hattı dosyası YOK — motorlar elle koşulur."
 fi
 
-# --- Duran görev damgası: YENİ pencere görevi TAM görmeli (ikinci emniyet).
-# UserPromptSubmit kancası damgayı oturum kimliğiyle tutar; ortam değişkeni
-# yoksa damga burada sıfırlanır ki duran görev sessizce kaybolmasın. ---
-rm -f "${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/state/gorev_damga.json"
+# --- DURAN GÖREV: yeni pencere görevi TAM ve TETİKLEYİCİSİZ görür ---
+# Görev OTURUM düzeyi bağlamdır. UserPromptSubmit'te tam basılınca ilk istem
+# 14281 bayta çıkıyor ve harness enjeksiyon eşiğini aşıyordu — görev tam da
+# yeni pencerenin ihtiyaç duyduğu anda kesiliyordu. SessionStart'ın KENDİ
+# bütçesinde tam basılır ve damga vurulur; her istem işaretçiyle ~6.9 KB'da
+# kalır. Sıra önemli: damga ÖNCE silinir, sonra `--gorev` yeniden vurur —
+# `--gorev` çökerse damga vurulmamış kalır ve ilk istem tam basar (fail-open).
+DAMGA="${CLAUDE_PROJECT_DIR:-.}/.claude/skills/piramit-sistem/state/gorev_damga.json"
+KANCA="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/piramit_auto.py"
+rm -f "$DAMGA"
+if [ -f "$KANCA" ]; then
+  python3 "$KANCA" --gorev ana || true
+fi
 
 # Only run in Claude Code on the web (remote) environment.
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then

@@ -965,11 +965,17 @@ def main() -> int:
             {"gorev": "DEĞİŞTİ", "sira": ["1) yeni"],
              "strateji_kurali": "S" * 2000}, ensure_ascii=False), encoding="utf-8")
         c_uc = _kanca_cikti()             # içerik değişti → yeniden TAM
-        kontrol("T36 kanca: duran görev damgası — değişmedikçe tek satır",
+        # SÖZLEŞME (ölçümle güncellendi): damga YOKken (SessionStart koşmamış)
+        # istem TAM basar = fail-open. Damga AYNI iken tek satır işaretçi.
+        # Görev OTURUM İÇİNDE değişirse istem yine TAM BASMAZ (7731+6290 krk
+        # eşiği aşardı) ama DEĞİŞTİ diyip dosyayı adlandırır — sessiz kalmaz.
+        kontrol("T36 kanca: damga yok=TAM, aynı=işaretçi, değişti=DEĞİŞTİ uyarısı",
                 "sıra: " in c_ilk and "sıra: " not in c_iki
-                and "engine/gorev.json" in c_iki and "sıra: " in c_uc,
+                and "engine/gorev.json" in c_iki
+                and "sıra: " not in c_uc and "DEĞİŞTİ" in c_uc
+                and "engine/gorev.json" in c_uc,
                 f"ilk={len(c_ilk)}B tam | ikinci={len(c_iki)}B işaretçi | "
-                f"değişince={len(c_uc)}B tam")
+                f"değişince={len(c_uc)}B DEĞİŞTİ uyarısı")
         kontrol("T37 kanca: değişmemiş görevde çıktı ≤ 2048 bayt",
                 len(c_iki.encode("utf-8")) <= 2048,
                 f"{len(c_iki.encode('utf-8'))} bayt (önce {len(c_ilk.encode('utf-8'))})")
@@ -994,6 +1000,47 @@ def main() -> int:
         kontrol("T38 kanca: çökme tanısı sabit bloktan ÖNCE, çıkış kodu 0",
                 i_hata >= 0 and i_k2 >= 0 and i_hata < i_k2 and _kod == 0,
                 f"hata@{i_hata} < kural@{i_k2} | çıkış={_kod}")
+
+        # ---- T39/T40: YENİ PENCERE — duran görev SessionStart'ta basılır ---
+        # Ölçüm: ilk istem 14281 bayt (tam duran görevle) → harness eşiğinin
+        # ÜSTÜNDE; yeni pencerenin görevi yine kesilirdi. Duran görev oturum
+        # düzeyi bağlamdır: SessionStart kendi bütçesinde TAM basar, damgayı
+        # vurur; UserPromptSubmit her istemde işaretçiyle küçük kalır.
+        os.environ["CLAUDE_PROJECT_DIR"] = str(tmp_repo)
+        (tmp_repo / "engine" / "gorev.json").write_text(json.dumps(
+            {"gorev": "pencere testi", "sira": ["1) bir", "2) iki"],
+             "strateji_kurali": "S" * 2000}, ensure_ascii=False), encoding="utf-8")
+        HOOK = importlib.reload(HOOK)
+        _damga_p = Path(HOOK.DAMGA)
+        _damga_p.unlink(missing_ok=True)          # yeni pencere: damga silinmiş
+        def _yakala(fn, *a):
+            _bb = io.StringIO()
+            with contextlib.redirect_stdout(_bb):
+                _r = fn(*a)
+            return _bb.getvalue(), _r
+        c_ana, _kg = _yakala(HOOK._gorev_kipi, "ana")
+        c_ek, _ke = _yakala(HOOK._gorev_kipi, "ek")
+        c_istem, _ = _yakala(HOOK.main)
+        kontrol("T39 yeni pencere: SessionStart 'ana' bölümü TAM basar, "
+                "boru hattını KOŞMAZ, damgayı vurur",
+                "sıra: " in c_ana and "Boru hattı" not in c_ana
+                and "strateji: " not in c_ana
+                and _damga_p.exists() and _kg == 0,
+                f"ana={len(c_ana)} krk, damga vuruldu={_damga_p.exists()}, "
+                f"çıkış={_kg}")
+        kontrol("T40 yeni pencere: SessionStart'tan sonra İLK istem işaretçi",
+                "sıra: " not in c_istem and "DURAN GÖREV] değişmedi" in c_istem,
+                f"ilk istem={len(c_istem)} krk (tam metin tekrarlanmadı)")
+        # Bölünme SEBEBİ: harness enjeksiyon eşiği KARAKTER cinsinden ve
+        # (6290, 13069] aralığında ölçüldü (13069 krk → "12.8KB" persisted).
+        # Tek parça duran görev 7731 krk = belirsiz bant. İki bölüm de
+        # KANITLANMIŞ-güvenli 6290'ın altında kalmalı.
+        kontrol("T41 yeni pencere: her SessionStart bölümü ≤ 6000 karakter",
+                len(c_ana) <= 6000 and len(c_ek) <= 6000 and _ke == 0,
+                f"ana={len(c_ana)} krk | ek={len(c_ek)} krk (tavan 6000)")
+        kontrol("T42 yeni pencere: 'ek' bölümü strateji + bekleyen işleri taşır",
+                "strateji: " in c_ek and "sıra: " not in c_ek,
+                f"ek={len(c_ek)} krk, strateji taşındı={'strateji: ' in c_ek}")
         os.environ.pop("CLAUDE_PROJECT_DIR", None)
         if _env_yedek is not None:
             os.environ["CLAUDE_PROJECT_DIR"] = _env_yedek

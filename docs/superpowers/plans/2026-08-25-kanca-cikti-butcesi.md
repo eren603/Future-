@@ -292,3 +292,52 @@ gözlenen tek nokta 12,8 KB'ın aştığı). 6.910 bayt eşiğin altında mı, b
 sonraki istemde görülecek: kanca çıktısı bağlama TAM girerse eşik aşılmamış
 demektir. Aşılsa bile (A) garantisi ayakta: kesilen kuyruk tekrarlanan
 kuraldır, kararın kendisi değil.
+
+---
+
+## Ek Faz: YENİ PENCERE — eksiksiz, tetikleyicisiz (2026-08-25)
+
+A+B uygulandıktan sonra ölçüm bir boşluk gösterdi: yeni pencerenin **ilk
+istemi** 14.281 bayt (13.069 karakter) idi, çünkü duran görev orada tam
+basılıyordu — yani görev tam da yeni pencerenin ihtiyaç duyduğu anda
+kesiliyordu.
+
+### Eşiğin ölçülmesi (varsayım değil, kanıt)
+
+Harness'ın enjeksiyon eşiği **KARAKTER** cinsindendir, bayt değil:
+13.069 karakterlik çıktı `Output too large (12.8KB)` ile dosyaya kaydırıldı
+(13.069 / 1024 = 12,76 KB ✓), 6.290 karakterlik çıktı bağlama tam girdi.
+Yani ölçülen bant: **6.290 < eşik ≤ 13.069 karakter**. Tam sayı VERİ YOK —
+CLI ikilisinde eşik `Nrn` diye başka modülden alias'lanmış sabit
+(`if (i <= a) return e;`), izi sürülemedi; tasarım bu yüzden eşikten
+BAĞIMSIZ kuruldu.
+
+### Çözüm
+
+Duran görev **oturum** düzeyi bağlamdır, istem düzeyi değil. `--gorev ana|ek`
+kipi eklendi (boru hattını KOŞMAZ) ve **iki ayrı SessionStart girişine**
+bölündü — her giriş kendi enjeksiyon bütçesini alır:
+
+| Kanal | İçerik | Ölçülen |
+|---|---|---|
+| SessionStart #1 (`session-start.sh --gorev ana`) | sağlık + görev + sıra + ETH profili + açık emir + hafıza | **3.470 krk** ✔ |
+| SessionStart #2 (`session-start-gorev-ek.sh --gorev ek`) | strateji süzgeci + bekleyen işler | **4.443 krk** ✔ |
+| Her istem (UserPromptSubmit) | koşu özeti + tek satır görev işaretçisi | **6.296 krk** ✔ |
+
+Üçü de kanıtlanmış-güvenli 6.290 bandında/altında.
+
+### Fail-open zinciri (sessiz kayıp yasak)
+
+1. `--gorev ana` damgayı vurur; `ek` **vurmaz** → `ana` çökerse damga kalmaz.
+2. Damga yoksa (SessionStart koşmamış) istem yolu görevi **TAM** basar —
+   kesilse bile dosyaya kaydedilir, kaybolmaz.
+3. Görev oturum içinde değişirse istem tam basmaz ama **"OTURUM İÇİNDE
+   DEĞİŞTİ → engine/gorev.json OKUNMALI"** der — sessiz kalmaz.
+4. `saglik.py` KANCA halkası artık `--gorev ana` / `--gorev ek` satırlarının
+   VARLIĞINI denetler: satır düşerse **KIRIK** (kanıtlandı: bozunca çıkış 1).
+
+### Testler
+
+T35 sıra · T36 damga üç durumu · T37 bayt tavanı · T38 çökme sırası ·
+T39 `ana` bölümü + damga · T40 ilk istem işaretçi · T41 bölüm ≤ 6000 krk ·
+T42 `ek` bölümü içeriği → **44/44 GEÇTİ**, `saglik.py --tam` 12/12.

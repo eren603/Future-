@@ -527,6 +527,58 @@ def _sunulan_karar_bas(g: dict) -> None:
     _hafiza_bas(g)
 
 
+def _gorev_tam_bas(bolum: str, g: dict | None = None) -> None:
+    """Duran görevi TAM bas — `bolum` = "ana" | "ek".
+
+    Bölünme SEBEBİ ölçümdür, tercih değil: harness enjeksiyon eşiği KARAKTER
+    cinsindendir; 13069 karakter dosyaya kaydırıldı ("Output too large
+    (12.8KB)"), 6290 karakter tam geçti. Tek parça duran görev 7731 karakter =
+    kanıtlanmamış bant. İki ayrı SessionStart girişi iki ayrı bütçe demektir.
+
+      ana : görev + sıra + ETH profili + açık emir + hafıza (damgayı VURUR)
+      ek  : strateji süzgeci + bekleyen işler               (damgayı vurmaz)
+    """
+    if g is None:
+        g = json.loads(GOREV.read_text(encoding="utf-8"))
+        if not isinstance(g, dict):
+            raise TypeError(f"kök tip {type(g).__name__}, sözlük bekleniyordu")
+    if bolum == "ek":
+        if g.get("strateji_kurali"):
+            print("   strateji: " + str(g.get("strateji_kurali")))
+        # BEKLEYEN İŞLER: kullanıcının "sonra yapacağız" dediği maddeler.
+        # Basılmazsa yeni pencere onları göremez ve iş sessizce kaybolur
+        # (EKSİK_AKTARIM). Yalnız AÇIK olanlar basılır.
+        _bekleyen = g.get("bekleyen_isler")
+        for _b in (_bekleyen if isinstance(_bekleyen, list) else []):
+            if not isinstance(_b, dict):
+                continue
+            if str(_b.get("durum", "")).upper().startswith("KAPANDI"):
+                continue
+            print(f"   ⏳ BEKLEYEN İŞ [{_b.get('id', '?')}] {_b.get('durum', '')} — "
+                  f"{_b.get('ne', '')}")
+            if _b.get("olculen_durum"):
+                print(f"      ölçülen durum: {_b['olculen_durum']}")
+            if _b.get("on_kosul"):
+                print(f"      ön koşul: {_b['on_kosul']}")
+        return
+    prof = g.get("eth_profili")
+    prof = prof if isinstance(prof, dict) else {}
+    sira = g.get("sira")
+    sira = sira if isinstance(sira, list) else []
+    print("[PİRAMİT — DURAN GÖREV] " + str(g.get("gorev", "")))
+    if sira:
+        print("   sıra: " + " ".join(str(x) for x in sira))
+    if prof:
+        print(f"   ETH profili: {prof.get('kontrat_eth')} ETH kontrat, "
+              f"sermaye {prof.get('sermaye_usd')} USD, kaldıraç "
+              f"{prof.get('kaldirac')}x, stop {prof.get('stop_usdt')} USDT "
+              f"(sabit), hedef {prof.get('hedef_usdt_brut')} USDT brüt, "
+              f"R_min {prof.get('r_min')}, kurulum ölçeği "
+              f"{prof.get('kurulum_olcegi')}")
+    _sunulan_karar_bas(g)
+    _gorev_damgasi()          # damga YALNIZ "ana" bölümünde vurulur
+
+
 def _oturum_kimligi() -> str:
     """Oturum kimliği — YENİ pencere duran görevi tekrar TAM görmeli.
 
@@ -540,27 +592,35 @@ def _oturum_kimligi() -> str:
     return ""
 
 
-def _gorev_damgasi() -> bool:
-    """True = duran görev TAM basılmalı, False = tek satır işaretçi yeter.
+def _gorev_damgasi(vur: bool = True) -> str:
+    """Duran görev damgasının durumu: "yok" | "degisti" | "ayni".
 
-    FAIL-OPEN: damga okunamaz/yazılamazsa TAM basılır. Duran görevin sessizce
-    kaybolması EKSİK_AKTARIM ihlalidir; gereksiz tekrar basmak yalnız bayt
-    maliyetidir — iki hatanın maliyeti asimetriktir.
+    - "yok"     : damga dosyası yok → SessionStart koşmamış/çökmüş. FAIL-OPEN:
+                  duran görev istemde TAM basılır (kesilse bile kaybolmaz;
+                  sessiz kayıp EKSİK_AKTARIM ihlalidir).
+    - "degisti" : gorev.json ya da oturum değişti.
+    - "ayni"    : bu oturumda zaten basıldı → tek satır işaretçi yeter.
+
+    `vur=False` yalnız okur (damgayı YAZMAZ) — SessionStart'ın "ek" bölümü
+    damgayı vurmamalı, yoksa "ana" bölümü çökse bile damga vurulmuş olur.
     """
     try:
         ham = GOREV.read_bytes() if GOREV.is_file() else b"YOK"
     except OSError:
-        return True
+        return "yok"
     yeni = {"sha": hashlib.sha256(ham).hexdigest(), "oturum": _oturum_kimligi()}
     try:
         eski = json.loads(DAMGA.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         eski = None
-    try:
-        _atomik_yaz(DAMGA, json.dumps(yeni, ensure_ascii=False))
-    except OSError:
-        return True
-    return not (isinstance(eski, dict) and eski == yeni)
+    if vur:
+        try:
+            _atomik_yaz(DAMGA, json.dumps(yeni, ensure_ascii=False))
+        except OSError:
+            return "yok"
+    if eski is None:
+        return "yok"
+    return "ayni" if (isinstance(eski, dict) and eski == yeni) else "degisti"
 
 
 def _gorev_bas() -> None:
@@ -576,46 +636,29 @@ def _gorev_bas() -> None:
         g = json.loads(GOREV.read_text(encoding="utf-8"))
         if not isinstance(g, dict):
             raise TypeError(f"kök tip {type(g).__name__}, sözlük bekleniyordu")
-        # DAMGA KAPISI: sabit metin istemler arası DEĞİŞMEZ; her istemde
-        # yeniden basmak çıktı bütçesini yiyor (ölçüm: 8871 bayt / %62).
-        # Dinamik satırlar (_sunulan_karar_bas) bu kapının ARDINDAN da basılır.
-        if not _gorev_damgasi():
-            print("[PİRAMİT — DURAN GÖREV] değişmedi (bu oturumda basıldı) → "
-                  "tam metin: engine/gorev.json")
+        # DAMGA KAPISI. Tam metin OTURUM AÇILIŞINDA basılır (SessionStart,
+        # `--gorev ana|ek`) — orada kendi enjeksiyon bütçesi var. İstem yolunda
+        # tam basılırsa çıktı 7731+6290 karaktere çıkar ve harness eşiğini
+        # (ölçülen bant: 6290 < eşik ≤ 13069 KARAKTER) aşar; düzeltilen kusurun
+        # aynısı geri gelir. İstemde yalnız tek satır durum + DİNAMİK satırlar.
+        _dmg = _gorev_damgasi()
+        if _dmg == "ayni":
+            print("[PİRAMİT — DURAN GÖREV] değişmedi (oturum açılışında "
+                  "basıldı) → tam metin: engine/gorev.json")
             _sunulan_karar_bas(g)
             return
-        prof = g.get("eth_profili")
-        prof = prof if isinstance(prof, dict) else {}
-        sira = g.get("sira")
-        sira = sira if isinstance(sira, list) else []
-        print("[PİRAMİT — DURAN GÖREV] " + str(g.get("gorev", "")))
-        if sira:
-            print("   sıra: " + " ".join(str(x) for x in sira))
-        if prof:
-            print(f"   ETH profili: {prof.get('kontrat_eth')} ETH kontrat, "
-                  f"sermaye {prof.get('sermaye_usd')} USD, kaldıraç "
-                  f"{prof.get('kaldirac')}x, stop {prof.get('stop_usdt')} USDT "
-                  f"(sabit), hedef {prof.get('hedef_usdt_brut')} USDT brüt, "
-                  f"R_min {prof.get('r_min')}, kurulum ölçeği "
-                  f"{prof.get('kurulum_olcegi')}")
-        if g.get("strateji_kurali"):
-            print("   strateji: " + str(g.get("strateji_kurali")))
-        # BEKLEYEN İŞLER: kullanıcının "sonra yapacağız" dediği maddeler. Dosyada
-        # durup basılmazsa yeni pencere onları göremez ve iş sessizce kaybolur
-        # (EKSİK_AKTARIM). Yalnız AÇIK olanlar basılır.
-        _bekleyen = g.get("bekleyen_isler")
-        for _b in (_bekleyen if isinstance(_bekleyen, list) else []):
-            if not isinstance(_b, dict):
-                continue
-            if str(_b.get("durum", "")).upper().startswith("KAPANDI"):
-                continue
-            print(f"   ⏳ BEKLEYEN İŞ [{_b.get('id', '?')}] {_b.get('durum', '')} — "
-                  f"{_b.get('ne', '')}")
-            if _b.get("olculen_durum"):
-                print(f"      ölçülen durum: {_b['olculen_durum']}")
-            if _b.get("on_kosul"):
-                print(f"      ön koşul: {_b['on_kosul']}")
-        _sunulan_karar_bas(g)
+        if _dmg == "degisti":
+            print("[PİRAMİT — DURAN GÖREV] OTURUM İÇİNDE DEĞİŞTİ → "
+                  "engine/gorev.json OKUNMALI (tam metin istemde basılmaz: "
+                  "çıktı eşiği).")
+            _sunulan_karar_bas(g)
+            return
+        # _dmg == "yok": SessionStart koşmamış/çökmüş → FAIL-OPEN.
+        # Kesilme riskine rağmen TAM basılır: sessiz kayıp
+        # (EKSİK_AKTARIM) kesilmiş-ama-dosyada-duran çıktıdan kötüdür.
+        _gorev_tam_bas("ana", g)
+        _gorev_tam_bas("ek", g)
+        return
     except Exception as e:  # noqa: BLE001 — görev bloğu boru hattını DÜŞÜREMEZ
         print(f"[PİRAMİT] ⚠ DURAN GÖREV OKUNAMADI ({type(e).__name__}: {e}) — "
               f"{GOREV} yok ya da şema dışı. Görev/hedef/ETH profili bağlama "
@@ -1133,6 +1176,39 @@ def main() -> int:
         _sabit_bas()
 
 
+def _gorev_kipi(bolum: str = "ana") -> int:
+    """SessionStart kipi (`--gorev ana|ek`): YALNIZ duran görevi basar, boru
+    hattını KOŞMAZ.
+
+    NEDEN İKİ BÖLÜM: harness enjeksiyon eşiği KARAKTER cinsindendir ve bu
+    oturumda ölçüldü — 13069 karakterlik çıktı "Output too large (12.8KB)"
+    ile dosyaya kaydırıldı, 6290 karakterlik çıktı tam geçti. Tek parça duran
+    görev 7731 karakter, yani KANITLANMAMIŞ bantta. İki ayrı SessionStart
+    girişi = iki ayrı enjeksiyon bütçesi; her bölüm kanıtlanmış-güvenli
+    6290'ın altında kalır ve görev EKSİKSİZ ulaşır.
+
+      ana : görev + sıra + ETH profili + açık emir + hafıza  (damgayı VURUR)
+      ek  : strateji süzgeci + bekleyen işler                (damgayı vurmaz)
+
+    Neden burada: duran görev OTURUM düzeyi bağlamdır ("yeni pencere görevi
+    tekrar sormaz"), istem düzeyi değil. UserPromptSubmit'te tam basılınca ilk
+    istem 14281 bayta çıkıyor ve harness eşiğini aşıyordu — yani yeni
+    pencerenin görevi tam da ihtiyaç duyduğu anda kesiliyordu. SessionStart'ın
+    KENDİ enjeksiyon bütçesi var; görev orada tam basılır, damga vurulur ve
+    her istem işaretçiyle ~6.9 KB'da kalır.
+
+    Damga yazımı `_gorev_bas` içindeki `_gorev_damgasi()`den gelir. Bu kip
+    çökerse damga VURULMAZ → ilk istem tam basar (fail-open korunur).
+    """
+    try:
+        _gorev_tam_bas(bolum)
+    except Exception as e:  # noqa: BLE001 — oturum açılışı asla bloklanmaz
+        print(f"[PİRAMİT] duran görev ({bolum}) basılamadı "
+              f"({type(e).__name__}: {e}) — ilk istemde tam basılacak "
+              "(damga vurulmadı).")
+    return 0
+
+
 def _sessiz_cik(kod: int = 0):
     """stdout kapalıyken çıkışta ikinci BrokenPipeError üretme.
 
@@ -1152,6 +1228,16 @@ def _sessiz_cik(kod: int = 0):
 
 
 if __name__ == "__main__":
+    if "--gorev" in sys.argv[1:]:
+        # SessionStart kipi: yalnız duran görev (boru hattı KOŞMAZ).
+        _argv = sys.argv[1:]
+        _bolum = "ek" if "ek" in _argv else "ana"
+        try:
+            _sessiz_cik(_gorev_kipi(_bolum))
+        except SystemExit:
+            raise
+        except Exception:  # noqa: BLE001 — oturum açılışı bloklanmaz
+            _sessiz_cik(0)
     try:
         _sessiz_cik(main() or 0)
     except BrokenPipeError:
