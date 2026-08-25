@@ -1,0 +1,132 @@
+{
+  "son_bar": 1785085200000,
+  "son_bar_utc": "2026-07-26 17:00",
+  "karar": {
+    "karar": "BEKLE",
+    "yon": null,
+    "zincir": 1,
+    "neden": "BEKLE: LONG sinyali var (zincir 1) ama kenar zayıf — R=1.1 < 1.35 (depo risk kuralı); T1 likiditesi stopa göre çok yakın."
+  },
+  "takip": null,
+  "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-07-26 17:00).",
+  "acik_bolgeler": [
+    {
+      "tip": "bull",
+      "ust": 1870.57,
+      "alt": 1869.84,
+      "ce": 1870.205,
+      "bar": 122,
+      "zaman": 1785015000000
+    },
+    {
+      "tip": "bull",
+      "ust": 1876.11,
+      "alt": 1874.65,
+      "ce": 1875.38,
+      "bar": 132,
+      "zaman": 1785024000000
+    },
+    {
+      "tip": "bull",
+      "ust": 1891.25,
+      "alt": 1888.0,
+      "ce": 1889.625,
+      "bar": 188,
+      "zaman": 1785074400000
+    },
+    {
+      "tip": "bull",
+      "ust": 1895.23,
+      "alt": 1894.63,
+      "ce": 1894.93,
+      "bar": 190,
+      "zaman": 1785076200000
+    },
+    {
+      "tip": "bull",
+      "ust": 1905.89,
+      "alt": 1903.0,
+      "ce": 1904.4450000000002,
+      "bar": 193,
+      "zaman": 1785078900000
+    },
+    {
+      "tip": "bear",
+      "ust": 1917.06,
+      "alt": 1915.51,
+      "ce": 1916.2849999999999,
+      "bar": 199,
+      "zaman": 1785084300000
+    }
+  ],
+  "swing_15m_son": [
+    [
+      1884.91,
+      "H"
+    ],
+    [
+      1881.07,
+      "L"
+    ],
+    [
+      1883.76,
+      "L"
+    ],
+    [
+      1893.0,
+      "H"
+    ],
+    [
+      1880.66,
+      "L"
+    ],
+    [
+      1898.0,
+      "H"
+    ],
+    [
+      1917.45,
+      "H"
+    ],
+    [
+      1927.9,
+      "H"
+    ]
+  ],
+  "swing_4h_son": [
+    [
+      1909.32,
+      "L"
+    ],
+    [
+      1958.75,
+      "H"
+    ],
+    [
+      1858.0,
+      "L"
+    ],
+    [
+      1909.32,
+      "H"
+    ],
+    [
+      1846.17,
+      "L"
+    ],
+    [
+      1850.26,
+      "L"
+    ]
+  ],
+  "rejim_4h": {
+    "rejim": "FLAT",
+    "fark": 17.487499999999955,
+    "esik": 26.27229999999986
+  },
+  "donus_dizisi": {
+    "yon": "LONG",
+    "adim": 4,
+    "supurme_ucu": 1882.0
+  }
+}
