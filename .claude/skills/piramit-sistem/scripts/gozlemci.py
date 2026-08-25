@@ -307,7 +307,10 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
         if ad in str(g) and not [k for k in kaynaklar if k != ad]:
             dairesel.append(f"{ad} ← {str(g)[:70]}")
     if dairesel:
-        b.append(_bulgu("DAIRESEL", "UYARI",
+        # İHLAL (UYARI değil): DAIRESEL, KRITIK kümesindedir ve mühür yalnız
+        # İHLAL satırlarını sayar — UYARI olarak kalırsa kritik ihlal ASLA
+        # mühürlenemez (kapı sözleşmede var, kodda ölüydü).
+        b.append(_bulgu("DAIRESEL", "İHLAL",
                         "kendi çıktısıyla doğrulanan danışman: " + "; ".join(dairesel),
                         "çapraz doğrulayıcı ekle (başka motor onaylasın)"))
     else:
@@ -356,7 +359,16 @@ def gozlemci_k4(k3: dict, k4: dict) -> list:
     # 4) rr denetimi seviye taşıyan her danışmana uygulandı mı?
     rr = k4.get("rr_denetimi") or {}
     seviyeli = set((k3.get("seviyeler") or {}))
-    atlanan = seviyeli - set(rr)
+    # ANAHTAR VARLIĞI YETMEZ, SONUÇ denetlenir. Ölçüt `verdict` VARLIĞIDIR:
+    # rr_denetim yalnız gerçekten koştuğunda verdict üretir
+    # (TUTARLI/ŞİŞİRİLMİŞ/GEÇERSİZ). piramit.py iki ayrı başarısızlık kaydı
+    # yazıyor — "VERİ YOK — … denetim yapılamadı" (829) ve "denetim ÇALIŞMADI"
+    # (836); ikisinde de verdict yok. Önceki ölçüt ("VERİ YOK" dizgesi)
+    # ikincisini KAÇIRIYORDU: alt süreç çöktüğünde/zaman aşımına uğradığında,
+    # yani kapının en çok gerektiği anda, EKSIK_AKTARIM "TEMİZ" diyordu.
+    kosan = {a for a, v in rr.items()
+             if isinstance(v, dict) and v.get("verdict")}
+    atlanan = seviyeli - kosan
     if atlanan:
         b.append(_bulgu("EKSIK_AKTARIM", "İHLAL",
                         f"seviye taşıyan {atlanan} için rr_denetim koşmadı"))
@@ -478,10 +490,15 @@ def gozlemci_k5(k3: dict, k4: dict, k5: dict, zirve: dict,
     # 0d) ÇELİŞKİ TURU: koştu mu, sonucu karara yansıdı mı?
     ct = k5.get("celiski_turu")
     if isinstance(ct, dict):
-        if ct.get("yon_dayaniksiz") and str(sentez.get("YON_BIAS")) != "NÖTR":
+        # KARAR'a bakılır, YON_BIAS'a DEĞİL. Sözleşme gereği yön asla
+        # saklanmaz: fail-closed uygulandığında bile YON_BIAS yönlü KALIR
+        # (piramit.py:1056) ve kapanan şey KARAR'dır. Koşul YON_BIAS'a
+        # baktığı için fail-closed her DOĞRU çalıştığında sistem kendine
+        # sahte MEMNUN_ETME ihlali (ve kritik mühür) yazıyordu.
+        if ct.get("yon_dayaniksiz") and str(sentez.get("KARAR")) != "NÖTR-BEKLE":
             b.append(_bulgu("MEMNUN_ETME", "İHLAL",
-                            "çelişki turu yönü DAYANIKSIZ buldu ama karar hâlâ "
-                            f"{sentez.get('YON_BIAS')} — fail-closed uygulanmamış"))
+                            "çelişki turu yönü DAYANIKSIZ buldu ama KARAR hâlâ "
+                            f"{sentez.get('KARAR')} — fail-closed uygulanmamış"))
         else:
             b.append(_bulgu("MEMNUN_ETME", "TEMİZ", str(ct.get("hukum", YOK))[:110]))
 
