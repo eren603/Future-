@@ -189,7 +189,7 @@ def test_grounding(m):
             if isinstance(p, dict) and "fiyat" in p and round(float(p["fiyat"]), 6) not in olculen:
                 kaynaksiz.append((spec["arac"], nk, p["fiyat"]))
     onay("GROUNDING: otomatik katmanda kaynaksız fiyat yok", not kaynaksiz,
-         f"kaynaksız: {kaynaksız[:3]}")
+         f"kaynaksız: {kaynaksiz[:3]}")
 
 
 def test_uctan_uca(m, tmp: Path):
