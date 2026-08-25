@@ -1041,6 +1041,37 @@ def main() -> int:
         kontrol("T42 yeni pencere: 'ek' bölümü strateji + bekleyen işleri taşır",
                 "strateji: " in c_ek and "sıra: " not in c_ek,
                 f"ek={len(c_ek)} krk, strateji taşındı={'strateji: ' in c_ek}")
+
+        # ---- T43: HÜKÜM BAŞLIĞI — kesme nereye düşerse düşsün görünür ------
+        # Ölçüm: kesilme olursa önizleme ilk 2000 KARAKTERdir; YÖN/İŞLEM o
+        # bandın içinde ama EMİR (@2037) ve GÖZLEMCİ (@2273) DIŞINDA kalıyordu.
+        # Hüküm başlığı özetlerden ÖNCE basılır; sayı UYDURULMAZ, yalnız
+        # özet metninden okunur, yoksa "VERİ YOK".
+        _ornek = (
+            "PİRAMİT SİSTEMİ — engine/girdi\n"
+            "YÖN (bias): SHORT — ağırlıklı yön skoru -0.42\n"
+            "İŞLEM KALİTESİ: temiz giriş VAR (1863.68)\n"
+            "EMİR: LIMIT SHORT @1863.68 | stop 1830.35 | T1 1908.68 | R 1.35\n"
+            "GÖZLEMCİ DENETİMİ: 25 denetim, 0 ihlal, 2 uyarı  ✔ temiz\n"
+            "PİRAMİT SİSTEMİ — engine/girdi/eth\n"
+            "YÖN (bias): NÖTR — ağırlıklı yön skoru 0.0\n"
+            "İŞLEM KALİTESİ: temiz giriş yok\n"
+            "EMİR: EMİR YOK\n")
+        _h = HOOK._hukum_satirlari(_ornek)
+        _hm = "\n".join(_h)
+        kontrol("T43 hüküm başlığı: iki sembol, uydurma yok, eksik=VERİ YOK",
+                len(_h) >= 2 and "engine/girdi" in _hm and "eth" in _hm
+                and "SHORT" in _hm and "LIMIT SHORT @1863.68" in _hm
+                and "0 ihlal" in _hm and "VERİ YOK" in _hm
+                and "1.35" in _hm,
+                f"{len(_h)} satır | eth gözlemcisi yok → VERİ YOK var="
+                f"{'VERİ YOK' in _hm}")
+        # Uydurma korkuluğu: boş özetten sayı ÜRETİLMEZ
+        _bos = HOOK._hukum_satirlari("")
+        kontrol("T44 hüküm başlığı: özet yoksa sayı UYDURULMAZ",
+                len(_bos) == 1 and "VERİ YOK" in _bos[0]
+                and not any(ch.isdigit() for ch in _bos[0].replace("PİRAMİT", "")),
+                f"boş özet → {_bos}")
         os.environ.pop("CLAUDE_PROJECT_DIR", None)
         if _env_yedek is not None:
             os.environ["CLAUDE_PROJECT_DIR"] = _env_yedek

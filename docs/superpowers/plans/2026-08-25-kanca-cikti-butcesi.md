@@ -341,3 +341,24 @@ bölündü — her giriş kendi enjeksiyon bütçesini alır:
 T35 sıra · T36 damga üç durumu · T37 bayt tavanı · T38 çökme sırası ·
 T39 `ana` bölümü + damga · T40 ilk istem işaretçi · T41 bölüm ≤ 6000 krk ·
 T42 `ek` bölümü içeriği → **44/44 GEÇTİ**, `saglik.py --tam` 12/12.
+
+### Kalıntı risk kapatıldı: HÜKÜM BAŞLIĞI
+
+Ölçüm gösterdi ki A'nın "kesilse bile karar görünür" garantisi yarımdı:
+kesme önizlemesi ilk **2000 karakterdir** ve YÖN (@1728) / İŞLEM (@1828)
+o bandın içindeyken **EMİR (@2037)** ve **GÖZLEMCİ (@2273)** dışında
+kalıyordu; ETH hükmü ise ~3100. karakterdeydi.
+
+`_hukum_satirlari()` eklendi: iki sembolün YÖN / EMİR / işlem / gözlemci
+satırlarını özet metninden **okuyup** (uydurmadan; eksik alan "VERİ YOK")
+en üste basar. Taze koşuda BTC özeti artık hemen basılmaz — `ozet` zaten
+yakalanmış bir dizedir, ETH koştuktan sonra hüküm başlığının ardından
+basılır (koşuyu geciktirmez).
+
+| Yol | Toplam | ilk YÖN | ilk EMİR | ilk gözlemci | önizlemede sembol |
+|---|---|---|---|---|---|
+| Önbellek | 6.779 krk | @344 | @355 | @472 | **2/2** |
+| Taze koşu | 6.964 krk | @398 | @409 | @526 | **2/2** |
+
+Test: T43 (iki sembol, uydurma yok, eksik=VERİ YOK) · T44 (boş özetten sayı
+üretilmez) → **46/46 GEÇTİ**.

@@ -1062,6 +1062,8 @@ def _akis() -> int:
     if onceki.get("fp") == fp and onceki.get("ozet"):
         if bool(onceki.get("http_engelli")) != http_once:
             _durum_yaz(onceki)   # ağ-engeli bayrağı bu yolda da KALICI olsun
+        for _s in _hukum_satirlari(onceki["ozet"]):
+            print(_s)
         print("[PİRAMİT] Girdi verisi DEĞİŞMEDİ — yeniden koşulmadı; son koşunun "
               "sonucu (motor hafızası kirletilmedi):")
         print(onceki["ozet"])
@@ -1089,9 +1091,13 @@ def _akis() -> int:
 
     hafiza = ("KUM HAVUZU (motor bu barı zaten işlemişti — gerçek defter "
               "korundu)" if kum else "GERÇEK hafıza (yeni bar)")
-    print(f"[PİRAMİT] Boru hattı koştu — hafıza: {hafiza} "
-          f"(çıkış kodu {kod}; 0=zirve, 2=bir katman kapısında durdu):")
-    print(ozet)
+    # ÖZET HEMEN BASILMAZ: ikinci sembol de koştuktan sonra, HÜKÜM BAŞLIĞININ
+    # ARDINDAN basılır. Sebep ölçüm: kesilme önizlemesi ilk 2000 karakterdir;
+    # ETH hükmü ~3100. karakterde kalıyordu. `ozet` zaten yakalanmış bir dize
+    # (alt-süreç capture_output) — basımı ertelemek koşuyu geciktirmez.
+    _basliklar = [f"[PİRAMİT] Boru hattı koştu — hafıza: {hafiza} "
+                  f"(çıkış kodu {kod}; 0=zirve, 2=bir katman kapısında durdu):",
+                  ozet]
 
     # --- İKİNCİ SEMBOL: aynı istemde, aynı disiplinle (elle koşu yok) -------
     ij = _ikinci_job()
@@ -1110,14 +1116,20 @@ def _akis() -> int:
                       "düşülür (bu AÇIKÇA söylenmeli). Son çıktı:")
                 print(ozet2[-800:])
             else:
-                print(f"[PİRAMİT] İkinci sembol {IKINCI['ad']} koştu "
-                      f"(çıkış kodu {kod2}; sabit-USDT profili "
-                      f"{'BAĞLI' if ij.get('usd_profil') else 'YOK'}):")
-                print(ozet2)
+                _basliklar.append(
+                    f"[PİRAMİT] İkinci sembol {IKINCI['ad']} koştu "
+                    f"(çıkış kodu {kod2}; sabit-USDT profili "
+                    f"{'BAĞLI' if ij.get('usd_profil') else 'YOK'}):")
+                _basliklar.append(ozet2)
                 ozet = f"{ozet}\n{ozet2}"
         except (subprocess.TimeoutExpired, OSError) as e:
             print(f"[PİRAMİT] İkinci sembol koşulamadı ({type(e).__name__}: {e}) "
                   "— elle koşuya düşülür (bu AÇIKÇA söylenmeli).")
+    # HÜKÜM BAŞLIĞI ÖNCE, ayrıntı SONRA (kesme kuyruğa düşsün diye).
+    for _s in _hukum_satirlari(ozet):
+        print(_s)
+    for _s in _basliklar:
+        print(_s)
     # Karar grafiği: her koşudan sonra ölçülen yapı SVG'ye basılır (çizim
     # karar üretmez; karara geri beslenmez — dairesel kanıt yasak).
     grafikler = _karar_grafigi()
@@ -1134,6 +1146,45 @@ def _akis() -> int:
     except OSError:
         pass
     return 0
+
+
+def _hukum_satirlari(ozet: str) -> list[str]:
+    """Koşu özetinden KOMPAKT hüküm başlığı üret (uydurma YOK).
+
+    NEDEN: harness kesmesinde önizleme ilk 2000 KARAKTERdir. Ölçüldü —
+    YÖN (@1728) ve İŞLEM (@1828) o bandın içinde, ama EMİR (@2037) ve
+    GÖZLEMCİ (@2273) DIŞINDA kalıyordu; yani kesilirse emir ve denetim
+    kaybolurdu. Bu başlık özetlerden ÖNCE basılır, böylece kesme nereye
+    düşerse düşsün hüküm görünür.
+
+    Sayı ÜRETMEZ: her alan yalnız `ozet` metninden okunur; bulunamayan alan
+    "VERİ YOK" olur (doğruluk sözleşmesi — uydurma/ölçülmemiş sayı yasak).
+    """
+    bloklar: list[tuple[str, dict]] = []
+    for ham in ozet.split("PİRAMİT SİSTEMİ — ")[1:]:
+        sembol = ham.split("\n", 1)[0].strip()
+        alan: dict = {}
+        for satir in ham.split("\n"):
+            t = satir.strip()
+            for anah, on in (("yon", "YÖN (bias):"), ("islem", "İŞLEM KALİTESİ:"),
+                             ("emir", "EMİR:"), ("gozlemci", "GÖZLEMCİ DENETİMİ:")):
+                if t.startswith(on) and anah not in alan:
+                    alan[anah] = t[len(on):].strip()
+        bloklar.append((sembol, alan))
+    if not bloklar:
+        return ["[PİRAMİT — HÜKÜM] VERİ YOK — koşu özeti okunamadı "
+                "(uydurulmadı); ayrıntı aşağıdaki çıktıdadır."]
+    out = ["[PİRAMİT — HÜKÜM ÖZETİ] (kesme olursa da görünsün diye en üstte; "
+           "ayrıntı ve kanıt aşağıda)"]
+    for sembol, alan in bloklar:
+        yon = (alan.get("yon") or "VERİ YOK").split(" — ")[0]
+        islem = alan.get("islem") or "VERİ YOK"
+        emir = alan.get("emir") or "VERİ YOK"
+        goz = alan.get("gozlemci") or "VERİ YOK"
+        out.append(f"   {sembol} | YÖN {yon} | EMİR {emir}")
+        out.append(f"      işlem: {islem[:110]}")
+        out.append(f"      gözlemci: {goz}")
+    return out
 
 
 def _sabit_bas() -> None:
