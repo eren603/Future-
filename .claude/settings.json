@@ -1,5 +1,8 @@
 {
   "outputStyle": "Concise",
+  "alwaysThinkingEnabled": true,
+  "promptSuggestionEnabled": true,
+  "workflowSizeGuideline": "large",
   "hooks": {
     "SessionStart": [
       {
