@@ -1,0 +1,106 @@
+==============================================================================
+RUBRİK KAPISI — koşu kalitesi notu | sembol: TEST-KOSULLU
+koşu durumu: TAMAM — piramidin tepesine ulaşıldı
+==============================================================================
+① KRİTER-BAŞINA DÖKÜM (BİRİNCİL)
+
+  [G — Girdi]
+   ✔ G1   GEÇTİ       Fiyat kanalı ölçüldü (K1 kapısı)
+        ↳ gecti=True, m15_bar=180, h4_bar=150, ohlcv profili=yok
+   ✔ G2   GEÇTİ       K1 çıkarım yapmadı (taban katman yalnız ölçer)
+        ↳ K1'de çıkarım alanı: yok (gozlemci.py:105 ile aynı liste)
+   ✖ G3   DÜŞTÜ       Zorunlu girdilerin İKİSİ de geldi
+        ↳ zorunlu_girdiler=['likidasyon'], zorunlu_eksik=1 madde
+   ✔ G4   GEÇTİ       Elle gelen girdi TAZE ve damgalı
+        ↳ 1 tazelik satırı, bayat/damgasız: yok (tolerans 240 dk)
+   ✔ G5   GEÇTİ       Eksik kanal sessizce düşmedi
+        ↳ gerekçesiz düşen kanal: yok (1 gerekçe)
+   – G6   ATLANDI     HESAP VERME — önceki kararın akıbeti ölçüldü
+        ↳ koşul sağlanmadı (onceki-kosu-kaydi-var): k1.onceki_kayit_var=False
+
+  [KP — Kapı]
+   ✔ KP1  GEÇTİ       K2 çoklu motor kapısı
+        ↳ motor_sayisi=4 (kapı >= 2), gecti=True
+   ✔ KP2  GEÇTİ       K3 danışman kurulu kapısı
+        ↳ danışman=2 (kapı >= 2): ['karar-motoru', 'grafik-calisma']
+   ✔ KP3  GEÇTİ       Motor çıktısı şema derinliğini karşıladı
+        ↳ 4 şemalı motor denetlendi; eksik alan: yok
+   ✔ KP4  GEÇTİ       Sessiz kayıp yok — koşan motor ya kurulda ya gerekçe
+        ↳ gerekçesiz düşen motor: yok; eksik gerekçeli hata kaydı: 0
+   ✔ KP5  GEÇTİ       Karar eşikleri veriden türetildi ve AYNEN uygulandı
+        ↳ eşik türetilemedi; kaynak etiketi: KALİBRE EDİLEMEDİ (örneklem küçük) → sentez STATİK KORKULUK kullanır (etiketli)
+   ✔ KP6  GEÇTİ       İşlem kalitesi kapısı fail-closed işledi
+        ↳ hüküm=TEMİZ GİRİŞ YOK — TEPKİ/SEVİYE BEKLE; engel gerekçesi=0 madde; ozet=var
+   – E2   ATLANDI     Emir yönü kararın yönüyle aynı
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+   – E3   ATLANDI     Her aday rr_denetim'den TUTARLI geçti
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+   – E4   ATLANDI     Her adayın R'si R_min kapısını geçti
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+   – E9   ATLANDI     Sabit-USDT profili beyan edildiyse 5 kapıdan geçti
+        ↳ koşul sağlanmadı (emir-dogdu + usd-profil-beyan): EMIR=EMİR YOK; _job.usd_profil=beyan yok
+
+  [D — Doğrulama]
+   ✔ D1   GEÇTİ       Doğrulanmamış görüş tam ağırlık almadı (fail-closed)
+        ↳ 2 doğrulanmamış danışman, penaltı=0.25; kural dışı: yok
+   ✔ D2   GEÇTİ       Doğrulama seçici — herkes onaylanmadı
+        ↳ çürütme=['karar-motoru', 'grafik-calisma'], verifier'da kapsanmayan=yok, onay=[]
+   – D3   ATLANDI     Şişirilmiş-R denetimi her seviyeye uygulandı
+        ↳ koşul sağlanmadı (seviye-uretildi): k3.seviyeler=boş
+   ✖ D4   DÜŞTÜ       Tünel görüşü yok — en az iki kanıt ailesi doğrulandı
+        ↳ onaylı danışman=yok → aile=yok (gerek >= 2)
+   ✔ D5   GEÇTİ       Dairesel doğrulama yok
+        ↳ 2 doğrulama gerekçesi; dairesel: yok
+   ✔ D6   GEÇTİ       Çelişki turu koştu ve hükmü uygulandı
+        ↳ ÇELİŞKİ TURU: gerekmedi — doğrulanmış danışman yok
+   – D7   ATLANDI     Görsel okuma mekanik ölçümle karşılıklı teyide bağla
+        ↳ koşul sağlanmadı (gorsel-okuma-var): k1.zorunlu_girdiler=['likidasyon']
+   – D8   ATLANDI     Türev kanalı KAPSAMIYLA birlikte raporlandı
+        ↳ koşul sağlanmadı (turev-motoru-kostu): turev-akis motor çıktısı VERİ YOK
+   – D9   ATLANDI     Çapraz-varlık riski ölçüldü ve risk çarpanına çevril
+        ↳ koşul sağlanmadı (korelasyon-beyan-edildi): _job.korelasyon=beyan yok
+   – E8   ATLANDI     Emir gözlemci mührüyle çelişmiyor
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+
+  [Ç — Çıktı]
+   ✔ Ç1   GEÇTİ       İki satır sözleşmesi (YÖN + İŞLEM KALİTESİ)
+        ↳ YON_BIAS=NÖTR; 1_YON=dolu, 2_ISLEM_KALITESI=dolu
+   ✔ Ç2   GEÇTİ       YÖN mekanik türedi (beklentiye göre ayarlanmadı)
+        ↳ yon_skoru=0.0 → beklenen yön=NÖTR, basılan=NÖTR
+   ✔ Ç3   GEÇTİ       Çıktı hikâye değil EMİR
+        ↳ EMİR YOK; gerekçe=var (yön NÖTR — yönsüz kurulumda giriş/stop tanımsız)
+   ✔ Ç4   GEÇTİ       Geçersizlik koşulu taşındı
+        ↳ gecersizlik=VERİ YOK
+   ✔ Ç5   GEÇTİ       Zorunlu girdi eksiği en üstte VE çelişkiye taşınmış
+        ↳ 1 zorunlu eksik; K4 çelişkilerine taşınmayan: yok
+   ✔ Ç6   GEÇTİ       Gözlemci mührü uygulandı
+        ↳ mühür yok; kritik ihlal=0; özet=22 denetim, 0 ihlal, 2 uyarı
+   – Ç7   ATLANDI     KIYAS koştu (eski veri → yeni veri)
+        ↳ koşul sağlanmadı (onceki-kosu-kaydi-var): k1.onceki_kayit_var=False
+   ✔ Ç8   GEÇTİ       Zirvedeki her sayının alt katmanda kaynağı var
+        ↳ zirvede 2 sayı denetlendi; alt katmanda karşılığı olmayan: yok
+   ✔ Ç9   GEÇTİ       Kalibrasyon ölçülmüş defterden ve sınırları içinde
+        ↳ 1 motor defteri: karar-motoru(n=0→1.0) | kural dışı: yok
+   – E1   ATLANDI     Emir biçimi sözleşmeye uygun
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+   – E5   ATLANDI     Seviyeler ÖLÇÜLEN yapıdan (uydurma/yuvarlak seviye y
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+   – E6   ATLANDI     MARKET yalnız fiyat giriş bölgesindeyken verildi
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+   – E7   ATLANDI     Her adayda geçersizlik cümlesi var
+        ↳ koşul sağlanmadı (emir-dogdu): EMIR=EMİR YOK
+
+------------------------------------------------------------------------------
+② KOVA BAŞINA GEÇME ORANI (BİRİNCİL)
+   G — Girdi        4/5 geçti (oran 0.8) | atlandı 1 | düşen: G3
+   KP — Kapı        6/6 geçti (oran 1.0) | atlandı 4
+   D — Doğrulama    4/5 geçti (oran 0.8) | atlandı 5 | düşen: D4
+   Ç — Çıktı        8/8 geçti (oran 1.0) | atlandı 5
+------------------------------------------------------------------------------
+③ TOPLAM (İKİNCİL — tek başına okunmaz)
+   22 geçti / 2 düştü / 15 atlandı  → geçme oranı 0.9167
+   ⚠ İKİNCİL ÖLÇÜM — toplam geçme oranı anlamlı boşlukları maskeleyebilir; kriter-başına dökümü okumadan karar verme.
+------------------------------------------------------------------------------
+BİRİNCİL ÖLÇÜM kriter-başına geçme oranıdır. Kaynak rubrik sözleşmesi: "aggregate pass rates can mask meaningful gaps" — toplam skor tek başına sunulmaz. Koşulu sağlanmayan kriter ATLANDI'dır, DÜŞMÜŞ SAYILMAZ.
+⚠️ Bu bir KOŞU KALİTESİ notudur; piyasa yönü/kararı değildir. Canlı/otomatik emir DAHİL DEĞİL.
+==============================================================================

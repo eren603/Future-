@@ -1,0 +1,213 @@
+# YANLIŞ-POZİTİF (YP) KURALLARI — Future- deposuna özgü
+#
+# Kaynak deseni: triage/SKILL.md Faz 3a "EXCLUSION RULES: if the finding
+# matches any of these, it is FALSE_POSITIVE even if technically accurate.
+# Cite the rule number in your verdict."  Buradaki kurallar da AYNI
+# sözleşmeyle çalışır: kural tutarsa bulgu TEKNİK OLARAK DOĞRU OLSA BİLE
+# yanlış-pozitiftir ve hükümde kural numarası ANILIR.
+#
+# Bu depoda "arıza" = boru hattı arızası (motor beklenmedik sonuç verdi,
+# kapıda durdu, sicil ezildi, gözlemci ihlali çıktı, akıbet ile karar
+# tutarsız). Aşağıdaki 13 kural, bu depoda TASARIM olan davranışların
+# arıza sanılmasını engeller.
+#
+# Alan sözleşmesi:
+#   id        : hükümde anılan kural numarası
+#   ad        : makine okunur ad
+#   alanlar   : bulgunun hangi alanlarında aranacağı (varsayılan aşağıda)
+#   desen     : regex listesi (herhangi biri tutarsa kural tutar)
+#   istisna   : regex listesi (herhangi biri tutarsa kural DÜŞER — bulgu
+#               yeniden gerçek arıza adayı olur)
+#   neden     : çürütme nedeni etiketi
+#   guven     : 0-10, bu kuralın çürütme gücü
+#   gerekce   : kullanıcıya gösterilen tek cümlelik dayanak
+surum: 1
+varsayilan_alanlar: [kategori, baslik, belirti, konum, siddet]
+
+kurallar:
+  - id: 1
+    ad: kapi_dusmesi_tasarimdir
+    alanlar: [kategori, baslik, belirti, durum]
+    desen:
+      - 'kap[ıi](s[ıi])?\s*(GEÇ[İI]LMED[İI]|KAPALI|geçilmedi|kapalı)'
+      - 'DURDU\s*[—-]\s*K[1-5]'
+      - 'fail-?closed'
+      - 'NÖTR-BEKLE'
+    istisna:
+      - 'Traceback|Exception|SyntaxError|ImportError|rc=2|çöktü|crash'
+      - 'kap[ıi] uygulanmad[ıi]|kapı atlandı|gate bypass'
+    neden: tasarim_geregi
+    guven: 9
+    gerekce: >-
+      Katman kapısının düşmesi ve boru hattının DURMASI tasarımdır:
+      piramit.py "FAIL-CLOSED: her katmanın KAPISI vardır. Kapı geçilmezse
+      üst katman KOŞMAZ". Arıza olan, kapının düşmesi değil kapının
+      UYGULANMAMASIDIR (istisna deseni onu yakalar).
+
+  - id: 2
+    ad: bekle_karari_arizadegil
+    desen:
+      - '\bBEKLE\b.*(karar|hüküm|çıktı)'
+      - '(karar|motor).*\bBEKLE\b'
+      - 'işlem yok.*(R\s*<|temiz giriş)'
+    istisna:
+      - 'YÖN.*(gizlen|saklan|verilmedi|basılmadı)'
+      - 'yon_skoru.*(çelişki|tutars)'
+    neden: tasarim_geregi
+    guven: 9
+    gerekce: >-
+      BEKLE bir İŞLEM-KALİTESİ hükmüdür, yön reddi değildir (CLAUDE.md
+      "YÖN ZORUNLU" kuralı). Arıza yalnız YÖN de gizlendiyse vardır.
+
+  - id: 3
+    ad: celiski_turu_notr
+    desen:
+      - 'çeli[şs]ki turu.*(DAYANIKSIZ|NÖTR)'
+      - 'yon_dayaniksiz'
+    istisna:
+      - 'hâlâ (LONG|SHORT)|fail-closed uygulanmam'
+    neden: tasarim_geregi
+    guven: 8
+    gerekce: >-
+      Çelişki turu yönü dayanıksız bulduğunda NÖTR'e düşmek fail-closed
+      tasarımdır; ihlal ancak karar yönlü KALIRSA vardır.
+
+  - id: 4
+    ad: muhur_calisti
+    desen:
+      - 'EM[İI]R YOK\s*[—-]\s*DENET[İI]M MÜHÜRÜ'
+      - 'mühür(lendi)?.*(çalıştı|devrede|uygulandı)'
+      - 'işlem kalitesi MÜHÜRLEND'
+    istisna:
+      - 'mühür.*(rağmen|hâlâ|yine de).*(emir|seviye) (bas|ver|üret)'
+    neden: tasarim_geregi
+    guven: 8
+    gerekce: >-
+      Kritik ihlalde emrin kapanması korkuluğun ÇALIŞTIĞININ kanıtıdır.
+      Mührün kendisi arıza değildir — mührü TETİKLEYEN ihlal ayrı bir
+      bulgudur ve ayrıca soruşturulur.
+
+  - id: 5
+    ad: veri_yok_beyani
+    desen:
+      - 'VER[İI] YOK'
+      - 'kapsam.*(düşük|eksik).*(beyan|etiket|raporl)'
+    istisna:
+      - 'sessizce|gerekçesiz|beyan edilmeden|gizlen'
+    neden: tasarim_geregi
+    guven: 7
+    gerekce: >-
+      Eksik kanalın "VERİ YOK" diye etiketlenmesi doğruluk sözleşmesidir
+      (uydurma yok). Arıza, eksik kanalın SESSİZCE düşmesidir.
+
+  - id: 6
+    ad: tunel_uyarisi_veri_eksigi
+    alanlar: [kategori, belirti, siddet]
+    desen:
+      - 'TUNEL.*UYARI'
+      - 'tek pencereden bakıl'
+      - 'yalnız .* ailesinden'
+    istisna:
+      - 'İHLAL'
+      - 'aile.*(besleniyor|mevcut).*(doğrulanmad|kurula girmed)'
+    neden: uygulanabilir_degil
+    guven: 6
+    gerekce: >-
+      TUNEL uyarısı tek başına VERİ EKSİKLİĞİDİR (likidasyon/görsel/tarihsel
+      aile beslenmemiş), kod arızası değil. Aile raporda VARSA ama
+      doğrulanmamışsa istisna devreye girer.
+
+  - id: 7
+    ad: akibet_pencere_dolmadi
+    desen:
+      - 'bekleme penceresi henüz dolmad'
+      - 'ÖLÇÜLEMEDİ.*(veri kısa|bar yok|pencere)'
+    istisna:
+      - 'ölçüm HATASI|Traceback|karar barı .* yok.*arşiv'
+    neden: tasarim_geregi
+    guven: 8
+    gerekce: >-
+      Akıbetin "henüz ölçülemedi" demesi muhafazakâr ölçüm kuralıdır
+      (kiyas.py). Arıza, kayıt VARKEN akıbetin HİÇ ölçülmemesidir.
+
+  - id: 8
+    ad: statik_korkuluk_etiketli
+    desen:
+      - 'STAT[İI]K KORKULUK'
+      - 'kalibrasyon.*türetilemed.*(etiket|beyan)'
+    istisna:
+      - 'etiketsiz|gizli eşik|beyan edilmed'
+    neden: tasarim_geregi
+    guven: 8
+    gerekce: >-
+      Eşik türetilemediğinde etiketli statik korkuluğa düşmek fail-closed
+      tasarımdır (CLAUDE.md eşik politikası). Etiketsiz gizli eşik arızadır.
+
+  - id: 9
+    ad: ilk_analiz_kiyas_yok
+    desen:
+      - 'ilk analiz'
+      - 'önceki (koşu )?kay[ıi]t[ıi]? yok'
+    istisna:
+      - 'kayıt VAR'
+    neden: tasarim_geregi
+    guven: 9
+    gerekce: >-
+      Kayıt yokken kıyas yapılmaması dürüstlük kuralıdır (geçmiş
+      UYDURULMAZ). Kayıt varken kıyas koşmaması ise gerçek ihlaldir.
+
+  - id: 10
+    ad: gorsel_tavan
+    desen:
+      - 'gorsel_tavan|görsel tavan'
+      - 'görsel okuma.*(güven|confidence).*0[.,]5'
+    istisna:
+      - 'tavan aşıl|0[.,][6-9]'
+    neden: tasarim_geregi
+    guven: 7
+    gerekce: >-
+      Görsel okumanın güveninin 0.50 ile sınırlanması sözleşmedir (görsel
+      bir ÖLÇÜM değildir). Tavanın aşılması arızadır.
+
+  - id: 11
+    ad: kum_havuzu_artefakti
+    alanlar: [dosya, kategori, baslik, belirti]
+    desen:
+      - 'kum_havuzu|kum havuzu'
+      - 'self_test|öz-?test|self-?test'
+      - 'örnek koşu|deneme koşusu'
+    istisna:
+      - 'gerçek sicil|engine/state/(durum|defter)'
+    neden: uygulanabilir_degil
+    guven: 8
+    gerekce: >-
+      Kum havuzu / öz-test artefaktındaki tutarsızlık gerçek sicili
+      etkilemez (kaynak kural 2'nin karşılığı: test-only code).
+
+  - id: 12
+    ad: r_esigi_reddi
+    desen:
+      - 'R\s*<\s*1[.,]35'
+      - 'R_MIN.*(düşük|altında)'
+      - 'ŞİŞİRİLMİŞ.*(R|r).*(reddedildi|R_gercekci)'
+    istisna:
+      - 'R.*denetimden geçmed|rr_denetim (koşmad|atland)'
+    neden: tasarim_geregi
+    guven: 8
+    gerekce: >-
+      R < 1.35 nedeniyle emrin reddi depo risk kuralıdır (engine/README.md
+      md. 6). Arıza, rr_denetim'in HİÇ koşmamasıdır.
+
+  - id: 13
+    ad: bayat_girdi_reddi
+    desen:
+      - 'BAYAT'
+      - 'zorunlu_damga_tolerans'
+      - 'damgas[ıi]z .*(kullanılmad|reddedild)'
+    istisna:
+      - 'bayat.*(kullanıld|birleştirild)|taze sayıld'
+    neden: tasarim_geregi
+    guven: 8
+    gerekce: >-
+      Damgasız/eski panel okumasının BAYAT sayılıp kullanılmaması tazelik
+      sözleşmesidir. Bayat verinin KULLANILMASI arızadır.

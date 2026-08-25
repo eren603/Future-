@@ -1100,6 +1100,39 @@ def main() -> int:
         os.environ.pop("CLAUDE_PROJECT_DIR", None)
         if _env_yedek is not None:
             os.environ["CLAUDE_PROJECT_DIR"] = _env_yedek
+        # ---- T35: MEKANİKLEŞTİRME — atlanan motor boru hattını DURDURUR ----
+        # Bu test mekanizmanın KENDİSİNİ sınar: manifestoya var olmayan bir
+        # motor eklenince kapı kapanmalı. Kapanmazsa "hiçbir şey atlanamaz"
+        # güvencesi sözde kalır (kapı kodu bozulsa kimse fark etmezdi).
+        sicil_var = isinstance(r1.get("_MOTOR_SICILI"), list) and r1["_MOTOR_SICILI"]
+        kosan_k1 = {s["motor"] for s in (r1.get("_MOTOR_SICILI") or [])
+                    if s.get("katman") == "K1-LLM"}
+        zorunlu_k1 = set(P.ZORUNLU_MOTOR["K1-LLM"])
+        k1_tam = zorunlu_k1 <= kosan_k1
+
+        _yedek_man = dict(P.ZORUNLU_MOTOR)
+        try:
+            P.ZORUNLU_MOTOR["K1-LLM"] = list(_yedek_man["K1-LLM"]) + ["yok_motor"]
+            r35 = _kos(_job(tmp, {"m15": str(m15), "h4": str(h4)}))
+        finally:
+            P.ZORUNLU_MOTOR.clear()
+            P.ZORUNLU_MOTOR.update(_yedek_man)
+        durdu = str(r35.get("durum", "")).startswith("DURDU — K1-LLM")
+        gerekce = "ZORUNLU HESAP EKSİK" in str(
+            (r35.get("katmanlar") or [{}])[0].get("kapi", ""))
+        # gözlemci de bağımsız olarak yakalamalı (ikinci ağ)
+        r36 = json.loads(json.dumps(r1, default=str))
+        r36["_MOTOR_SICILI"] = [s for s in r36["_MOTOR_SICILI"]
+                               if s.get("motor") != "eleme"]
+        d36 = GZ.denetle(r36)
+        gozlemci_yakaladi = any("ZORUNLU motor koşmadı" in str(b)
+                                for b in (d36.get("ihlal") or []))
+        kontrol("T35 mekanikleştirme: atlanan zorunlu motor kapıyı KAPATIR",
+                bool(sicil_var) and k1_tam and durdu and gerekce
+                and gozlemci_yakaladi,
+                f"sicil kaydı={bool(sicil_var)}, K1 zorunlular koştu={k1_tam}, "
+                f"eksikte durdu={durdu}, gerekçe yazıldı={gerekce}, "
+                f"gözlemci bağımsız yakaladı={gozlemci_yakaladi}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
         if yedek is not None:

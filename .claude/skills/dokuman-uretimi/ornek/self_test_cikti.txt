@@ -1,0 +1,23 @@
+ok    gecerli-beceri-temiz           kodlar=-
+ok    iki-nokta-ayrismiyor           kodlar=AYRISMA_IKI_NOKTA,FM_YAML_HATASI
+ok    description-1536-asiyor        kodlar=DESC_COK_KELIME,DESC_COK_UZUN
+ok    description-1024-1536-arasi-HATA-DEGIL kodlar=DESC_YAYIN_SINIRI
+ok    name-dizin-uyusmaz             kodlar=NAME_DIZIN_UYUSMAZ
+ok    description-eksik              kodlar=EKSIK_DESCRIPTION
+ok    name-gecersiz-karakter         kodlar=NAME_KEBAB_DEGIL
+ok    motor-oztestsiz                kodlar=MOTOR_OZTEST_YOK
+ok    skill-md-yok                   kodlar=YOK_SKILL_MD
+ok    frontmatter-yok                kodlar=YOK_FRONTMATTER
+ok    frontmatter-kapanmiyor         kodlar=GECERSIZ_FM_BICIM
+ok    beklenmeyen-anahtar            kodlar=BEKLENMEYEN_ANAHTAR
+ok    aci-parantez                   kodlar=DESC_ACI_PARANTEZ
+ok    name-64-asiyor                 kodlar=NAME_COK_UZUN
+ok    name-ardisik-tire              kodlar=NAME_TIRE_HATASI
+ok    compatibility-500-asiyor       kodlar=COMPAT_COK_UZUN
+ok    frontmatter-sozluk-degil       kodlar=FM_SOZLUK_DEGIL
+ok    name-metin-degil               kodlar=NAME_METIN_DEGIL
+ok    name-eksik                     kodlar=EKSIK_NAME
+ok    tetikleyici-sozlesme-uyari     kodlar=TETIKLEYICI_SOZLESME
+ok    kendi-SKILL.md-kendi-dogrulayicisindan-gecmeli uyari=0
+
+OZ-TEST: 21 vaka, 21 gecti, 0 dustu

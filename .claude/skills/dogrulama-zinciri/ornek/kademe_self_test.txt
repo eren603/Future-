@@ -1,0 +1,14 @@
+MALİYET KADEMESİ — öz-test
+[GECTI] temiz-kosu: DEVAM — kapı yok
+[GECTI] kapali/katman-kapisi: DUR — koşu katman kapısında DURDU — değerlendirilecek karar yok
+[GECTI] taslak/zorunlu-eksik: DUR — zorunlu girdi eksik (2) — karar TASLAK
+[GECTI] onemsiz/notr-emirsiz: DUR — yön nötr ve emir yok — doğrulanacak sayısal iddia yok
+[GECTI] zaten-degerlendirildi: DUR — bu koşu (sha256:b7b55df0e7bfee79) zaten değerlendirilmiş
+[GECTI] veri-ayni: DUR — veri ilerlemedi (son bar 1785235500000 ≤ 1785235500000)
+[GECTI] muafiyet/muhurlu-kosu: DEVAM — code-review.md:22 muafiyeti — DENETİM MÜHÜRÜ var; 'önems
+[GECTI] maliyet-sirasi: sınıf sırası=[1, 1, 1, 1, 1] monoton=True; pahalı kademe koşmadı=True
+[GECTI] yol-toplama: 1 yol, kök CLAUDE.md=True, içerik alanı yok=True
+[GECTI] tasarruf: DUR'da orta/pahalı adım üretilmedi (YOK — pahalı doğrulama (bulgu_dogrula.py…)
+
+10/10 vaka geçti (HEPSİ TAMAM)
+EXIT=0

@@ -1,0 +1,38 @@
+--- HATA (15) ---
+  x [EKSIK_DOSYA] .claude/skills/backtest-motoru/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/data-analysis-deep-scan/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/finansal-modelleme/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/forex-trading-expert/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/grafik-calisma/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/grafik-cizim/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/karar-kurulu/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/karar-motoru/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/piramit-sistem/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/portfoy-optimizasyonu/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/risk-yonetimi/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/turev-akis/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/uzman-modu/KANIT.md: KANIT.md yok
+  x [EKSIK_DOSYA] .claude/skills/video-isleme/KANIT.md: KANIT.md yok
+  x [REF_COZUMLENMEDI] .claude/skills/piramit-sistem/SKILL.md: karar-kurulu/sentez.py -> dosya yok
+
+--- DENETLENEMEDI (3) ---
+  ? [OZTEST_YASAK] .claude/skills/piramit-sistem/scripts/piramit.py: boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)
+  ? [OZTEST_YASAK] .claude/skills/piramit-sistem/scripts/saglik.py: boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)
+  ? [OZTEST_YASAK] .claude/skills/piramit-sistem/scripts/self_test.py: boru hattini calistirir ve sicilleri degistirir — denetim araci kosturamaz (GECTI sayilmaz)
+
+--- UYARI (3) ---
+  ! [ACIKLAMA_YAYIN_SINIRI] .claude/skills/grafik-calisma/SKILL.md: description 1243 karakter, yayin siniri 1024 (anthropics/skills quick_validate.py:82-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz yayin sozlesmesi ihlali
+  ! [ACIKLAMA_YAYIN_SINIRI] .claude/skills/grafik-cizim/SKILL.md: description 1338 karakter, yayin siniri 1024 (anthropics/skills quick_validate.py:82-84). Calisma zamaninda KIRPILMAZ (1536 altinda); yalniz yayin sozlesmesi ihlali
+  ! [ACIKLAMA_BUTCESI_ASILDI] .claude/skills: toplam description 19964 karakter / butce 8000 (250%) — asilirsa aciklamalar TEK TEK kirpilmaz, TAMAMEN dusurulur (geriye yalniz isimler kalir) ve bu SESSIZ olur. Kaynak: anthropics/claude-code issue #64606 (200000*4*0.01=8000). UYARI seviyesi bilerek secildi: sayi bir hata bildiriminden gelir, sartnameden degil — HATA demek olculmemis bir kesinlik iddiasi olurdu
+
+--- BILGI (8) ---
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/izleme-telemetri/SKILL.md: engine/state/olcum.jsonl — kosuda uretilir, depoda yok
+  i [REF_DIS_KAYNAK] .claude/skills/izleme-telemetri/SKILL.md: grafana/dashboards/working-dashboard.json — bu depoda olmayan bir agac; dogrulanamadi
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/piramit-sistem/SKILL.md: state/agirlik.json — kosuda uretilir, depoda yok
+  i [REF_DIS_KAYNAK] .claude/skills/rubrik-kapisi/SKILL.md: k12-lesson-planning/rubrics/shared.csv — bu depoda olmayan bir agac; dogrulanamadi
+  i [REF_DIS_KAYNAK] .claude/skills/sema-dogrulama/SKILL.md: financial-services/scripts/validate.py — bu depoda olmayan bir agac; dogrulanamadi
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/sorusturma/SKILL.md: state/piramit_defter.jsonl — kosuda uretilir, depoda yok
+  i [REF_KOSU_ARTEFAKTI] .claude/skills/sorusturma/SKILL.md: state/son_rapor.json — kosuda uretilir, depoda yok
+  i [KANCA_YORUMLAYICI] .claude/hooks/piramit_auto.py: +x yok ama yorumlayici ile cagriliyor — sorun degil
+
+DUSTU — 15 hata, 3 denetlenemedi, 3 uyari, 8 bilgi; 271 denetim yapildi.

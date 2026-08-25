@@ -1,0 +1,45 @@
+{
+  "sistem": "PİRAMİT (ÖRNEK ARTEFAKT — öz-test içindir, gerçek koşu değildir)",
+  "sembol": "ORNEKUSDT",
+  "durum": "TAMAM — piramidin tepesine ulaşıldı (DENETİM MÜHÜRÜ)",
+  "katmanlar": [
+    {"katman": "K1-LLM", "gecti": true, "kapi": "K1 kapısı GEÇİLDİ: en az bir tam fiyat kanalı var.", "onceki_kayit_var": true},
+    {"katman": "K2-AI-AJAN", "gecti": true, "kapi": "K2 kapısı GEÇİLDİ: 4 motor bağımsız sayısal sonuç üretti."},
+    {"katman": "K3-COKLU-AJAN", "gecti": true, "kapi": "K3 kapısı GEÇİLDİ: 3 danışman kurula girdi."},
+    {"katman": "K4-AGI", "gecti": true, "kapi": "K4 kapısı GEÇİLDİ: 2 danışman doğrulamadan geçti."},
+    {"katman": "K5-SI", "gecti": true, "kapi": "K5 kapısı GEÇİLDİ: nihai karar üretildi ve geri besleme yazıldı."}
+  ],
+  "DENETIM": {
+    "gozlemciler": {
+      "K4-AGI": [
+        {"kod": "TUNEL", "durum": "UYARI", "kanit": "doğrulanmış kanıt yalnız {'fiyat-yapisi'} ailesinden — tek pencereden bakılıyor"},
+        {"kod": "DAIRESEL", "durum": "TEMİZ", "kanit": "her doğrulama BAŞKA bir motordan"}
+      ],
+      "K5-SI": [
+        {"kod": "EKSIK_AKTARIM", "durum": "İHLAL", "kanit": "önceki kayıt VAR ama kıyas koşmadı — kıyas motoru sessizce atlandı"},
+        {"kod": "UYDURMA", "durum": "İHLAL", "kanit": "kalibre edilen eşik {'score': 0.31} ile sentezin uyguladığı {'score': 0.22} AYNI DEĞİL — karar raporlanandan başka kapıdan geçti"},
+        {"kod": "MEMNUN_ETME", "durum": "TEMİZ", "kanit": "YÖN_BIAS ağırlıklı skorun işaretinden mekanik türedi"}
+      ]
+    },
+    "ihlal": [
+      "K5-SI/EKSIK_AKTARIM: önceki kayıt VAR ama kıyas koşmadı — kıyas motoru sessizce atlandı",
+      "K5-SI/UYDURMA: kalibre edilen eşik {'score': 0.31} ile sentezin uyguladığı {'score': 0.22} AYNI DEĞİL — karar raporlanandan başka kapıdan geçti"
+    ],
+    "uyari": [
+      "K4-AGI/TUNEL: doğrulanmış kanıt yalnız {'fiyat-yapisi'} ailesinden — tek pencereden bakılıyor"
+    ],
+    "kritik_ihlal": [
+      "K5-SI/EKSIK_AKTARIM: önceki kayıt VAR ama kıyas koşmadı — kıyas motoru sessizce atlandı",
+      "K5-SI/UYDURMA: kalibre edilen eşik {'score': 0.31} ile sentezin uyguladığı {'score': 0.22} AYNI DEĞİL"
+    ],
+    "muhurlendi": true,
+    "ozet": "24 denetim, 2 ihlal, 1 uyarı"
+  },
+  "ZIRVE": {
+    "YON_BIAS": "SHORT",
+    "ISLEM_KALITESI": "DENETİM İHLALİ — İŞLEM YOK (mühürlendi)",
+    "EMIR": "EMİR YOK — DENETİM MÜHÜRÜ",
+    "yon_skoru": -0.41,
+    "guven_skoru": 0.38
+  }
+}

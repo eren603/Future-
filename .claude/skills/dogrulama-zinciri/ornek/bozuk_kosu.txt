@@ -1,0 +1,22 @@
+$ python3 .claude/skills/dogrulama-zinciri/scripts/bulgu_dogrula.py --rapor ornek/bozuk_rapor.json --oy 4 --ozet --ayrinti
+====================================================================
+BULGU DOĞRULAYICI — bulgu başına bağımsız oy
+====================================================================
+aday: 2 | doğrulanan: 1 | elenen: 1
+oy kuralı: --oy 4; çoğunluk (evet > n/2); KANIT_YOK aleyhe; n<2 RED
+--------------------------------------------------------------------
+⛔ EMIR_YON_CELISKISI [hata_1 :43] — Emir yönü SHORT ama YON_BIAS LONG
+   neden: bug — karar yönü ile emir yönü ters
+   doğrulama: çoğunluk: 4/4 EVET
+      oy1 EVET       ZIRVE.EMIR = SHORT
+      oy2 EVET       ZIRVE.emir_adaylari.0.yon = SHORT
+      oy3 EVET       K5.emir_plani.yon = SHORT
+      oy4 EVET       ZIRVE.yon_skoru = 0.42
+--------------------------------------------------------------------
+ELENEN ADAYLAR (code-review.md:57 — doğrulanmayan atılır):
+   ✖ TUREV_KAPSAMI_DUSUK      YANLIS_POZITIF   :85 General code quality concerns … unless explicitly requir
+--------------------------------------------------------------------
+1 doğrulanmış bulgu (1 aday elendi).
+====================================================================
+⚠️ Yalnız karar-destek; canlı/otomatik emir DAHİL DEĞİL.
+EXIT=1

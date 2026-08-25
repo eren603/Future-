@@ -8,3 +8,6 @@ state/otomatik.json
 state/piramit_defter.jsonl
 state/kum_havuzu_eth/
 state/son_rapor_eth.json
+# Mekanikleştirme koşu artıkları (kalıcı sicil DEĞİL — her koşuda yeniden yazılır)
+state/_zirve/
+state/_ariza/
