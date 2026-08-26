@@ -585,6 +585,29 @@ class KonumKoduTesti(unittest.TestCase):
         for k in range(1, 5):
             self.assertNotEqual(m.zaman_konumu(k, 16), m.sembol_konumu(k, 16))
 
+    def _l2(self, a, b):
+        return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+
+    def test_faz_olculen_ayrisma_degeri(self):
+        """SEMBOL_EKSENI_FAZI docstring'indeki SAYIYI kilitler.
+
+        Denetci bulgusu (SAHTE_KANIT): docstring'e once boyut=4 ve olceksiz
+        bir deneme kosusundan alinan 1.08..1.58 yazilmisti; fonksiyonun
+        gercek ciktisi (boyut=16, 0.10 olcek) 0.2165..0.2970'tir. Bu test
+        sayiyi artefakta baglar - bir daha kaynaksiz sayi yazilamaz.
+        """
+        beklenen = [0.216478, 0.243442, 0.270609, 0.297025]
+        for k, deger in enumerate(beklenen):
+            self.assertAlmostEqual(
+                self._l2(m.zaman_konumu(k, 16), m.sembol_konumu(k, 16)),
+                deger, places=6, msg=f"konum={k} icin olculen deger degisti")
+
+    def test_fazsiz_kurulum_sifirda_tam_cakisir(self):
+        """Fazin NEDEN gerekli oldugunun kaniti: fazsiz L2 tam 0."""
+        fazsiz = [x * 0.10 for x in m._sinuzoidal(0, 16, 97.0, faz=0.0)]
+        self.assertAlmostEqual(self._l2(m.zaman_konumu(0, 16), fazsiz),
+                               0.0, places=12)
+
 
 # ---------------------------------------------------------------- Task 10
 
@@ -784,6 +807,227 @@ class KalibrasyonFitTesti(unittest.TestCase):
                                                       [0.0, 1.0]]))
         self.assertFalse(m.sicaklik_karari_cevirir_mi([[3.0, 0.0], [2.0, 0.0],
                                                        [1.0, 0.0]]))
+
+
+# ---------------------------------------------------------------- Task 13
+
+class DecodingTesti(unittest.TestCase):
+    def test_daima_yon_uretir(self):
+        for p in (0.0, 0.4999, 0.5, 0.5001, 1.0):
+            self.assertIn(m.decode(p), m.YON_SOZLUGU)
+
+    def test_beraberlikte_long(self):
+        self.assertEqual(m.decode(0.5), "LONG")
+
+    def test_hold_asla_donmez(self):
+        """Belgenin Gerekce 1-2: decoding secimsiz adim uretemez."""
+        rng = m.tohumlu_rng("decode-fuzz")
+        for _ in range(500):
+            self.assertIn(m.decode(rng.random()), ("LONG", "SHORT"))
+
+    def test_seviyeler_long_yonlu(self):
+        s = m.seviyeler(giris=100.0, atr_deger=2.0, yon="LONG", stop_k=1.5, hedef_k=3.0)
+        self.assertAlmostEqual(s["stop"], 97.0, places=9)
+        self.assertAlmostEqual(s["hedef"], 106.0, places=9)
+        self.assertAlmostEqual(s["R"], 2.0, places=9)
+
+    def test_seviyeler_short_simetrik(self):
+        s = m.seviyeler(100.0, 2.0, "SHORT", 1.5, 3.0)
+        self.assertAlmostEqual(s["stop"], 103.0, places=9)
+        self.assertAlmostEqual(s["hedef"], 94.0, places=9)
+
+
+class KararUretTesti(unittest.TestCase):
+    def _baglam(self, kanit_yok=True):
+        barlar = [{"o": 100 + i * 0.1, "h": 100 + i * 0.1 + 0.5,
+                   "l": 100 + i * 0.1 - 0.5, "c": 100 + i * 0.1} for i in range(300)]
+        return {
+            "sembol": "BTCUSDT", "barlar": barlar, "atr_serisi": [1.0] * 300,
+            "indeksler": list(range(0, 250, 5)),
+            "p_ham": 0.95 if kanit_yok else 0.72,
+            "dogru": 17 if kanit_yok else 700,
+            "toplam": 48 if kanit_yok else 1000,
+            "ece_enkotu": 0.02, "dolu_kanal": 6, "toplam_kanal": 6,
+            "giris": 130.0, "atr": 1.0, "likidasyon": 100.0,
+            "kaldirac_azami": 10.0, "komisyon": 0.0004, "kayma": 0.0005,
+            "funding": 0.0, "lam": 1.0,
+        }
+
+    def test_stake_sifirken_bile_seviyeler_uretilir(self):
+        """Belgenin Gerekce 5: seviyeler KOSULSUZ uretilir."""
+        r = m.karar_uret(self._baglam(kanit_yok=True))
+        self.assertIn(r["yon"], m.YON_SOZLUGU)
+        self.assertIsNotNone(r["giris"])
+        self.assertIsNotNone(r["stop"])
+        self.assertIsNotNone(r["hedef"])
+        self.assertEqual(r["stake"]["f"], 0.0)
+
+    def test_kanit_yoksa_stake_sifir(self):
+        r = m.karar_uret(self._baglam(kanit_yok=True))
+        self.assertEqual(r["stake"]["f"], 0.0)
+        self.assertEqual(r["shrinkage"]["s"], 0.0)
+
+    def test_cikti_lambda_uclusu_icerir(self):
+        r = m.karar_uret(self._baglam(kanit_yok=True))
+        for lam in ("1.0", "0.5", "0.25"):
+            self.assertIn(lam, r["stake"]["lambda_tablosu"])
+
+    def test_basabas_p_daima_raporlanir(self):
+        self.assertIn("basabas_p", m.karar_uret(self._baglam())["geometri"])
+
+    def test_yon_daraltilmamis_olasiliktan_gelir(self):
+        """Shrinkage stake'i sifirlar ama YON bilgisini yok etmez."""
+        r = m.karar_uret(self._baglam(kanit_yok=True))
+        self.assertEqual(r["yon"], "LONG")   # p_ham=0.95 -> LONG
+
+    def test_likidasyon_okunamazsa_stake_sifir(self):
+        b = self._baglam(kanit_yok=False)
+        b["likidasyon"] = None
+        r = m.karar_uret(b)
+        self.assertEqual(r["stake"]["f"], 0.0)
+        self.assertEqual(r["stake"]["f_max"], 0.0)
+
+
+# ---------------------------------------------------------------- Task 14
+
+class GostergeTesti(unittest.TestCase):
+    def test_ema_ilk_deger_girdiye_esit(self):
+        self.assertAlmostEqual(m.ema([5.0, 6.0, 7.0], 3)[0], 5.0, places=9)
+
+    def test_ema_uzunluk_korunur(self):
+        self.assertEqual(len(m.ema([1.0] * 10, 3)), 10)
+
+    def test_atr_pozitif(self):
+        barlar = [{"o": 100, "h": 101, "l": 99, "c": 100} for _ in range(20)]
+        self.assertTrue(all(x >= 0 for x in m.atr(barlar, 14)))
+
+    def test_rsi_araligi(self):
+        rng = m.tohumlu_rng("rsi")
+        for x in m.rsi([100 + rng.uniform(-1, 1) for _ in range(60)], 14):
+            self.assertGreaterEqual(x, 0.0)
+            self.assertLessEqual(x, 100.0)
+
+
+class BoruHattiTesti(unittest.TestCase):
+    def _paket(self, turev_var=True, tohum="boru"):
+        rng = m.tohumlu_rng(tohum)
+        barlar15, fiyat = [], 100.0
+        for _ in range(240):
+            fiyat *= (1.0 + rng.uniform(-0.003, 0.0032))
+            barlar15.append({"o": fiyat, "h": fiyat * 1.002, "l": fiyat * 0.998,
+                             "c": fiyat, "v": 1000 + rng.uniform(0, 100)})
+        # Turev SERI olmalidir: tek anlik deger tum barlara yazilirsa std=0
+        # olur ve Olcekleyici onu dogru bicimde sifirlar (bilgi kaybolur).
+        turev_serisi = None
+        if turev_var:
+            turev_serisi = []
+            for i in range(len(barlar15)):
+                turev_serisi.append({
+                    "oi_degisim": 0.01 + 0.02 * math.sin(i / 7.0),
+                    "funding_z": 0.2 + 0.5 * math.sin(i / 11.0),
+                    "taker_dengesi": 0.1 + 0.3 * math.cos(i / 5.0),
+                    "derinlik_dengesi": -0.05 + 0.2 * math.sin(i / 13.0)})
+        return {"sembol": "BTCUSDT", "barlar15": barlar15,
+                "barlar4h": barlar15[::16], "turev_serisi": turev_serisi,
+                "dolu_kanal": 6 if turev_var else 3, "toplam_kanal": 6,
+                "likidasyon": barlar15[-1]["c"] * 0.8, "kaldirac_azami": 10.0,
+                "azami_ornek": 40}
+
+    def test_uctan_uca_karar_uretir(self):
+        r = m.BoruHatti(tohum=2026).calistir(self._paket())
+        self.assertIn(r["yon"], m.YON_SOZLUGU)
+        self.assertIsNotNone(r["giris"])
+        self.assertIn("iz", r)
+
+    def test_iz_on_uc_halka_icerir(self):
+        r = m.BoruHatti(tohum=2026).calistir(self._paket())
+        for halka in range(13):
+            self.assertIn(f"halka_{halka}", r["iz"], f"halka_{halka} izde yok")
+
+    def test_determinizm(self):
+        p = self._paket()
+        a = m.BoruHatti(tohum=2026).calistir(p)
+        b = m.BoruHatti(tohum=2026).calistir(p)
+        self.assertEqual(a["yon"], b["yon"])
+        self.assertAlmostEqual(a["stake"]["f"], b["stake"]["f"], places=12)
+
+    def test_kanal_dususu_stake_dusurur(self):
+        tam = m.BoruHatti(tohum=2026).calistir(self._paket(turev_var=True))
+        eksik = m.BoruHatti(tohum=2026).calistir(self._paket(turev_var=False))
+        self.assertLessEqual(eksik["stake"]["f"], tam["stake"]["f"])
+        self.assertLess(eksik["shrinkage"]["s_kapsam"], tam["shrinkage"]["s_kapsam"])
+
+    def test_turev_ailesi_temsili_degistirir(self):
+        """63-bulgu #1'in panzehiri: turev GERCEKTEN modele giriyor mu."""
+        p1 = self._paket(turev_var=True)
+        p2 = self._paket(turev_var=True)
+        p2["turev_serisi"] = [
+            {"oi_degisim": -0.9 + 0.05 * math.cos(i / 3.0),
+             "funding_z": -2.0 + 0.4 * math.sin(i / 9.0),
+             "taker_dengesi": -0.8 + 0.3 * math.sin(i / 4.0),
+             "derinlik_dengesi": 0.7 + 0.2 * math.cos(i / 6.0)}
+            for i in range(len(p2["barlar15"]))]
+        r1 = m.BoruHatti(tohum=2026).calistir(p1)
+        r2 = m.BoruHatti(tohum=2026).calistir(p2)
+        self.assertNotAlmostEqual(r1["p_ham"], r2["p_ham"], places=6)
+
+
+# ---------------------------------------------------------------- Task 15
+
+class CiktiTesti(unittest.TestCase):
+    def _karar(self):
+        return {
+            "sembol": "BTCUSDT", "yon": "LONG", "p_ham": 0.55,
+            "p_kullanilan": 0.5,
+            "shrinkage": {"s": 0.0, "s_kanit": 0.0, "s_kalibrasyon": 1.0,
+                          "s_kapsam": 1.0},
+            "geometri": {"stop_k": 1.5, "hedef_k": 3.0, "R": 2.0, "p_hedef": 0.4,
+                         "n": 40, "basabas_p": 0.68, "elog": -0.01, "not": ""},
+            "giris": 100.0, "stop": 98.5, "hedef": 103.0, "R": 2.0,
+            "stake": {"f": 0.0, "kirpildi": False, "f_max": 0.1,
+                      "lambda_tablosu": {"1.0": {"f": 0.0}, "0.5": {"f": 0.0},
+                                         "0.25": {"f": 0.0}}},
+        }
+
+    def test_metin_rapor_yon_icerir(self):
+        self.assertIn("LONG", m.metin_rapor(self._karar()))
+
+    def test_metin_rapor_stake_sifiri_gizlemez(self):
+        metin = m.metin_rapor(self._karar())
+        self.assertIn("f*", metin)
+
+    def test_metin_rapor_basabas_gosterir(self):
+        self.assertIn("basabas", m.metin_rapor(self._karar()).lower())
+
+    def test_defter_stake_sifirda_pozisyon_acmaz(self):
+        yeni = m.defter_guncelle({"sermaye": 1000.0, "pozisyonlar": {}},
+                                 self._karar(),
+                                 {"o": 100, "h": 101, "l": 99, "c": 100})
+        self.assertNotIn("BTCUSDT", yeni["pozisyonlar"])
+
+    def test_defter_stake_pozitifken_pozisyon_acar(self):
+        karar = self._karar()
+        karar["stake"]["f"] = 0.02
+        yeni = m.defter_guncelle({"sermaye": 1000.0, "pozisyonlar": {}}, karar,
+                                 {"o": 100, "h": 101, "l": 99, "c": 100})
+        self.assertIn("BTCUSDT", yeni["pozisyonlar"])
+
+    def test_defter_stopta_kapatir(self):
+        durum = {"sermaye": 1000.0, "pozisyonlar": {
+            "BTCUSDT": {"yon": "LONG", "giris": 100.0, "stop": 98.5,
+                        "hedef": 103.0, "miktar": 10.0}}}
+        yeni = m.defter_guncelle(durum, self._karar(),
+                                 {"o": 100, "h": 100, "l": 98.0, "c": 99})
+        self.assertNotIn("BTCUSDT", yeni["pozisyonlar"])
+        self.assertLess(yeni["sermaye"], 1000.0)
+
+    def test_main_esikler_sifir_doner(self):
+        """--esikler yan etkisiz; --self-test ozyineleme yaratir, orada sinanmaz."""
+        self.assertEqual(m.main(["--esikler"]), 0)
+
+    def test_oz_test_ozyineleme_korumasi(self):
+        """Oz-test icinden tekrar cagrilirsa ic ice kosu YAPILMAZ."""
+        self.assertFalse(m.oz_test_kosuyor())
 
 
 if __name__ == "__main__":

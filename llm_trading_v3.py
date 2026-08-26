@@ -609,11 +609,15 @@ class Olcekleyici:
 SEMBOL_EKSENI_FAZI = math.pi / 4.0
 """Sembol ekseninin faz kaydirmasi.
 
-Gerekce (olculerek bulundu): taban degistirmek TEK BASINA yetmez. konum=0'da
-aci = 0/payda = 0 olur ve sin(0)=0, cos(0)=1 her tabanda AYNI vektoru verir;
-yani lag=0 ile sembol=0 cakisir ve model bu iki ekseni ayirt edemez.
-Faz kaydirmasi cakismayi HER indekste kaldirir (olculdu: konum 0..3 icin
-L2 fark 1.08..1.58).
+Gerekce: taban degistirmek TEK BASINA yetmez. konum=0'da aci = 0/payda = 0
+olur ve sin(0)=0, cos(0)=1 her tabanda AYNI vektoru verir; yani lag=0 ile
+sembol=0 cakisir ve model bu iki ekseni ayirt edemez.
+
+Olculen (boyut=16, fonksiyonun kendi ciktisi, 0.10 olcek dahil):
+  fazsiz  konum=0 -> L2 = 0.000000  (TAM CAKISMA)
+  fazli   konum 0..3 -> L2 = 0.2165, 0.2434, 0.2706, 0.2970
+Bu degerler KonumKoduTesti.test_faz_olculen_ayrisma_degeri ile kilitlidir;
+sayi degisirse test duser.
 """
 
 
@@ -957,3 +961,493 @@ def kalibrasyon_sec(kal_ornekler, basliklar):
                 "sinirda": False}
     return {"yontem": "sicaklik", "T": sicaklik["T"], "fn": None,
             "nll": sicaklik["nll"], "sinirda": sicaklik["sinirda"]}
+
+
+# ---------------------------------------------------------------- BOLUM 8
+# Decoding: sozluk V = {LONG, SHORT}. HOLD YOKTUR. Seviyeler KOSULSUZ uretilir.
+# Stake ayri bir eksendir; f*=0 bir sinif degil, Kelly'nin dogal degeridir.
+
+LAMBDA_TABLOSU = (1.0, 0.5, 0.25)
+
+
+def decode(p_long):
+    """argmax. Beraberlikte LONG (tanimli ve deterministik)."""
+    return "LONG" if float(p_long) >= 0.5 else "SHORT"
+
+
+def seviyeler(giris, atr_deger, yon, stop_k, hedef_k):
+    giris = float(giris)
+    atr_deger = max(float(atr_deger), EPSILON)
+    if yon == "LONG":
+        stop = giris - stop_k * atr_deger
+        hedef = giris + hedef_k * atr_deger
+    else:
+        stop = giris + stop_k * atr_deger
+        hedef = giris - hedef_k * atr_deger
+    return {"giris": giris, "stop": stop, "hedef": hedef,
+            "stop_mesafesi": abs(giris - stop), "R": hedef_k / stop_k}
+
+
+def karar_uret(baglam):
+    """Tek sembol icin nihai karar: YON (zorunlu) + STAKE (surekli)."""
+    shr = shrinkage_katsayisi(baglam["dogru"], baglam["toplam"],
+                              baglam.get("ece_enkotu"),
+                              baglam["dolu_kanal"], baglam["toplam_kanal"])
+
+    # YON kosulsuz ve DARALTILMAMIS olasiliktan gelir: shrinkage stake'i
+    # sifirlar ama yon BILGISINI yok etmez (belgenin Gerekce 2'si korunur).
+    yon = decode(baglam["p_ham"])
+    p_yon = baglam["p_ham"] if yon == "LONG" else (1.0 - baglam["p_ham"])
+
+    def cost_r_fn(stop_k):
+        mesafe = stop_k * max(float(baglam["atr"]), EPSILON)
+        return maliyet_r(baglam["giris"], mesafe, baglam["komisyon"],
+                         baglam["kayma"], baglam["funding"])
+
+    geo = geometri_sec(baglam["barlar"], baglam["indeksler"], yon,
+                       baglam["atr_serisi"], p_yon, cost_r_fn,
+                       lam=1.0, azami_bar=baglam.get("azami_bar", 32))
+
+    sev = seviyeler(baglam["giris"], baglam["atr"], yon,
+                    geo["stop_k"], geo["hedef_k"])
+
+    # STAKE: sozlesme stake_hesapla icinde garanti edilir (kanit yoksa f*=0).
+    f_max = likidasyon_tavani(baglam["giris"], baglam.get("likidasyon"),
+                              baglam.get("kaldirac_azami"), 0.5)
+    b, a = (geo.get("b"), geo.get("a"))
+    lambda_tablosu = {}
+    for lam in LAMBDA_TABLOSU:
+        if b is None or a is None or geo["f"] <= 0.0:
+            lambda_tablosu[str(lam)] = {"f": 0.0, "kirpildi": False,
+                                        "f_ham": 0.0, "f_max": f_max}
+            continue
+        ham = stake_hesapla(p_yon, shr["s"], b, a, lam)
+        lambda_tablosu[str(lam)] = stake_kirp(ham["f"], f_max)
+    secilen = lambda_tablosu[str(float(baglam.get("lam", 1.0)))]
+
+    return {
+        "sembol": baglam["sembol"], "yon": yon,
+        "p_ham": baglam["p_ham"],
+        "p_kullanilan": daralt(p_yon, shr["s"],
+                               hedef=(geo.get("basabas_p") or 0.5)),
+        "shrinkage": shr, "geometri": geo,
+        "giris": sev["giris"], "stop": sev["stop"], "hedef": sev["hedef"],
+        "R": sev["R"],
+        "stake": {"f": secilen["f"], "kirpildi": secilen["kirpildi"],
+                  "f_max": f_max, "lambda_tablosu": lambda_tablosu},
+    }
+
+
+# ---------------------------------------------------------------- BOLUM 9a
+# Gostergeler (stdlib, kayan pencere).
+
+
+def ema(degerler, periyot):
+    if not degerler:
+        return []
+    alfa = 2.0 / (periyot + 1.0)
+    cikti = [float(degerler[0])]
+    for x in degerler[1:]:
+        cikti.append(alfa * float(x) + (1.0 - alfa) * cikti[-1])
+    return cikti
+
+
+def atr(barlar, periyot=14):
+    araliklar = []
+    for i, b in enumerate(barlar):
+        onceki = barlar[i - 1]["c"] if i else b["c"]
+        araliklar.append(max(b["h"] - b["l"], abs(b["h"] - onceki),
+                             abs(b["l"] - onceki)))
+    cikti = []
+    for i in range(len(araliklar)):
+        pencere = araliklar[max(0, i - periyot + 1):i + 1]
+        cikti.append(sum(pencere) / len(pencere))
+    return cikti
+
+
+def rsi(kapanislar, periyot=14):
+    cikti = [50.0] * len(kapanislar)
+    for i in range(periyot, len(kapanislar)):
+        kazanc, kayip = [], []
+        for j in range(i - periyot + 1, i + 1):
+            fark = kapanislar[j] - kapanislar[j - 1]
+            kazanc.append(max(fark, 0.0))
+            kayip.append(max(-fark, 0.0))
+        ok = sum(kazanc) / len(kazanc)
+        oy = sum(kayip) / len(kayip)
+        if oy == 0:
+            cikti[i] = 100.0 if ok > 0 else 50.0
+        else:
+            cikti[i] = 100.0 - 100.0 / (1.0 + ok / oy)
+    return cikti
+
+
+# ---------------------------------------------------------------- BOLUM 9b
+# Uctan uca boru hatti. 12 halkanin her biri ize yazilir.
+
+GECIKME_SAYISI = 4
+ETIKET_UFKU = 16
+EMBARGO = 4
+AZAMI_ORNEK = 120
+"""Egitim/kalibrasyon/test icin azami ornek sayisi.
+
+Gerekce: her ornek bir Kodlayici.ileri cagrisidir ve attention O(n^2) maliyetlidir.
+Hedef ortam Pydroid 3 (telefon); sinirsiz ornek pratikte kosulamaz. Bu bir
+ISTATISTIK esigi degil HESAP butcesidir - ESIK_KAYNAGI'nda YAPISAL degil,
+burada ayrica beyan edilir.
+"""
+
+
+def _ornek_indeksleri(baslangic, bitis, azami=AZAMI_ORNEK):
+    """Araligi esit araliklarla en cok `azami` ornege indirger."""
+    adaylar = list(range(baslangic, bitis))
+    if len(adaylar) <= azami:
+        return adaylar
+    if azami <= 1:
+        return adaylar[-1:]
+    adim = (len(adaylar) - 1) / (azami - 1)
+    return [adaylar[round(k * adim)] for k in range(azami)]
+
+
+def _kanal_konumu(barlar, i, pencere=48):
+    onceki = barlar[max(0, i - pencere):i]
+    if not onceki:
+        return 0.0
+    en_yuksek = max(b["h"] for b in onceki)
+    en_dusuk = min(b["l"] for b in onceki)
+    genislik = en_yuksek - en_dusuk
+    if genislik <= 0:
+        return 0.0
+    return kirp((barlar[i]["c"] - en_dusuk) / genislik * 2.0 - 1.0)
+
+
+def _z(degerler, i, pencere=48):
+    gecmis = degerler[max(0, i - pencere):i]
+    if len(gecmis) < 5:
+        return 0.0
+    ort = sum(gecmis) / len(gecmis)
+    var = sum((x - ort) ** 2 for x in gecmis) / max(1, len(gecmis) - 1)
+    std = math.sqrt(var)
+    if std < SABIT_ESIK_TOLERANSI:
+        return 0.0
+    return kirp((degerler[i] - ort) / std, -5.0, 5.0) / 5.0
+
+
+def satir_uret(barlar, gostergeler, turev_serisi, i):
+    """Bir bar icin dort aileli oznitelik satiri.
+
+    turev_serisi bar basina bir sozluk listesidir (SERI, tek anlik deger
+    DEGIL). Gerekce (olculerek bulundu): tek anlik deger tum barlara ayni
+    yazilirsa kolon std=0 olur, Olcekleyici onu DOGRU biçimde sabit sayip
+    0.0 verir ve turev bilgisi modele HIC ulasmaz - eski sistemin #1
+    bulgusunun tekrari. Turev bir seri olarak gelmelidir.
+
+    turev_serisi None ise turev ailesi kapsam=0 ile isaretlenir; bu
+    shrinkage uzerinden stake'i dusurur (uydurma yasagi).
+    """
+    turev = None if turev_serisi is None else turev_serisi[i]
+    kapanislar = gostergeler["kapanislar"]
+    fiyat = [
+        kirp(math.log(kapanislar[i] / kapanislar[i - 1])) if i >= 1 else 0.0,
+        kirp(math.log(kapanislar[i] / kapanislar[i - 4])) if i >= 4 else 0.0,
+        kirp(math.log(kapanislar[i] / kapanislar[i - 16])) if i >= 16 else 0.0,
+        kirp((gostergeler["ema_hizli"][i] - gostergeler["ema_yavas"][i])
+             / max(gostergeler["atr"][i], EPSILON) / 2.0),
+        kirp((gostergeler["rsi"][i] - 50.0) / 20.0),
+        _kanal_konumu(barlar, i),
+    ]
+    hacimler = gostergeler["hacimler"]
+    hacim = [_z(hacimler, i), _z([h * k for h, k in zip(hacimler, kapanislar)], i)]
+    if turev is None:
+        turev_vek = [0.0, 0.0, 0.0, 0.0, 0.0]      # kapsam=0 -> bilgi YOK
+    else:
+        turev_vek = [kirp(turev.get("oi_degisim", 0.0) * 5.0),
+                     kirp(turev.get("funding_z", 0.0)),
+                     kirp(turev.get("taker_dengesi", 0.0)),
+                     kirp(turev.get("derinlik_dengesi", 0.0)),
+                     1.0]
+    oynaklik = [
+        kirp(gostergeler["atr"][i] / max(kapanislar[i], EPSILON) * 100.0),
+        kirp(_z(gostergeler["atr"], i) * 2.0),
+        1.0 if gostergeler["ema_hizli"][i] > gostergeler["ema_yavas"][i] else -1.0,
+    ]
+    return {"fiyat": fiyat, "hacim": hacim, "turev": turev_vek,
+            "oynaklik": oynaklik}
+
+
+def _gostergeler(barlar):
+    kapanislar = [b["c"] for b in barlar]
+    return {"kapanislar": kapanislar,
+            "hacimler": [b.get("v", 0.0) for b in barlar],
+            "ema_hizli": ema(kapanislar, 8),
+            "ema_yavas": ema(kapanislar, 21),
+            "atr": atr(barlar, 14),
+            "rsi": rsi(kapanislar, 14)}
+
+
+def etiket_uret(barlar, i, atr_serisi, ufuk=ETIKET_UFKU):
+    """Iki sinifli etiket: ufuk icinde yon lehine mi hareket etti?
+
+    LONG etiketi (1): hedef once vuruldu. Ayni barda ikisi de = STOP (0).
+    """
+    olcum = ilk_gecis_olcum(barlar, [i], "LONG", 1.0, 1.0, atr_serisi, ufuk)
+    if olcum["p_hedef"] is None:
+        return None
+    return 1 if olcum["hedef"] > 0 else 0
+
+
+class BoruHatti:
+    """LLM zincirinin 12 halkasini sirayla kosturan orkestrator."""
+
+    def __init__(self, tohum=2026, boyut=16):
+        self.tohum = tohum
+        self.boyut = boyut
+        self.sozluk = TokenSozlugu()
+        self.kodlayici = Kodlayici(boyut=boyut, bas_sayisi=2, tohum=tohum)
+        self.aile_gomme = {aile: vektor(boyut, (tohum, "aile", aile), 0.06)
+                           for aile in AILELER}
+        self.giris_izdusumu = {aile: matris(boyut, AILELER[aile],
+                                            (tohum, "izdusum", aile), 0.10)
+                               for aile in AILELER}
+
+    def _durumlar(self, satirlar, olcekleyici, indeks, sembol_indeksi=0):
+        """Halka 1-3: tokenlar -> gomme + konum kodu."""
+        durumlar = []
+        for gecikme in range(GECIKME_SAYISI - 1, -1, -1):
+            j = indeks - gecikme
+            if j < 0:
+                j = 0
+            for aile in AILELER:
+                olcekli = olcekleyici.donustur(aile, satirlar[j][aile])
+                icerik = matvec(self.giris_izdusumu[aile], olcekli)
+                kimlik = self.sozluk.kimlik("S", "15m", aile, gecikme)
+                token_gomme = vektor(self.boyut, (self.tohum, "token", kimlik), 0.05)
+                durumlar.append(topla_vek(icerik, token_gomme,
+                                          self.aile_gomme[aile],
+                                          zaman_konumu(gecikme, self.boyut),
+                                          sembol_konumu(sembol_indeksi, self.boyut)))
+        return durumlar
+
+    def calistir(self, paket):
+        iz = {}
+        barlar = paket["barlar15"]
+        iz["halka_0"] = {"ad": "ham girdi", "bar_sayisi": len(barlar),
+                         "dolu_kanal": paket["dolu_kanal"],
+                         "toplam_kanal": paket["toplam_kanal"]}
+
+        gost = _gostergeler(barlar)
+        turev_serisi = paket.get("turev_serisi")
+        satirlar = [satir_uret(barlar, gost, turev_serisi, i)
+                    for i in range(len(barlar))]
+        iz["halka_1"] = {"ad": "tokenizasyon", "aile_sayisi": len(AILELER),
+                         "gecikme": GECIKME_SAYISI,
+                         "token_sayisi": GECIKME_SAYISI * len(AILELER)}
+
+        baslangic = 20
+        bitis = len(barlar) - ETIKET_UFKU - 1
+        tum_indeksler = _ornek_indeksleri(baslangic, bitis,
+                                          paket.get("azami_ornek", AZAMI_ORNEK))
+        bolme = kronolojik_bol(tum_indeksler, ETIKET_UFKU, EMBARGO)
+        iz["halka_11"] = {"ad": "otoregresif/bolme", "train": len(bolme["train"]),
+                          "kalibrasyon": len(bolme["kalibrasyon"]),
+                          "test": len(bolme["test"]), "atilan": bolme["atilan"],
+                          "sizinti": sizinti_var_mi(bolme, ETIKET_UFKU,
+                                                    GECIKME_SAYISI)}
+
+        olcekleyici = Olcekleyici()
+        kesim = bolme["train"][-1] if bolme["train"] else max(1, len(satirlar) // 2)
+        olcekleyici.fit(satirlar, kesim)
+        iz["halka_2"] = {"ad": "embedding/olcekleme", "kesim": kesim,
+                         "sabit_kolon": len(olcekleyici.sabit_kolonlar)}
+        iz["halka_3"] = {"ad": "konum kodu", "zaman_ekseni": True,
+                         "sembol_ekseni": True, "faz": SEMBOL_EKSENI_FAZI}
+        iz["halka_4"] = {"ad": "causal attention", "bas": self.kodlayici.bas_sayisi,
+                         "maske": True}
+        iz["halka_5"] = {"ad": "FFN", "genislik": self.boyut * 2}
+
+        def ornek(i):
+            x = self.kodlayici.ileri(self._durumlar(satirlar, olcekleyici, i))
+            y = etiket_uret(barlar, i, gost["atr"])
+            return None if y is None else {"x": x, "y": y}
+
+        train = [o for o in (ornek(i) for i in bolme["train"]) if o]
+        kal = [o for o in (ornek(i) for i in bolme["kalibrasyon"]) if o]
+        test = [o for o in (ornek(i) for i in bolme["test"]) if o]
+
+        basliklar = []
+        for gorus in range(3):
+            b = Baslik(boyut=self.boyut, tohum=self.tohum + 100 * (gorus + 1))
+            if train:
+                alt = [train[k] for k in range(gorus, len(train), 3)] or train
+                b.egit(alt, devir=40, ogrenme_hizi=0.15)
+            basliklar.append(b)
+        iz["halka_6"] = {"ad": "logit basligi", "train_ornek": len(train),
+                         "gorus": len(basliklar)}
+
+        kalib = kalibrasyon_sec(kal, basliklar) if kal else {
+            "yontem": "YOK", "T": 1.0, "fn": None, "nll": None, "sinirda": False}
+        iz["halka_7"] = {"ad": "kalibrasyon", "yontem": kalib["yontem"],
+                         "T": kalib["T"], "nll": kalib["nll"],
+                         "sinirda": kalib["sinirda"]}
+
+        ciftler = []
+        for o in test:
+            p = topluluk_olasilik(o["x"], basliklar, kalib["T"])["p"][0]
+            if kalib["fn"] is not None:
+                p = kalib["fn"](p)
+            ciftler.append((p, o["y"]))
+        dogru = sum(1 for p, y in ciftler if (1 if p >= 0.5 else 0) == y)
+        iz["halka_8"] = {"ad": "softmax/yon ekseni", "test_ornek": len(ciftler),
+                         "dogru": dogru,
+                         "ece": ece(ciftler) if ciftler else None,
+                         "mce": mce(ciftler) if ciftler else None,
+                         "brier": brier(ciftler) if ciftler else None,
+                         "auroc": auroc(ciftler) if ciftler else None,
+                         "wilson": wilson_araligi(dogru, len(ciftler))}
+
+        son = len(barlar) - 1
+        x_son = self.kodlayici.ileri(self._durumlar(satirlar, olcekleyici, son))
+        top = topluluk_olasilik(x_son, basliklar, kalib["T"])
+        p_ham = top["p"][0]
+        if kalib["fn"] is not None:
+            p_ham = kalib["fn"](p_ham)
+        iz["halka_9"] = {"ad": "decoding", "p_long": p_ham, "hold": False}
+        iz["halka_10"] = {"ad": "self-consistency", "uzlasi": top["uzlasi"],
+                          "dagilim": top["dagilim"],
+                          "T_karari_cevirir": sicaklik_karari_cevirir_mi(
+                              [b.logit(x_son) for b in basliklar])}
+
+        ece_grup = grup_ece({"test": ciftler}) if ciftler else {
+            "en_kotu": (None, None)}
+        karar = karar_uret({
+            "sembol": paket["sembol"], "barlar": barlar, "atr_serisi": gost["atr"],
+            "indeksler": bolme["test"] or tum_indeksler[-40:],
+            "p_ham": p_ham, "dogru": dogru, "toplam": len(ciftler),
+            "ece_enkotu": ece_grup["en_kotu"][1],
+            "dolu_kanal": paket["dolu_kanal"], "toplam_kanal": paket["toplam_kanal"],
+            "giris": barlar[son]["c"], "atr": gost["atr"][son],
+            "likidasyon": paket.get("likidasyon"),
+            "kaldirac_azami": paket.get("kaldirac_azami"),
+            "komisyon": paket.get("komisyon", 0.0004),
+            "kayma": paket.get("kayma", 0.0005),
+            "funding": paket.get("funding", 0.0),
+            "lam": paket.get("lam", 1.0)})
+        iz["halka_12"] = {"ad": "detokenizasyon", "giris": karar["giris"],
+                          "stop": karar["stop"], "hedef": karar["hedef"],
+                          "R": karar["R"], "f": karar["stake"]["f"]}
+        karar["iz"] = iz
+        karar["kalibrasyon"] = iz["halka_8"]
+        karar["adaptor"] = paket.get("adaptor")
+        return karar
+
+
+# ---------------------------------------------------------------- BOLUM 10
+# Cikti, kagit defteri, CLI. GERCEK EMIR YOK.
+
+
+def metin_rapor(karar):
+    g, s = karar["geometri"], karar["stake"]
+    satirlar = [
+        "=" * 78,
+        f"{karar['sembol']} | {SURUM} | YALNIZ KARAR-DESTEK (gercek emir YOK)",
+        f"YON: {karar['yon']}   (p_ham={karar['p_ham']:.4f} -> "
+        f"p_kullanilan={karar['p_kullanilan']:.4f})",
+        f"SHRINKAGE s={karar['shrinkage']['s']:.4f} "
+        f"(kanit={karar['shrinkage']['s_kanit']:.3f} "
+        f"kalibrasyon={karar['shrinkage']['s_kalibrasyon']:.3f} "
+        f"kapsam={karar['shrinkage']['s_kapsam']:.3f})",
+        f"GEOMETRI stop_k={g['stop_k']} hedef_k={g['hedef_k']} "
+        f"R={g['R']:.4f} p_hedef={g['p_hedef']} n={g['n']}",
+        f"basabas p (f*>0 icin gereken) = {g['basabas_p']}",
+        f"SEVIYELER giris={karar['giris']:.8g} stop={karar['stop']:.8g} "
+        f"hedef={karar['hedef']:.8g}",
+        f"STAKE f*={s['f']:.6f}  (f_max={s['f_max']:.6f}, "
+        f"kirpildi={'EVET' if s['kirpildi'] else 'hayir'})",
+        "  lambda: " + "  ".join(f"{lam}->{v['f']:.6f}"
+                                 for lam, v in s["lambda_tablosu"].items()),
+    ]
+    if g.get("not"):
+        satirlar.append(f"NOT: {g['not']}")
+    if s["f"] == 0.0:
+        satirlar.append("f*=0: yon ve seviyeler yine uretildi; bahis buyuklugu sifir.")
+    return "\n".join(satirlar)
+
+
+def defter_guncelle(durum, karar, bar):
+    """Yerel kagit defteri. f*=0 ise pozisyon ACILMAZ (bahis sifir)."""
+    yeni = {"sermaye": durum["sermaye"],
+            "pozisyonlar": dict(durum.get("pozisyonlar", {}))}
+    sembol = karar["sembol"]
+    mevcut = yeni["pozisyonlar"].get(sembol)
+    if mevcut:
+        if mevcut["yon"] == "LONG":
+            cikis = (mevcut["stop"] if bar["l"] <= mevcut["stop"]
+                     else (mevcut["hedef"] if bar["h"] >= mevcut["hedef"] else None))
+        else:
+            cikis = (mevcut["stop"] if bar["h"] >= mevcut["stop"]
+                     else (mevcut["hedef"] if bar["l"] <= mevcut["hedef"] else None))
+        if cikis is not None:
+            isaret = 1.0 if mevcut["yon"] == "LONG" else -1.0
+            yeni["sermaye"] += isaret * (cikis - mevcut["giris"]) * mevcut["miktar"]
+            yeni["pozisyonlar"].pop(sembol, None)
+
+    if sembol not in yeni["pozisyonlar"] and karar["stake"]["f"] > 0.0:
+        risk_tutari = yeni["sermaye"] * karar["stake"]["f"]
+        mesafe = abs(karar["giris"] - karar["stop"]) or EPSILON
+        yeni["pozisyonlar"][sembol] = {
+            "yon": karar["yon"], "giris": karar["giris"], "stop": karar["stop"],
+            "hedef": karar["hedef"], "miktar": risk_tutari / mesafe}
+    return yeni
+
+
+_OZ_TEST_KOSUYOR = False
+
+
+def oz_test_kosuyor():
+    """Oz-test icinden cagrildik mi? Ozyinelemeyi kesmek icin."""
+    return _OZ_TEST_KOSUYOR
+
+
+def _oz_test():
+    """Gomulu hizli denetim (Pydroid 3 icin).
+
+    Ozyineleme korumasi: test paketi main(--self-test) cagirirsa bu bayrak
+    sayesinde ic ice kosu YAPILMAZ.
+    """
+    global _OZ_TEST_KOSUYOR
+    if _OZ_TEST_KOSUYOR:
+        return 0
+    import unittest as _ut
+    try:
+        import test_llm_trading_v3 as _t
+    except ImportError:
+        print("test dosyasi bulunamadi - oz-test atlandi")
+        return 1
+    _OZ_TEST_KOSUYOR = True
+    try:
+        sonuc = _ut.TextTestRunner(verbosity=1).run(
+            _ut.defaultTestLoader.loadTestsFromModule(_t))
+    finally:
+        _OZ_TEST_KOSUYOR = False
+    return 0 if sonuc.wasSuccessful() else 1
+
+
+def main(argv=None):
+    import argparse
+    ayristirici = argparse.ArgumentParser(description=SURUM)
+    ayristirici.add_argument("--self-test", action="store_true")
+    ayristirici.add_argument("--esikler", action="store_true")
+    ayristirici.add_argument("--lam", type=float, default=1.0)
+    args = ayristirici.parse_args(argv)
+    if args.self_test:
+        return _oz_test()
+    if args.esikler:
+        print(esik_raporu())
+        return 0
+    print(f"{SURUM}: canli kosu icin ag erisimi gerekir.")
+    print("Bu ortamda: --self-test (testler) veya --esikler (esik beyani).")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
