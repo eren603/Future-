@@ -928,6 +928,24 @@ class GostergeTesti(unittest.TestCase):
             self.assertLessEqual(x, 100.0)
 
 
+def _agrega4h(barlar15):
+    """16 adet 15M barini GERCEK bir 4H barina toplar (ornekleme DEGIL).
+
+    Ornekleme (barlar15[::16]) hizalama semantigini sinayamaz cunku 4H
+    barinin kapanisi 15M barininkiyle ayni olur. Agregasyon ise 4H barinin
+    ANCAK 16. barda kapandigini gorunur kilar.
+    """
+    cikti = []
+    for k in range(0, len(barlar15) - 15, 16):
+        dilim = barlar15[k:k + 16]
+        cikti.append({"o": dilim[0]["o"],
+                      "h": max(b["h"] for b in dilim),
+                      "l": min(b["l"] for b in dilim),
+                      "c": dilim[-1]["c"],
+                      "v": sum(b["v"] for b in dilim)})
+    return cikti
+
+
 class BoruHattiTesti(unittest.TestCase):
     def _paket(self, turev_var=True, tohum="boru"):
         rng = m.tohumlu_rng(tohum)
@@ -948,7 +966,7 @@ class BoruHattiTesti(unittest.TestCase):
                     "taker_dengesi": 0.1 + 0.3 * math.cos(i / 5.0),
                     "derinlik_dengesi": -0.05 + 0.2 * math.sin(i / 13.0)})
         return {"sembol": "BTCUSDT", "barlar15": barlar15,
-                "barlar4h": barlar15[::16], "turev_serisi": turev_serisi,
+                "barlar4h": _agrega4h(barlar15), "turev_serisi": turev_serisi,
                 "dolu_kanal": 6 if turev_var else 3, "toplam_kanal": 6,
                 "likidasyon": barlar15[-1]["c"] * 0.8, "kaldirac_azami": 10.0,
                 "azami_ornek": 90}
@@ -1000,14 +1018,69 @@ class BoruHattiTesti(unittest.TestCase):
                          m.GECIKME_SAYISI * len(m.AILELER) * len(m.ZAMAN_DILIMLERI))
 
     def test_4h_kanali_dusunce_kapsam_duser(self):
-        """Modele ulasmayan veri s_kapsam'i BUYUTMEMELI (fail-closed)."""
+        """Modele ulasmayan veri s_kapsam'i BUYUTMEMELI (fail-closed).
+
+        Denetci bulgusu TIYATRO: bu testin ilk hali dolu_kanal'i ELLE
+        dusuruyordu, yani kendi kurdugu seyi olcuyordu ve 4H VARKEN de
+        geciyordu. Artik dolu_kanal'a DOKUNULMUYOR - kapsam dususu
+        boru hattinin KENDISINDEN gelmeli.
+        """
         tam = m.BoruHatti(tohum=2026).calistir(self._paket())
         eksik_p = self._paket()
-        eksik_p["barlar4h"] = None
-        eksik_p["dolu_kanal"] = 5
+        eksik_p["barlar4h"] = None          # dolu_kanal DEGISMIYOR
         eksik = m.BoruHatti(tohum=2026).calistir(eksik_p)
         self.assertLess(eksik["shrinkage"]["s_kapsam"],
-                        tam["shrinkage"]["s_kapsam"])
+                        tam["shrinkage"]["s_kapsam"],
+                        "4H yokken kapsam DUSMELI - yoksa kapsam yalan soyler")
+
+    def test_4h_hizalama_look_ahead_icermez(self):
+        """Denetci bulgusu (olumcul): i//16 HENUZ KAPANMAMIS 4H barini veriyordu.
+
+        4H bar k, 15M barlarini [16k, 16k+15] araliginda kapsar ve ancak
+        16k+15'te KAPANIR. 15M bar i, en fazla i'den ONCE kapanmis bir 4H
+        barini gorebilir.
+        """
+        p1 = self._paket()
+        i = 320
+        p2 = self._paket()
+        b4 = [dict(b) for b in p2["barlar4h"]]
+        hedef = i // 16
+        b4[hedef] = {"o": b4[hedef]["o"] * 3, "h": b4[hedef]["h"] * 3,
+                     "l": b4[hedef]["l"] * 3, "c": b4[hedef]["c"] * 3,
+                     "v": b4[hedef]["v"]}
+        p2["barlar4h"] = b4
+
+        g41 = m._gostergeler(p1["barlar4h"])
+        g42 = m._gostergeler(p2["barlar4h"])
+        e1 = m._h4_hizala(len(p1["barlar15"]), len(p1["barlar4h"]))
+        e2 = m._h4_hizala(len(p2["barlar15"]), len(p2["barlar4h"]))
+        satir1 = m.satir_uret(p1["barlar4h"], g41, None, e1[i])
+        satir2 = m.satir_uret(p2["barlar4h"], g42, None, e2[i])
+        self.assertEqual(satir1["fiyat"], satir2["fiyat"],
+                         "15M bar %d, HENUZ KAPANMAMIS 4H barini goruyor "
+                         "= look-ahead sizintisi" % i)
+
+    def test_4h_hizalama_son_kapanan_bari_verir(self):
+        """Esleme kurali: 15M bar i -> 4H bar (i+1)//16 - 1 (0'a kirpilmis)."""
+        eslesme = m._h4_hizala(700, 43)
+        # 4H bar k, 15M [16k, 16k+15] araligini kapsar, 16k+15'te KAPANIR.
+        self.assertEqual(eslesme[0], 0)    # isinma: henuz kapanmis bar yok, kirpilir
+        self.assertEqual(eslesme[14], 0)   # isinma
+        self.assertEqual(eslesme[15], 0)   # bar 0 TAM burada kapanir -> gorulebilir
+        self.assertEqual(eslesme[16], 0)   # bar 1 basladi ama kapanmadi
+        self.assertEqual(eslesme[30], 0)   # bar 1 hala olusuyor
+        self.assertEqual(eslesme[31], 1)   # bar 1 TAM burada kapandi
+        self.assertEqual(eslesme[32], 1)   # bar 2 olusuyor
+        self.assertEqual(eslesme[320], 19)  # bar 20 HENUZ kapanmadi (335'te kapanir)
+
+    def test_4h_yokken_token_uretilmez(self):
+        """Notr 0.0 enjeksiyonu YASAK: 4H yoksa token HIC uretilmemeli."""
+        eksik_p = self._paket()
+        eksik_p["barlar4h"] = None
+        iz = m.BoruHatti(tohum=2026).calistir(eksik_p)["iz"]
+        self.assertFalse(iz["halka_1"]["h4_var"])
+        self.assertEqual(iz["halka_1"]["token_sayisi"],
+                         m.GECIKME_SAYISI * len(m.AILELER))
 
     def test_determinizm(self):
         p = self._paket()

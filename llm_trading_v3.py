@@ -1135,22 +1135,28 @@ def rsi(kapanislar, periyot=14):
 # ---------------------------------------------------------------- BOLUM 9b
 # Uctan uca boru hatti. 12 halkanin her biri ize yazilir.
 
+H4_BAR_ORANI = esik_kaydet(
+    "H4_BAR_ORANI", 16, "YAPISAL",
+    "Bir 4H bari kac 15M barini kapsar (4*60/15). Zaman dilimi tanimindan "
+    "gelir, istatistiksel secim DEGILDIR.")
+
+
 def _h4_hizala(n15, n4h):
     """Her 15M bar indeksi icin SON KAPANMIS 4H bar indeksi.
 
-    Look-ahead yoktur: 4H bari 16 adet 15M barini kapsar, bu yuzden i'inci
-    15M bari en fazla (i // 16)'inci 4H barini gorebilir.
+    LOOK-AHEAD YASAGI: 4H bar k, 15M barlarini [16k, 16k+15] araliginda
+    KAPSAR ve ancak 16k+15'te KAPANIR. Bu yuzden 15M bar i, k = i//16
+    barini GOREMEZ - o bar hala olusmaktadir ve kapanisi/EMA/RSI/ATR degeri
+    i'den SONRAKI barlari icerir.
+
+    Dogru esleme: en son KAPANMIS bar = (i + 1) // 16 - 1, 0'a kirpilmis.
+    Isinma doneminde (i < 15) henuz kapanmis 4H bari yoktur; 0'a kirpilir
+    ve bu donem zaten ISINMA_BARI ile ornek disi birakilir.
+
+    Bu kural test_4h_hizalama_look_ahead_icermez ve
+    test_4h_hizalama_son_kapanan_bari_verir ile kilitlidir.
     """
-    return [min(max(0, i // 16), n4h - 1) for i in range(n15)]
-
-
-def _notr_satir():
-    """4H verisi YOKKEN kullanilan notr satir.
-
-    15M satiri KOPYALANMAZ (sahte bilgi uretmemek icin) ve kapsam dususu
-    ayrica shrinkage'a yansitilir.
-    """
-    return {aile: [0.0] * boyut for aile, boyut in AILELER.items()}
+    return [min(max(0, (i + 1) // H4_BAR_ORANI - 1), n4h - 1) for i in range(n15)]
 
 
 def _ornek_indeksleri(baslangic, bitis, azami=AZAMI_ORNEK):
@@ -1278,7 +1284,7 @@ class BoruHatti:
         durumlar = []
         for gecikme in range(GECIKME_SAYISI - 1, -1, -1):
             j = max(0, indeks - gecikme)
-            for zd in ZAMAN_DILIMLERI:
+            for zd in sorted(satir_kumesi):
                 satirlar = satir_kumesi[zd]
                 olcekleyici = olcekleyiciler[zd]
                 for aile in AILELER:
@@ -1309,24 +1315,23 @@ class BoruHatti:
         # 4H: kendi gostergeleriyle hesaplanip 15M indeksine HIZALANIR.
         # Hizalama look-ahead icermez: her 15M bari icin SON KAPANMIS 4H bari.
         barlar4h = paket.get("barlar4h")
-        if barlar4h:
+        h4_var = bool(barlar4h)
+        if h4_var:
             gost4 = _gostergeler(barlar4h)
             h4_satir = [satir_uret(barlar4h, gost4, None, i)
                         for i in range(len(barlar4h))]
             eslesme = _h4_hizala(len(barlar), len(barlar4h))
             satir_kumesi["4h"] = [h4_satir[eslesme[i]] for i in range(len(barlar))]
-            h4_var = True
-        else:
-            # 4H YOK: uydurma satir uretilmez, ayni 15M satiri KOPYALANMAZ.
-            # Notr satir konur ve kapsam dususu shrinkage'a yansitilir.
-            satir_kumesi["4h"] = [_notr_satir() for _ in range(len(barlar))]
-            h4_var = False
+        # 4H YOKSA: notr 0.0 satir ENJEKTE EDILMEZ (uydurma yasagi) ve 15M
+        # satiri KOPYALANMAZ. O zaman dilimi icin token HIC uretilmez;
+        # bedeli kapsam dususu olarak shrinkage'a yansir (asagida).
+        etkin_zd = [zd for zd in ZAMAN_DILIMLERI if zd in satir_kumesi]
         iz["halka_1"] = {"ad": "tokenizasyon", "aile_sayisi": len(AILELER),
                          "gecikme": GECIKME_SAYISI,
-                         "zaman_dilimi_sayisi": len(ZAMAN_DILIMLERI),
+                         "zaman_dilimi_sayisi": len(etkin_zd),
                          "h4_var": h4_var,
                          "token_sayisi": (GECIKME_SAYISI * len(AILELER)
-                                          * len(ZAMAN_DILIMLERI))}
+                                          * len(etkin_zd))}
 
         baslangic = ISINMA_BARI
         bitis = len(barlar) - ETIKET_UFKU - 1
@@ -1348,13 +1353,13 @@ class BoruHatti:
         kesim = (bolme["train"][-1] if bolme["train"]
                  else max(1, len(barlar) // 2))
         olcekleyiciler = {}
-        for zd in ZAMAN_DILIMLERI:      # her zaman dilimi KENDI istatistigiyle
+        for zd in etkin_zd:             # her zaman dilimi KENDI istatistigiyle
             o = Olcekleyici()
             o.fit(satir_kumesi[zd], kesim)
             olcekleyiciler[zd] = o
         iz["halka_2"] = {"ad": "embedding/olcekleme", "kesim": kesim,
                          "sabit_kolon": {zd: len(olcekleyiciler[zd].sabit_kolonlar)
-                                         for zd in ZAMAN_DILIMLERI}}
+                                         for zd in etkin_zd}}
         iz["halka_3"] = {"ad": "konum kodu", "zaman_ekseni": True,
                          "sembol_ekseni": True, "faz": SEMBOL_EKSENI_FAZI}
         iz["halka_4"] = {"ad": "causal attention", "bas": self.kodlayici.bas_sayisi,
@@ -1415,12 +1420,20 @@ class BoruHatti:
 
         ece_grup = grup_ece({"test": ciftler}) if ciftler else {
             "en_kotu": (None, None)}
+
+        # KAPSAM h4_var'dan TURETILIR: modele ULASMAYAN veri kapsami
+        # BUYUTEMEZ. Paket 4H kanalini dolu sayiyorsa ve 4H gercekten
+        # boru hattina girmediyse fail-closed olarak bir azaltilir.
+        dolu_kanal = paket["dolu_kanal"]
+        if not h4_var:
+            dolu_kanal = max(0, dolu_kanal - 1)
+            iz["halka_0"]["h4_kanali_dusuldu"] = True
         karar = karar_uret({
             "sembol": paket["sembol"], "barlar": barlar, "atr_serisi": gost["atr"],
             "indeksler": bolme["test"] or tum_indeksler[-40:],
             "p_ham": p_ham, "dogru": dogru, "toplam": len(ciftler),
             "ece_enkotu": ece_grup["en_kotu"][1],
-            "dolu_kanal": paket["dolu_kanal"], "toplam_kanal": paket["toplam_kanal"],
+            "dolu_kanal": dolu_kanal, "toplam_kanal": paket["toplam_kanal"],
             "giris": barlar[son]["c"], "atr": gost["atr"][son],
             "likidasyon": paket.get("likidasyon"),
             "kaldirac_azami": paket.get("kaldirac_azami"),
