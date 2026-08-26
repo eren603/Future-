@@ -75,9 +75,20 @@ bileşen ayrışımı, `AUROC`. Ayrıca **grup bazında** (sembol / rejim / vola
 kalitesi) ve **en kötü grup ECE**. Her metrikle birlikte örnek sayısı ve Wilson güven aralığı verilir.
 
 ### 4.4 Shrinkage — kanıt yoksa stake yok
+
+**Daraltma hedefi `0.5` DEĞİL, bahsin kendi başabaş olasılığı `p0 = a/(a+b)`'dir.**
 ```
-p_kullanilan = 0.5 + s · (p_kalibre − 0.5)
+p_kullanilan = p0 + s · (p_kalibre − p0),   p0 = a / (a + b)
 ```
+Gerekçe (uygulama sırasında ölçülerek bulundu, spec bu bulguyla düzeltildi): `p = 0.5`
+"bu bahsin beklenen değeri sıfır" anlamına **gelmez**. Ödül asimetrikse — örneğin `R=2.0`,
+`cost_r=0.3` ⇒ `b=1.7`, `a=1.3` — `p=0.5`'te `E[R] = 0.5(1.7) − 0.5(1.3) = +0.20` olur ve
+Kelly `f* = 0.0905` verir. Yani `0.5`'e daraltmak "kanıt yoksa stake yok" sözleşmesini
+**sağlamaz**; geometri avantajı kanıt yokluğunu maskeler. `p0`'a daraltmak `f*`'ı tam olarak
+sıfırlar (ölçüldü: `R∈{1.33, 2.0, 3.0, 5.0, 1.5}` için `|f*| < 1e-16`).
+
+Sözleşme tek bir giriş noktasında garanti edilir: `stake_hesapla(p_ham, s, b, a, lam)`.
+`daralt(p, s, hedef)` yalnız bu fonksiyonun içinden `hedef = p0` ile çağrılır.
 `s ∈ [0,1]` kalibrasyon güvenilirliğinden **türetilir**, üç çarpanın çarpımı:
 ```
 s = s_kanit · s_kalibrasyon · s_kapsam
