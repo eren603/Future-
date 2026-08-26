@@ -409,5 +409,182 @@ class GeometriSecimTesti(unittest.TestCase):
         self.assertFalse(r["kirpildi"])
 
 
+# ----------------------------------------------------------------- Task 7
+
+class AdaptorTesti(unittest.TestCase):
+    def test_kapsam_tam_veride_bir(self):
+        def sahte_getir(url, params):
+            return {"ok": True, "veri": [1, 2, 3]}
+        r = m.veri_topla("BTCUSDT", [m.BinanceAdaptor()], sahte_getir)
+        self.assertEqual(r["kapsam"], 1.0)
+        self.assertEqual(r["adaptor"], "binance")
+        self.assertEqual(r["dusen"], [])
+
+    def test_kanal_dusunce_kapsam_duser_ve_uydurulmaz(self):
+        def sahte_getir(url, params):
+            if "openInterest" in url:
+                raise OSError("erisilemedi")
+            return {"ok": True, "veri": [1, 2, 3]}
+        r = m.veri_topla("BTCUSDT", [m.BinanceAdaptor()], sahte_getir)
+        self.assertLess(r["kapsam"], 1.0)
+        self.assertIsNone(r["kanallar"]["oi"])
+        self.assertIn("oi", r["dusen"])
+
+    def test_ana_adaptor_tamamen_duserse_yedege_gecer_ve_bildirir(self):
+        def sahte_getir(url, params):
+            if "binance" in url:
+                raise OSError("403")
+            return {"ok": True, "veri": [1, 2, 3]}
+        r = m.veri_topla("BTCUSDT", [m.BinanceAdaptor(), m.OkxAdaptor()], sahte_getir)
+        self.assertEqual(r["adaptor"], "okx")
+        self.assertTrue(r["yedege_dusuldu"])
+
+    def test_hicbir_adaptor_calismazsa_kapsam_sifir(self):
+        def sahte_getir(url, params):
+            raise OSError("hepsi kapali")
+        r = m.veri_topla("BTCUSDT", [m.BinanceAdaptor(), m.OkxAdaptor()], sahte_getir)
+        self.assertEqual(r["kapsam"], 0.0)
+        self.assertTrue(all(v is None for v in r["kanallar"].values()))
+
+    def test_notr_sifir_enjekte_edilmez(self):
+        """Uydurma yasagi: dusen kanal None olmali, 0.0 OLMAMALI."""
+        def sahte_getir(url, params):
+            if "premiumIndex" in url or "funding-rate" in url:
+                raise OSError("yok")
+            return {"ok": True, "veri": [1]}
+        r = m.veri_topla("BTCUSDT", [m.BinanceAdaptor()], sahte_getir)
+        self.assertIsNone(r["kanallar"]["funding"])
+        self.assertNotEqual(r["kanallar"]["funding"], 0.0)
+
+    def test_okx_sembol_cevrimi(self):
+        u, _ = m.OkxAdaptor().uc("kline_15m", "BTCUSDT")
+        self.assertIn("BTC-USDT-SWAP", str(_))
+
+    def test_binance_dogru_period_parametresi(self):
+        """OKX SDK'da parametre adi 'period'; 'periodic' gecersizdir."""
+        _, params = m.BinanceAdaptor().uc("oi", "BTCUSDT")
+        self.assertIn("period", params)
+        self.assertNotIn("periodic", params)
+
+    def test_okx_dogru_period_parametresi(self):
+        _, params = m.OkxAdaptor().uc("oi", "BTCUSDT")
+        self.assertIn("period", params)
+        self.assertNotIn("periodic", params)
+
+    def test_hicbir_adaptor_emir_ucu_uretmez(self):
+        for adaptor in (m.BinanceAdaptor(), m.OkxAdaptor()):
+            for kanal in m.KANALLAR:
+                url, _ = adaptor.uc(kanal, "BTCUSDT")
+                self.assertNotIn("order", url.lower())
+                self.assertNotIn("trade", url.lower())
+
+
+# ----------------------------------------------------------------- Task 8
+
+class TokenSozluguTesti(unittest.TestCase):
+    def test_ayni_anahtar_ayni_kimlik(self):
+        s = m.TokenSozlugu()
+        self.assertEqual(s.kimlik("BTCUSDT", "15m", "fiyat", 0),
+                         s.kimlik("BTCUSDT", "15m", "fiyat", 0))
+
+    def test_farkli_zaman_dilimi_farkli_kimlik(self):
+        s = m.TokenSozlugu()
+        self.assertNotEqual(s.kimlik("BTCUSDT", "15m", "fiyat", 0),
+                            s.kimlik("BTCUSDT", "4h", "fiyat", 0))
+
+    def test_farkli_gecikme_farkli_kimlik(self):
+        s = m.TokenSozlugu()
+        self.assertNotEqual(s.kimlik("BTCUSDT", "15m", "fiyat", 0),
+                            s.kimlik("BTCUSDT", "15m", "fiyat", 1))
+
+    def test_sozluk_buyur(self):
+        s = m.TokenSozlugu()
+        self.assertEqual(s.boyut, 0)
+        s.kimlik("BTCUSDT", "15m", "fiyat", 0)
+        s.kimlik("BTCUSDT", "15m", "fiyat", 1)
+        self.assertEqual(s.boyut, 2)
+
+    def test_token_listesi_iki_zaman_dilimi_icerir(self):
+        tokenlar = m.token_listesi(["BTCUSDT"], gecikme_sayisi=2)
+        zamanlar = {t["zaman_dilimi"] for t in tokenlar}
+        self.assertEqual(zamanlar, set(m.ZAMAN_DILIMLERI))
+
+    def test_token_listesi_beklenen_sayida(self):
+        tokenlar = m.token_listesi(["BTCUSDT", "ETHUSDT"], gecikme_sayisi=3)
+        beklenen = 2 * len(m.ZAMAN_DILIMLERI) * len(m.AILELER) * 3
+        self.assertEqual(len(tokenlar), beklenen)
+
+    def test_turev_ailesi_sozlukte_var(self):
+        self.assertIn("turev", m.AILELER)
+
+    def test_token_listesi_eskiden_yeniye_sirali(self):
+        tokenlar = m.token_listesi(["BTCUSDT"], gecikme_sayisi=3)
+        gecikmeler = [t["gecikme"] for t in tokenlar]
+        self.assertEqual(gecikmeler[0], 2)
+        self.assertEqual(gecikmeler[-1], 0)
+
+
+# ----------------------------------------------------------------- Task 9
+
+class OlcekleyiciTesti(unittest.TestCase):
+    def _satirlar(self, n=100):
+        return [{"fiyat": [i * 0.01] * m.AILELER["fiyat"],
+                 "hacim": [0.0] * m.AILELER["hacim"],
+                 "turev": [i * 0.02] * m.AILELER["turev"],
+                 "oynaklik": [1.0] * m.AILELER["oynaklik"]} for i in range(n)]
+
+    def test_yalniz_train_diliminden_fit(self):
+        satirlar = self._satirlar(100)
+        o = m.Olcekleyici()
+        o.fit(satirlar, kesim=50)
+        o2 = m.Olcekleyici()
+        o2.fit(satirlar[:50], kesim=50)
+        self.assertEqual(o.donustur("fiyat", [0.25] * m.AILELER["fiyat"]),
+                         o2.donustur("fiyat", [0.25] * m.AILELER["fiyat"]))
+
+    def test_sabit_kolon_isaretlenir(self):
+        satirlar = self._satirlar(100)
+        o = m.Olcekleyici()
+        o.fit(satirlar, kesim=50)
+        self.assertIn(("hacim", 0), o.sabit_kolonlar)
+
+    def test_sabit_kolonda_donusum_sifir_verir(self):
+        """Sabit kolon bilgi tasimaz: ham deger SIZDIRILMAZ, 0.0 verilir."""
+        satirlar = self._satirlar(100)
+        o = m.Olcekleyici()
+        o.fit(satirlar, kesim=50)
+        self.assertEqual(o.donustur("hacim", [999.0, 999.0]), [0.0, 0.0])
+
+    def test_fit_edilmeden_donusum_hata_verir(self):
+        o = m.Olcekleyici()
+        with self.assertRaises(RuntimeError):
+            o.donustur("fiyat", [0.0] * m.AILELER["fiyat"])
+
+
+class KonumKoduTesti(unittest.TestCase):
+    def test_zaman_konumu_gecikmeye_gore_degisir(self):
+        self.assertNotEqual(m.zaman_konumu(0, 16), m.zaman_konumu(1, 16))
+
+    def test_zaman_konumu_deterministik(self):
+        self.assertEqual(m.zaman_konumu(3, 16), m.zaman_konumu(3, 16))
+
+    def test_sembol_konumu_ayri_eksen(self):
+        """Sembol ekseni zaman ekseninden BAGIMSIZ olmali."""
+        z0 = m.zaman_konumu(0, 16)
+        s0 = m.sembol_konumu(0, 16)
+        s1 = m.sembol_konumu(1, 16)
+        self.assertNotEqual(s0, s1)
+        self.assertNotEqual(s0, z0)
+
+    def test_konum_boyutu_dogru(self):
+        self.assertEqual(len(m.zaman_konumu(2, 16)), 16)
+        self.assertEqual(len(m.sembol_konumu(2, 16)), 16)
+
+    def test_ayni_indekste_iki_eksen_ayrisir(self):
+        """Ayni sayisal indeks, iki eksende FARKLI vektor uretmeli."""
+        for k in range(1, 5):
+            self.assertNotEqual(m.zaman_konumu(k, 16), m.sembol_konumu(k, 16))
+
+
 if __name__ == "__main__":
     unittest.main()

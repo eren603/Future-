@@ -420,3 +420,222 @@ def geometri_sec(barlar, indeksler, yon, atr_serisi, p_yon,
         en_iyi["f"] = 0.0
         en_iyi["not"] = "E[log] <= 0 - hicbir geometri pozitif buyume vermiyor"
     return en_iyi
+
+
+# ---------------------------------------------------------------- BOLUM 6
+# Veri adaptorleri. Yalniz public GET. Erisilemeyen kanal None kalir;
+# notr 0.0 enjeksiyonu YASAK (uydurma yasagi).
+# Ag cagrisi disaridan enjekte edilir (getir_fn) -> agsiz test edilebilir.
+
+KANALLAR = ("kline_15m", "kline_4h", "oi", "funding", "taker", "derinlik")
+
+
+class Adaptor:
+    """Ortak arayuz. Alt siniflar YALNIZ url uretir, ag cagrisi yapmaz."""
+
+    ad = "soyut"
+    taban = ""
+
+    def uc(self, kanal, sembol):
+        raise NotImplementedError
+
+
+class BinanceAdaptor(Adaptor):
+    ad = "binance"
+    taban = "https://fapi.binance.com"
+
+    def uc(self, kanal, sembol):
+        t = self.taban
+        return {
+            "kline_15m": (t + "/fapi/v1/klines",
+                          {"symbol": sembol, "interval": "15m", "limit": "500"}),
+            "kline_4h": (t + "/fapi/v1/klines",
+                         {"symbol": sembol, "interval": "4h", "limit": "500"}),
+            "oi": (t + "/futures/data/openInterestHist",
+                   {"symbol": sembol, "period": "15m", "limit": "500"}),
+            "funding": (t + "/fapi/v1/premiumIndex", {"symbol": sembol}),
+            "taker": (t + "/futures/data/takerlongshortRatio",
+                      {"symbol": sembol, "period": "15m", "limit": "500"}),
+            "derinlik": (t + "/fapi/v1/depth", {"symbol": sembol, "limit": "20"}),
+        }[kanal]
+
+
+class OkxAdaptor(Adaptor):
+    ad = "okx"
+    taban = "https://www.okx.com"
+
+    def _inst(self, sembol):
+        return sembol.replace("USDT", "-USDT-SWAP")
+
+    def uc(self, kanal, sembol):
+        # NOT: OKX resmi SDK'sinda parametre adi "period"tir, "periodic" DEGIL.
+        # Yanlis ad sessizce yok sayilir ve varsayilan periyot doner.
+        t, inst = self.taban, self._inst(sembol)
+        para = inst.split("-")[0]
+        return {
+            "kline_15m": (t + "/api/v5/market/candles",
+                          {"instId": inst, "bar": "15m", "limit": "300"}),
+            "kline_4h": (t + "/api/v5/market/candles",
+                         {"instId": inst, "bar": "4H", "limit": "300"}),
+            "oi": (t + "/api/v5/rubik/stat/contracts/open-interest-history",
+                   {"instId": inst, "period": "15m"}),
+            "funding": (t + "/api/v5/public/funding-rate", {"instId": inst}),
+            "taker": (t + "/api/v5/rubik/stat/taker-volume",
+                      {"instType": "CONTRACTS", "ccy": para, "period": "15m"}),
+            "derinlik": (t + "/api/v5/market/books", {"instId": inst, "sz": "20"}),
+        }[kanal]
+
+
+def veri_topla(sembol, adaptorler, getir_fn):
+    """Adaptorleri sirayla dener. Kanal basina basari/dusus kaydedilir."""
+    yedege_dusuldu = False
+    for sira, adaptor in enumerate(adaptorler):
+        kanallar = {}
+        dusen = []
+        for kanal in KANALLAR:
+            url, params = adaptor.uc(kanal, sembol)
+            try:
+                kanallar[kanal] = getir_fn(url, params)
+            except Exception:
+                kanallar[kanal] = None      # UYDURMA YOK: None kalir
+                dusen.append(kanal)
+        kapsam = sum(1 for v in kanallar.values() if v is not None) / len(KANALLAR)
+        if kapsam > 0.0:
+            return {"adaptor": adaptor.ad, "kanallar": kanallar, "kapsam": kapsam,
+                    "dusen": dusen, "yedege_dusuldu": yedege_dusuldu or sira > 0}
+        yedege_dusuldu = True
+
+    return {"adaptor": None, "kanallar": {k: None for k in KANALLAR},
+            "kapsam": 0.0, "dusen": list(KANALLAR), "yedege_dusuldu": True}
+
+
+# ---------------------------------------------------------------- BOLUM 7a
+# Ozellik-token sozlugu. Token kimligi (sembol, zaman_dilimi, aile, gecikme)
+# dortlusudur; 4H ve 15M AYRI zaman dilimi tokenlaridir.
+
+ZAMAN_DILIMLERI = ("15m", "4h")
+AILELER = {
+    "fiyat": 6,     # getiri1, getiri4, getiri16, ema_farki, rsi, kanal_konumu
+    "hacim": 2,     # hacim_z, nominal_hacim_z
+    "turev": 5,     # oi_degisim, funding_z, taker_dengesi, derinlik_dengesi, kapsam
+    "oynaklik": 3,  # atr_orani, oynaklik_orani, rejim
+}
+
+
+class TokenSozlugu:
+    """Token kimliklerini tutan sozluk. Ayni dortlu daima ayni kimlik."""
+
+    def __init__(self):
+        self._kimlikler = {}
+
+    def kimlik(self, sembol, zaman_dilimi, aile, gecikme):
+        anahtar = (sembol, zaman_dilimi, aile, int(gecikme))
+        if anahtar not in self._kimlikler:
+            self._kimlikler[anahtar] = len(self._kimlikler) + 1
+        return self._kimlikler[anahtar]
+
+    @property
+    def boyut(self):
+        return len(self._kimlikler)
+
+
+def token_listesi(semboller, gecikme_sayisi):
+    """Bir ileri gecis icin uretilecek tokenlarin tam listesi (eskiden yeniye)."""
+    tokenlar = []
+    for gecikme in range(gecikme_sayisi - 1, -1, -1):
+        for sembol in semboller:
+            for zaman_dilimi in ZAMAN_DILIMLERI:
+                for aile in AILELER:
+                    tokenlar.append({
+                        "sembol": sembol,
+                        "zaman_dilimi": zaman_dilimi,
+                        "aile": aile,
+                        "gecikme": gecikme,
+                        "boyut": AILELER[aile],
+                    })
+    return tokenlar
+
+
+# ---------------------------------------------------------------- BOLUM 7b
+# Gecmise dayali normalizasyon: olcekleyici YALNIZ train diliminden fit edilir.
+# Sabit kolon (std=0) bilgi tasimaz -> ham deger gecirilmez, 0.0 verilir.
+
+
+class Olcekleyici:
+    def __init__(self):
+        self._parametre = {}
+        self.sabit_kolonlar = []
+        self._fit_edildi = False
+
+    def fit(self, satirlar, kesim):
+        egitim = satirlar[:max(1, int(kesim))]
+        self._parametre = {}
+        self.sabit_kolonlar = []
+        for aile, boyut in AILELER.items():
+            kolonlar = []
+            for j in range(boyut):
+                degerler = [float(s[aile][j]) for s in egitim if aile in s]
+                kolonlar.append(self._kolon_parametresi(aile, j, degerler))
+            self._parametre[aile] = kolonlar
+        self._fit_edildi = True
+
+    def _kolon_parametresi(self, aile, j, degerler):
+        if not degerler:
+            self.sabit_kolonlar.append((aile, j))
+            return (0.0, 1.0, True)
+        ortalama = sum(degerler) / len(degerler)
+        if len(degerler) < 2:
+            varyans = 0.0
+        else:
+            varyans = sum((d - ortalama) ** 2 for d in degerler) / (len(degerler) - 1)
+        std = math.sqrt(varyans)
+        sabit = std < SABIT_ESIK_TOLERANSI
+        if sabit:
+            self.sabit_kolonlar.append((aile, j))
+        return (ortalama, 1.0 if sabit else std, sabit)
+
+    def donustur(self, aile, degerler):
+        if not self._fit_edildi:
+            raise RuntimeError("Olcekleyici fit edilmeden kullanilamaz")
+        sonuc = []
+        for deger, (ortalama, std, sabit) in zip(degerler, self._parametre[aile]):
+            if sabit:
+                sonuc.append(0.0)       # sabit kolon: ham deger SIZDIRILMAZ
+            else:
+                sonuc.append(kirp((float(deger) - ortalama) / std, -5.0, 5.0))
+        return sonuc
+
+
+SEMBOL_EKSENI_FAZI = math.pi / 4.0
+"""Sembol ekseninin faz kaydirmasi.
+
+Gerekce (olculerek bulundu): taban degistirmek TEK BASINA yetmez. konum=0'da
+aci = 0/payda = 0 olur ve sin(0)=0, cos(0)=1 her tabanda AYNI vektoru verir;
+yani lag=0 ile sembol=0 cakisir ve model bu iki ekseni ayirt edemez.
+Faz kaydirmasi cakismayi HER indekste kaldirir (olculdu: konum 0..3 icin
+L2 fark 1.08..1.58).
+"""
+
+
+def _sinuzoidal(konum, boyut, taban, faz=0.0):
+    cikti = []
+    for k in range(boyut):
+        payda = taban ** (2.0 * (k // 2) / max(1, boyut))
+        aci = konum / payda + faz
+        cikti.append(math.sin(aci) if k % 2 == 0 else math.cos(aci))
+    return cikti
+
+
+def zaman_konumu(gecikme, boyut):
+    """Zaman ekseni konum kodu (gecikme = kac bar geride)."""
+    return [x * 0.10 for x in _sinuzoidal(gecikme, boyut, 10000.0)]
+
+
+def sembol_konumu(sembol_indeksi, boyut):
+    """Sembol ekseni konum kodu - zaman ekseninden AYRISIK.
+
+    Ayrisma iki mekanizmayla saglanir: farkli taban (frekans bandi) VE
+    faz kaydirmasi (konum=0 cakismasini kaldirir).
+    """
+    return [x * 0.10 for x in _sinuzoidal(sembol_indeksi, boyut, 97.0,
+                                          faz=SEMBOL_EKSENI_FAZI)]
