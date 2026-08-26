@@ -67,6 +67,54 @@ ESIK_KAYNAGI = {
 }
 
 
+def esik_kaydet(ad, deger, kaynak, gerekce):
+    """Sabit esigi beyan defterine yazar. Etiketsiz esik YASAK."""
+    ESIK_KAYNAGI[ad] = {"deger": deger, "kaynak": kaynak, "gerekce": gerekce}
+    return deger
+
+
+# Boru hatti sabitleri (hepsi ESIK_KAYNAGI'nda beyanli)
+GECIKME_SAYISI = esik_kaydet(
+    "GECIKME_SAYISI", 4, "VARSAYIM",
+    "Karar tokeninin gordugu gecmis bar sayisi. Kalibre EDILMEDI. Buyutulurse "
+    "baglam artar ama hesap O(n^2) buyur (Pydroid 3 kisiti). Olcum yolu: "
+    "gecikme sayisina karsi holdout AUROC egrisi - platoya girdigi nokta.")
+
+ETIKET_UFKU = esik_kaydet(
+    "ETIKET_UFKU", 16, "VARSAYIM",
+    "Etiketin bakacagi ileri bar sayisi (16 x 15dk = 4 saat). Kalibre EDILMEDI "
+    "ve DOGRUDAN p'yi, dolayisiyla ECE ve stake'i belirler - etiketsiz gizli "
+    "esik yasaginin tam hedefi budur. Olcum yolu: ufka karsi holdout AUROC ve "
+    "ilk-gecis karar-veren oraninin birlikte taranmasi.")
+
+EMBARGO = esik_kaydet(
+    "EMBARGO", 4, "VARSAYIM",
+    "Purge'un uzerine eklenen guvenlik boslugu (bar). Kalibre EDILMEDI. "
+    "Kucultulurse sizinti riski artar, buyutulurse ornek kaybi artar. "
+    "Olcum yolu: embargo'ya karsi train-test dagilim farkinin olculmesi.")
+
+AZAMI_ORNEK = esik_kaydet(
+    "AZAMI_ORNEK", 120, "YAPISAL",
+    "HESAP BUTCESI (istatistik esigi DEGIL): her ornek bir Kodlayici.ileri "
+    "cagrisidir, attention O(n^2). Hedef ortam Pydroid 3 (telefon). Butce "
+    "bolmeyi dejenere edecek kadar kucultulemez: kronolojik_bol en az "
+    "3*(ufuk+embargo+5) ornek ister; altina dusulurse bolme BOS kalir ve "
+    "egitim/kalibrasyon/degerlendirme hic kosmaz.")
+
+LIKIDASYON_GUVENLIK_PAYI = esik_kaydet(
+    "LIKIDASYON_GUVENLIK_PAYI", 0.5, "VARSAYIM",
+    "Likidasyon mesafesinin ne kadarina kadar stake alinabilecegi. Kalibre "
+    "EDILMEDI. 0.5, likidasyona giden yolun yarisinda durmak demektir; "
+    "muhafazakar taraf. Olcum yolu: gerceklesmis en kotu bar-ici sapmanin "
+    "dagilimindan ust yuzdelik.")
+
+ISINMA_BARI = esik_kaydet(
+    "ISINMA_BARI", 20, "YAPISAL",
+    "Gostergelerin (EMA/ATR/RSI/kanal) anlamli deger uretmesi icin gereken "
+    "asgari gecmis bar sayisi; en uzun pencere (48) degil, gostergelerin "
+    "kararli hale geldigi nokta. Istatistiksel secim degil, gosterge tanimindan.")
+
+
 def esik_raporu():
     """Sabit esikleri kaynagi ve gerekcesiyle beyan eder (gizli esik yasagi)."""
     satirlar = ["SABIT ESIK BEYANI (etiketsiz gizli esik yasak):"]
@@ -352,7 +400,8 @@ def beklenen_log(p_hedef, f, b, a):
     return p_hedef * math.log(kazanc) + (1.0 - p_hedef) * math.log(kayip)
 
 
-def likidasyon_tavani(giris, likidasyon, kaldirac_azami, guvenlik=0.5):
+def likidasyon_tavani(giris, likidasyon, kaldirac_azami,
+                      guvenlik=LIKIDASYON_GUVENLIK_PAYI):
     """Stake'in mutlak ust siniri. Likidasyon okunamazsa fail-closed 0."""
     if likidasyon is None or kaldirac_azami is None or kaldirac_azami <= 0:
         return 0.0
@@ -1013,7 +1062,8 @@ def karar_uret(baglam):
 
     # STAKE: sozlesme stake_hesapla icinde garanti edilir (kanit yoksa f*=0).
     f_max = likidasyon_tavani(baglam["giris"], baglam.get("likidasyon"),
-                              baglam.get("kaldirac_azami"), 0.5)
+                              baglam.get("kaldirac_azami"),
+                              LIKIDASYON_GUVENLIK_PAYI)
     b, a = (geo.get("b"), geo.get("a"))
     lambda_tablosu = {}
     for lam in LAMBDA_TABLOSU:
@@ -1085,17 +1135,22 @@ def rsi(kapanislar, periyot=14):
 # ---------------------------------------------------------------- BOLUM 9b
 # Uctan uca boru hatti. 12 halkanin her biri ize yazilir.
 
-GECIKME_SAYISI = 4
-ETIKET_UFKU = 16
-EMBARGO = 4
-AZAMI_ORNEK = 120
-"""Egitim/kalibrasyon/test icin azami ornek sayisi.
+def _h4_hizala(n15, n4h):
+    """Her 15M bar indeksi icin SON KAPANMIS 4H bar indeksi.
 
-Gerekce: her ornek bir Kodlayici.ileri cagrisidir ve attention O(n^2) maliyetlidir.
-Hedef ortam Pydroid 3 (telefon); sinirsiz ornek pratikte kosulamaz. Bu bir
-ISTATISTIK esigi degil HESAP butcesidir - ESIK_KAYNAGI'nda YAPISAL degil,
-burada ayrica beyan edilir.
-"""
+    Look-ahead yoktur: 4H bari 16 adet 15M barini kapsar, bu yuzden i'inci
+    15M bari en fazla (i // 16)'inci 4H barini gorebilir.
+    """
+    return [min(max(0, i // 16), n4h - 1) for i in range(n15)]
+
+
+def _notr_satir():
+    """4H verisi YOKKEN kullanilan notr satir.
+
+    15M satiri KOPYALANMAZ (sahte bilgi uretmemek icin) ve kapsam dususu
+    ayrica shrinkage'a yansitilir.
+    """
+    return {aile: [0.0] * boyut for aile, boyut in AILELER.items()}
 
 
 def _ornek_indeksleri(baslangic, bitis, azami=AZAMI_ORNEK):
@@ -1206,26 +1261,37 @@ class BoruHatti:
         self.kodlayici = Kodlayici(boyut=boyut, bas_sayisi=2, tohum=tohum)
         self.aile_gomme = {aile: vektor(boyut, (tohum, "aile", aile), 0.06)
                            for aile in AILELER}
+        self.zd_gomme = {zd: vektor(boyut, (tohum, "zd", zd), 0.06)
+                         for zd in ZAMAN_DILIMLERI}
         self.giris_izdusumu = {aile: matris(boyut, AILELER[aile],
                                             (tohum, "izdusum", aile), 0.10)
                                for aile in AILELER}
 
-    def _durumlar(self, satirlar, olcekleyici, indeks, sembol_indeksi=0):
-        """Halka 1-3: tokenlar -> gomme + konum kodu."""
+    def _durumlar(self, satir_kumesi, olcekleyiciler, indeks, sembol_indeksi=0):
+        """Halka 1-3: tokenlar -> gomme + konum kodu.
+
+        HER zaman dilimi icin AYRI token uretilir (spec halka 1: "4H ve 15M
+        ayri zaman dilimi tokenlari"). satir_kumesi: {zaman_dilimi: [satir]},
+        olcekleyiciler: {zaman_dilimi: Olcekleyici}. 4H satirlari 15M
+        indeksine hizalanmistir (look-ahead yok).
+        """
         durumlar = []
         for gecikme in range(GECIKME_SAYISI - 1, -1, -1):
-            j = indeks - gecikme
-            if j < 0:
-                j = 0
-            for aile in AILELER:
-                olcekli = olcekleyici.donustur(aile, satirlar[j][aile])
-                icerik = matvec(self.giris_izdusumu[aile], olcekli)
-                kimlik = self.sozluk.kimlik("S", "15m", aile, gecikme)
-                token_gomme = vektor(self.boyut, (self.tohum, "token", kimlik), 0.05)
-                durumlar.append(topla_vek(icerik, token_gomme,
-                                          self.aile_gomme[aile],
-                                          zaman_konumu(gecikme, self.boyut),
-                                          sembol_konumu(sembol_indeksi, self.boyut)))
+            j = max(0, indeks - gecikme)
+            for zd in ZAMAN_DILIMLERI:
+                satirlar = satir_kumesi[zd]
+                olcekleyici = olcekleyiciler[zd]
+                for aile in AILELER:
+                    olcekli = olcekleyici.donustur(aile, satirlar[j][aile])
+                    icerik = matvec(self.giris_izdusumu[aile], olcekli)
+                    kimlik = self.sozluk.kimlik("S", zd, aile, gecikme)
+                    token_gomme = vektor(self.boyut,
+                                         (self.tohum, "token", kimlik), 0.05)
+                    durumlar.append(topla_vek(
+                        icerik, token_gomme, self.aile_gomme[aile],
+                        self.zd_gomme[zd],
+                        zaman_konumu(gecikme, self.boyut),
+                        sembol_konumu(sembol_indeksi, self.boyut)))
         return durumlar
 
     def calistir(self, paket):
@@ -1237,28 +1303,58 @@ class BoruHatti:
 
         gost = _gostergeler(barlar)
         turev_serisi = paket.get("turev_serisi")
-        satirlar = [satir_uret(barlar, gost, turev_serisi, i)
-                    for i in range(len(barlar))]
+        satir_kumesi = {"15m": [satir_uret(barlar, gost, turev_serisi, i)
+                                for i in range(len(barlar))]}
+
+        # 4H: kendi gostergeleriyle hesaplanip 15M indeksine HIZALANIR.
+        # Hizalama look-ahead icermez: her 15M bari icin SON KAPANMIS 4H bari.
+        barlar4h = paket.get("barlar4h")
+        if barlar4h:
+            gost4 = _gostergeler(barlar4h)
+            h4_satir = [satir_uret(barlar4h, gost4, None, i)
+                        for i in range(len(barlar4h))]
+            eslesme = _h4_hizala(len(barlar), len(barlar4h))
+            satir_kumesi["4h"] = [h4_satir[eslesme[i]] for i in range(len(barlar))]
+            h4_var = True
+        else:
+            # 4H YOK: uydurma satir uretilmez, ayni 15M satiri KOPYALANMAZ.
+            # Notr satir konur ve kapsam dususu shrinkage'a yansitilir.
+            satir_kumesi["4h"] = [_notr_satir() for _ in range(len(barlar))]
+            h4_var = False
         iz["halka_1"] = {"ad": "tokenizasyon", "aile_sayisi": len(AILELER),
                          "gecikme": GECIKME_SAYISI,
-                         "token_sayisi": GECIKME_SAYISI * len(AILELER)}
+                         "zaman_dilimi_sayisi": len(ZAMAN_DILIMLERI),
+                         "h4_var": h4_var,
+                         "token_sayisi": (GECIKME_SAYISI * len(AILELER)
+                                          * len(ZAMAN_DILIMLERI))}
 
-        baslangic = 20
+        baslangic = ISINMA_BARI
         bitis = len(barlar) - ETIKET_UFKU - 1
         tum_indeksler = _ornek_indeksleri(baslangic, bitis,
                                           paket.get("azami_ornek", AZAMI_ORNEK))
         bolme = kronolojik_bol(tum_indeksler, ETIKET_UFKU, EMBARGO)
+        # Bos bolmede "sizinti: False" demek fail-OPEN rapordur: olculemeyen
+        # sey "yok" diye raporlanamaz.
+        bolme_bos = not (bolme["train"] and bolme["kalibrasyon"] and bolme["test"])
         iz["halka_11"] = {"ad": "otoregresif/bolme", "train": len(bolme["train"]),
                           "kalibrasyon": len(bolme["kalibrasyon"]),
                           "test": len(bolme["test"]), "atilan": bolme["atilan"],
-                          "sizinti": sizinti_var_mi(bolme, ETIKET_UFKU,
-                                                    GECIKME_SAYISI)}
+                          "not": bolme["not"] or ("yetersiz ornek - bolme dejenere"
+                                                  if bolme_bos else ""),
+                          "sizinti": (None if bolme_bos
+                                      else sizinti_var_mi(bolme, ETIKET_UFKU,
+                                                          GECIKME_SAYISI))}
 
-        olcekleyici = Olcekleyici()
-        kesim = bolme["train"][-1] if bolme["train"] else max(1, len(satirlar) // 2)
-        olcekleyici.fit(satirlar, kesim)
+        kesim = (bolme["train"][-1] if bolme["train"]
+                 else max(1, len(barlar) // 2))
+        olcekleyiciler = {}
+        for zd in ZAMAN_DILIMLERI:      # her zaman dilimi KENDI istatistigiyle
+            o = Olcekleyici()
+            o.fit(satir_kumesi[zd], kesim)
+            olcekleyiciler[zd] = o
         iz["halka_2"] = {"ad": "embedding/olcekleme", "kesim": kesim,
-                         "sabit_kolon": len(olcekleyici.sabit_kolonlar)}
+                         "sabit_kolon": {zd: len(olcekleyiciler[zd].sabit_kolonlar)
+                                         for zd in ZAMAN_DILIMLERI}}
         iz["halka_3"] = {"ad": "konum kodu", "zaman_ekseni": True,
                          "sembol_ekseni": True, "faz": SEMBOL_EKSENI_FAZI}
         iz["halka_4"] = {"ad": "causal attention", "bas": self.kodlayici.bas_sayisi,
@@ -1266,7 +1362,7 @@ class BoruHatti:
         iz["halka_5"] = {"ad": "FFN", "genislik": self.boyut * 2}
 
         def ornek(i):
-            x = self.kodlayici.ileri(self._durumlar(satirlar, olcekleyici, i))
+            x = self.kodlayici.ileri(self._durumlar(satir_kumesi, olcekleyiciler, i))
             y = etiket_uret(barlar, i, gost["atr"])
             return None if y is None else {"x": x, "y": y}
 
@@ -1306,7 +1402,7 @@ class BoruHatti:
                          "wilson": wilson_araligi(dogru, len(ciftler))}
 
         son = len(barlar) - 1
-        x_son = self.kodlayici.ileri(self._durumlar(satirlar, olcekleyici, son))
+        x_son = self.kodlayici.ileri(self._durumlar(satir_kumesi, olcekleyiciler, son))
         top = topluluk_olasilik(x_son, basliklar, kalib["T"])
         p_ham = top["p"][0]
         if kalib["fn"] is not None:

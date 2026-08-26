@@ -283,9 +283,29 @@ class EsikEtiketiTesti(unittest.TestCase):
     def test_esik_kaynagi_sozlugu_var(self):
         self.assertTrue(hasattr(m, "ESIK_KAYNAGI"))
 
+    # Etiket gerektirmeyen sabitler: kimlik/yapisal, istatistiksel secim DEGIL.
+    MUAF = {
+        "SURUM", "SEMBOLLER", "YON_SOZLUGU", "EPSILON", "ESIK_KAYNAGI",
+        "KANALLAR", "ZAMAN_DILIMLERI", "AILELER", "IZGARA", "LAMBDA_TABLOSU",
+        "SICAKLIK_IZGARASI", "SEMBOL_EKSENI_FAZI",
+    }
+
     def test_her_sabit_esik_etiketli(self):
-        for ad in ("ECE_TAVANI", "ASGARI_OLCUM", "SABIT_ESIK_TOLERANSI"):
-            self.assertIn(ad, m.ESIK_KAYNAGI, f"{ad} etiketsiz - gizli esik yasak")
+        """Denetci bulgusu: sabit ad listesi YENI esikleri yakalayamiyordu.
+
+        Artik modul TARANIYOR - eklenen her sayisal BUYUK_HARF sabiti ya
+        ESIK_KAYNAGI'nda beyan edilmeli ya MUAF listesinde gerekcelenmeli.
+        """
+        etiketsiz = []
+        for ad in dir(m):
+            if not ad.isupper() or ad.startswith("_") or ad in self.MUAF:
+                continue
+            if not isinstance(getattr(m, ad), (int, float)):
+                continue
+            if ad not in m.ESIK_KAYNAGI:
+                etiketsiz.append(ad)
+        self.assertEqual(etiketsiz, [],
+                         f"etiketsiz gizli esik YASAK: {etiketsiz}")
 
     def test_etiket_zorunlu_alanlari_icerir(self):
         for ad, kayit in m.ESIK_KAYNAGI.items():
@@ -912,7 +932,7 @@ class BoruHattiTesti(unittest.TestCase):
     def _paket(self, turev_var=True, tohum="boru"):
         rng = m.tohumlu_rng(tohum)
         barlar15, fiyat = [], 100.0
-        for _ in range(240):
+        for _ in range(700):
             fiyat *= (1.0 + rng.uniform(-0.003, 0.0032))
             barlar15.append({"o": fiyat, "h": fiyat * 1.002, "l": fiyat * 0.998,
                              "c": fiyat, "v": 1000 + rng.uniform(0, 100)})
@@ -931,7 +951,7 @@ class BoruHattiTesti(unittest.TestCase):
                 "barlar4h": barlar15[::16], "turev_serisi": turev_serisi,
                 "dolu_kanal": 6 if turev_var else 3, "toplam_kanal": 6,
                 "likidasyon": barlar15[-1]["c"] * 0.8, "kaldirac_azami": 10.0,
-                "azami_ornek": 40}
+                "azami_ornek": 90}
 
     def test_uctan_uca_karar_uretir(self):
         r = m.BoruHatti(tohum=2026).calistir(self._paket())
@@ -943,6 +963,51 @@ class BoruHattiTesti(unittest.TestCase):
         r = m.BoruHatti(tohum=2026).calistir(self._paket())
         for halka in range(13):
             self.assertIn(f"halka_{halka}", r["iz"], f"halka_{halka} izde yok")
+
+    def test_boru_hatti_gercekten_kosuyor(self):
+        """Denetci bulgusu TIYATRO: bolme bos kalinca egitim/kalibrasyon/
+        degerlendirme HIC calismiyordu ama testler bos gecip PASS veriyordu."""
+        iz = m.BoruHatti(tohum=2026).calistir(self._paket())["iz"]
+        self.assertGreater(iz["halka_11"]["train"], 0, "bolme dejenere")
+        self.assertGreater(iz["halka_6"]["train_ornek"], 0, "baslik egitilmedi")
+        self.assertGreater(iz["halka_8"]["test_ornek"], 0, "degerlendirme yok")
+        self.assertNotEqual(iz["halka_7"]["yontem"], "YOK", "kalibrasyon secilmedi")
+
+    def test_bos_bolmede_sizinti_fail_closed(self):
+        """Bos bolmede 'sizinti: False' demek fail-OPEN rapordur."""
+        kucuk = self._paket()
+        kucuk["azami_ornek"] = 20          # bilerek dejenere
+        iz = m.BoruHatti(tohum=2026).calistir(kucuk)["iz"]
+        self.assertIsNone(iz["halka_11"]["sizinti"])
+        self.assertIn("yetersiz", iz["halka_11"]["not"])
+
+    def test_4h_ailesi_temsili_degistirir(self):
+        """Denetci bulgusu ATLAMA: 4H boru hattina HIC girmiyordu."""
+        p1 = self._paket()
+        p2 = self._paket()
+        p2["barlar4h"] = [{"o": b["o"] * 1.5, "h": b["h"] * 1.6,
+                           "l": b["l"] * 1.4, "c": b["c"] * 1.5, "v": b["v"]}
+                          for b in p2["barlar4h"]]
+        r1 = m.BoruHatti(tohum=2026).calistir(p1)
+        r2 = m.BoruHatti(tohum=2026).calistir(p2)
+        self.assertNotAlmostEqual(r1["p_ham"], r2["p_ham"], places=6)
+
+    def test_iz_iki_zaman_dilimi_raporlar(self):
+        iz = m.BoruHatti(tohum=2026).calistir(self._paket())["iz"]
+        self.assertEqual(iz["halka_1"]["zaman_dilimi_sayisi"],
+                         len(m.ZAMAN_DILIMLERI))
+        self.assertEqual(iz["halka_1"]["token_sayisi"],
+                         m.GECIKME_SAYISI * len(m.AILELER) * len(m.ZAMAN_DILIMLERI))
+
+    def test_4h_kanali_dusunce_kapsam_duser(self):
+        """Modele ulasmayan veri s_kapsam'i BUYUTMEMELI (fail-closed)."""
+        tam = m.BoruHatti(tohum=2026).calistir(self._paket())
+        eksik_p = self._paket()
+        eksik_p["barlar4h"] = None
+        eksik_p["dolu_kanal"] = 5
+        eksik = m.BoruHatti(tohum=2026).calistir(eksik_p)
+        self.assertLess(eksik["shrinkage"]["s_kapsam"],
+                        tam["shrinkage"]["s_kapsam"])
 
     def test_determinizm(self):
         p = self._paket()
