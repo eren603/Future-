@@ -586,5 +586,205 @@ class KonumKoduTesti(unittest.TestCase):
             self.assertNotEqual(m.zaman_konumu(k, 16), m.sembol_konumu(k, 16))
 
 
+# ---------------------------------------------------------------- Task 10
+
+class OluHalkaTesti(unittest.TestCase):
+    """Sozlesmenin 1. kabul olcutu: hicbir halka olu olmamali.
+
+    Her halka icin, o halka devre disi birakilinca nihai ciktinin
+    OLCULEBILIR bicimde degistigi kanitlanir.
+    """
+
+    def _kodlayici_ve_durumlar(self, n=9, d=16):
+        kod = m.Kodlayici(boyut=d, bas_sayisi=2, tohum=2026)
+        rng = m.tohumlu_rng("test-durum", n, d)
+        durumlar = [[rng.uniform(-1, 1) for _ in range(d)] for _ in range(n)]
+        return kod, durumlar
+
+    def _fark(self, a, b):
+        return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+
+    def test_qk_terimi_ciktiyi_degistirir(self):
+        kod, durumlar = self._kodlayici_ve_durumlar()
+        self.assertGreater(
+            self._fark(kod.ileri(durumlar, qk_acik=True),
+                       kod.ileri(durumlar, qk_acik=False)), 1e-6,
+            "QK terimi ciktiyi degistirmiyor -> olu halka")
+
+    def test_nedensel_maske_ciktiyi_degistirir(self):
+        kod, durumlar = self._kodlayici_ve_durumlar()
+        self.assertGreater(
+            self._fark(kod.ileri(durumlar, maske_acik=True),
+                       kod.ileri(durumlar, maske_acik=False)), 1e-6,
+            "Nedensel maske ciktiyi degistirmiyor -> olu halka")
+
+    def test_ffn_ciktiyi_degistirir(self):
+        kod, durumlar = self._kodlayici_ve_durumlar()
+        self.assertGreater(
+            self._fark(kod.ileri(durumlar, ffn_acik=True),
+                       kod.ileri(durumlar, ffn_acik=False)), 1e-6,
+            "FFN ciktiyi degistirmiyor -> olu halka")
+
+    def test_girdi_degisince_cikti_degisir(self):
+        kod, durumlar = self._kodlayici_ve_durumlar()
+        rng = m.tohumlu_rng("test-durum-2", 9, 16)
+        baska = [[rng.uniform(-1, 1) for _ in range(16)] for _ in range(9)]
+        self.assertGreater(self._fark(kod.ileri(durumlar), kod.ileri(baska)), 1e-3)
+
+    def test_temsil_piyasaya_duyarli(self):
+        """63-bulgu #0'in panzehiri: temsilin %99'u sabit OLMAMALI."""
+        kod = m.Kodlayici(boyut=16, bas_sayisi=2, tohum=2026)
+        ciktilar = []
+        for k in range(20):
+            rng = m.tohumlu_rng("duyarlilik", k)
+            durumlar = [[rng.uniform(-1, 1) for _ in range(16)] for _ in range(9)]
+            ciktilar.append(kod.ileri(durumlar))
+        ortalama = [sum(c[j] for c in ciktilar) / len(ciktilar) for j in range(16)]
+        sapma = [math.sqrt(sum((c[j] - ortalama[j]) ** 2 for c in ciktilar) / len(ciktilar))
+                 for j in range(16)]
+        norm_ort = math.sqrt(sum(x * x for x in ortalama))
+        norm_sap = math.sqrt(sum(x * x for x in sapma))
+        degisken_pay = norm_sap / math.sqrt(norm_sap ** 2 + norm_ort ** 2)
+        self.assertGreater(degisken_pay, 0.10,
+                           f"temsil %{degisken_pay*100:.1f} degisken - cok sabit")
+
+
+class SoftmaxTesti(unittest.TestCase):
+    def test_toplam_bir(self):
+        self.assertAlmostEqual(sum(m.kararli_softmax([1.0, 2.0, 3.0])), 1.0, places=9)
+
+    def test_sicaklik_tek_softmaxta_sirayi_degistirmez(self):
+        for T in (0.1, 1.0, 10.0):
+            p = m.kararli_softmax([3.0, 1.0], T)
+            self.assertGreater(p[0], p[1])
+
+    def test_buyuk_deger_tasmaz(self):
+        p = m.kararli_softmax([1000.0, 999.0])
+        self.assertTrue(all(math.isfinite(x) for x in p))
+
+
+# ---------------------------------------------------------------- Task 11
+
+class SizintiTesti(unittest.TestCase):
+    def test_purge_embargo_ortusmeyi_keser(self):
+        b = m.kronolojik_bol(list(range(0, 400, 5)), ufuk=16, embargo=4)
+        self.assertFalse(m.sizinti_var_mi(b, ufuk=16, giris_penceresi=6),
+                         "purge/embargo etiket penceresini kesmeli")
+
+    def test_purge_yoksa_sizinti_tespit_edilir(self):
+        b = m.kronolojik_bol(list(range(0, 400, 5)), ufuk=0, embargo=0)
+        self.assertTrue(m.sizinti_var_mi(b, ufuk=16, giris_penceresi=6))
+
+    def test_bolme_kronolojik_sirali(self):
+        b = m.kronolojik_bol(list(range(0, 400, 5)), ufuk=16, embargo=4)
+        self.assertLess(max(b["train"]), min(b["kalibrasyon"]))
+        self.assertLess(max(b["kalibrasyon"]), min(b["test"]))
+
+    def test_atilan_ornek_sayilir(self):
+        indeksler = list(range(0, 400, 5))
+        b = m.kronolojik_bol(indeksler, ufuk=16, embargo=4)
+        toplam = len(b["train"]) + len(b["kalibrasyon"]) + len(b["test"])
+        self.assertEqual(toplam + b["atilan"], len(indeksler))
+        self.assertGreater(b["atilan"], 0)
+
+    def test_cok_az_veride_bos_bolme(self):
+        b = m.kronolojik_bol([1, 2, 3], ufuk=16, embargo=4)
+        self.assertEqual(b["train"], [])
+        self.assertIn("yetersiz", b["not"])
+
+
+class BaslikTesti(unittest.TestCase):
+    def _ogrenilebilir(self, n=200):
+        rng = m.tohumlu_rng("baslik-test")
+        ornekler = []
+        for _ in range(n):
+            x = [rng.uniform(-1, 1) for _ in range(16)]
+            ornekler.append({"x": x, "y": 1 if sum(x[:4]) > 0 else 0})
+        return ornekler
+
+    def test_egitim_kaybi_duser(self):
+        ornekler = self._ogrenilebilir()
+        b = m.Baslik(boyut=16, tohum=7)
+        once = b.kayip(ornekler)
+        b.egit(ornekler, devir=60, ogrenme_hizi=0.15)
+        self.assertLess(b.kayip(ornekler), once, "egitim kaybi dusmeli")
+
+    def test_logit_iki_sinif(self):
+        self.assertEqual(len(m.Baslik(boyut=16, tohum=7).logit([0.0] * 16)), 2)
+
+    def test_egitilmemis_baslik_neredeyse_esit_olasilik(self):
+        p = m.kararli_softmax(m.Baslik(boyut=16, tohum=7).logit([0.0] * 16))
+        self.assertAlmostEqual(p[0], 0.5, places=1)
+
+
+# ---------------------------------------------------------------- Task 12
+
+class KalibrasyonFitTesti(unittest.TestCase):
+    def _basliklar_ve_ornekler(self):
+        rng = m.tohumlu_rng("kal-fit")
+        basliklar = [m.Baslik(boyut=8, tohum=100 + k) for k in range(3)]
+        ornekler = []
+        for _ in range(300):
+            x = [rng.uniform(-1, 1) for _ in range(8)]
+            ornekler.append({"x": x, "y": 1 if sum(x[:3]) > 0 else 0})
+        for b in basliklar:
+            b.egit(ornekler[:200], devir=40, ogrenme_hizi=0.2)
+        return basliklar, ornekler[200:]
+
+    def test_sicaklik_fit_dagitilan_dagilimda_yapilir(self):
+        """63-bulgu #28'in panzehiri: T, DAGITILAN dagilimda fit edilmeli."""
+        basliklar, kal = self._basliklar_ve_ornekler()
+        r = m.sicaklik_fit(kal, basliklar)
+
+        def nll(T):
+            toplam = 0.0
+            for o in kal:
+                p = m.topluluk_olasilik(o["x"], basliklar, T)["p"]
+                toplam += -math.log(max(1e-12, p[o["y"]]))
+            return toplam / len(kal)
+
+        self.assertLessEqual(r["nll"], nll(1.0) + 1e-9)
+        self.assertLessEqual(r["nll"], nll(5.0) + 1e-9)
+        self.assertAlmostEqual(r["nll"], nll(r["T"]), places=9)
+
+    def test_sicaklik_sinirda_bayragi(self):
+        basliklar, kal = self._basliklar_ve_ornekler()
+        r = m.sicaklik_fit(kal, basliklar)
+        self.assertIn("sinirda", r)
+        self.assertIsInstance(r["sinirda"], bool)
+
+    def test_topluluk_uzlasi_ve_dagilim(self):
+        basliklar, kal = self._basliklar_ve_ornekler()
+        r = m.topluluk_olasilik(kal[0]["x"], basliklar, 1.0)
+        self.assertAlmostEqual(sum(r["p"]), 1.0, places=9)
+        self.assertGreaterEqual(r["uzlasi"], 1.0 / 3.0)
+        self.assertLessEqual(r["uzlasi"], 1.0)
+        self.assertGreaterEqual(r["dagilim"], 0.0)
+
+    def test_izotonik_monoton(self):
+        ciftler = [(0.1, 0), (0.2, 0), (0.3, 1), (0.4, 0), (0.5, 1),
+                   (0.6, 1), (0.7, 1), (0.8, 1), (0.9, 1)]
+        fn = m.izotonik_fit(ciftler)
+        degerler = [fn(x / 10.0) for x in range(1, 10)]
+        for i in range(1, len(degerler)):
+            self.assertGreaterEqual(degerler[i] + 1e-9, degerler[i - 1])
+
+    def test_kalibrasyon_sec_nll_dusuk_olani_secer(self):
+        basliklar, kal = self._basliklar_ve_ornekler()
+        r = m.kalibrasyon_sec(kal, basliklar)
+        self.assertIn(r["yontem"], ("sicaklik", "izotonik"))
+        self.assertTrue(math.isfinite(r["nll"]))
+
+    def test_karisim_softmaxinda_sicaklik_karari_cevirebilir(self):
+        """63-bulgu #24: olasilik-havuzunda T argmax'i DEGISTIREBILIR.
+
+        Bu bir hata degil, olgudur; sistem bunu BILMELI ve raporlamali.
+        """
+        self.assertTrue(m.sicaklik_karari_cevirir_mi([[10.0, 0.0], [0.0, 1.0],
+                                                      [0.0, 1.0]]))
+        self.assertFalse(m.sicaklik_karari_cevirir_mi([[3.0, 0.0], [2.0, 0.0],
+                                                       [1.0, 0.0]]))
+
+
 if __name__ == "__main__":
     unittest.main()

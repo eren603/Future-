@@ -639,3 +639,321 @@ def sembol_konumu(sembol_indeksi, boyut):
     """
     return [x * 0.10 for x in _sinuzoidal(sembol_indeksi, boyut, 97.0,
                                           faz=SEMBOL_EKSENI_FAZI)]
+
+
+# ---------------------------------------------------------------- BOLUM 7c
+# Causal attention + FFN.
+# qk_acik / maske_acik / ffn_acik anahtarlari YALNIZ olu-halka testleri
+# icindir; uretimde daima True. Her anahtar kapatilinca cikti DEGISMELIDIR.
+
+
+def matris(satir, sutun, tohum_parcalari, olcek=0.12):
+    rng = tohumlu_rng(*tohum_parcalari)
+    return [[rng.uniform(-olcek, olcek) for _ in range(sutun)] for _ in range(satir)]
+
+
+def vektor(boyut, tohum_parcalari, olcek=0.12):
+    rng = tohumlu_rng(*tohum_parcalari)
+    return [rng.uniform(-olcek, olcek) for _ in range(boyut)]
+
+
+def matvec(M, v):
+    return [sum(satir[j] * v[j] for j in range(len(v))) for satir in M]
+
+
+def nokta(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+
+def topla_vek(*vektorler):
+    if not vektorler:
+        return []
+    return [sum(v[i] for v in vektorler) for i in range(len(vektorler[0]))]
+
+
+def kararli_softmax(logitler, sicaklik=1.0):
+    T = max(float(sicaklik), 1e-6)
+    olcekli = [float(z) / T for z in logitler]
+    en_buyuk = max(olcekli) if olcekli else 0.0
+    us = [math.exp(max(-60.0, min(60.0, z - en_buyuk))) for z in olcekli]
+    toplam = sum(us) or 1.0
+    return [u / toplam for u in us]
+
+
+def katman_norm(v, epsilon=1e-5):
+    ort = sum(v) / len(v)
+    std = math.sqrt(sum((x - ort) ** 2 for x in v) / len(v) + epsilon)
+    return [(x - ort) / std for x in v]
+
+
+def relu(v):
+    return [max(0.0, x) for x in v]
+
+
+class Kodlayici:
+    """Tek bloklu nedensel kodlayici.
+
+    Karar temsili = son token + TUM durumlarin havuzu. Havuz sayesinde
+    maskelenen konumlar ciktiyi GERCEKTEN etkiler (yalniz son tokene
+    bakilsaydi maske olu kod olurdu).
+    """
+
+    def __init__(self, boyut=16, bas_sayisi=2, tohum=2026):
+        self.boyut = boyut
+        self.bas_sayisi = bas_sayisi
+        self.bas_boyut = boyut // bas_sayisi
+        self.tohum = tohum
+        self.wq = [matris(self.bas_boyut, boyut, (tohum, "wq", h))
+                   for h in range(bas_sayisi)]
+        self.wk = [matris(self.bas_boyut, boyut, (tohum, "wk", h))
+                   for h in range(bas_sayisi)]
+        self.wv = [matris(self.bas_boyut, boyut, (tohum, "wv", h))
+                   for h in range(bas_sayisi)]
+        self.wo = matris(boyut, self.bas_boyut * bas_sayisi, (tohum, "wo"))
+        self.ff1 = matris(boyut * 2, boyut, (tohum, "ff1"))
+        self.ff2 = matris(boyut, boyut * 2, (tohum, "ff2"))
+
+    def _dikkat(self, durumlar, qk_acik, maske_acik):
+        n = len(durumlar)
+        olcek = math.sqrt(max(1, self.bas_boyut))
+        bas_ciktilari = []
+        for h in range(self.bas_sayisi):
+            q = [matvec(self.wq[h], x) for x in durumlar]
+            k = [matvec(self.wk[h], x) for x in durumlar]
+            v = [matvec(self.wv[h], x) for x in durumlar]
+            cikti = []
+            for i in range(n):
+                skorlar = []
+                for j in range(n):
+                    if maske_acik and j > i:
+                        skorlar.append(-1e9)
+                    elif qk_acik:
+                        skorlar.append(nokta(q[i], k[j]) / olcek)
+                    else:
+                        skorlar.append(0.0)
+                agirlik = kararli_softmax(skorlar)
+                cikti.append([sum(agirlik[j] * v[j][u] for j in range(n))
+                              for u in range(self.bas_boyut)])
+            bas_ciktilari.append(cikti)
+        return bas_ciktilari
+
+    def ileri(self, durumlar, qk_acik=True, maske_acik=True, ffn_acik=True):
+        n = len(durumlar)
+        bas_ciktilari = self._dikkat(durumlar, qk_acik, maske_acik)
+        yeni = []
+        for i in range(n):
+            birlesik = []
+            for h in range(self.bas_sayisi):
+                birlesik.extend(bas_ciktilari[h][i])
+            yeni.append(katman_norm(topla_vek(durumlar[i],
+                                              matvec(self.wo, birlesik))))
+        havuz = [sum(y[j] for y in yeni) / n for j in range(self.boyut)]
+        h_vek = topla_vek(yeni[-1], havuz)
+        if ffn_acik:
+            h_vek = topla_vek(h_vek, matvec(self.ff2, relu(matvec(self.ff1, h_vek))))
+        return katman_norm(h_vek)
+
+
+# ---------------------------------------------------------------- BOLUM 7d
+# Kronolojik bolme + purge/embargo + egitilen logit basligi (V = LONG/SHORT).
+
+
+def kronolojik_bol(indeksler, ufuk, embargo, oranlar=(0.6, 0.2, 0.2)):
+    """Train/kalibrasyon/test; sinirlarda purge (ufuk) + embargo uygulanir."""
+    sirali = sorted(indeksler)
+    n = len(sirali)
+    bosluk = int(ufuk) + int(embargo)
+    if n < 3 * (bosluk + 5):
+        return {"train": [], "kalibrasyon": [], "test": [], "atilan": n,
+                "not": "yetersiz ornek - bolme yapilamadi"}
+
+    kesim1 = int(n * oranlar[0])
+    kesim2 = int(n * (oranlar[0] + oranlar[1]))
+    train, kalibrasyon, test = sirali[:kesim1], sirali[kesim1:kesim2], sirali[kesim2:]
+
+    if train and kalibrasyon:      # PURGE: etiket penceresi sonraki bolmeye tasmasin
+        train = [i for i in train if i + bosluk < kalibrasyon[0]]
+    if kalibrasyon and test:
+        kalibrasyon = [i for i in kalibrasyon if i + bosluk < test[0]]
+
+    atilan = n - (len(train) + len(kalibrasyon) + len(test))
+    return {"train": train, "kalibrasyon": kalibrasyon, "test": test,
+            "atilan": atilan, "not": ""}
+
+
+def sizinti_var_mi(bolme, ufuk, giris_penceresi):
+    """Bir bolmenin etiket penceresi sonrakinin girdi penceresine giriyor mu?"""
+    for once, sonra in (("train", "kalibrasyon"), ("kalibrasyon", "test")):
+        a, b = bolme.get(once) or [], bolme.get(sonra) or []
+        if not a or not b:
+            continue
+        if max(a) + int(ufuk) >= min(b) - int(giris_penceresi) + 1:
+            return True
+    return False
+
+
+class Baslik:
+    """Iki sinifli (LONG/SHORT) egitilen logit basligi, agirlikli capraz entropi."""
+
+    def __init__(self, boyut=16, tohum=3000):
+        self.boyut = boyut
+        self.w = matris(2, boyut, (tohum, "baslik-w"), 0.02)
+        self.b = vektor(2, (tohum, "baslik-b"), 0.02)
+        self.tohum = tohum
+
+    def logit(self, x):
+        return [nokta(self.w[k], x) + self.b[k] for k in range(2)]
+
+    def kayip(self, ornekler):
+        if not ornekler:
+            return float("inf")
+        toplam = 0.0
+        for o in ornekler:
+            p = kararli_softmax(self.logit(o["x"]))
+            toplam += -math.log(max(1e-12, p[o["y"]]))
+        return toplam / len(ornekler)
+
+    def _sinif_agirliklari(self, ornekler):
+        sayim = [0, 0]
+        for o in ornekler:
+            sayim[o["y"]] += 1
+        toplam = sum(sayim) or 1
+        return [toplam / (2.0 * max(1, s)) for s in sayim]
+
+    def egit(self, ornekler, devir=60, ogrenme_hizi=0.10, agirlik_azalmasi=5e-4):
+        if not ornekler:
+            return
+        agirliklar = self._sinif_agirliklari(ornekler)
+        rng = tohumlu_rng(self.tohum, "karistir")
+        sira = list(range(len(ornekler)))
+        for adim in range(devir):
+            rng.shuffle(sira)
+            grad_w = [[0.0] * self.boyut for _ in range(2)]
+            grad_b = [0.0, 0.0]
+            for indeks in sira:
+                o = ornekler[indeks]
+                p = kararli_softmax(self.logit(o["x"]))
+                agirlik = agirliklar[o["y"]]
+                for k in range(2):
+                    hata = (p[k] - (1.0 if k == o["y"] else 0.0)) * agirlik
+                    for j in range(self.boyut):
+                        grad_w[k][j] += hata * o["x"][j]
+                    grad_b[k] += hata
+            hiz = ogrenme_hizi / (1.0 + adim / 25.0)
+            payda = max(1, len(ornekler))
+            for k in range(2):
+                for j in range(self.boyut):
+                    self.w[k][j] -= hiz * (grad_w[k][j] / payda
+                                           + agirlik_azalmasi * self.w[k][j])
+                self.b[k] -= hiz * grad_b[k] / payda
+
+
+# ---------------------------------------------------------------- BOLUM 7e
+# Kalibrasyon: T, DAGITILAN dagilimin kendisinde fit edilir.
+
+SICAKLIK_IZGARASI = tuple(math.exp(-2.0 + 4.0 * i / 40.0) for i in range(41))
+
+
+def topluluk_olasilik(x, basliklar, sicaklik=1.0):
+    """Her baslik icin softmax alinir, SONRA olasiliklar ortalanir."""
+    gorusler = [kararli_softmax(b.logit(x), sicaklik) for b in basliklar]
+    n = len(gorusler) or 1
+    p = [sum(g[k] for g in gorusler) / n for k in range(2)]
+    argmaxlar = [0 if g[0] >= g[1] else 1 for g in gorusler]
+    uzlasi = max(argmaxlar.count(0), argmaxlar.count(1)) / n
+    dagilim = sum(sum((g[k] - p[k]) ** 2 for g in gorusler) / n
+                  for k in range(2)) / 2.0
+    return {"p": p, "gorusler": gorusler, "uzlasi": uzlasi, "dagilim": dagilim}
+
+
+def _nll(ornekler, basliklar, sicaklik):
+    if not ornekler:
+        return float("inf")
+    toplam = 0.0
+    for o in ornekler:
+        p = topluluk_olasilik(o["x"], basliklar, sicaklik)["p"]
+        toplam += -math.log(max(1e-12, p[o["y"]]))
+    return toplam / len(ornekler)
+
+
+def sicaklik_fit(ornekler, basliklar):
+    """T'yi DAGITILAN dagilimda (olasilik-havuzu) NLL minimize ederek secer."""
+    en_iyi_T, en_iyi_nll = 1.0, float("inf")
+    for T in SICAKLIK_IZGARASI:
+        deger = _nll(ornekler, basliklar, T)
+        if deger < en_iyi_nll:
+            en_iyi_T, en_iyi_nll = T, deger
+    sinirda = (en_iyi_T <= SICAKLIK_IZGARASI[0] * 1.001
+               or en_iyi_T >= SICAKLIK_IZGARASI[-1] * 0.999)
+    return {"T": en_iyi_T, "nll": en_iyi_nll, "sinirda": sinirda}
+
+
+def sicaklik_karari_cevirir_mi(baslik_logitleri, izgara=(0.2, 1.0, 5.0)):
+    """Karisim softmaxinda T, argmax'i degistirebilir mi?
+
+    Tek softmax monotondur ama OLASILIK-HAVUZU karisimi degildir: T->0'da
+    karar oy sayisina, T->buyukte ortalama logit farkina duser. Ikisi
+    celisirse yon T ile doner. Bu bir hata degil OLGUDUR; sistem bunu
+    olcup raporlar (63-bulgu #24).
+    """
+    kararlar = set()
+    for T in izgara:
+        gorusler = [kararli_softmax(z, T) for z in baslik_logitleri]
+        n = len(gorusler) or 1
+        p_long = sum(g[0] for g in gorusler) / n
+        p_short = sum(g[1] for g in gorusler) / n
+        kararlar.add("LONG" if p_long >= p_short else "SHORT")
+    return len(kararlar) > 1
+
+
+def izotonik_fit(ciftler):
+    """PAVA ile monoton kalibrasyon egrisi. Donen fonksiyon p -> p_kalibre."""
+    sirali = sorted(ciftler, key=lambda c: c[0])
+    if not sirali:
+        return lambda p: p
+    x = [c[0] for c in sirali]
+    y = [float(c[1]) for c in sirali]
+    agirlik = [1.0] * len(y)
+    i = 0
+    while i < len(y) - 1:
+        if y[i] <= y[i + 1] + 1e-12:
+            i += 1
+            continue
+        toplam_a = agirlik[i] + agirlik[i + 1]
+        ort = (y[i] * agirlik[i] + y[i + 1] * agirlik[i + 1]) / toplam_a
+        y[i:i + 2] = [ort]
+        agirlik[i:i + 2] = [toplam_a]
+        x[i:i + 2] = [x[i]]
+        i = max(0, i - 1)
+
+    def uygula(p):
+        if p <= x[0]:
+            return y[0]
+        for k in range(1, len(x)):
+            if p <= x[k]:
+                return y[k - 1]
+        return y[-1]
+
+    return uygula
+
+
+def kalibrasyon_sec(kal_ornekler, basliklar):
+    """Sicaklik ve izotonik arasinda holdout NLL'e gore secim."""
+    sicaklik = sicaklik_fit(kal_ornekler, basliklar)
+
+    ham = [(topluluk_olasilik(o["x"], basliklar, 1.0)["p"][0], o["y"])
+           for o in kal_ornekler]
+    izo = izotonik_fit(ham)
+    izo_nll = float("inf")
+    if ham:
+        toplam = 0.0
+        for p_ham, y in ham:
+            p_kal = min(1.0 - 1e-9, max(1e-9, izo(p_ham)))
+            toplam += -math.log(p_kal if y == 1 else 1.0 - p_kal)
+        izo_nll = toplam / len(ham)
+
+    if izo_nll < sicaklik["nll"]:
+        return {"yontem": "izotonik", "T": 1.0, "fn": izo, "nll": izo_nll,
+                "sinirda": False}
+    return {"yontem": "sicaklik", "T": sicaklik["T"], "fn": None,
+            "nll": sicaklik["nll"], "sinirda": sicaklik["sinirda"]}
