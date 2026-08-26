@@ -155,6 +155,20 @@ class KalibrasyonMetrikTesti(unittest.TestCase):
         ciftler = [(0.5, 1)] * 10 + [(0.5, 0)] * 10
         self.assertAlmostEqual(m.auroc(ciftler), 0.5, places=9)
 
+    def test_mce_en_kotu_kovayi_verir(self):
+        """PD-2: mce() uygulanmisti ama testi yoktu."""
+        # iyi kova: guven 0.95, dogruluk 1.0 -> fark 0.05
+        # kotu kova: guven 0.55, dogruluk 0.0 -> fark 0.55
+        ciftler = [(0.95, 1)] * 20 + [(0.55, 0)] * 20
+        self.assertAlmostEqual(m.mce(ciftler), 0.55, places=9)
+
+    def test_mce_ece_den_buyuk_esit(self):
+        ciftler = [(0.95, 1)] * 20 + [(0.55, 0)] * 20
+        self.assertGreaterEqual(m.mce(ciftler), m.ece(ciftler))
+
+    def test_mce_bos_girdide_none(self):
+        self.assertIsNone(m.mce([]))
+
     def test_grup_ece_en_kotuyu_bulur(self):
         gruplu = {
             "buyuk": [(0.8, 1)] * 95 + [(0.8, 0)] * 5,
@@ -259,6 +273,41 @@ class ShrinkageKellyEntegrasyonTesti(unittest.TestCase):
 
 
 # ----------------------------------------------------------------- Task 5
+
+class EsikEtiketiTesti(unittest.TestCase):
+    """PD-3: depo sozlesmesi (CLAUDE.md) etiketsiz gizli esigi YASAKLIYOR.
+
+    Kalibre edilemeyen her sabit, kaynagi ve gerekcesiyle beyan edilmeli.
+    """
+
+    def test_esik_kaynagi_sozlugu_var(self):
+        self.assertTrue(hasattr(m, "ESIK_KAYNAGI"))
+
+    def test_her_sabit_esik_etiketli(self):
+        for ad in ("ECE_TAVANI", "ASGARI_OLCUM", "SABIT_ESIK_TOLERANSI"):
+            self.assertIn(ad, m.ESIK_KAYNAGI, f"{ad} etiketsiz - gizli esik yasak")
+
+    def test_etiket_zorunlu_alanlari_icerir(self):
+        for ad, kayit in m.ESIK_KAYNAGI.items():
+            for alan in ("deger", "kaynak", "gerekce"):
+                self.assertIn(alan, kayit, f"{ad}.{alan} eksik")
+
+    def test_etiket_degeri_gercek_sabitle_ayni(self):
+        self.assertEqual(m.ESIK_KAYNAGI["ECE_TAVANI"]["deger"], m.ECE_TAVANI)
+        self.assertEqual(m.ESIK_KAYNAGI["ASGARI_OLCUM"]["deger"], m.ASGARI_OLCUM)
+
+    def test_kalibre_edilmemis_esik_acikca_beyan_edilir(self):
+        """Kaynak 'VARSAYIM' ise gerekce bos birakilamaz."""
+        for ad, kayit in m.ESIK_KAYNAGI.items():
+            if kayit["kaynak"] == "VARSAYIM":
+                self.assertTrue(kayit["gerekce"].strip(),
+                                f"{ad} VARSAYIM ama gerekcesi bos")
+
+    def test_esik_raporu_metin_uretir(self):
+        metin = m.esik_raporu()
+        self.assertIn("ECE_TAVANI", metin)
+        self.assertIn("VARSAYIM", metin)
+
 
 class GeometriTesti(unittest.TestCase):
     def test_ilk_gecis_ayni_barda_iki_bariyer_stop_sayilir(self):

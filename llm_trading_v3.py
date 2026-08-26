@@ -23,6 +23,58 @@ YON_SOZLUGU = ("LONG", "SHORT")
 
 EPSILON = 1e-12
 
+# ---------------------------------------------------------------- ESIK BEYANI
+# Depo sozlesmesi (CLAUDE.md): kalibre edilemeyen her sabit ACIKCA etiketlenir.
+# "Etiketsiz gizli esik" YASAK. Kaynak alani uc degerden biri olabilir:
+#   OLCULEN  - bu kosunun verisinden istatistikle turetildi
+#   YAPISAL  - matematiksel tanimdan gelir, secim degil
+#   VARSAYIM - kalibre EDILMEDI; gerekcesi zorunlu, cikitida beyan edilir
+
+ECE_TAVANI = 0.10        # kalibrasyon guvenilmezlik esigi
+ASGARI_OLCUM = 20        # ilk-gecis olcumunun guvenilir sayilmasi icin asgari n
+SABIT_ESIK_TOLERANSI = 1e-9   # bir kolonun "sabit" sayilmasi icin std tavani
+
+ESIK_KAYNAGI = {
+    "ECE_TAVANI": {
+        "deger": ECE_TAVANI,
+        "kaynak": "VARSAYIM",
+        "gerekce": (
+            "Kalibrasyon literaturunde yaygin bir rapor esigi; bu depoda HENUZ "
+            "kalibre EDILMEDI. Etkisi tek yonludur: buyutulurse s_kalibrasyon "
+            "artar ve stake buyur, kucultulurse stake kuculur. Fail-closed "
+            "tarafta kalmak icin kucuk secildi. Olcum yolu: grup ECE dagiliminin "
+            "ust yuzdeligi (holdout uzerinde) — yeterli ornek birikince turetilmeli."
+        ),
+    },
+    "ASGARI_OLCUM": {
+        "deger": ASGARI_OLCUM,
+        "kaynak": "VARSAYIM",
+        "gerekce": (
+            "Ikili oranin Wilson araliginin ise yarar genislige inmesi icin kaba "
+            "alt sinir; kalibre EDILMEDI. n=20'de %95 aralik genisligi ~0.4'tur, "
+            "yani olcum zaten zayif sayilir ve p_bilesik geometrik ortalamayla "
+            "bastirilir. Olcum yolu: hedeflenen aralik genisligine gore n cozulmeli."
+        ),
+    },
+    "SABIT_ESIK_TOLERANSI": {
+        "deger": SABIT_ESIK_TOLERANSI,
+        "kaynak": "YAPISAL",
+        "gerekce": (
+            "Kayan nokta sifir-varyans toleransi; istatistiksel bir secim degil, "
+            "float64 hassasiyet sinirindan gelir."
+        ),
+    },
+}
+
+
+def esik_raporu():
+    """Sabit esikleri kaynagi ve gerekcesiyle beyan eder (gizli esik yasagi)."""
+    satirlar = ["SABIT ESIK BEYANI (etiketsiz gizli esik yasak):"]
+    for ad, kayit in ESIK_KAYNAGI.items():
+        satirlar.append(f"  {ad} = {kayit['deger']}  [{kayit['kaynak']}]")
+        satirlar.append(f"      {kayit['gerekce']}")
+    return "\n".join(satirlar)
+
 
 # ---------------------------------------------------------------- BOLUM 1
 # Determinizm ve temel yardimcilar.
@@ -192,9 +244,6 @@ def grup_ece(ciftler_gruplu, bin_sayisi=10):
 # Shrinkage: kanit yoksa olasilik sansa cekilir, boylece stake kendiliginden
 # sifira iner. Sabit esik YOKTUR; uc carpan da veriden gelir.
 
-ECE_TAVANI = 0.10  # bu degerin ustunde kalibrasyon guvenilmez sayilir
-
-
 def shrinkage_katsayisi(dogru, toplam, ece_enkotu, dolu_kanal, toplam_kanal):
     """s = s_kanit * s_kalibrasyon * s_kapsam, hepsi [0,1]."""
     alt, _ = wilson_araligi(dogru, toplam)
@@ -253,7 +302,6 @@ IZGARA = (
     (1.5, 2.0), (1.5, 3.0), (1.5, 4.0), (1.5, 5.0),
     (2.0, 3.0), (2.0, 4.0), (2.0, 6.0),
 )
-ASGARI_OLCUM = 20  # bu sayidan az karar veren ornek varsa olcum guvenilmez
 
 
 def ilk_gecis_olcum(barlar, indeksler, yon, stop_k, hedef_k, atr_serisi, azami_bar):

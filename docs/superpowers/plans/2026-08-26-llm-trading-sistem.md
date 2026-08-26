@@ -495,10 +495,22 @@ git commit -m "feat: kalibrasyon metrikleri (ECE duyarlilik, MCE, Brier, AUROC, 
 - Modify: `test_llm_trading_v3.py`
 
 **Interfaces:**
-- Consumes: `wilson_araligi`, `kirp` (Task 1, 3)
+- Consumes: `wilson_araligi`, `kirp` (Task 1, 3), `basabas_p`, `kelly_asimetrik` (Task 2)
 - Produces:
   - `shrinkage_katsayisi(dogru: int, toplam: int, ece_enkotu: float | None, dolu_kanal: int, toplam_kanal: int) -> dict` → `{"s": float, "s_kanit": float, "s_kalibrasyon": float, "s_kapsam": float}`
-  - `daralt(p: float, s: float) -> float`
+  - `daralt(p: float, s: float, hedef: float = 0.5) -> float`
+  - `stake_hesapla(p_ham: float, s: float, b: float, a: float, lam: float = 1.0) -> dict` → `{"f": float, "p_kullanilan": float | None, "p0": float | None, "not": str}`
+  - `ESIK_KAYNAGI: dict`, `esik_raporu() -> str`
+
+> **DÜZELTME (denetçi bulgusu PD-1, uygulama sırasında ölçülerek bulundu):**
+> Daraltma hedefi **`0.5` DEĞİLDİR**. `p = 0.5`, bahsin beklenen değerinin sıfır olduğu
+> anlamına gelmez: ödül asimetrikse (`b > a`) `p=0.5`'te bile `E[R] > 0` kalır ve Kelly
+> pozitif stake verir. Ölçüldü: `R=2.0, cost_r=0.3` ⇒ `b=1.7, a=1.3` ⇒ `f* = 0.0905`,
+> yani "kanıt yoksa stake yok" sözleşmesi **sağlanmıyordu**.
+> Tarafsız hedef bahsin **başabaş olasılığıdır**: `p0 = a/(a+b)`. Bu hedefle `f*` tam sıfır
+> olur (`R ∈ {1.33, 2.0, 3.0, 5.0, 1.5}` için `|f*| < 1e-16` ölçüldü).
+> **Sonraki görevler (özellikle Task 12 kalibrasyon ve Task 13 decoding) `0.5` hedefini
+> MİRAS ALMAMALIDIR** — stake sözleşmesi yalnız `stake_hesapla()` üzerinden geçer.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -545,12 +557,26 @@ class ShrinkageTesti(unittest.TestCase):
 
 
 class ShrinkageKellyEntegrasyonTesti(unittest.TestCase):
+    """Sozlesmenin cekirdegi: kanit yoksa f* matematigin kendisiyle 0 olur."""
+
     def test_kanit_yokken_stake_sifir(self):
-        """Sozlesmenin cekirdegi: kanit yoksa f* matematigin kendisiyle 0 olur."""
         r = m.shrinkage_katsayisi(17, 48, 0.02, 5, 5)
-        p = m.daralt(0.95, r["s"])
         b, a = m.net_kanatlar(R=2.0, cost_r=0.3)
-        self.assertEqual(m.kelly_asimetrik(p, b, a), 0.0)
+        self.assertEqual(m.stake_hesapla(0.95, r["s"], b, a)["f"], 0.0)
+
+    def test_kanit_yokken_stake_sifir_her_geometride(self):
+        r = m.shrinkage_katsayisi(17, 48, 0.02, 5, 5)
+        for R, cost_r in ((1.3333, 0.6), (2.0, 0.3), (3.0, 0.1),
+                          (5.0, 0.05), (1.5, 0.0)):
+            b, a = m.net_kanatlar(R, cost_r)
+            self.assertAlmostEqual(m.stake_hesapla(0.95, r["s"], b, a)["f"],
+                                   0.0, places=12)
+
+    def test_eski_zincir_neden_yetmiyordu(self):
+        """Regresyon korumasi: 0.5 hedefli daraltma sozlesmeyi SAGLAMAZ."""
+        b, a = m.net_kanatlar(R=2.0, cost_r=0.3)
+        p_yanlis = m.daralt(0.95, 0.0, hedef=0.5)
+        self.assertGreater(m.kelly_asimetrik(p_yanlis, b, a), 0.0)
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -591,9 +617,26 @@ def shrinkage_katsayisi(dogru, toplam, ece_enkotu, dolu_kanal, toplam_kanal):
     }
 
 
-def daralt(p, s):
-    """p'yi kanit gucune gore 0.5'e dogru daraltir."""
-    return 0.5 + kirp(s, 0.0, 1.0) * (kirp(p, 0.0, 1.0) - 0.5)
+def daralt(p, s, hedef=0.5):
+    """p'yi kanit gucune gore HEDEF'e dogru daraltir.
+
+    Tarafsiz hedef 0.5 DEGILDIR: p=0.5, bahsin EV'sinin sifir oldugu anlamina
+    gelmez (odul asimetrikse E[R] pozitif kalir). Stake sozlesmesi icin dogru
+    hedef bahsin BASABAS olasiligidir; bkz. stake_hesapla.
+    """
+    hedef = kirp(hedef, 0.0, 1.0)
+    return hedef + kirp(s, 0.0, 1.0) * (kirp(p, 0.0, 1.0) - hedef)
+
+
+def stake_hesapla(p_ham, s, b, a, lam=1.0):
+    """Stake sozlesmesinin TEK garanti noktasi: kanit yoksa f* tam olarak 0."""
+    p0 = basabas_p(b, a)
+    if p0 is None:                      # kazanc kanadi yok: bahis imkansiz
+        return {"f": 0.0, "p_kullanilan": None, "p0": None,
+                "not": "kazanc kanadi <= 0 - bahis matematiksel olarak imkansiz"}
+    p_kullanilan = daralt(p_ham, s, hedef=p0)
+    f = kelly_asimetrik(p_kullanilan, b, a) * max(0.0, float(lam))
+    return {"f": f, "p_kullanilan": p_kullanilan, "p0": p0, "not": ""}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
