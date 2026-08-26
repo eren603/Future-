@@ -907,6 +907,21 @@ class Baslik:
 SICAKLIK_IZGARASI = tuple(math.exp(-2.0 + 4.0 * i / 40.0) for i in range(41))
 
 
+LONG_SINIFI = esik_kaydet(
+    "LONG_SINIFI", 1, "YAPISAL",
+    "Baslik logit vektorunde LONG'un indeksi. Istatistiksel secim DEGIL, "
+    "etiket tanimindan gelir: etiket_uret LONG hedefi once vuruldugunda 1 "
+    "doner ve Baslik.egit p[y]'yi buyutur, dolayisiyla P(LONG dogru) = p[1]. "
+    "Yon okuyan HER yer bu sabitten gecer; ham indeks yazmak yasaktir - eksen "
+    "iki yerde ayri ayri varsayilirsa yon SESSIZCE tersine doner ve modul ici "
+    "tutarlilik testleri bunu YAKALAMAZ.")
+
+
+def long_olasiligi(p):
+    """Olasilik vektorunden LONG olasiligi. Eksene TEK erisim noktasi."""
+    return p[LONG_SINIFI]
+
+
 def topluluk_olasilik(x, basliklar, sicaklik=1.0):
     """Her baslik icin softmax alinir, SONRA olasiliklar ortalanir."""
     gorusler = [kararli_softmax(b.logit(x), sicaklik) for b in basliklar]
@@ -953,8 +968,8 @@ def sicaklik_karari_cevirir_mi(baslik_logitleri, izgara=(0.2, 1.0, 5.0)):
     for T in izgara:
         gorusler = [kararli_softmax(z, T) for z in baslik_logitleri]
         n = len(gorusler) or 1
-        p_long = sum(g[0] for g in gorusler) / n
-        p_short = sum(g[1] for g in gorusler) / n
+        p_long = sum(long_olasiligi(g) for g in gorusler) / n
+        p_short = 1.0 - p_long
         kararlar.add("LONG" if p_long >= p_short else "SHORT")
     return len(kararlar) > 1
 
@@ -994,7 +1009,7 @@ def kalibrasyon_sec(kal_ornekler, basliklar):
     """Sicaklik ve izotonik arasinda holdout NLL'e gore secim."""
     sicaklik = sicaklik_fit(kal_ornekler, basliklar)
 
-    ham = [(topluluk_olasilik(o["x"], basliklar, 1.0)["p"][0], o["y"])
+    ham = [(long_olasiligi(topluluk_olasilik(o["x"], basliklar, 1.0)["p"]), o["y"])
            for o in kal_ornekler]
     izo = izotonik_fit(ham)
     izo_nll = float("inf")
@@ -1393,7 +1408,8 @@ class BoruHatti:
 
         ciftler = []
         for o in test:
-            p = topluluk_olasilik(o["x"], basliklar, kalib["T"])["p"][0]
+            p = long_olasiligi(
+                topluluk_olasilik(o["x"], basliklar, kalib["T"])["p"])
             if kalib["fn"] is not None:
                 p = kalib["fn"](p)
             ciftler.append((p, o["y"]))
@@ -1409,7 +1425,7 @@ class BoruHatti:
         son = len(barlar) - 1
         x_son = self.kodlayici.ileri(self._durumlar(satir_kumesi, olcekleyiciler, son))
         top = topluluk_olasilik(x_son, basliklar, kalib["T"])
-        p_ham = top["p"][0]
+        p_ham = long_olasiligi(top["p"])
         if kalib["fn"] is not None:
             p_ham = kalib["fn"](p_ham)
         iz["halka_9"] = {"ad": "decoding", "p_long": p_ham, "hold": False}

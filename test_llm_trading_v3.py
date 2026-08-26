@@ -857,6 +857,65 @@ class DecodingTesti(unittest.TestCase):
         self.assertAlmostEqual(s["hedef"], 94.0, places=9)
 
 
+class SinifEkseniTesti(unittest.TestCase):
+    """etiket_uret'in y'si ile decode'un okudugu olasilik AYNI ekseni gostermeli.
+
+    Bu sinif bir SEMANTIK bagi sinar: modul ici tutarlilik testleri (softmax
+    toplami 1, decode daima yon uretir) eksen ters olsa bile GECER. Bag ancak
+    ogrenilebilir bir sinyalle olculur: etiket kuralini bilen bir baslik
+    egitilir, sonra decode'un ayni yonu soyleyip soylemedigine BAKILIR.
+    """
+
+    def _ogrenilebilir(self, n=400, boyut=4, tohum="eksen-test"):
+        rng = m.tohumlu_rng(tohum)
+        kume = []
+        for _ in range(n):
+            x = [rng.uniform(-1, 1) for _ in range(boyut)]
+            # etiket_uret sozlesmesi: 1 = "LONG hedefi once vuruldu" = LONG DOGRU
+            kume.append({"x": x, "y": 1 if x[0] > 0 else 0})
+        return kume
+
+    def setUp(self):
+        self.kume = self._ogrenilebilir()
+        self.b = m.Baslik(boyut=4, tohum=42)
+        self.b.egit(self.kume, devir=120, ogrenme_hizi=0.20)
+
+    def _p_long(self, x):
+        return m.long_olasiligi(m.topluluk_olasilik(x, [self.b])["p"])
+
+    def test_long_dogru_ornekte_decode_LONG_der(self):
+        self.assertEqual(m.decode(self._p_long([0.9, 0.0, 0.0, 0.0])), "LONG")
+
+    def test_long_yanlis_ornekte_decode_SHORT_der(self):
+        self.assertEqual(m.decode(self._p_long([-0.9, 0.0, 0.0, 0.0])), "SHORT")
+
+    def test_ogrenilebilir_sinyalde_dogruluk_sanstan_yuksek(self):
+        """Eksen tersse bu deger 0.5'in COK ALTINA duser (1 - dogruluk)."""
+        dogru = sum(1 for o in self.kume
+                    if (1 if self._p_long(o["x"]) >= 0.5 else 0) == o["y"])
+        self.assertGreater(dogru / len(self.kume), 0.9)
+
+    def test_eksen_tek_yerde_beyan_edilir(self):
+        """Ham indeks (p[0]/p[1]) ile yon okumak yasak: eksen kayabilir."""
+        self.assertTrue(hasattr(m, "LONG_SINIFI"))
+        self.assertEqual(m.long_olasiligi([0.3, 0.7]), [0.3, 0.7][m.LONG_SINIFI])
+
+    def test_kaynakta_ham_indeksle_yon_okunmuyor(self):
+        """Modulde `["p"][0]` kalmamali - eksen kacisi buradan sizar."""
+        kaynak = pathlib.Path(m.__file__).read_text(encoding="utf-8")
+        self.assertNotIn('["p"][0]', kaynak)
+        self.assertNotIn('["p"][1]', kaynak)
+
+    def test_sicaklik_karari_cevirir_mi_ayni_ekseni_kullanir(self):
+        """T taramasi da LONG_SINIFI'ndan gecmeli; aksi halde iki eksen olur."""
+        logitler = [[0.0, 3.0], [0.0, 3.0], [0.0, 3.0]]   # net LONG (sinif 1)
+        for T in (0.2, 1.0, 5.0):
+            gorusler = [m.kararli_softmax(z, T) for z in logitler]
+            p_long = sum(m.long_olasiligi(g) for g in gorusler) / len(gorusler)
+            self.assertEqual(m.decode(p_long), "LONG")
+        self.assertFalse(m.sicaklik_karari_cevirir_mi(logitler))
+
+
 class KararUretTesti(unittest.TestCase):
     def _baglam(self, kanit_yok=True):
         barlar = [{"o": 100 + i * 0.1, "h": 100 + i * 0.1 + 0.5,
