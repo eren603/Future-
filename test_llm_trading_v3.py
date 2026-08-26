@@ -735,6 +735,43 @@ class SizintiTesti(unittest.TestCase):
         self.assertEqual(b["train"], [])
         self.assertIn("yetersiz", b["not"])
 
+    # -- 4H token erisimi: purge/embargo penceresi 15M gecikmesi DEGILDIR --
+
+    def test_girdi_erisimi_4h_varken_bar_orani_kadar_buyur(self):
+        """Bir 4H token'i 16 adet 15M barini OZETLER; erisim 16 kat uzar."""
+        self.assertEqual(m.girdi_erisimi(4, h4_var=False), 4)
+        self.assertEqual(m.girdi_erisimi(4, h4_var=True), 4 * m.H4_BAR_ORANI)
+
+    def test_sizinti_denetimi_4h_erisimini_hesaba_katar(self):
+        """Ayni bolme: 15M penceresiyle 'temiz', gercek erisimle SIZINTILI.
+
+        Fail-open rapor yasagi: olculmeyen sey 'yok' diye raporlanamaz.
+        """
+        bolme = {"train": list(range(0, 400, 8)),
+                 "kalibrasyon": list(range(423, 540, 8)),
+                 "test": list(range(556, 660, 8))}
+        self.assertFalse(m.sizinti_var_mi(bolme, 16, m.girdi_erisimi(4, False)))
+        self.assertTrue(m.sizinti_var_mi(bolme, 16, m.girdi_erisimi(4, True)))
+
+    def test_bolme_giris_erisimi_kadar_purge_eder(self):
+        indeksler = list(range(0, 700, 7))
+        erisim = m.girdi_erisimi(4, h4_var=True)
+        b = m.kronolojik_bol(indeksler, ufuk=16, embargo=4, giris_erisimi=erisim)
+        self.assertTrue(b["train"] and b["kalibrasyon"] and b["test"],
+                        "erisim eklenince bolme dejenere OLMAMALI")
+        self.assertGreaterEqual(b["kalibrasyon"][0] - b["train"][-1], 16 + 4 + erisim)
+        self.assertFalse(m.sizinti_var_mi(b, 16, erisim))
+
+    def test_dejenere_kapisi_ornek_biriminde_olculur(self):
+        """Kapi bar-boslugunu ornek sayisiyla kiyaslarsa alt-orneklemde yanilir.
+
+        700 barda 100 ornek (adim 7) purge'u ~12 ornege mal olur, 84'e DEGIL.
+        """
+        indeksler = list(range(0, 700, 7))
+        b = m.kronolojik_bol(indeksler, ufuk=16, embargo=4,
+                             giris_erisimi=m.girdi_erisimi(4, True))
+        self.assertEqual(b["not"], "")
+
 
 class BaslikTesti(unittest.TestCase):
     def _ogrenilebilir(self, n=200):
@@ -817,6 +854,76 @@ class KalibrasyonFitTesti(unittest.TestCase):
         r = m.kalibrasyon_sec(kal, basliklar)
         self.assertIn(r["yontem"], ("sicaklik", "izotonik"))
         self.assertTrue(math.isfinite(r["nll"]))
+
+    # -- yarisma adaleti: ayni kumede fit + puanlama izotoniki KAYIRIR --
+
+    def _sinyalsiz(self, tohum, n=120, boyut=4):
+        """Etiketi x'ten BAGIMSIZ kume: hicbir yontem gercek kenar bulamaz."""
+        rng = m.tohumlu_rng(tohum)
+        basliklar = [m.Baslik(boyut=boyut, tohum=100 + k) for k in range(3)]
+        ornekler = [{"x": [rng.uniform(-1, 1) for _ in range(boyut)],
+                     "y": 1 if rng.random() < 0.5 else 0} for _ in range(n)]
+        return basliklar, ornekler
+
+    @staticmethod
+    def _nll(ciftler):
+        toplam = 0.0
+        for p, y in ciftler:
+            p = min(1.0 - 1e-9, max(1e-9, p))
+            toplam += -math.log(p if y == 1 else 1.0 - p)
+        return toplam / len(ciftler)
+
+    def _ham(self, ornekler, basliklar, T=1.0):
+        return [(m.long_olasiligi(m.topluluk_olasilik(o["x"], basliklar, T)["p"]),
+                 o["y"]) for o in ornekler]
+
+    def test_ezberleyen_izotonik_secilmez(self):
+        """Ic-orneklemde izotonik KAZANIR, dis-orneklemde KAYBEDER.
+
+        Izotonik n serbestlik derecesine kadar cikar; sicaklik tek
+        parametredir. Ayni kumede fit edilip ayni kumede puanlanan bir
+        yarisma bu yuzden yapisal olarak izotoniki secer - kenar degil
+        EZBER olculur. Adil yarisma sicakligi secmeli.
+        """
+        basliklar, ornekler = self._sinyalsiz("kal-b")
+        kal, dis = ornekler[:60], ornekler[60:]
+        izo = m.izotonik_fit(self._ham(kal, basliklar))
+        sic = m.sicaklik_fit(kal, basliklar)
+
+        ic_izo = self._nll([(izo(p), y) for p, y in self._ham(kal, basliklar)])
+        ic_sic = self._nll(self._ham(kal, basliklar, sic["T"]))
+        dis_izo = self._nll([(izo(p), y) for p, y in self._ham(dis, basliklar)])
+        dis_sic = self._nll(self._ham(dis, basliklar, sic["T"]))
+        # Kurulumun gecerliligi: tuzak GERCEKTEN kurulu olmali.
+        self.assertLess(ic_izo, ic_sic, "kurulum bozuk: izotonik ic-orneklemde kaybediyor")
+        self.assertGreater(dis_izo, dis_sic, "kurulum bozuk: izotonik dis-orneklemde kazaniyor")
+
+        self.assertEqual(m.kalibrasyon_sec(kal, basliklar)["yontem"], "sicaklik")
+
+    def test_yarisma_ic_holdoutta_yapilir_ve_beyan_edilir(self):
+        basliklar, ornekler = self._sinyalsiz("kal-a")
+        r = m.kalibrasyon_sec(ornekler[:60], basliklar)
+        self.assertEqual(r["yarisma"], "ic-holdout")
+
+    def test_yetersiz_ornekte_yarisma_yapilmaz_fail_closed(self):
+        """Bolunemeyecek kadar az ornekte ezber riski en dusuk yontem secilir."""
+        basliklar, ornekler = self._sinyalsiz("kal-c")
+        r = m.kalibrasyon_sec(ornekler[:2 * m.ASGARI_OLCUM - 1], basliklar)
+        self.assertEqual(r["yontem"], "sicaklik")
+        self.assertIn("yetersiz", r["yarisma"])
+
+    def test_kazanan_tum_kalibrasyon_kumesinde_yeniden_fit_edilir(self):
+        """Yarisma ayirmak icindir; kazanan veriyi ISRAF etmemeli."""
+        basliklar, ornekler = self._sinyalsiz("kal-d", n=200)
+        kal = ornekler[:120]
+        r = m.kalibrasyon_sec(kal, basliklar)
+        if r["yontem"] == "sicaklik":
+            self.assertAlmostEqual(r["T"], m.sicaklik_fit(kal, basliklar)["T"],
+                                   places=9)
+        else:
+            tam = m.izotonik_fit(self._ham(kal, basliklar))
+            for p in (0.1, 0.3, 0.5, 0.7, 0.9):
+                self.assertAlmostEqual(r["fn"](p), tam(p), places=9)
 
     def test_karisim_softmaxinda_sicaklik_karari_cevirebilir(self):
         """63-bulgu #24: olasilik-havuzunda T argmax'i DEGISTIREBILIR.

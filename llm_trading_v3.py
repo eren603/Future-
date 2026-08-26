@@ -108,6 +108,12 @@ LIKIDASYON_GUVENLIK_PAYI = esik_kaydet(
     "muhafazakar taraf. Olcum yolu: gerceklesmis en kotu bar-ici sapmanin "
     "dagilimindan ust yuzdelik.")
 
+H4_BAR_ORANI = esik_kaydet(
+    "H4_BAR_ORANI", 16, "YAPISAL",
+    "Bir 4H bari kac 15M barini kapsar (4*60/15). Zaman dilimi tanimindan "
+    "gelir, istatistiksel secim DEGILDIR.")
+
+
 ISINMA_BARI = esik_kaydet(
     "ISINMA_BARI", 20, "YAPISAL",
     "Gostergelerin (EMA/ATR/RSI/kanal) anlamli deger uretmesi icin gereken "
@@ -811,12 +817,44 @@ class Kodlayici:
 # Kronolojik bolme + purge/embargo + egitilen logit basligi (V = LONG/SHORT).
 
 
-def kronolojik_bol(indeksler, ufuk, embargo, oranlar=(0.6, 0.2, 0.2)):
-    """Train/kalibrasyon/test; sinirlarda purge (ufuk) + embargo uygulanir."""
+def girdi_erisimi(gecikme_sayisi=None, h4_var=True, bar_orani=None):
+    """Bir ornegin GERIYE dogru okudugu 15M bar sayisi.
+
+    15M ailesi `gecikme_sayisi` bar geriye bakar. 4H ailesi ayni sayida 4H
+    bar geriye bakar ve her 4H bar `bar_orani` adet 15M barini OZETLER -
+    yani erisim 16 kat uzar. Purge/embargo bu erisime gore olculmelidir:
+    daha kisa bir pencereyle yapilan sizinti denetimi sizintiyi OLCEMEZ,
+    "yok" diye raporlar (fail-open yalan).
+    """
+    gecikme_sayisi = GECIKME_SAYISI if gecikme_sayisi is None else int(gecikme_sayisi)
+    bar_orani = H4_BAR_ORANI if bar_orani is None else int(bar_orani)
+    return gecikme_sayisi * (bar_orani if h4_var else 1)
+
+
+def _ornek_adimi(sirali):
+    """Ornekler arasi ortalama BAR araligi (alt-orneklem adimi)."""
+    if len(sirali) < 2:
+        return 1.0
+    return max(1.0, (sirali[-1] - sirali[0]) / float(len(sirali) - 1))
+
+
+def kronolojik_bol(indeksler, ufuk, embargo, giris_erisimi=0,
+                   oranlar=(0.6, 0.2, 0.2)):
+    """Train/kalibrasyon/test; sinirlarda purge + embargo + girdi erisimi.
+
+    Bosluk UC bilesenlidir: etiket ufku (ileri), embargo (guvenlik) ve
+    girdi erisimi (geri). Ucuncusu olmadan onceki bolmenin ETIKET penceresi
+    sonraki bolmenin GIRDI penceresiyle ortusur.
+    """
     sirali = sorted(indeksler)
     n = len(sirali)
-    bosluk = int(ufuk) + int(embargo)
-    if n < 3 * (bosluk + 5):
+    bosluk = int(ufuk) + int(embargo) + int(giris_erisimi)
+    # Dejenere kapisi ORNEK biriminde olculur: bosluk BAR cinsindendir,
+    # ornekler alt-orneklenmis olabilir. Bar boslugunu ornek sayisiyla
+    # dogrudan kiyaslamak (eski hali) adim>1 iken bolmeyi gereksiz yere
+    # dejenere ilan eder.
+    kayip = int(bosluk / _ornek_adimi(sirali)) + 1
+    if n < 3 * (kayip + 5):
         return {"train": [], "kalibrasyon": [], "test": [], "atilan": n,
                 "not": "yetersiz ornek - bolme yapilamadi"}
 
@@ -1005,26 +1043,64 @@ def izotonik_fit(ciftler):
     return uygula
 
 
+def _ikili_nll(ciftler):
+    """(p_long, y) ciftlerinin ortalama negatif log olabilirligi."""
+    if not ciftler:
+        return float("inf")
+    toplam = 0.0
+    for p, y in ciftler:
+        p = min(1.0 - 1e-9, max(1e-9, p))
+        toplam += -math.log(p if y == 1 else 1.0 - p)
+    return toplam / len(ciftler)
+
+
+def _ham_ciftler(ornekler, basliklar, sicaklik=1.0):
+    return [(long_olasiligi(topluluk_olasilik(o["x"], basliklar, sicaklik)["p"]),
+             o["y"]) for o in ornekler]
+
+
 def kalibrasyon_sec(kal_ornekler, basliklar):
-    """Sicaklik ve izotonik arasinda holdout NLL'e gore secim."""
-    sicaklik = sicaklik_fit(kal_ornekler, basliklar)
+    """Sicaklik ve izotonik arasinda IC-HOLDOUT NLL'e gore secim.
 
-    ham = [(long_olasiligi(topluluk_olasilik(o["x"], basliklar, 1.0)["p"]), o["y"])
-           for o in kal_ornekler]
-    izo = izotonik_fit(ham)
-    izo_nll = float("inf")
-    if ham:
-        toplam = 0.0
-        for p_ham, y in ham:
-            p_kal = min(1.0 - 1e-9, max(1e-9, izo(p_ham)))
-            toplam += -math.log(p_kal if y == 1 else 1.0 - p_kal)
-        izo_nll = toplam / len(ham)
+    ADIL YARISMA: izotonik, veri noktasi sayisi kadar serbestlik derecesine
+    kadar cikabilir; sicaklik TEK parametredir. Iki yontem ayni kumede fit
+    edilip ayni kumede puanlanirsa yarisma kenari degil EZBERI olcer ve
+    yapisal olarak izotoniki secer. Bu yuzden kalibrasyon kumesi KRONOLOJIK
+    olarak ikiye bolunur: her iki yontem de A'da fit edilir, NLL'i B'de
+    olculur. Kazanan SONRA tum kumede yeniden fit edilir - yarisma ayirmak
+    icindir, veriyi israf etmek icin degil.
 
-    if izo_nll < sicaklik["nll"]:
-        return {"yontem": "izotonik", "T": 1.0, "fn": izo, "nll": izo_nll,
-                "sinirda": False}
-    return {"yontem": "sicaklik", "T": sicaklik["T"], "fn": None,
-            "nll": sicaklik["nll"], "sinirda": sicaklik["sinirda"]}
+    Bolunemeyecek kadar az ornekte (her yariya ASGARI_OLCUM dusmuyorsa)
+    yarisma YAPILMAZ ve fail-closed olarak sicaklik secilir: ezber riski en
+    dusuk olan yontem. Bu durum "yarisma" alaninda BEYAN edilir - sessiz
+    varsayilan yoktur.
+    """
+    n = len(kal_ornekler)
+    if n < 2 * ASGARI_OLCUM:
+        s = sicaklik_fit(kal_ornekler, basliklar)
+        return {"yontem": "sicaklik", "T": s["T"], "fn": None, "nll": s["nll"],
+                "sinirda": s["sinirda"],
+                "yarisma": f"YAPILMADI - yetersiz ornek (n={n} < {2 * ASGARI_OLCUM}), "
+                           "fail-closed sicaklik"}
+
+    kesim = n // 2
+    fit_kume, puan_kume = kal_ornekler[:kesim], kal_ornekler[kesim:]
+
+    s_fit = sicaklik_fit(fit_kume, basliklar)
+    sicaklik_nll = _ikili_nll(_ham_ciftler(puan_kume, basliklar, s_fit["T"]))
+
+    izo_fit = izotonik_fit(_ham_ciftler(fit_kume, basliklar))
+    izo_nll = _ikili_nll([(izo_fit(p), y)
+                          for p, y in _ham_ciftler(puan_kume, basliklar)])
+
+    if izo_nll < sicaklik_nll:
+        return {"yontem": "izotonik", "T": 1.0,
+                "fn": izotonik_fit(_ham_ciftler(kal_ornekler, basliklar)),
+                "nll": izo_nll, "sinirda": False, "yarisma": "ic-holdout"}
+    s_tam = sicaklik_fit(kal_ornekler, basliklar)
+    return {"yontem": "sicaklik", "T": s_tam["T"], "fn": None,
+            "nll": sicaklik_nll, "sinirda": s_tam["sinirda"],
+            "yarisma": "ic-holdout"}
 
 
 # ---------------------------------------------------------------- BOLUM 8
@@ -1149,12 +1225,6 @@ def rsi(kapanislar, periyot=14):
 
 # ---------------------------------------------------------------- BOLUM 9b
 # Uctan uca boru hatti. 12 halkanin her biri ize yazilir.
-
-H4_BAR_ORANI = esik_kaydet(
-    "H4_BAR_ORANI", 16, "YAPISAL",
-    "Bir 4H bari kac 15M barini kapsar (4*60/15). Zaman dilimi tanimindan "
-    "gelir, istatistiksel secim DEGILDIR.")
-
 
 def _h4_hizala(n15, n4h):
     """Her 15M bar indeksi icin SON KAPANMIS 4H bar indeksi.
@@ -1352,18 +1422,23 @@ class BoruHatti:
         bitis = len(barlar) - ETIKET_UFKU - 1
         tum_indeksler = _ornek_indeksleri(baslangic, bitis,
                                           paket.get("azami_ornek", AZAMI_ORNEK))
-        bolme = kronolojik_bol(tum_indeksler, ETIKET_UFKU, EMBARGO)
+        # Purge/embargo, ornegin GERCEKTEN okudugu geriye erisime gore
+        # olculur: 4H tokeni varken bu 15M gecikmesinin H4_BAR_ORANI katidir.
+        erisim = girdi_erisimi(GECIKME_SAYISI, h4_var=h4_var)
+        bolme = kronolojik_bol(tum_indeksler, ETIKET_UFKU, EMBARGO,
+                               giris_erisimi=erisim)
         # Bos bolmede "sizinti: False" demek fail-OPEN rapordur: olculemeyen
         # sey "yok" diye raporlanamaz.
         bolme_bos = not (bolme["train"] and bolme["kalibrasyon"] and bolme["test"])
         iz["halka_11"] = {"ad": "otoregresif/bolme", "train": len(bolme["train"]),
                           "kalibrasyon": len(bolme["kalibrasyon"]),
                           "test": len(bolme["test"]), "atilan": bolme["atilan"],
+                          "giris_erisimi": erisim,
                           "not": bolme["not"] or ("yetersiz ornek - bolme dejenere"
                                                   if bolme_bos else ""),
                           "sizinti": (None if bolme_bos
                                       else sizinti_var_mi(bolme, ETIKET_UFKU,
-                                                          GECIKME_SAYISI))}
+                                                          erisim))}
 
         kesim = (bolme["train"][-1] if bolme["train"]
                  else max(1, len(barlar) // 2))
@@ -1404,7 +1479,8 @@ class BoruHatti:
             "yontem": "YOK", "T": 1.0, "fn": None, "nll": None, "sinirda": False}
         iz["halka_7"] = {"ad": "kalibrasyon", "yontem": kalib["yontem"],
                          "T": kalib["T"], "nll": kalib["nll"],
-                         "sinirda": kalib["sinirda"]}
+                         "sinirda": kalib["sinirda"],
+                         "yarisma": kalib.get("yarisma", "YOK")}
 
         ciftler = []
         for o in test:
