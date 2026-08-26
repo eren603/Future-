@@ -1,0 +1,609 @@
+{
+ "gorev": "LLM islem zincirinin sayisal karsiliklarini tasarim analojisi olarak birakmayip ozellik-token sozlugu, gecmise dayali normalizasyon/embedding, zaman-sembol konum kodu, causal attention, logit basligi, softmax, ayri kalibrasyon, self-consistency, maliyet sonrasi karar ve kisitli paper-trading katmanlariyla tek bir Python dosyasinda uygulayan iki dosyada BIREBIR UYMAYAN yerleri cerrahi titizlikle bulup tek tek yazmak (3 tur + ultracode + deep-research)",
+ "gorev_maddeleri": [
+  {
+   "id": "M1",
+   "metin": "ozellik-token sozlugu katmaninin uyumsuzluklari"
+  },
+  {
+   "id": "M2",
+   "metin": "gecmise dayali normalizasyon/embedding uyumsuzluklari"
+  },
+  {
+   "id": "M3",
+   "metin": "zaman-sembol konum kodu uyumsuzluklari"
+  },
+  {
+   "id": "M4",
+   "metin": "causal attention uyumsuzluklari"
+  },
+  {
+   "id": "M5",
+   "metin": "logit basligi uyumsuzluklari"
+  },
+  {
+   "id": "M6",
+   "metin": "softmax uyumsuzluklari"
+  },
+  {
+   "id": "M7",
+   "metin": "ayri kalibrasyon uyumsuzluklari"
+  },
+  {
+   "id": "M8",
+   "metin": "self-consistency uyumsuzluklari"
+  },
+  {
+   "id": "M9",
+   "metin": "maliyet sonrasi karar uyumsuzluklari"
+  },
+  {
+   "id": "M10",
+   "metin": "kisitli paper-trading uyumsuzluklari"
+  },
+  {
+   "id": "M11",
+   "metin": "3 tur (bulgu -> curutme -> sentez) yurutulmesi"
+  },
+  {
+   "id": "M12",
+   "metin": "bulgularin TEK TEK yazilmasi"
+  }
+ ],
+ "dislanan_maddeler": [],
+ "adimlar": [
+  {
+   "id": "Z1",
+   "ad": "GOREV COZUMLEME",
+   "ajan": "cozumleyici",
+   "bagimsiz": false,
+   "girdi_id": [],
+   "gordugu_adimlar": [],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "M11",
+    "M12"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "girdi",
+     "ref": "kullanici istemi (/goal)",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/SPEC.md",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "istek 12 maddeye ayrildi ve sartname A1..K7 kodlariyla olcute baglandi",
+     "sayilar": [
+      12
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/SPEC.md"
+    }
+   ],
+   "kapi": "her madde bir adima atandi",
+   "gecti": true
+  },
+  {
+   "id": "Z2",
+   "ad": "KANIT TOPLAMA",
+   "ajan": "kanitci",
+   "bagimsiz": false,
+   "girdi_id": [
+    "Z1"
+   ],
+   "gordugu_adimlar": [
+    "Z1"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/A_pydroid3.py",
+     "okundu": true,
+     "sayilar": [
+      1103
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/B_llm_trading.py",
+     "okundu": true,
+     "sayilar": [
+      352
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/A_rapor.md",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/A_doc.md",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "A 1103 satir, B 352 satir okundu",
+     "sayilar": [
+      1103,
+      352
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/A_pydroid3.py"
+    }
+   ],
+   "kapi": "iddia ureten her adimin okunmus artefakti var",
+   "gecti": true
+  },
+  {
+   "id": "Z3a",
+   "ad": "URETIM — 13 izole katman denetcisi (workflow)",
+   "ajan": "uretici-workflow",
+   "bagimsiz": true,
+   "girdi_id": [
+    "Z2"
+   ],
+   "gordugu_adimlar": [
+    "Z2"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "M11"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "arac",
+     "ref": "Workflow wf_02725009-79f (28 ajan, 0 hata)",
+     "okundu": true,
+     "sayilar": [
+      28,
+      0
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "13 katman denetcisi izole kosarak ham bulgu uretti",
+     "sayilar": [
+      13
+     ],
+     "kaynak": "arac"
+    }
+   ],
+   "kapi": "izole kosu — denetciler birbirinin ciktisini gormedi",
+   "gecti": true
+  },
+  {
+   "id": "Z3b",
+   "ad": "URETIM — ana oturum bagimsiz kanit ailesi",
+   "ajan": "uretici-ana",
+   "bagimsiz": true,
+   "girdi_id": [
+    "Z2"
+   ],
+   "gordugu_adimlar": [
+    "Z2"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M4",
+    "M6",
+    "M7",
+    "M9",
+    "M10"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/BULGULARIM.md",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "arac",
+     "ref": "python3 offline aritmetik + A_pydroid3 modul kosumu",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "karar temsilinin piyasaya duyarli payi 0.99 yuzde, kosinus benzerligi 0.999900",
+     "sayilar": [
+      0.99,
+      0.9999
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "QK terimi silindiginde kosinus 0.999999997, maske farki tam 0.0",
+     "sayilar": [
+      0.999999997,
+      0.0
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "egitilen parametre 51 / toplam 3827 = 1.33 yuzde",
+     "sayilar": [
+      51,
+      3827,
+      1.33
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "Wilson %95 GA 0.2343-0.4956, binom p 0.4327",
+     "sayilar": [
+      0.2343,
+      0.4956,
+      0.4327
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "EV odul carpani 2.0 ama gercek geometri 1.3333",
+     "sayilar": [
+      2.0,
+      1.3333
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "B p_cal teorik tavani 0.5761, tau icin gereken z-gap 0.5754",
+     "sayilar": [
+      0.5761,
+      0.5754
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "OKX SDK parametre adi period (periodic degil)",
+     "sayilar": [],
+     "kaynak": "https://raw.githubusercontent.com/okxapi/python-okx/master/okx/TradingData.py"
+    }
+   ],
+   "kapi": "izole kosu — workflow ciktisi gorulmeden uretildi",
+   "gecti": true
+  },
+  {
+   "id": "Z4",
+   "ad": "CAPRAZ DOGRULAMA — adversarial curutme",
+   "ajan": "curutucu",
+   "bagimsiz": true,
+   "girdi_id": [
+    "Z3a",
+    "Z3b"
+   ],
+   "gordugu_adimlar": [
+    "Z3a",
+    "Z3b"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "M11"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "arac",
+     "ref": "Workflow Tur2 curutucu ajanlari (varsayilan gercek_mi=false)",
+     "okundu": true,
+     "sayilar": [
+      79,
+      5
+     ]
+    },
+    {
+     "tur": "arac",
+     "ref": "ana oturum yeniden uretim kosusu",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "84 ham bulgudan 79'u ayakta kaldi, 5'i curudu",
+     "sayilar": [
+      84,
+      79,
+      5
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "ana oturumun 'tau hic gecilemez' iddiasi curutuldu: gecilebilir ama z-gap 0.5754 gerekir",
+     "sayilar": [
+      0.5754
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "ana oturumun 'nedensel maske gercek' iddiasi curutuldu: maske olu kod, fark 0.0",
+     "sayilar": [
+      0.0
+     ],
+     "kaynak": "arac"
+    },
+    {
+     "metin": "ana oturumun 'T argmax'i degistiremez' iddiasi curutuldu: karisim softmax'inda T yonu ceviriyor",
+     "sayilar": [],
+     "kaynak": "arac"
+    }
+   ],
+   "kapi": "her iddiaya en az bir CURUTME denemesi yapildi",
+   "gecti": true
+  },
+  {
+   "id": "Z5",
+   "ad": "SENTEZ",
+   "ajan": "sentezci",
+   "bagimsiz": false,
+   "girdi_id": [
+    "Z4"
+   ],
+   "gordugu_adimlar": [
+    "Z4"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "M12"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/RAPOR.md",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "79 dogrulanmis bulgu tekrarlari ayiklanarak 63 ayri maddeye indirildi, severity sirali",
+     "sayilar": [
+      79,
+      63
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/RAPOR.md"
+    }
+   ],
+   "kapi": "uretilen her sonuc ya sentezde ya gerekceli dislamada",
+   "gecti": true
+  },
+  {
+   "id": "Z6",
+   "ad": "TESLIM",
+   "ajan": "teslimci",
+   "bagimsiz": false,
+   "girdi_id": [
+    "Z5"
+   ],
+   "gordugu_adimlar": [
+    "Z5"
+   ],
+   "kapsanan_maddeler": [
+    "M12"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/RAPOR.md",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/OLCUMLER.md",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "gercek/varsayim/yorum ayrildi; curutulen 5 iddia da kayda gecirildi",
+     "sayilar": [
+      5
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/4056c135-aef4-5d4b-804f-5f0dd0c8f598/scratchpad/audit/RAPOR.md"
+    }
+   ],
+   "kapi": "gercek/varsayim/yorum ayrimi + duzeltme plani",
+   "gecti": true
+  }
+ ],
+ "dogrulamalar": [
+  {
+   "iddia": "karar temsilinin piyasaya duyarli payi 0.99 yuzde",
+   "dogrulayan_ajan": "ana-oturum-yeniden-uretim",
+   "aile": "kod-kosumu",
+   "sonuc": "ONAY",
+   "gerekce": "40 bagimsiz sentetik piyasada forward() olculdu"
+  },
+  {
+   "iddia": "QK terimi etkisiz (kosinus 0.999999997)",
+   "dogrulayan_ajan": "ana-oturum-yeniden-uretim",
+   "aile": "kod-kosumu",
+   "sonuc": "ONAY",
+   "gerekce": "workflow ajaninin sayisi bagimsiz kosuda birebir yeniden uretildi"
+  },
+  {
+   "iddia": "tau eşigi hic gecilemez",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "aritmetik",
+   "sonuc": "ÇÜRÜTÜLDÜ",
+   "gerekce": "p_cal tavani 0.5761; z-gap 0.5754 ile gecilebilir"
+  },
+  {
+   "iddia": "nedensel maske gercek nedensellik sagliyor",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "kod-kosumu",
+   "sonuc": "ÇÜRÜTÜLDÜ",
+   "gerekce": "maske kaldirilinca fark 0.0"
+  },
+  {
+   "iddia": "temperature argmax'i degistiremez",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "aritmetik",
+   "sonuc": "ÇÜRÜTÜLDÜ",
+   "gerekce": "karisim softmax'inda T=0.5 SHORT, T=1.0 LONG"
+  }
+ ],
+ "dislanan_ciktilar": [
+  {
+   "id": "L01-04",
+   "gerekce": "curutuldu — olgu dogru ama olculebilir sonucu yok, #11 kapsiyor"
+  },
+  {
+   "id": "L02-06",
+   "gerekce": "curutuldu — beta zaten 0, iddia bosta"
+  },
+  {
+   "id": "L03-04",
+   "gerekce": "curutuldu — #11 ve #59'a devredildi, ayri bulgu degil"
+  },
+  {
+   "id": "L03-06",
+   "gerekce": "curutuldu — sinuzoidal kodda sin/cos ciftleri normal, olu degil"
+  },
+  {
+   "id": "L08-06",
+   "gerekce": "curutuldu — #25 ile ayni olgu, tekrar"
+  }
+ ],
+ "kullanici_itirazi": {
+  "fikir_degisti": false,
+  "yeni_kanit": [],
+  "eski": "",
+  "yeni": "",
+  "adim": "Z5"
+ },
+ "teslim": {
+  "metin": "LLM zinciri ile iki dosya arasindaki 63 birebir uyumsuzluk, katman katman ve severity sirali",
+  "sayilar": [
+   63,
+   79,
+   5
+  ],
+  "suruculer": [
+   {
+    "ad": "karar temsilinin %99'u sabit",
+    "kaynak_adim": "Z3b"
+   },
+   {
+    "ad": "turev kanali egitimde sifir",
+    "kaynak_adim": "Z3a"
+   },
+   {
+    "ad": "kalibrasyon sert karari degistiriyor",
+    "kaynak_adim": "Z4"
+   }
+  ],
+  "girdi_id": [
+   "Z6"
+  ],
+  "gercek": [
+   "kod satirlari ve bunlardan turetilen aritmetik",
+   "OKX SDK parametre adi"
+  ],
+  "varsayim": [
+   "OKX uclarinin varsayilan satir sayilari (taker ~100, OI ~8h) — kodun kendi yorumundan"
+  ],
+  "yorum": [
+   "oncelik siralamasi",
+   "siddet takdirleri"
+  ]
+ }
+}
