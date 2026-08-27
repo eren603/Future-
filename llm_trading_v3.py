@@ -1527,8 +1527,13 @@ class BoruHatti:
                         sembol_konumu(sembol_indeksi, self.boyut)))
         return durumlar
 
-    def calistir(self, paket):
-        iz = {}
+    # -- calistir'in halkalari --------------------------------------------
+    # Her yardimci KENDI iz kaydini yazar ve ortak baglami (ctx) besler.
+    # Bolme gerekcesi: plan Global Constraint "tek fonksiyon 60 satiri
+    # asmaz". Bolme DAVRANIS-NOTRDUR; sira ve iz anahtarlari korunur.
+
+    def _halka_tokenler(self, paket, iz):
+        """Halka 0-1: ham girdi -> zaman dilimi basina oznitelik satirlari."""
         barlar = paket["barlar15"]
         iz["halka_0"] = {"ad": "ham girdi", "bar_sayisi": len(barlar),
                          "dolu_kanal": paket["dolu_kanal"],
@@ -1551,7 +1556,7 @@ class BoruHatti:
             satir_kumesi["4h"] = [h4_satir[eslesme[i]] for i in range(len(barlar))]
         # 4H YOKSA: notr 0.0 satir ENJEKTE EDILMEZ (uydurma yasagi) ve 15M
         # satiri KOPYALANMAZ. O zaman dilimi icin token HIC uretilmez;
-        # bedeli kapsam dususu olarak shrinkage'a yansir (asagida).
+        # bedeli kapsam dususu olarak shrinkage'a yansir.
         etkin_zd = [zd for zd in ZAMAN_DILIMLERI if zd in satir_kumesi]
         iz["halka_1"] = {"ad": "tokenizasyon", "aile_sayisi": len(AILELER),
                          "gecikme": GECIKME_SAYISI,
@@ -1559,14 +1564,18 @@ class BoruHatti:
                          "h4_var": h4_var,
                          "token_sayisi": (GECIKME_SAYISI * len(AILELER)
                                           * len(etkin_zd))}
+        return {"barlar": barlar, "gost": gost, "satir_kumesi": satir_kumesi,
+                "etkin_zd": etkin_zd, "h4_var": h4_var}
 
-        baslangic = ISINMA_BARI
+    def _halka_bolme(self, ctx, paket, iz):
+        """Halka 11: purge/embargo + sizinti denetimi."""
+        barlar = ctx["barlar"]
         bitis = len(barlar) - ETIKET_UFKU - 1
-        tum_indeksler = _ornek_indeksleri(baslangic, bitis,
+        tum_indeksler = _ornek_indeksleri(ISINMA_BARI, bitis,
                                           paket.get("azami_ornek", AZAMI_ORNEK))
         # Purge/embargo, ornegin GERCEKTEN okudugu geriye erisime gore
-        # olculur: 4H tokeni varken bu 15M gecikmesinin H4_BAR_ORANI katidir.
-        erisim = girdi_erisimi(GECIKME_SAYISI, h4_var=h4_var)
+        # olculur: gosterge pencerelerinden turetilir, token gecikmesinden DEGIL.
+        erisim = girdi_erisimi(GECIKME_SAYISI, h4_var=ctx["h4_var"])
         bolme = kronolojik_bol(tum_indeksler, ETIKET_UFKU, EMBARGO,
                                giris_erisimi=erisim)
         # Bos bolmede "sizinti: False" demek fail-OPEN rapordur: olculemeyen
@@ -1581,31 +1590,41 @@ class BoruHatti:
                           "sizinti": (None if bolme_bos
                                       else sizinti_var_mi(bolme, ETIKET_UFKU,
                                                           erisim))}
+        ctx["bolme"] = bolme
+        ctx["tum_indeksler"] = tum_indeksler
 
+    def _halka_olcek(self, ctx, iz):
+        """Halka 2-5: TRAIN-ONLY olcekleyici + konum/attention/FFN beyani."""
+        bolme, barlar = ctx["bolme"], ctx["barlar"]
         kesim = (bolme["train"][-1] if bolme["train"]
                  else max(1, len(barlar) // 2))
         olcekleyiciler = {}
-        for zd in etkin_zd:             # her zaman dilimi KENDI istatistigiyle
+        for zd in ctx["etkin_zd"]:     # her zaman dilimi KENDI istatistigiyle
             o = Olcekleyici()
-            o.fit(satir_kumesi[zd], kesim)
+            o.fit(ctx["satir_kumesi"][zd], kesim)
             olcekleyiciler[zd] = o
         iz["halka_2"] = {"ad": "embedding/olcekleme", "kesim": kesim,
                          "sabit_kolon": {zd: len(olcekleyiciler[zd].sabit_kolonlar)
-                                         for zd in etkin_zd}}
+                                         for zd in ctx["etkin_zd"]}}
         iz["halka_3"] = {"ad": "konum kodu", "zaman_ekseni": True,
                          "sembol_ekseni": True, "faz": SEMBOL_EKSENI_FAZI}
         iz["halka_4"] = {"ad": "causal attention", "bas": self.kodlayici.bas_sayisi,
                          "maske": True}
         iz["halka_5"] = {"ad": "FFN", "genislik": self.boyut * 2}
+        ctx["olcekleyiciler"] = olcekleyiciler
 
-        def ornek(i):
-            x = self.kodlayici.ileri(self._durumlar(satir_kumesi, olcekleyiciler, i))
-            y = etiket_uret(barlar, i, gost["atr"])
-            return None if y is None else {"x": x, "y": y}
+    def _ornek(self, ctx, i):
+        x = self.kodlayici.ileri(
+            self._durumlar(ctx["satir_kumesi"], ctx["olcekleyiciler"], i))
+        y = etiket_uret(ctx["barlar"], i, ctx["gost"]["atr"])
+        return None if y is None else {"x": x, "y": y}
 
-        train = [o for o in (ornek(i) for i in bolme["train"]) if o]
-        kal = [o for o in (ornek(i) for i in bolme["kalibrasyon"]) if o]
-        test = [o for o in (ornek(i) for i in bolme["test"]) if o]
+    def _halka_egitim(self, ctx, iz):
+        """Halka 6-7: ornek uretimi, baslik egitimi, kalibrasyon secimi."""
+        bolme = ctx["bolme"]
+        train = [o for o in (self._ornek(ctx, i) for i in bolme["train"]) if o]
+        kal = [o for o in (self._ornek(ctx, i) for i in bolme["kalibrasyon"]) if o]
+        test = [o for o in (self._ornek(ctx, i) for i in bolme["test"]) if o]
 
         basliklar = []
         for gorus in range(3):
@@ -1623,9 +1642,14 @@ class BoruHatti:
                          "T": kalib["T"], "nll": kalib["nll"],
                          "sinirda": kalib["sinirda"],
                          "yarisma": kalib.get("yarisma", "YOK")}
+        ctx.update({"train": train, "test": test, "basliklar": basliklar,
+                    "kalib": kalib})
 
+    def _halka_degerlendirme(self, ctx, iz):
+        """Halka 8: HOLDOUT metrikleri (train'de degil, test diliminde)."""
+        basliklar, kalib = ctx["basliklar"], ctx["kalib"]
         ciftler = []
-        for o in test:
+        for o in ctx["test"]:
             p = long_olasiligi(
                 topluluk_olasilik(o["x"], basliklar, kalib["T"])["p"])
             if kalib["fn"] is not None:
@@ -1639,9 +1663,15 @@ class BoruHatti:
                          "brier": brier(ciftler) if ciftler else None,
                          "auroc": auroc(ciftler) if ciftler else None,
                          "wilson": wilson_araligi(dogru, len(ciftler))}
+        ctx["ciftler"] = ciftler
+        ctx["dogru"] = dogru
 
-        son = len(barlar) - 1
-        x_son = self.kodlayici.ileri(self._durumlar(satir_kumesi, olcekleyiciler, son))
+    def _halka_olasilik(self, ctx, iz):
+        """Halka 9-10: son barin olasiligi + self-consistency."""
+        basliklar, kalib = ctx["basliklar"], ctx["kalib"]
+        son = len(ctx["barlar"]) - 1
+        x_son = self.kodlayici.ileri(
+            self._durumlar(ctx["satir_kumesi"], ctx["olcekleyiciler"], son))
         top = topluluk_olasilik(x_son, basliklar, kalib["T"])
         p_ham = long_olasiligi(top["p"])
         if kalib["fn"] is not None:
@@ -1652,7 +1682,7 @@ class BoruHatti:
         # Sozluk kurali (V = {LONG, SHORT}, HOLD YOK) DECODER'in sinif
         # kumesi hakkindadir - burada decoder egitilmis bir model uzerinde
         # hic kosmamistir, yani ucuncu bir sinif eklenmiyor; olcum YOK.
-        egitildi = bool(train)
+        egitildi = bool(ctx["train"])
         if not egitildi:
             p_ham = None
         iz["halka_9"] = {"ad": "decoding", "p_long": p_ham, "hold": False,
@@ -1661,42 +1691,56 @@ class BoruHatti:
                           "dagilim": top["dagilim"],
                           "T_karari_cevirir": sicaklik_karari_cevirir_mi(
                               [b.logit(x_son) for b in basliklar])}
+        ctx["p_ham"] = p_ham
+        ctx["egitildi"] = egitildi
+        ctx["son"] = son
 
-        ece_grup = grup_ece({"test": ciftler}) if ciftler else {
-            "en_kotu": (None, None)}
-
-        # KAPSAM h4_var'dan TURETILIR: modele ULASMAYAN veri kapsami
-        # BUYUTEMEZ. Paket 4H kanalini dolu sayiyorsa ve 4H gercekten
-        # boru hattina girmediyse fail-closed olarak bir azaltilir.
+    def _kapsam(self, ctx, paket, iz):
+        """KAPSAM h4_var'dan TURETILIR: modele ULASMAYAN veri kapsami
+        BUYUTEMEZ. Paket 4H kanalini dolu sayiyorsa ve 4H gercekten boru
+        hattina girmediyse fail-closed olarak bir azaltilir."""
         dolu_kanal = paket["dolu_kanal"]
-        if not h4_var:
+        if not ctx["h4_var"]:
             dolu_kanal = max(0, dolu_kanal - 1)
             iz["halka_0"]["h4_kanali_dusuldu"] = True
-        if not egitildi:
-            karar = {"sembol": paket["sembol"], "yon": "VERI YOK",
-                     "p_ham": None, "p_kullanilan": None,
-                     "giris": None, "stop": None, "hedef": None, "R": None,
-                     "geometri": None,
-                     "shrinkage": {"s": 0.0, "s_kanit": 0.0,
-                                   "s_kalibrasyon": 0.0, "s_kapsam": 0.0},
-                     "stake": {"f": 0.0, "p_kullanilan": None, "p0": None,
-                               "not": "model EGITILMEDI - bolme dejenere"},
-                     "not": ("bolme dejenere: egitim/kalibrasyon/degerlendirme "
-                             "kosmadi. Yon bir OLCUM degil tohum artefakti "
-                             "olurdu - beyan edilmiyor (fail-closed).")}
-            iz["halka_12"] = {"ad": "detokenizasyon", "giris": None,
-                              "stop": None, "hedef": None, "R": None, "f": 0.0}
-            karar["iz"] = iz
-            karar["kalibrasyon"] = iz["halka_8"]
-            karar["adaptor"] = paket.get("adaptor")
-            return karar
+        return dolu_kanal
 
+    def _tamamla(self, karar, paket, iz):
+        karar["iz"] = iz
+        karar["kalibrasyon"] = iz["halka_8"]
+        karar["adaptor"] = paket.get("adaptor")
+        return karar
+
+    def _dejenere_karar(self, paket, iz):
+        """Fail-closed cikti: model hic egitilmedi, olcum YOK."""
+        iz["halka_12"] = {"ad": "detokenizasyon", "giris": None, "stop": None,
+                          "hedef": None, "R": None, "f": 0.0}
+        return self._tamamla({
+            "sembol": paket["sembol"], "yon": "VERI YOK",
+            "p_ham": None, "p_kullanilan": None,
+            "giris": None, "stop": None, "hedef": None, "R": None,
+            "geometri": None,
+            "shrinkage": {"s": 0.0, "s_kanit": 0.0, "s_kalibrasyon": 0.0,
+                          "s_kapsam": 0.0},
+            "stake": {"f": 0.0, "p_kullanilan": None, "p0": None,
+                      "not": "model EGITILMEDI - bolme dejenere"},
+            "not": ("bolme dejenere: egitim/kalibrasyon/degerlendirme "
+                    "kosmadi. Yon bir OLCUM degil tohum artefakti "
+                    "olurdu - beyan edilmiyor (fail-closed).")}, paket, iz)
+
+    def _halka_karar(self, ctx, paket, iz):
+        """Halka 12: olasilik + geometri + shrinkage -> uygulanabilir karar."""
+        barlar, gost, son = ctx["barlar"], ctx["gost"], ctx["son"]
+        ece_grup = (grup_ece({"test": ctx["ciftler"]}) if ctx["ciftler"]
+                    else {"en_kotu": (None, None)})
         karar = karar_uret({
             "sembol": paket["sembol"], "barlar": barlar, "atr_serisi": gost["atr"],
-            "indeksler": bolme["test"] or tum_indeksler[-40:],
-            "p_ham": p_ham, "dogru": dogru, "toplam": len(ciftler),
+            "indeksler": ctx["bolme"]["test"] or ctx["tum_indeksler"][-40:],
+            "p_ham": ctx["p_ham"], "dogru": ctx["dogru"],
+            "toplam": len(ctx["ciftler"]),
             "ece_enkotu": ece_grup["en_kotu"][1],
-            "dolu_kanal": dolu_kanal, "toplam_kanal": paket["toplam_kanal"],
+            "dolu_kanal": self._kapsam(ctx, paket, iz),
+            "toplam_kanal": paket["toplam_kanal"],
             "giris": barlar[son]["c"], "atr": gost["atr"][son],
             "likidasyon": paket.get("likidasyon"),
             "kaldirac_azami": paket.get("kaldirac_azami"),
@@ -1707,10 +1751,21 @@ class BoruHatti:
         iz["halka_12"] = {"ad": "detokenizasyon", "giris": karar["giris"],
                           "stop": karar["stop"], "hedef": karar["hedef"],
                           "R": karar["R"], "f": karar["stake"]["f"]}
-        karar["iz"] = iz
-        karar["kalibrasyon"] = iz["halka_8"]
-        karar["adaptor"] = paket.get("adaptor")
-        return karar
+        return self._tamamla(karar, paket, iz)
+
+    def calistir(self, paket):
+        """LLM zincirinin 12 halkasini sirayla kosturur."""
+        iz = {}
+        ctx = self._halka_tokenler(paket, iz)
+        self._halka_bolme(ctx, paket, iz)
+        self._halka_olcek(ctx, iz)
+        self._halka_egitim(ctx, iz)
+        self._halka_degerlendirme(ctx, iz)
+        self._halka_olasilik(ctx, iz)
+        if not ctx["egitildi"]:
+            self._kapsam(ctx, paket, iz)      # kapsam notu iz'de yine gorunsun
+            return self._dejenere_karar(paket, iz)
+        return self._halka_karar(ctx, paket, iz)
 
 
 # ---------------------------------------------------------------- BOLUM 10

@@ -10,6 +10,7 @@ Kritik test siniflari:
   ShrinkageTesti     - kanit yoksa f* matematiksel olarak 0
   GeometriTesti      - ilk-gecis muhafazakar, E[log] dogru
 """
+import ast
 
 import inspect
 import json
@@ -1433,6 +1434,17 @@ class BoruHattiTesti(unittest.TestCase):
         self.assertTrue(r["iz"]["halka_9"]["egitildi"])
         self.assertIn(r["yon"], m.YON_SOZLUGU)
         self.assertIsNotNone(r["giris"])
+
+    def test_hicbir_fonksiyon_satir_sinirini_asmaz(self):
+        """Plan Global Constraint: tek fonksiyon 60 satiri asmaz."""
+        agac = ast.parse(pathlib.Path(m.__file__).read_text(encoding="utf-8"))
+        uzun = []
+        for dugum in ast.walk(agac):
+            if isinstance(dugum, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                n = (dugum.end_lineno or dugum.lineno) - dugum.lineno + 1
+                if n > 60:
+                    uzun.append((dugum.name, n))
+        self.assertEqual(uzun, [], f"60 satiri asan fonksiyon(lar): {uzun}")
 
     def test_iz_giris_erisimini_DOGRUDAN_beyan_eder(self):
         """G-4: bu alan dolayli kilitliydi; dogrudan iddia ucuz ve gerekli."""
