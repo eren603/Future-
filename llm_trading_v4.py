@@ -857,7 +857,23 @@ def gostergeler_kur(barlar, profil):
     }
 
 
-def satir_uret(barlar, gost, turev_seri, onarim_seri, profil, i):
+def _olcekli(t, anahtar, olcekler):
+    """Turev ozniteligini kanalin KENDI robust sigmasina bolup TEK KEZ kirpar.
+
+    Olcek yoksa (kanal cok kisa / sabit) oznitelik URETILMEZ ve 0.0 doner -
+    ama bu bir "notr enjeksiyonu" DEGILDIR: ayni satirdaki kapsam bayragi
+    ve gozlem maskesi modele bu ailenin olculemedigini soyler.
+    """
+    v = t.get(anahtar)
+    if v is None:
+        return 0.0
+    sg = (olcekler or {}).get(anahtar)
+    if not sg:
+        return 0.0
+    return kirp(float(v) / (5.0 * sg))
+
+
+def satir_uret(barlar, gost, turev_seri, onarim_seri, profil, i, olcekler=None):
     """Bes aileli oznitelik satiri.
 
     turev_seri : bar basina sozluk listesi (SERI, tek anlik deger DEGIL)
@@ -890,8 +906,9 @@ def satir_uret(barlar, gost, turev_seri, onarim_seri, profil, i):
         # kapsam bayragini gordugu icin ayirt edebilir.
         turev_vek = [0.0, 0.0, 0.0, 0.0]
     else:
-        turev_vek = [kirp(t.get("oi_degisim", 0.0) * 5.0),
-                     kirp(t.get("taker_dengesi", 0.0)),
+        # TEK asamali kirp, kanal olcegine bolunmus. Cift kirp YOK.
+        turev_vek = [_olcekli(t, "oi_degisim", olcekler),
+                     _olcekli(t, "taker_dengesi", olcekler),
                      kirp(t.get("cvd", 0.0)),
                      1.0]
     oynaklik = [
@@ -900,9 +917,11 @@ def satir_uret(barlar, gost, turev_seri, onarim_seri, profil, i):
         1.0 if gost["ema_hizli"][i] > gost["ema_yavas"][i] else -1.0,
     ]
     o = (onarim_seri[i] if onarim_seri else None) or {}
+    # ONARIM AILESI = GOZLEM MASKESI. Surekli onarim guveni ("guven") BURAYA
+    # GIRMEZ; o yalniz stake eksenindedir (bkz. turev_serisi_kur gerekcesi).
     onarim = [
-        kirp(float(o.get("guven", 1.0)), 0.0, 1.0) * 2.0 - 1.0,   # [-1,1]
-        kirp(float(o.get("fark", 0.0))),
+        kirp(float(o.get("m_oi", 1.0)), 0.0, 1.0) * 2.0 - 1.0,
+        kirp(float(o.get("m_taker", 1.0)), 0.0, 1.0) * 2.0 - 1.0,
         kirp(float(o.get("yogunluk", 0.0)), 0.0, 1.0) * 2.0 - 1.0,
     ]
     return {"fiyat": fiyat, "hacim": hacim, "turev": turev_vek,
@@ -1412,6 +1431,14 @@ def stake_hesapla(p_ham, s, b, a, lam=1.0):
     if s <= 0.0:
         return {"f": 0.0, "p_kullanilan": pk, "p0": p0,
                 "not": "kanit yok (s=0) - f* tanim geregi 0"}
+    # BASABAS ALTI/ESITI: TANIM GEREGI bahis yok. Kelly payi
+    # p*b - (1-p)*a ancak TAM aritmetikte p=p0'da sadelesir; float64'te
+    # ~1e-17 artik kalir ve bu artik ZARARSIZ DEGIL - olculdu: R=1.5,
+    # cost=0.0, s=1.0 -> f = 7.4e-17 ve bahis_acilir_mi TRUE donuyordu,
+    # yani sifir bahis POZISYON ACIYORDU. Bu bir ESIK degil TANIMDIR.
+    if pk <= p0:
+        return {"f": 0.0, "p_kullanilan": pk, "p0": p0,
+                "not": "p_kullanilan <= basabas - tanim geregi bahis YOK"}
     return {"f": kelly_asimetrik(pk, b, a) * max(0.0, float(lam)),
             "p_kullanilan": pk, "p0": p0, "not": ""}
 
@@ -1425,6 +1452,21 @@ def likidasyon_tavani(giris, likidasyon, kaldirac_azami,
         return 0.0
     oran = abs(g - float(likidasyon)) / g
     return max(0.0, min(1.0 / float(kaldirac_azami), oran * float(guvenlik)))
+
+
+def stake_gecit_kirp(f_stake, f_gecit):
+    """Stake, GECIDIN kendi f'ini ASAMAZ (fail-closed).
+
+    Gecit (geometri_sec) ve stake (stake_hesapla) ayni bahsi IKI FARKLI
+    olasilikla boyutlandirir: gecit p_bilesik_alt ile, stake daraltilmis
+    p ile. Ayrisirlarsa KUCUK olan gecerlidir - buyugu secmek, gecidi
+    acan kanittan DAHA BUYUK bir bahis demektir.
+
+    Doner: (f, bagladi_mi)
+    """
+    f_stake = max(0.0, float(f_stake))
+    f_gecit = max(0.0, float(f_gecit))
+    return (f_gecit, True) if f_stake > f_gecit else (f_stake, False)
 
 
 def stake_kirp(f_ham, f_max):
@@ -1689,7 +1731,11 @@ def _bayatlik_guveni(yas, tavan=None):
     tavan = BAYATLIK_TAVANI if tavan is None else int(tavan)
     if yas is None:
         return 0.0
-    return math.exp(-float(yas) / max(1.0, float(tavan)))
+    # KIRPMA ZORUNLU: yas negatif olursa (kayit bardan YENI) us pozitife
+    # doner ve carpan 1.0'i ASAR -> riski BUYUTUR (fail-open). Bugunku cagri
+    # yolunda yas >= 0, ama korumasiz bir fonksiyon gelecekteki bir cagirana
+    # acik kapi birakir. Olculdu: yas=-1 -> 1.2840, yas=-2 -> 1.6487.
+    return min(1.0, math.exp(-max(0.0, float(yas)) / max(1.0, float(tavan))))
 
 
 def turev_serisi_kur(barlar15, kanallar, adim_ms=900000):
@@ -1731,16 +1777,40 @@ def turev_serisi_kur(barlar15, kanallar, adim_ms=900000):
     if tk_ham is not None:
         beklenen.append("taker")
 
+    # KANAL OLCEGI: her turev ozniteligi kendi ROBUST sigmasina bolunur.
+    # Sabit bir "x5" carpani YOKTUR - o carpan cift-kirp doygunlugunun
+    # kaynagiydi. Sigma kanalin HAM serisinden gelir (FIR: gelecege bakmaz);
+    # olculemezse oznitelik URETILMEZ (uydurma yasagi).
+    def _kanal_olcegi(seri_deger):
+        d = [seri_deger[j] - seri_deger[j - 1] for j in range(1, len(seri_deger))]
+        sg = mad_sigma(d) if len(d) >= 2 else 0.0
+        return sg if sg > SABIT_TOLERANSI else None
+
+    oi_ham_deger = [v for _, v in oi_onarim["seri"]]
+    tk_ham_deger = [v for _, v in tk_onarim["seri"]]
+    olcek = {
+        "oi_degisim": _kanal_olcegi([100.0 * (oi_ham_deger[j] / oi_ham_deger[j - 1] - 1.0)
+                                     for j in range(1, len(oi_ham_deger))
+                                     if oi_ham_deger[j - 1]]) if len(oi_ham_deger) > 2 else None,
+        "taker_dengesi": _kanal_olcegi([v - 1.0 for v in tk_ham_deger])
+        if len(tk_ham_deger) > 2 else None,
+    }
+    rapor["_olcek"] = dict(olcek)
+
     seri, onarim_izi = [], []
     for i, bar in enumerate(barlar15):
         k = {}
         oi_v, oi_y = oi_hiz[i]
         oi_v0 = oi_hiz[i - 1][0] if i > 0 else None
         if oi_v is not None and oi_v0:
-            k["oi_degisim"] = kirp((oi_v - oi_v0) / oi_v0 * 100.0)
+            # KIRPMA YOK. Olculdu: uretimde kirp(D%) + oznitelikte kirp(x*5)
+            # cift kirp demektir ve %0.20 UZERINDE buyukluk bilgisini tamamen
+            # yok eder (0.20->1.00, 0.60->1.00, 2.00->1.00). Olceklendirme
+            # TEK yerde ve kanalin KENDI robust sigmasiyla yapilir.
+            k["oi_degisim"] = (oi_v - oi_v0) / oi_v0 * 100.0
         tk_v, tk_y = tk_hiz[i]
         if tk_v is not None:
-            k["taker_dengesi"] = kirp(tk_v - 1.0)
+            k["taker_dengesi"] = tk_v - 1.0
         hacim = bar["v"] or EPSILON
         k["cvd"] = kirp((2.0 * bar["taker_alis"] - hacim) / hacim)
         seri.append(k if k else None)
@@ -1756,8 +1826,20 @@ def turev_serisi_kur(barlar15, kanallar, adim_ms=900000):
         katkilar.append(1.0)          # cvd: kullanicinin KENDI kline'indan, tam
         kullanilabilir = sum(1 for x in (oi_v, tk_v) if x is not None)
         onarim_izi.append({
+            # "guven" YALNIZ STAKE eksenine gider - modele GIRMEZ.
+            # Olculdu: surekli onarim guveni modele oznitelik olarak
+            # verildiginde p_long'u degistiriyor ve YONU CEVIRIYOR
+            # (guven 1.0 -> SHORT, guven 0.0 -> LONG). Onarim guveni bizim
+            # KESTIRICIMIZIN kalitesidir, piyasa hakkinda bir olgu DEGILDIR;
+            # yonu belirlememelidir.
             "guven": ortalama(katkilar) if katkilar else 0.0,
-            "fark": 0.0,
+            # Modele giden: GOZLEM MASKESI (kanal basina ayri bit). Bu bir
+            # OLGUDUR - "bu barda borsa OI yayinladi mi" - ve piyasayla
+            # ilgilidir (or. oynaklikta kesinti). Kanal basina AYRI tutulur;
+            # tek skalere ezilirse model hangi kanalin eksik oldugunu
+            # ayirt edemez.
+            "m_oi": 1.0 if oi_v is not None else 0.0,
+            "m_taker": 1.0 if tk_v is not None else 0.0,
             "yogunluk": (1.0 - kullanilabilir / float(len(beklenen))
                          if beklenen else 1.0),
         })
@@ -2141,14 +2223,35 @@ def karar_uret(baglam):
                               baglam.get("kaldirac_azami"),
                               LIKIDASYON_GUVENLIK_PAYI)
     b, a = geo.get("b"), geo.get("a")
+    # OLAY UYUSMAZLIGI DUZELTMESI: Kelly'ye giren p, b/a'nin TANIMLANDIGI
+    # olayin olasiligi olmalidir. p_yon ETIKET olayindan gelir (SIMETRIK
+    # 1xATR bariyer, ETIKET_UFKU bar); b/a ise ASIMETRIK (stop_k, hedef_k)
+    # bariyerinden ve azami_bar ufkundan. Iki FARKLI olay. Gecidin kendisi
+    # zaten p_bilesik_alt = sqrt(p_yon * p_hedef_alt) hesapliyor ama bu deger
+    # stake'e VERILMIYORDU - yani gecidi acan olasilik ile boyutlandiran
+    # olasilik farkliydi.
+    p_stake = geo.get("p_bilesik_alt")
+    if p_stake is None:
+        p_stake = p_yon
     lt = {}
     for lam in LAMBDA_TABLOSU:
         if b is None or a is None or geo["f"] <= 0.0:
+            # SOZLESME: bu dal NORMAL dalla AYNI anahtarlari tasir. Aksi
+            # halde tuketiciler yalniz mutlu yolda calisir ve fail-closed
+            # dalda coker - yani guvenlik dali, cokme dali olur.
             lt[str(lam)] = {"f": 0.0, "kirpildi": False, "f_ham": 0.0,
-                            "f_max": f_max}
+                            "f_max": f_max, "f_gecit": 0.0,
+                            "f_stake_ham": 0.0, "gecit_bagladi": False}
             continue
-        ham = stake_hesapla(p_yon, shr["s"], b, a, lam)
-        lt[str(lam)] = stake_kirp(ham["f"], f_max)
+        ham = stake_hesapla(p_stake, shr["s"], b, a, lam)
+        # FAIL-CLOSED KORKULUK: stake, gecidin kendi f'ini ASAMAZ. Iki hesap
+        # ayrisirsa kucuk olan gecerlidir ve oran ize yazilir.
+        f_gecit = geo["f"] * max(0.0, float(lam))
+        f_kirpik, gecit_bagladi = stake_gecit_kirp(ham["f"], f_gecit)
+        lt[str(lam)] = stake_kirp(f_kirpik, f_max)
+        lt[str(lam)]["f_gecit"] = f_gecit
+        lt[str(lam)]["f_stake_ham"] = ham["f"]
+        lt[str(lam)]["gecit_bagladi"] = gecit_bagladi
     secilen = lt[str(float(baglam.get("lam", 1.0)))]
     bref = _basabas_referansi(geo)
     return {
@@ -2161,7 +2264,10 @@ def karar_uret(baglam):
         "giris": sev["giris"], "stop": sev["stop"], "hedef": sev["hedef"],
         "R": sev["R"],
         "stake": {"f": secilen["f"], "kirpildi": secilen["kirpildi"],
-                  "f_max": f_max, "lambda_tablosu": lt},
+                  "f_max": f_max, "lambda_tablosu": lt,
+                  "p_stake": p_stake, "p_yon": p_yon,
+                  "olay_uyumu": ("GECIT_OLAYI" if geo.get("p_bilesik_alt")
+                                 is not None else "ETIKET_OLAYI (gecit olcumu YOK)")},
     }
 
 
@@ -3225,17 +3331,25 @@ class FailOpenTesti(unittest.TestCase):
 
 
 class OnarimIzOzniteligiTesti(unittest.TestCase):
-    def test_onarim_ailesi_satirda_var(self):
+    def test_onarim_ailesi_MASKE_tasir_guven_DEGIL(self):
+        """TRIAD B1 sonrasi sozlesme: onarim ailesi GOZLEM MASKESI tasir;
+        surekli onarim guveni modele GIRMEZ (yalniz stake eksenindedir)."""
         p = {"yuvarlanan": 12, "atr": 5, "ema_hizli": 3, "ema_yavas": 5,
              "rsi": 5, "ad": "ASGARI"}
         barlar = [{"t": i, "o": 100.0, "h": 101.0, "l": 99.0, "c": 100.0,
                    "v": 10.0, "taker_alis": 5.0} for i in range(30)]
         g = gostergeler_kur(barlar, p)
-        izi = [{"guven": 0.3, "fark": 0.1, "yogunluk": 0.5}] * 30
-        s = satir_uret(barlar, g, None, izi, p, 20)
-        self.assertIn("onarim", s)
-        self.assertEqual(len(s["onarim"]), AILELER["onarim"])
-        self.assertAlmostEqual(s["onarim"][0], 0.3 * 2 - 1, places=9)
+        a = satir_uret(barlar, g, None,
+                       [{"guven": 0.3, "m_oi": 1.0, "m_taker": 0.0,
+                         "yogunluk": 0.5}] * 30, p, 20)
+        b = satir_uret(barlar, g, None,
+                       [{"guven": 0.9, "m_oi": 1.0, "m_taker": 0.0,
+                         "yogunluk": 0.5}] * 30, p, 20)
+        self.assertEqual(len(a["onarim"]), AILELER["onarim"])
+        self.assertEqual(a["onarim"], b["onarim"],
+                         "guven degisince oznitelik DEGISMEMELI")
+        self.assertAlmostEqual(a["onarim"][0], 1.0 * 2 - 1, places=9)
+        self.assertAlmostEqual(a["onarim"][1], 0.0 * 2 - 1, places=9)
 
     def test_onarim_ozniteligi_karari_etkiler(self):
         """Olu halka testi: onarim izi degisince karar DEGISMELI."""
@@ -3258,6 +3372,155 @@ class OnarimIzOzniteligiTesti(unittest.TestCase):
         a, b = kos(1.0), kos(0.0)
         self.assertNotEqual(a["shrinkage"]["s_onarim"], b["shrinkage"]["s_onarim"])
         self.assertEqual(b["shrinkage"]["s"], 0.0)
+
+
+
+# ---- TRIAD DENETIM REGRESYONLARI (KONSEY v8.1 FINAL_AUDIT bulgulari) ----
+class TriadDenetimTesti(unittest.TestCase):
+    """KONSEY v8.1 TRIAD FINAL_AUDIT'in bu dosyada MEKANIK dogrulanan
+    bulgulari. Her test, bulgunun geri gelmesini engelleyen korkuluktur."""
+
+    def test_O2_cift_kirp_doygunlugu_yok(self):
+        """BULGU O2: uretimde kirp(D%) + oznitelikte kirp(x*5) cift kirptir
+        ve %0.20 UZERINDE buyukluk bilgisini yok eder (olculdu: 0.20->1.00,
+        0.60->1.00, 2.00->1.00). Buyuk degisim kucukten AYIRT EDILEBILMELI."""
+        olcek = {"oi_degisim": 0.05}       # robust sigma
+        a = _olcekli({"oi_degisim": 0.20}, "oi_degisim", olcek)
+        b = _olcekli({"oi_degisim": 0.60}, "oi_degisim", olcek)
+        c = _olcekli({"oi_degisim": 2.00}, "oi_degisim", olcek)
+        self.assertLess(abs(a), abs(b), "%%0.20 ile %%0.60 ayirt edilemiyor")
+        self.assertLessEqual(abs(b), abs(c))
+        # kucuk degisimler de dogrusal kalmali
+        k1 = _olcekli({"oi_degisim": 0.05}, "oi_degisim", olcek)
+        k2 = _olcekli({"oi_degisim": 0.10}, "oi_degisim", olcek)
+        self.assertAlmostEqual(k2, 2.0 * k1, places=9)
+
+    def test_O2_olcek_yoksa_oznitelik_uretilmez(self):
+        self.assertEqual(_olcekli({"oi_degisim": 5.0}, "oi_degisim", {}), 0.0)
+        self.assertEqual(_olcekli({}, "oi_degisim", {"oi_degisim": 0.1}), 0.0)
+
+    def test_AR04_bayatlik_carpani_1i_asamaz(self):
+        """BULGU AR-04: yas<0 iken us pozitife doner ve carpan 1.0'i ASAR
+        (olculdu: yas=-1 -> 1.2840, yas=-2 -> 1.6487) -> riski BUYUTUR."""
+        for y in (-10, -2, -1, 0, 1, 4, 100):
+            g = _bayatlik_guveni(y)
+            self.assertLessEqual(g, 1.0, "yas=%s -> guven=%s > 1.0" % (y, g))
+            self.assertGreaterEqual(g, 0.0)
+
+    def test_B1_onarim_guveni_p_longa_GIRMEZ(self):
+        """BULGU B1: surekli onarim guveni modele oznitelik olarak verilince
+        p_long'u degistiriyor ve YONU CEVIRIYOR (olculdu: guven 1.0 -> SHORT,
+        guven 0.0 -> LONG). Onarim guveni bizim KESTIRICIMIZIN kalitesidir,
+        piyasa hakkinda bir olgu DEGILDIR; yonu belirlememelidir."""
+        def kos(guven):
+            # TOHUM guvene BAGLI OLMAMALI - aksi halde iki kosu FARKLI fiyat
+            # verisi uretir ve test onarim guvenini degil veriyi olcer.
+            rng = tohumlu_rng("b1-regresyon")
+            n = 400
+            barlar, f = [], 100.0
+            for i in range(n):
+                f *= 1.0 + rng.uniform(-0.003, 0.0031)
+                barlar.append({"t": i * 900000, "o": f, "h": f * 1.002,
+                               "l": f * 0.998, "c": f, "v": 1000.0,
+                               "taker_alis": 500.0})
+            paket = {"sembol": "T", "barlar15": barlar, "barlar4h": None,
+                     "turev_serisi": [{"cvd": 0.1}] * n,
+                     "onarim_izi": [{"guven": guven, "m_oi": 1.0,
+                                     "m_taker": 1.0, "yogunluk": 0.0}] * n,
+                     "onarim_raporu": {}, "dolu_kanal": 4, "toplam_kanal": 6,
+                     "anlik_kanallar": [], "adaptor": "t"}
+            return BoruHatti(tohum=3).calistir(paket)
+        a, b = kos(1.0), kos(0.0)
+        self.assertEqual(a["p_ham"], b["p_ham"],
+                         "onarim guveni p_long'u DEGISTIRIYOR (%.12f vs %.12f)"
+                         % (a["p_ham"], b["p_ham"]))
+        self.assertEqual(a["yon"], b["yon"])
+        # ama STAKE ekseninde etkisi SURMELI
+        self.assertNotEqual(a["shrinkage"]["s_onarim"], b["shrinkage"]["s_onarim"])
+        self.assertEqual(b["shrinkage"]["s"], 0.0)
+
+    def test_B1_gozlem_maskesi_modele_GIRER(self):
+        """Maske bir OLGUDUR ('borsa bu barda OI yayinladi mi') ve kanal
+        basina AYRI tutulur; tek skalere ezilirse model hangi kanalin eksik
+        oldugunu ayirt edemez."""
+        p = {"yuvarlanan": 12, "atr": 5, "ema_hizli": 3, "ema_yavas": 5,
+             "rsi": 5, "ad": "ASGARI"}
+        barlar = [{"t": i, "o": 100.0, "h": 101.0, "l": 99.0, "c": 100.0,
+                   "v": 10.0, "taker_alis": 5.0} for i in range(30)]
+        g = gostergeler_kur(barlar, p)
+        tam = [{"guven": 0.3, "m_oi": 1.0, "m_taker": 1.0, "yogunluk": 0.0}] * 30
+        oi_yok = [{"guven": 0.3, "m_oi": 0.0, "m_taker": 1.0, "yogunluk": 0.5}] * 30
+        tk_yok = [{"guven": 0.3, "m_oi": 1.0, "m_taker": 0.0, "yogunluk": 0.5}] * 30
+        s1 = satir_uret(barlar, g, None, tam, p, 20)["onarim"]
+        s2 = satir_uret(barlar, g, None, oi_yok, p, 20)["onarim"]
+        s3 = satir_uret(barlar, g, None, tk_yok, p, 20)["onarim"]
+        self.assertNotEqual(s1, s2)
+        self.assertNotEqual(s2, s3, "oi eksik ile taker eksik AYIRT EDILEMIYOR")
+
+    def test_AR03_stake_gecidin_olasiligini_kullanir(self):
+        """BULGU AR-03: Kelly'ye giren p, b/a'nin TANIMLANDIGI olay olmali.
+        p_yon ETIKET olayindan (simetrik 1xATR, ETIKET_UFKU bar), b/a ise
+        ASIMETRIK (stop_k,hedef_k) bariyerinden ve azami_bar ufkundan gelir."""
+        karar, _, _ = _fikstur_kosu(5)
+        st = karar["stake"]
+        self.assertIn("p_stake", st)
+        self.assertIn("olay_uyumu", st)
+        geo = karar["geometri"]
+        if geo.get("p_bilesik_alt") is not None:
+            self.assertAlmostEqual(st["p_stake"], geo["p_bilesik_alt"], places=12)
+            self.assertEqual(st["olay_uyumu"], "GECIT_OLAYI")
+
+    def test_AR03_stake_gecidin_f_sini_ASAMAZ(self):
+        """Fail-closed korkuluk: iki hesap ayrisirsa KUCUK olan gecerlidir.
+
+        Bu test kapagin GERCEKTEN BAGLADIGI vakayi icerir - fikstur kosusunda
+        f=0 oldugu icin 'f <= f_gecit' iddiasi ici bos gecerdi (tiyatro)."""
+        # (a) kapak BAGLAR
+        f, bagladi = stake_gecit_kirp(0.40, 0.10)
+        self.assertTrue(bagladi)
+        self.assertAlmostEqual(f, 0.10, places=12)
+        # (b) kapak BAGLAMAZ
+        f, bagladi = stake_gecit_kirp(0.05, 0.10)
+        self.assertFalse(bagladi)
+        self.assertAlmostEqual(f, 0.05, places=12)
+        # (c) esitlik: baglamaz, deger korunur
+        f, bagladi = stake_gecit_kirp(0.10, 0.10)
+        self.assertFalse(bagladi)
+        self.assertAlmostEqual(f, 0.10, places=12)
+        # (d) negatif girdi 0'a kirpilir
+        self.assertEqual(stake_gecit_kirp(-1.0, 0.5)[0], 0.0)
+        self.assertEqual(stake_gecit_kirp(0.5, -1.0)[0], 0.0)
+        # (e) karar_uret bu fonksiyonu GERCEKTEN cagiriyor mu
+        kaynak = _modul_kaynagi()
+        govde = kaynak[kaynak.index("def karar_uret"):]
+        govde = govde[:govde.index("\ndef ")]
+        self.assertIn("stake_gecit_kirp(", govde,
+                      "karar_uret gecit kapagini CAGIRMIYOR")
+        # (f) kosuda alan tasiniyor
+        karar, _, _ = _fikstur_kosu(5)
+        for lam, v in karar["stake"]["lambda_tablosu"].items():
+            self.assertIn("gecit_bagladi", v)
+            self.assertLessEqual(v["f"], v["f_gecit"] + 1e-12)
+
+    def test_AR02_s_kapsam_ve_s_onarim_CARPIM(self):
+        """min() degil CARPIM: min'de bir kapi digerini MASKELER."""
+        t = shrinkage_katsayisi(90, 100, 0.01, 4, 6, onarim_guveni=1.0)
+        y = shrinkage_katsayisi(90, 100, 0.01, 4, 6, onarim_guveni=0.5)
+        self.assertAlmostEqual(y["s"] / t["s"], 0.5, places=12)
+
+    def test_B5_p_esit_p0_iken_bahis_ACILMAZ(self):
+        """A'da olculdu: p_ham==p0 iken f = 9.46e-17 ve bahis_acilir_mi True
+        donuyordu. Dogru olcut f==0.0 degil, TUKETICI YUKLEMIDIR."""
+        for R in (1.2, 1.5, 2.0, 3.0):
+            for cost in (0.0, 0.3, 0.6, 1.0):
+                b, a = net_kanatlar(R, cost)
+                p0 = basabas_p(b, a)
+                if p0 is None:
+                    continue
+                for s in (1.0, 1e-6, 1e-12, 1e-18, 0.0):
+                    r = stake_hesapla(p0, s, b, a)
+                    self.assertFalse(bahis_acilir_mi({"f": r["f"]}),
+                                     "R=%s cost=%s s=%s -> f=%r" % (R, cost, s, r["f"]))
 
 
 if __name__ == "__main__":
