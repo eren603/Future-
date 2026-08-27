@@ -101,17 +101,18 @@ BOLME_ORANLARI = esik_kaydet(
 
 AZAMI_ORNEK = esik_kaydet(
     "AZAMI_ORNEK", int(math.ceil(2 * ASGARI_OLCUM / BOLME_ORANLARI[1])), "YAPISAL",
-    "HESAP BUTCESI (istatistik esigi DEGIL) - ama degeri KEYFI DEGIL, "
-    "modulun kendi sabitlerinden TURETILIR: kalibrasyon_sec adil yarisma "
-    "icin kalibrasyon kumesini ikiye bolup her yariya ASGARI_OLCUM ornek "
-    "dusurmek zorundadir (2*20 = 40) ve kalibrasyon payi BOLME_ORANLARI[1] "
-    "= 0.2'dir, yani taban 40/0.2 = 200 ornektir. Bu bir TABANDIR, garanti "
-    "DEGIL: purge bosluguna gore kalibrasyon dilimi bunun altina duser ve o "
-    "durumda yarisma KOSMAZ, fail-closed sicaklik secilir ve bu iz'de BEYAN "
-    "edilir. Butce, yarismayi ACMAK icin buyutulmez - esigi geciren degere "
-    "cekmek asiri-uyumdur; olculdu ki 200'de bile 12000 barlik pencerede "
-    "kal=23 < 40 kaliyor ve dogru cevap 'yarisma yapilamaz' demektir. "
-    "Hedef ortam Pydroid 3 (telefon): 200 ornek + 12000 bar = 1.26 s.")
+    "HESAP TAVANI (istatistik esigi DEGIL). Deger, kalibrasyon diliminin "
+    "purge'DEN ONCE 2*ASGARI_OLCUM'e ulastigi nokta: 40/0.2 = 200. "
+    "DIKKAT - BU TEK BASINA YARISMAYI ACMAZ ve acmasi da beklenmez: purge "
+    "her sinirdan en az bir ornek aldigi icin purge SONRASI kal DAIMA "
+    "40'in altina duser. Yani bu sayi 'yarisma kosar' demez, 'hesap tavani "
+    "budur' der. Yarismanin GERCEKTEN kosmasi icin gereken butce sabit "
+    "DEGILDIR, veriye baglidir ve `gereken_ornek_butcesi()` ile her kosuda "
+    "TURETILIP ize yazilir (olculdu: 12000 barda 356, 30000 barda 243, "
+    "6000 barda 1628 ornek gerekiyor). Tavan, yarismayi acmak icin "
+    "BUYUTULMEZ - esigi geciren degere cekmek asiri-uyumdur; cagiran taraf "
+    "gereken butceyi izden okuyup paketle bilerek verebilir. Hedef ortam "
+    "Pydroid 3 (telefon): 200 ornek + 12000 bar = 1.26 s.")
 
 LIKIDASYON_GUVENLIK_PAYI = esik_kaydet(
     "LIKIDASYON_GUVENLIK_PAYI", 0.5, "VARSAYIM",
@@ -665,8 +666,15 @@ class OkxAdaptor(Adaptor):
 
 
 def veri_topla(sembol, adaptorler, getir_fn):
-    """Adaptorleri sirayla dener. Kanal basina basari/dusus kaydedilir."""
-    yedege_dusuldu = False
+    """TUM adaptorleri dener, EN YUKSEK kapsamli olani secer.
+
+    "Ilk kapsam>0 vereni al" YANLISTI: kapsam dogrudan stake'i belirler
+    (s_kapsam), yani 1/6 kanal donduren ana adaptorde kalmak 6/6
+    donebilecek yedegi hic denememek demektir - olculebilir bilgiyi
+    gerekcesiz atmak. Esitlikte ILK adaptor korunur (ana adaptor
+    tercihi bozulmasin).
+    """
+    en_iyi = None
     for sira, adaptor in enumerate(adaptorler):
         kanallar = {}
         dusen = []
@@ -678,11 +686,15 @@ def veri_topla(sembol, adaptorler, getir_fn):
                 kanallar[kanal] = None      # UYDURMA YOK: None kalir
                 dusen.append(kanal)
         kapsam = sum(1 for v in kanallar.values() if v is not None) / len(KANALLAR)
-        if kapsam > 0.0:
-            return {"adaptor": adaptor.ad, "kanallar": kanallar, "kapsam": kapsam,
-                    "dusen": dusen, "yedege_dusuldu": yedege_dusuldu or sira > 0}
-        yedege_dusuldu = True
+        aday = {"adaptor": adaptor.ad, "kanallar": kanallar, "kapsam": kapsam,
+                "dusen": dusen, "yedege_dusuldu": sira > 0}
+        if kapsam >= 1.0:               # tam kapsam: aramaya gerek yok
+            return aday
+        if en_iyi is None or kapsam > en_iyi["kapsam"]:
+            en_iyi = aday
 
+    if en_iyi is not None and en_iyi["kapsam"] > 0.0:
+        return en_iyi
     return {"adaptor": None, "kanallar": {k: None for k in KANALLAR},
             "kapsam": 0.0, "dusen": list(KANALLAR), "yedege_dusuldu": True}
 
@@ -983,6 +995,29 @@ def girdi_erisimi(gecikme_sayisi=None, h4_var=True, bar_orani=None):
     if h4_var:
         erisim = max(erisim, max(0, gecikme - 1) + (2 * oran - 1) + oran * W)
     return erisim
+
+
+def gereken_ornek_butcesi(acikllik, bosluk, kal_orani, hedef_kal):
+    """Kalibrasyon yarismasinin KOSABILMESI icin gereken ornek sayisi.
+
+    "Ulasilamaz" demek yeterli degildir - NE KADAR veriyle ulasilir,
+    TURETILIR:
+        adim               = acikllik / azami
+        sinir basina kayip = bosluk / adim = bosluk * azami / acikllik
+        kal dilimi         = kal_orani * azami
+        kal (purge sonrasi) = azami * (kal_orani - bosluk / acikllik)
+        gereken: >= hedef_kal
+        => azami >= hedef_kal / (kal_orani - bosluk / acikllik)
+
+    Payda <= 0 ise HICBIR butce yetmez (purge, dilimin tamamini yer);
+    o durumda None doner - cevap "daha cok ornek" degil "daha uzun veri".
+    Formul ampirik olarak sinandi ve SIKI cikti: 20 ornek eksigiyle kal
+    hedefin altina duser.
+    """
+    pay = float(kal_orani) - float(bosluk) / float(max(1, acikllik))
+    if pay <= 0.0:
+        return None
+    return int(math.ceil(float(hedef_kal) / pay))
 
 
 def _ornek_adimi(sirali):
@@ -1524,9 +1559,12 @@ def satir_uret(barlar, gostergeler, turev_serisi, i):
         _kanal_konumu(barlar, i),
     ]
     # hacim_deger BIR KEZ _gostergeler'de kurulur. Eskiden burada bar BASINA
-    # yeniden kuruluyordu; olculdu (cProfile, 20000 bar): bu tek listcomp
-    # toplam surenin %71.3'u = gercek O(N^2). Hoist DAVRANIS-NOTRDUR (_z
-    # yalniz [i-48:i] ve [i]'yi okur), yalniz maliyeti dusurur.
+    # yeniden kuruluyordu: listcomp TUM seriyi kuruyor ama _z yalniz
+    # [i-YUVARLANAN_PENCERE:i] ve [i]'yi okuyor = gercek O(N^2).
+    # Hoist DAVRANIS-NOTRDUR ve bu ARTEFAKTA KILITLI
+    # (HesapKarmasikligiTesti). Profil gozlemi (cProfile, 20000 bar,
+    # bu makinede toplam surenin ~%70'i) ARTEFAKTA KILITLI DEGILDIR -
+    # makineye ve olcege baglidir, bir karar girdisi degil gozlemdir.
     hacim = [_z(gostergeler["hacimler"], i), _z(gostergeler["hacim_deger"], i)]
     if turev is None:
         turev_vek = [0.0, 0.0, 0.0, 0.0, 0.0]      # kapsam=0 -> bilgi YOK
@@ -1581,6 +1619,13 @@ class BoruHatti:
                            for aile in AILELER}
         self.zd_gomme = {zd: vektor(boyut, (tohum, "zd", zd), 0.06)
                          for zd in ZAMAN_DILIMLERI}
+        # SABIT RASTGELE IZDUSUM - OGRENILMEZ (bilincli sapma, beyanli).
+        # Plan/tasarim "ogrenilen giris izdusumu" diyordu. Olculdu:
+        # izdusum 256 parametre tasiyor, egitim dilimi 86 ornek
+        # (~3 parametre/ornek). Bu orneklem buyuklugunde 256 parametre
+        # egitmek asiri-uyumdur; egitilen kisim kucuk baslikta tutuluyor
+        # (102 parametre). Halka OLU DEGIL - izdusum degisince karar
+        # degisir (SabitIzdusumTesti bunu kilitler) - yalniz OGRENILMEZ.
         self.giris_izdusumu = {aile: matris(boyut, AILELER[aile],
                                             (tohum, "izdusum", aile), 0.10)
                                for aile in AILELER}
@@ -1675,6 +1720,14 @@ class BoruHatti:
                           "sizinti": (None if bolme_bos
                                       else sizinti_var_mi(bolme, ETIKET_UFKU,
                                                           erisim))}
+        # Yarisma kosamiyorsa "ulasilamaz" deyip birakmak yetmez: NE KADAR
+        # veriyle/butceyle ulasilacagi TURETILIP raporlanir.
+        iz["halka_11"]["gereken_azami_ornek"] = gereken_ornek_butcesi(
+            max(1, tum_indeksler[-1] - tum_indeksler[0]) if tum_indeksler else 1,
+            ETIKET_UFKU + EMBARGO + erisim,
+            BOLME_ORANLARI[1], 2 * ASGARI_OLCUM)
+        iz["halka_11"]["kullanilan_azami_ornek"] = paket.get("azami_ornek",
+                                                             AZAMI_ORNEK)
         ctx["bolme"] = bolme
         ctx["tum_indeksler"] = tum_indeksler
 
@@ -1727,6 +1780,14 @@ class BoruHatti:
                          "T": kalib["T"], "nll": kalib["nll"],
                          "sinirda": kalib["sinirda"],
                          "yarisma": kalib.get("yarisma", "YOK")}
+        # Yarisma kosmadiysa NE GEREKTIGI de yazilir: "yapilamaz" bir
+        # hukumdur, "su kadar veriyle yapilir" bir YOL TARIFIDIR.
+        gereken = iz.get("halka_11", {}).get("gereken_azami_ornek")
+        if iz["halka_7"]["yarisma"].startswith("YAPILMADI"):
+            iz["halka_7"]["yarisma"] += (
+                f" | gereken azami_ornek: {gereken}"
+                if gereken else
+                " | bu veri ACIKLIGINDA hicbir butce yetmez (daha uzun seri gerekir)")
         ctx.update({"train": train, "test": test, "basliklar": basliklar,
                     "kalib": kalib})
 
@@ -1976,7 +2037,12 @@ def rapor_yaz(kararlar, dosya):
 
 
 def defter_guncelle(durum, karar, bar):
-    """Yerel kagit defteri. f*=0 ise pozisyon ACILMAZ (bahis sifir)."""
+    """Yerel kagit defteri. f*=0 ise pozisyon ACILMAZ (bahis sifir).
+
+    MALIYET DUSULUR: Kelly kayip kanadini a = 1 + cost_r olarak fiyatlar.
+    Defter yalniz `f` dusseydi, boyutlandirdigi hedefe gore SISTEMATIK
+    iyimser olurdu - sicil, olctugu seyden BASKA bir seyi olcerdi.
+    """
     yeni = {"sermaye": durum["sermaye"],
             "pozisyonlar": dict(durum.get("pozisyonlar", {}))}
     sembol = karar["sembol"]
@@ -1990,7 +2056,13 @@ def defter_guncelle(durum, karar, bar):
                      else (mevcut["hedef"] if bar["l"] <= mevcut["hedef"] else None))
         if cikis is not None:
             isaret = 1.0 if mevcut["yon"] == "LONG" else -1.0
-            yeni["sermaye"] += isaret * (cikis - mevcut["giris"]) * mevcut["miktar"]
+            ham = isaret * (cikis - mevcut["giris"]) * mevcut["miktar"]
+            # Islem maliyeti (komisyon+kayma), R biriminde tutulan cost_r
+            # uzerinden ve stop mesafesiyle olceklenerek dusulur.
+            maliyet = (mevcut.get("cost_r", 0.0)
+                       * abs(mevcut["giris"] - mevcut["stop"])
+                       * mevcut["miktar"])
+            yeni["sermaye"] += ham - maliyet
             yeni["pozisyonlar"].pop(sembol, None)
 
     if sembol not in yeni["pozisyonlar"] and bahis_acilir_mi(karar["stake"]):
@@ -1998,7 +2070,8 @@ def defter_guncelle(durum, karar, bar):
         mesafe = abs(karar["giris"] - karar["stop"]) or EPSILON
         yeni["pozisyonlar"][sembol] = {
             "yon": karar["yon"], "giris": karar["giris"], "stop": karar["stop"],
-            "hedef": karar["hedef"], "miktar": risk_tutari / mesafe}
+            "hedef": karar["hedef"], "miktar": risk_tutari / mesafe,
+            "cost_r": float((karar.get("geometri") or {}).get("cost_r") or 0.0)}
     return yeni
 
 

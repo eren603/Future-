@@ -44,7 +44,7 @@ de ihlal edilmez.
 |---|---|---|---|
 | 0 | Ham girdi | Çift adaptör: Binance USD-M (ana) / OKX (yedek); kanal başına kapsam skoru | Kanal düşünce kapsam skoru ve `f*` değişir |
 | 1 | Tokenizasyon | Özellik-token **sözlüğü**; kimlik `(sembol, zaman_dilimi, aile, gecikme)`; 4H ve 15M **ayrı** zaman dilimi tokenları | Bir aile çıkarılınca temsil ve karar değişir |
-| 2 | Embedding | Yalnız TRAIN diliminden `μ/σ`; öğrenilen giriş izdüşümü | İzdüşüm sabitlenince (öğrenilmezse) test metriği düşer |
+| 2 | Embedding | Yalnız TRAIN diliminden `μ/σ`; sabit rastgele giriş izdüşümü (ÖĞRENİLMEZ — bkz. plan 'Uygulama sapmaları' md. 7; 256 parametre / 86 örnek oranı ölçüldü, eğitmek aşırı-uyum olurdu) | İzdüşüm sabitlenince (öğrenilmezse) test metriği düşer |
 | 3 | Konum kodu | Zaman ekseni ve sembol ekseni **ayrı** kodlanır | Konum karıştırılınca çıktı değişir |
 | 4 | Causal attention | `softmax(QK^T/√d_k)·V`, nedensel maske | QK terimi silinince VE maske kaldırılınca çıktı değişir (iki ayrı test) |
 | 5 | FFN | Kapılı MLP + artık bağlantı + norm | Kapatılınca çıktı değişir |

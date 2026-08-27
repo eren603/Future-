@@ -873,6 +873,52 @@ class AdaptorTesti(unittest.TestCase):
 
 # ----------------------------------------------------------------- Task 8
 
+class KapsamSecimiTesti(unittest.TestCase):
+    """Ilk kapsam>0 veren adaptor degil, EN YUKSEK kapsamli olan secilir.
+
+    Kapsam dogrudan stake'i belirler (s_kapsam). 1/6 kanal donduren ana
+    adaptorde kalmak, 6/6 donebilecek yedegi hic denememek demektir -
+    yani olculebilir bilgiyi gerekcesiz atmak.
+    """
+
+    class _Sahte(m.Adaptor):
+        def __init__(self, ad, calisan):
+            self.ad = ad
+            self.calisan = set(calisan)
+
+        def uc(self, kanal, sembol):
+            return (f"https://ornek/{self.ad}/{kanal}", {"symbol": sembol})
+
+    def _getir(self, url, params):
+        ad, kanal = url.split("/")[-2], url.split("/")[-1]
+        for a in self._adaptorler:
+            if a.ad == ad and kanal in a.calisan:
+                return {"kanal": kanal}
+        raise RuntimeError("kanal yok")
+
+    def test_yuksek_kapsamli_yedek_TERCIH_EDILIR(self):
+        zayif = self._Sahte("zayif", ["kline_15m"])
+        guclu = self._Sahte("guclu", m.KANALLAR)
+        self._adaptorler = [zayif, guclu]
+        r = m.veri_topla("BTCUSDT", self._adaptorler, self._getir)
+        self.assertEqual(r["adaptor"], "guclu")
+        self.assertAlmostEqual(r["kapsam"], 1.0, places=9)
+
+    def test_esitlikte_ILK_adaptor_korunur(self):
+        a = self._Sahte("a", ["kline_15m", "kline_4h"])
+        b = self._Sahte("b", ["kline_15m", "kline_4h"])
+        self._adaptorler = [a, b]
+        r = m.veri_topla("BTCUSDT", self._adaptorler, self._getir)
+        self.assertEqual(r["adaptor"], "a", "esitlikte ana adaptor korunmali")
+
+    def test_hicbiri_veri_vermezse_fail_closed(self):
+        bos = self._Sahte("bos", [])
+        self._adaptorler = [bos]
+        r = m.veri_topla("BTCUSDT", self._adaptorler, self._getir)
+        self.assertIsNone(r["adaptor"])
+        self.assertEqual(r["kapsam"], 0.0)
+
+
 class TokenSozluguTesti(unittest.TestCase):
     def test_ayni_anahtar_ayni_kimlik(self):
         s = m.TokenSozlugu()
@@ -1003,6 +1049,55 @@ class KonumKoduTesti(unittest.TestCase):
 
 # ---------------------------------------------------------------- Task 10
 
+class SabitIzdusumTesti(unittest.TestCase):
+    """Giris izdusumu OGRENILMEZ - sabit rastgele izdusumdur. BEYAN EDILIR.
+
+    Plan ve tasarim belgesi "ogrenilen giris izdusumu" diyordu; kod bunu
+    hicbir zaman guncellemiyor. Bu bir eksiklik olarak DEGIL, olculmus bir
+    tasarim kararı olarak kayda gecer: izdusum 256 parametre tasir ve
+    egitim dilimi 86 ornektir (~3 parametre/ornek). O parametreleri bu
+    orneklem buyuklugunde egitmek asiri-uyumdur; sabit rastgele izdusum +
+    egitilen kucuk baslik (102 parametre) bilincli secimdir.
+
+    Halka OLU DEGILDIR: izdusum degisince cikti degisir - yalniz
+    OGRENILMEZ.
+    """
+
+    def test_izdusum_kosu_boyunca_DEGISMEZ(self):
+        bh = m.BoruHatti(tohum=2026)
+        once = {a: [list(satir) for satir in mat]
+                for a, mat in bh.giris_izdusumu.items()}
+        bh.calistir(BoruHattiTesti("test_determinizm")._paket())
+        for aile, mat in bh.giris_izdusumu.items():
+            for i, satir in enumerate(mat):
+                self.assertEqual(list(satir), once[aile][i],
+                                 f"{aile}: izdusum egitiliyormus gibi degisti")
+
+    def test_izdusum_OLU_DEGIL_ciktiyi_belirler(self):
+        """Sabit olmak olu olmak degildir: degistirince karar degismeli."""
+        paket = BoruHattiTesti("test_determinizm")._paket()
+        taban = m.BoruHatti(tohum=2026).calistir(paket)["p_ham"]
+        bh = m.BoruHatti(tohum=2026)
+        for mat in bh.giris_izdusumu.values():
+            for satir in mat:
+                for j in range(len(satir)):
+                    satir[j] = -satir[j]
+        self.assertNotAlmostEqual(bh.calistir(paket)["p_ham"], taban, places=9)
+
+    def test_parametre_orneklem_orani_OLCULUR(self):
+        """Sapmanin gerekcesi sayidir, anlati degil."""
+        bh = m.BoruHatti(tohum=2026)
+        izdusum_p = sum(len(mat) * len(mat[0])
+                        for mat in bh.giris_izdusumu.values())
+        baslik_p = (2 * bh.boyut + 2) * 3
+        self.assertEqual(izdusum_p, 256)
+        self.assertEqual(baslik_p, 102)
+        train = bh.calistir(BoruHattiTesti("test_determinizm")._paket())
+        n = train["iz"]["halka_6"]["train_ornek"]
+        self.assertGreater(izdusum_p / n, 2.0,
+                           "izdusum egitilseydi parametre/ornek orani asiri olurdu")
+
+
 class OluHalkaTesti(unittest.TestCase):
     """Sozlesmenin 1. kabul olcutu: hicbir halka olu olmamali.
 
@@ -1101,6 +1196,52 @@ class SizintiTesti(unittest.TestCase):
         toplam = len(b["train"]) + len(b["kalibrasyon"]) + len(b["test"])
         self.assertEqual(toplam + b["atilan"], len(indeksler))
         self.assertGreater(b["atilan"], 0)
+
+    # -- gereken ornek butcesi TURETILIR, "ulasilamaz" denip birakilmaz --
+
+    def test_gereken_butce_kapali_formulden_gelir(self):
+        """azami >= hedef / (kal_orani - bosluk/acikllik).
+
+        Turetim: adim = acikllik/azami; sinir basina purge kaybi =
+        bosluk/adim = bosluk*azami/acikllik; kal dilimi = kal_orani*azami.
+        """
+        bosluk, hedef, kal_orani = 1046, 40, 0.2
+        gereken = m.gereken_ornek_butcesi(11980, bosluk, kal_orani, hedef)
+        self.assertEqual(gereken,
+                         math.ceil(hedef / (kal_orani - bosluk / 11980.0)))
+
+    def test_gereken_butce_ampirik_olarak_YETER(self):
+        """Turetilen butce GERCEKTEN kal >= hedef veriyor mu (formul sinandi)."""
+        erisim = m.girdi_erisimi(m.GECIKME_SAYISI, h4_var=True)
+        bosluk = m.ETIKET_UFKU + m.EMBARGO + erisim
+        hedef = 2 * m.ASGARI_OLCUM
+        for bar in (12000, 30000):
+            acikllik = bar - m.ISINMA_BARI - m.ETIKET_UFKU - 1
+            azami = m.gereken_ornek_butcesi(acikllik, bosluk,
+                                            m.BOLME_ORANLARI[1], hedef)
+            idx = m._ornek_indeksleri(m.ISINMA_BARI, bar - m.ETIKET_UFKU - 1, azami)
+            b = m.kronolojik_bol(idx, m.ETIKET_UFKU, m.EMBARGO,
+                                 giris_erisimi=erisim)
+            self.assertGreaterEqual(len(b["kalibrasyon"]), hedef,
+                                    f"{bar} barda turetilen butce yetmedi")
+
+    def test_gereken_butce_SIKI_bir_alt_sinir(self):
+        """Formul gevsek olamaz: belirgin olcude altinda kal hedefe DUSMELI."""
+        erisim = m.girdi_erisimi(m.GECIKME_SAYISI, h4_var=True)
+        bosluk = m.ETIKET_UFKU + m.EMBARGO + erisim
+        hedef = 2 * m.ASGARI_OLCUM
+        bar = 30000
+        acikllik = bar - m.ISINMA_BARI - m.ETIKET_UFKU - 1
+        azami = m.gereken_ornek_butcesi(acikllik, bosluk,
+                                        m.BOLME_ORANLARI[1], hedef)
+        idx = m._ornek_indeksleri(m.ISINMA_BARI, bar - m.ETIKET_UFKU - 1,
+                                  azami - 20)
+        b = m.kronolojik_bol(idx, m.ETIKET_UFKU, m.EMBARGO, giris_erisimi=erisim)
+        self.assertLess(len(b["kalibrasyon"]), hedef)
+
+    def test_aciklik_yetmezse_butce_VERI_YOK(self):
+        """acikllik <= bosluk/kal_orani ise hicbir butce yetmez."""
+        self.assertIsNone(m.gereken_ornek_butcesi(3000, 1046, 0.2, 40))
 
     def test_cok_az_veride_bos_bolme(self):
         b = m.kronolojik_bol([1, 2, 3], ufuk=16, embargo=4)
@@ -1988,6 +2129,28 @@ class CiktiTesti(unittest.TestCase):
                       "lambda_tablosu": {"1.0": {"f": 0.0}, "0.5": {"f": 0.0},
                                          "0.25": {"f": 0.0}}},
         }
+
+    def test_defter_maliyeti_dusuyor_mu(self):
+        """Kelly kayip kanadini f*a fiyatlar; defter de ayni maliyeti dusmeli.
+
+        Aksi halde kagit defteri, boyutlandirdigi hedefe gore SISTEMATIK
+        iyimser olur - yani sicil, olctugu seyden farkli bir seyi olcer.
+        """
+        durum = {"sermaye": 1000.0, "pozisyonlar": {}}
+        karar = dict(self._karar())
+        karar["stake"] = {"f": 0.02, "kirpildi": False, "f_max": 0.1,
+                          "lambda_tablosu": {"1.0": {"f": 0.02}}}
+        karar["geometri"] = dict(karar["geometri"], cost_r=0.01)
+        acilis = m.defter_guncelle(durum, karar, {"o": 100.0, "h": 100.2,
+                                                  "l": 99.9, "c": 100.0})
+        # Stop'a giden bar: kayip, maliyeti DE icermeli
+        kapanis = m.defter_guncelle(acilis, dict(karar, sembol="BTCUSDT"),
+                                    {"o": 98.6, "h": 98.7, "l": 98.0, "c": 98.5})
+        kayip = durum["sermaye"] - kapanis["sermaye"]
+        risk = durum["sermaye"] * 0.02
+        self.assertGreater(kayip, risk,
+                           "maliyet dusulmemis: kayip tam risk kadar cikti")
+        self.assertLess(kayip, risk * 1.5, "maliyet asiri dusulmus")
 
     def test_metin_rapor_yon_icerir(self):
         self.assertIn("LONG", m.metin_rapor(self._karar()))

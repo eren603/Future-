@@ -2623,3 +2623,18 @@ plandan **bilinçli** ayrılmalardır.
 6. **`_bicim()` + dejenere dalın anahtar denkliği (planda yoktu).**
    Fail-closed dal, tüketiciler (`metin_rapor`) None değerlerde
    patladığı için çökme dalına dönüşmüştü.
+
+7. **Giriş izdüşümü ÖĞRENİLMİYOR — sabit rastgele izdüşüm.** Plan
+   ("Architecture") ve tasarım belgesi (halka 2) "öğrenilen giriş
+   izdüşümü" diyor; kod onu hiç güncellemiyor. Bu bir eksiklik olarak
+   değil, **ölçülmüş bir tasarım kararı** olarak kayda geçer:
+   `giris_izdusumu` 256 parametre taşıyor, eğitim dilimi 86 örnek
+   (~3 parametre/örnek). Bu örneklem büyüklüğünde 256 parametre eğitmek
+   aşırı-uyumdur; eğitilen kısım küçük başlıkta tutuluyor (3 görüş × 34 =
+   102 parametre). Mimari adı: **rastgele özellik / ELM tarzı** — sabit
+   izdüşüm + eğitilen doğrusal başlık.
+   **Tasarım belgesinin halka-2 ölü-halka ölçütü ("izdüşüm sabitlenince
+   test metriği düşer") bu haliyle SAĞLANAMAZ** ve düzeltilmelidir; yerine
+   geçen ve sağlanan ölçüt: *izdüşüm değiştirilince karar değişir* (halka
+   ölü değil), *koşu boyunca değişmez* (öğrenilmiyor). İkisi de
+   `SabitIzdusumTesti` ile kilitli.
