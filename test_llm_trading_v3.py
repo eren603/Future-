@@ -12,9 +12,12 @@ Kritik test siniflari:
 """
 
 import inspect
+import json
 import math
 import pathlib
 import re
+import shutil
+import tempfile
 import unittest
 
 import llm_trading_v3 as m
@@ -375,6 +378,48 @@ class GeometriTesti(unittest.TestCase):
 
 
 # ----------------------------------------------------------------- Task 6
+
+class GeometriDaireselTesti(unittest.TestCase):
+    """Kazanan geometri, denenen listesinin ICINDE olamaz (dairesel referans).
+
+    Bulundu: `en_iyi["denenen"] = denenen` satiri, en_iyi zaten denenen'in
+    bir ELEMANI oldugu icin kendine referans yaratiyordu. Sonuc: bir
+    geometri KAZANDIGI anda karar JSON'a serilesemiyor ("Circular reference
+    detected"). Kusur, yalniz fail-closed dal (en_iyi is None) calisirken
+    gizli kaliyordu - yani sistem DOGRU calistiginda bozuluyordu.
+    """
+
+    def _barlar(self, n=400):
+        rng = m.tohumlu_rng("dairesel")
+        barlar, fiyat = [], 100.0
+        for _ in range(n):
+            fiyat *= 1.0 + rng.uniform(-0.002, 0.004)
+            barlar.append({"o": fiyat, "h": fiyat * 1.004, "l": fiyat * 0.996,
+                           "c": fiyat, "v": 100.0})
+        return barlar
+
+    def _sec(self):
+        barlar = self._barlar()
+        atr_serisi = m.atr(barlar)
+        indeksler = list(range(m.ISINMA_BARI, len(barlar) - 40))
+        return m.geometri_sec(barlar, indeksler, "LONG", atr_serisi,
+                              p_yon=0.6, cost_r_fn=lambda k: 0.001)
+
+    def test_kazanan_geometri_serilesebilir(self):
+        secim = self._sec()
+        self.assertTrue(secim["denenen"], "kurulum bozuk: hic aday denenmemis")
+        json.dumps(secim)      # dairesel referansta ValueError yukselir
+
+    def test_kazanan_denenen_listesinin_elemani_DEGIL(self):
+        secim = self._sec()
+        for aday in secim["denenen"]:
+            self.assertIsNot(aday, secim,
+                             "kazanan, kendi denenen listesinin elemani olamaz")
+
+    def test_denenen_adaylari_kendi_denenenini_TASIMAZ(self):
+        for aday in self._sec()["denenen"]:
+            self.assertNotIn("denenen", aday)
+
 
 class GeometriSecimTesti(unittest.TestCase):
     def _yukselen_barlar(self, n=200):
@@ -1059,6 +1104,27 @@ class SinifEkseniTesti(unittest.TestCase):
                     if (1 if self._p_long(o["x"]) >= 0.5 else 0) == o["y"])
         self.assertGreater(dogru / len(self.kume), 0.9)
 
+    def test_ters_eksenin_bedeli_ARTEFAKTA_KILITLI(self):
+        """Eksen ters cevrilince dogruluk ne oluyor - sayi burada URETILIYOR.
+
+        Bu testin varlik sebebi: c9ba8cd commit mesajinda depo
+        artefaktindan yeniden URETILEMEYEN bir vektor yazilmisti
+        (denetci #6 yakaladi, sicilde G-1). Kaynagi olmayan nicel iddia
+        gercek gibi sunulamaz. Bundan sonra bu sayilar burada olculuyor;
+        deger degisirse test duser.
+        """
+        dogru_eksen = sum(1 for o in self.kume
+                          if (1 if self._p_long(o["x"]) >= 0.5 else 0) == o["y"])
+        ters_eksen = len(self.kume) - dogru_eksen
+        self.assertEqual(dogru_eksen + ters_eksen, len(self.kume))
+        self.assertGreater(dogru_eksen / len(self.kume), 0.9)
+        self.assertLess(ters_eksen / len(self.kume), 0.1)
+        # Ters eksen TAM olarak tamamlayicidir: 1 - dogruluk.
+        p = self._p_long([0.9, 0.0, 0.0, 0.0])
+        self.assertAlmostEqual(p + (1.0 - p), 1.0, places=12)
+        self.assertEqual(m.decode(p), "LONG")
+        self.assertEqual(m.decode(1.0 - p), "SHORT")
+
     def test_eksen_tek_yerde_beyan_edilir(self):
         """Ham indeks (p[0]/p[1]) ile yon okumak yasak: eksen kayabilir."""
         self.assertTrue(hasattr(m, "LONG_SINIFI"))
@@ -1368,6 +1434,25 @@ class BoruHattiTesti(unittest.TestCase):
         self.assertIn(r["yon"], m.YON_SOZLUGU)
         self.assertIsNotNone(r["giris"])
 
+    def test_iz_giris_erisimini_DOGRUDAN_beyan_eder(self):
+        """G-4: bu alan dolayli kilitliydi; dogrudan iddia ucuz ve gerekli."""
+        iz = m.BoruHatti(tohum=2026).calistir(self._paket())["iz"]
+        self.assertEqual(iz["halka_11"]["giris_erisimi"],
+                         m.girdi_erisimi(m.GECIKME_SAYISI, h4_var=True))
+        self.assertGreater(iz["halka_11"]["giris_erisimi"],
+                           m.GECIKME_SAYISI * m.H4_BAR_ORANI,
+                           "erisim token gecikmesinden BUYUK olmali")
+
+    def test_iz_yarisma_hukmunu_DOGRUDAN_beyan_eder(self):
+        """Yarisma kosmadiysa bu SESSIZ kalamaz: gerekcesiyle yazilmali."""
+        iz = m.BoruHatti(tohum=2026).calistir(self._paket())["iz"]
+        yarisma = iz["halka_7"]["yarisma"]
+        self.assertIn(yarisma.split(" ")[0], ("ic-holdout", "YAPILMADI"))
+        if yarisma.startswith("YAPILMADI"):
+            self.assertIn("yetersiz ornek", yarisma)
+            self.assertIn("fail-closed", yarisma)
+            self.assertEqual(iz["halka_7"]["yontem"], "sicaklik")
+
     def test_uctan_uca_karar_uretir(self):
         r = m.BoruHatti(tohum=2026).calistir(self._paket())
         self.assertIn(r["yon"], m.YON_SOZLUGU)
@@ -1526,6 +1611,78 @@ class CiktiTesti(unittest.TestCase):
 
     def test_metin_rapor_yon_icerir(self):
         self.assertIn("LONG", m.metin_rapor(self._karar()))
+
+    # -- rapor_yaz: plan Task 15'in beyan ettigi cikti (G-6) --
+
+    def _gecici(self, ad="rapor.json"):
+        dizin = tempfile.mkdtemp(prefix="llm-trading-test-")
+        self.addCleanup(shutil.rmtree, dizin, True)
+        return pathlib.Path(dizin) / ad
+
+    def test_rapor_yaz_dosya_uretir_ve_geri_okunur(self):
+        yol = self._gecici()
+        m.rapor_yaz([self._karar()], yol)
+        veri = json.loads(yol.read_text(encoding="utf-8"))
+        self.assertEqual(veri["surum"], m.SURUM)
+        self.assertEqual(len(veri["kararlar"]), 1)
+        self.assertEqual(veri["kararlar"][0]["sembol"], "BTCUSDT")
+        self.assertEqual(veri["kararlar"][0]["yon"], "LONG")
+
+    def test_rapor_yaz_deterministik(self):
+        """Ayni girdi ayni bayt: rapor bir kanit artefaktidir."""
+        a, b = self._gecici("a.json"), self._gecici("b.json")
+        m.rapor_yaz([self._karar()], a)
+        m.rapor_yaz([self._karar()], b)
+        self.assertEqual(a.read_bytes(), b.read_bytes())
+
+    def test_rapor_yaz_karar_destek_uyarisini_TASIR(self):
+        """Dosya baglamindan koparilinca da sinir okunabilmeli."""
+        yol = self._gecici()
+        m.rapor_yaz([self._karar()], yol)
+        veri = json.loads(yol.read_text(encoding="utf-8"))
+        self.assertIn("karar-destek", veri["uyari"].lower())
+        self.assertIn("otomatik emir", veri["uyari"].lower())
+
+    def test_rapor_yaz_serilesmeyen_alani_SESSIZCE_ATMAZ(self):
+        """Yazilamayan sey 'yazildi' diye raporlanamaz (fail-closed)."""
+        karar = self._karar()
+        karar["fn"] = lambda x: x
+        with self.assertRaises(TypeError):
+            m.rapor_yaz([karar], self._gecici())
+
+    def test_rapor_yaz_bos_liste_de_gecerli_dosya_yazar(self):
+        yol = self._gecici()
+        m.rapor_yaz([], yol)
+        veri = json.loads(yol.read_text(encoding="utf-8"))
+        self.assertEqual(veri["kararlar"], [])
+
+    def test_rapor_yaz_boru_hatti_kararini_yazabilir(self):
+        """Gercek karar (iz dahil) seri hale gelmeli - sozlesme kontrolu."""
+        paket = BoruHattiTesti("test_determinizm")._paket()
+        karar = m.BoruHatti(tohum=2026).calistir(paket)
+        yol = self._gecici()
+        m.rapor_yaz([karar], yol)
+        veri = json.loads(yol.read_text(encoding="utf-8"))
+        self.assertIn("iz", veri["kararlar"][0])
+        self.assertIn("halka_11", veri["kararlar"][0]["iz"])
+
+    def test_rapor_yaz_gizli_alan_SIZDIRMAZ(self):
+        """Guvenlik siniri: dosyada anahtar/imza/emir ucu deseni bulunmaz."""
+        paket = BoruHattiTesti("test_determinizm")._paket()
+        karar = m.BoruHatti(tohum=2026).calistir(paket)
+        yol = self._gecici()
+        m.rapor_yaz([karar], yol)
+        metin = yol.read_text(encoding="utf-8").lower()
+        for desen in ("api_key", "apikey", "secret", "hmac", "signature",
+                      "/order", "/cancel", "listenkey"):
+            self.assertNotIn(desen, metin)
+
+    def test_main_rapor_bayragi_dosya_yazar(self):
+        yol = self._gecici("cli.json")
+        self.assertEqual(m.main(["--oz-rapor", str(yol)]), 0)
+        veri = json.loads(yol.read_text(encoding="utf-8"))
+        self.assertEqual(veri["surum"], m.SURUM)
+        self.assertIsInstance(veri["kararlar"], list)
 
     def test_metin_rapor_stake_sifiri_gizlemez(self):
         metin = m.metin_rapor(self._karar())

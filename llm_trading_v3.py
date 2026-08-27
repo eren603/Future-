@@ -526,6 +526,12 @@ def geometri_sec(barlar, indeksler, yon, atr_serisi, p_yon,
                 "not": "OLCUM YOK - yeterli ilk-gecis ornegi yok (fail-closed)",
                 "denenen": denenen}
 
+    # KOPYA sart: en_iyi zaten denenen'in bir ELEMANI. Dogrudan
+    # `en_iyi["denenen"] = denenen` yazmak kendine referans yaratir ve
+    # karar JSON'a SERILESEMEZ. Kusur yalniz bir geometri KAZANDIGINDA
+    # ortaya cikar - yani sistem dogru calistiginda; fail-closed dal
+    # (en_iyi is None) taze bir sozluk dondugu icin gizli kaliyordu.
+    en_iyi = dict(en_iyi)
     en_iyi["denenen"] = denenen
     if en_iyi["elog"] <= 0.0:
         en_iyi["f"] = 0.0
@@ -1739,6 +1745,33 @@ def metin_rapor(karar):
     return "\n".join(satirlar)
 
 
+KARAR_DESTEK_UYARISI = (
+    "Yalniz karar-destek. Canli/otomatik emir (gercek para) DAHIL DEGILDIR; "
+    "bu dosya bir emir dosyasi degil, bir olcum kaydidir."
+)
+
+
+def rapor_yaz(kararlar, dosya):
+    """Kararlari YEREL bir JSON dosyasina yazar. Ag erisimi YOK.
+
+    Deterministik: ayni girdi ayni bayt (sort_keys + sabit girinti). Rapor
+    bir KANIT artefaktidir - denetim onu yeniden okuyup sayilari
+    dogrulayabilmelidir, dolayisiyla iz (halka_0..12) oldugu gibi tasinir.
+
+    Serilesmeyen bir alan varsa TypeError YUKSELIR ve dosya yazilmaz:
+    yazilamayan sey "yazildi" diye raporlanamaz (fail-closed). json.dumps
+    varsayilan olarak zaten yukseltir; `default=` ile susturmak, sessizce
+    veri kaybi demek olurdu.
+    """
+    import json
+
+    govde = {"surum": SURUM, "uyari": KARAR_DESTEK_UYARISI,
+             "kararlar": list(kararlar)}
+    metin = json.dumps(govde, sort_keys=True, indent=1, ensure_ascii=False)
+    with open(str(dosya), "w", encoding="utf-8") as f:
+        f.write(metin + "\n")
+
+
 def defter_guncelle(durum, karar, bar):
     """Yerel kagit defteri. f*=0 ise pozisyon ACILMAZ (bahis sifir)."""
     yeni = {"sermaye": durum["sermaye"],
@@ -1798,17 +1831,54 @@ def _oz_test():
     return 0 if sonuc.wasSuccessful() else 1
 
 
+def _oz_kosu_kararlari(bar_sayisi=None, tohum=2026):
+    """Sentetik veriyle tam boru hatti kosusu. Ag YOK, test paketi YOK.
+
+    Bar sayisi varsayilani, bolmenin dejenere olmamasi icin gereken
+    mertebeden (purge boslugu = ufuk + embargo + girdi_erisimi) TURETILIR;
+    sabit secilmez.
+    """
+    if bar_sayisi is None:
+        bosluk = ETIKET_UFKU + EMBARGO + girdi_erisimi(GECIKME_SAYISI, True)
+        bar_sayisi = 6 * bosluk
+    rng = tohumlu_rng("oz-kosu", tohum, bar_sayisi)
+    barlar, fiyat = [], 100.0
+    for _ in range(bar_sayisi):
+        fiyat *= 1.0 + rng.uniform(-0.003, 0.0032)
+        barlar.append({"o": fiyat, "h": fiyat * 1.002, "l": fiyat * 0.998,
+                       "c": fiyat, "v": 1000.0 + rng.uniform(0.0, 100.0)})
+    dort = []
+    for k in range(0, len(barlar) // H4_BAR_ORANI * H4_BAR_ORANI, H4_BAR_ORANI):
+        dilim = barlar[k:k + H4_BAR_ORANI]
+        dort.append({"o": dilim[0]["o"], "h": max(b["h"] for b in dilim),
+                     "l": min(b["l"] for b in dilim), "c": dilim[-1]["c"],
+                     "v": sum(b["v"] for b in dilim)})
+    paket = {"sembol": "SENTETIK", "barlar15": barlar, "barlar4h": dort,
+             "turev_serisi": None, "dolu_kanal": 2, "toplam_kanal": 6,
+             "adaptor": "sentetik-oz-kosu", "azami_ornek": AZAMI_ORNEK}
+    return [BoruHatti(tohum=tohum).calistir(paket)]
+
+
 def main(argv=None):
     import argparse
     ayristirici = argparse.ArgumentParser(description=SURUM)
     ayristirici.add_argument("--self-test", action="store_true")
     ayristirici.add_argument("--esikler", action="store_true")
+    ayristirici.add_argument("--oz-rapor", metavar="DOSYA",
+                             help="sentetik oz-kosunun kararini DOSYA'ya yazar "
+                                  "(ag erisimi YOK; canli veri gerektirmez)")
     ayristirici.add_argument("--lam", type=float, default=1.0)
     args = ayristirici.parse_args(argv)
     if args.self_test:
         return _oz_test()
     if args.esikler:
         print(esik_raporu())
+        return 0
+    if args.oz_rapor:
+        # Oz-kosu: SENTETIK veri uzerinde tam boru hatti + rapor. Test
+        # paketini CAGIRMAZ (--self-test ozyineleme korkulugu bozulmasin).
+        rapor_yaz(_oz_kosu_kararlari(), args.oz_rapor)
+        print(f"rapor yazildi: {args.oz_rapor}")
         return 0
     print(f"{SURUM}: canli kosu icin ag erisimi gerekir.")
     print("Bu ortamda: --self-test (testler) veya --esikler (esik beyani).")
