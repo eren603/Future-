@@ -11,6 +11,7 @@ Kritik test siniflari:
   GeometriTesti      - ilk-gecis muhafazakar, E[log] dogru
 """
 
+import inspect
 import math
 import pathlib
 import re
@@ -1110,6 +1111,56 @@ def _agrega4h(barlar15):
                       "c": dilim[-1]["c"],
                       "v": sum(b["v"] for b in dilim)})
     return cikti
+
+
+class HesapKarmasikligiTesti(unittest.TestCase):
+    """satir_uret bar BASINA tum seriyi yeniden kurmamali (gercek O(N^2)).
+
+    Olculdu (cProfile, 20000 bar): `_z([h*k for h,k in zip(...)], i)` listcomp'u
+    toplam surenin %71.3'unu yiyordu. Bu bir hiz suslemesi degil: hedef ortam
+    Pydroid 3 (telefon) ve durust purge daha buyuk fikstur GEREKTIRIYOR -
+    kosmayan sistem dogru sonuc vermez.
+    """
+
+    def _barlar(self, n):
+        rng = m.tohumlu_rng("karmasiklik")
+        barlar, fiyat = [], 100.0
+        for _ in range(n):
+            fiyat *= 1.0 + rng.uniform(-0.004, 0.004)
+            barlar.append({"o": fiyat, "h": fiyat * 1.002, "l": fiyat * 0.998,
+                           "c": fiyat, "v": rng.uniform(80.0, 120.0)})
+        return barlar
+
+    def test_gostergeler_hacim_degerini_onceden_hesaplar(self):
+        gost = m._gostergeler(self._barlar(60))
+        self.assertIn("hacim_deger", gost)
+        self.assertEqual(len(gost["hacim_deger"]), 60)
+
+    def test_hacim_deger_serisi_eski_ic_formulle_ayni(self):
+        """Hoist DAVRANIS DEGISTIRMEMELI: seri birebir ayni olmali."""
+        barlar = self._barlar(80)
+        gost = m._gostergeler(barlar)
+        beklenen = [h * k for h, k in zip(gost["hacimler"], gost["kapanislar"])]
+        self.assertEqual(gost["hacim_deger"], beklenen)
+
+    def test_satir_uret_kaynakta_seri_boyu_listcomp_kurmuyor(self):
+        """Yapisal kilit: fonksiyon govdesinde tum seri uzerinde zip/listcomp yok."""
+        kaynak = inspect.getsource(m.satir_uret)
+        self.assertNotIn("zip(hacimler", kaynak)
+        self.assertNotIn("for h, k in zip", kaynak)
+
+    def test_satir_uret_maliyeti_seri_boyuyla_buyumuyor(self):
+        """Bar basina maliyet N'den BAGIMSIZ olmali (yapisal, zamanlama degil).
+
+        Ayni bar indeksinde uretilen satir, serinin GERISINE eklenen barlardan
+        etkilenmemeli; etkileniyorsa fonksiyon tum seriyi geziyor demektir.
+        """
+        kisa = self._barlar(200)
+        uzun = kisa + self._barlar(2000)
+        i = 150
+        s1 = m.satir_uret(kisa, m._gostergeler(kisa), None, i)
+        s2 = m.satir_uret(uzun, m._gostergeler(uzun), None, i)
+        self.assertEqual(s1, s2, "gelecek barlar gecmis satiri degistiremez")
 
 
 class BoruHattiTesti(unittest.TestCase):

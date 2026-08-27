@@ -1302,8 +1302,11 @@ def satir_uret(barlar, gostergeler, turev_serisi, i):
         kirp((gostergeler["rsi"][i] - 50.0) / 20.0),
         _kanal_konumu(barlar, i),
     ]
-    hacimler = gostergeler["hacimler"]
-    hacim = [_z(hacimler, i), _z([h * k for h, k in zip(hacimler, kapanislar)], i)]
+    # hacim_deger BIR KEZ _gostergeler'de kurulur. Eskiden burada bar BASINA
+    # yeniden kuruluyordu; olculdu (cProfile, 20000 bar): bu tek listcomp
+    # toplam surenin %71.3'u = gercek O(N^2). Hoist DAVRANIS-NOTRDUR (_z
+    # yalniz [i-48:i] ve [i]'yi okur), yalniz maliyeti dusurur.
+    hacim = [_z(gostergeler["hacimler"], i), _z(gostergeler["hacim_deger"], i)]
     if turev is None:
         turev_vek = [0.0, 0.0, 0.0, 0.0, 0.0]      # kapsam=0 -> bilgi YOK
     else:
@@ -1323,8 +1326,11 @@ def satir_uret(barlar, gostergeler, turev_serisi, i):
 
 def _gostergeler(barlar):
     kapanislar = [b["c"] for b in barlar]
+    hacimler = [b.get("v", 0.0) for b in barlar]
     return {"kapanislar": kapanislar,
-            "hacimler": [b.get("v", 0.0) for b in barlar],
+            "hacimler": hacimler,
+            # Hacim x fiyat serisi: bar basina DEGIL, seri basina bir kez.
+            "hacim_deger": [h * k for h, k in zip(hacimler, kapanislar)],
             "ema_hizli": ema(kapanislar, 8),
             "ema_yavas": ema(kapanislar, 21),
             "atr": atr(barlar, 14),
