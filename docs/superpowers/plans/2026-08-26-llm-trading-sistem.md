@@ -40,7 +40,7 @@
 - Consumes: yok (ilk görev)
 - Produces: `SURUM: str`, `SEMBOLLER: list[str]`, `tohumlu_rng(*parcalar) -> random.Random`, `sabit_kimlik(*parcalar) -> int`, `kirp(x, alt, ust) -> float`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # test_llm_trading_v3.py
@@ -98,12 +98,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3 -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'llm_trading_v3'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 #!/usr/bin/env python3
@@ -147,12 +147,12 @@ def kirp(x, alt=-1.0, ust=1.0):
     return max(alt, min(ust, deger))
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3 -v`
 Expected: PASS (6 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -175,7 +175,7 @@ git commit -m "feat: iskelet, guvenlik siniri ve determinizm cekirdegi"
   - `basabas_p(b: float, a: float) -> float | None`
   - `net_kanatlar(R: float, cost_r: float) -> tuple[float, float]` → `(b, a)`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class KellyTesti(unittest.TestCase):
@@ -229,12 +229,12 @@ class KellyTesti(unittest.TestCase):
 
 `test_llm_trading_v3.py` başına `import math` eklenir.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.KellyTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'net_kanatlar'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 2
@@ -279,12 +279,12 @@ def kelly_asimetrik(p, b, a):
     return max(0.0, f)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.KellyTesti -v`
 Expected: PASS (9 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -312,7 +312,7 @@ git commit -m "feat: maliyet sonrasi asimetrik Kelly ve basabas kimligi"
 
 `ciftler` biçimi: `[(p_long, y), ...]` — `p_long` LONG olasılığı, `y ∈ {0,1}` (1 = LONG doğruydu).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class KalibrasyonMetrikTesti(unittest.TestCase):
@@ -368,12 +368,12 @@ class KalibrasyonMetrikTesti(unittest.TestCase):
         self.assertGreater(rapor["en_kotu"][1], rapor["gruplar"]["buyuk"])
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.KalibrasyonMetrikTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'wilson_araligi'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 3
@@ -474,12 +474,12 @@ def grup_ece(ciftler_gruplu, bin_sayisi=10):
     return {"gruplar": gruplar, "en_kotu": (en_kotu_ad, gruplar[en_kotu_ad])}
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.KalibrasyonMetrikTesti -v`
 Expected: PASS (10 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -512,7 +512,7 @@ git commit -m "feat: kalibrasyon metrikleri (ECE duyarlilik, MCE, Brier, AUROC, 
 > **Sonraki görevler (özellikle Task 12 kalibrasyon ve Task 13 decoding) `0.5` hedefini
 > MİRAS ALMAMALIDIR** — stake sözleşmesi yalnız `stake_hesapla()` üzerinden geçer.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class ShrinkageTesti(unittest.TestCase):
@@ -579,12 +579,12 @@ class ShrinkageKellyEntegrasyonTesti(unittest.TestCase):
         self.assertGreater(m.kelly_asimetrik(p_yanlis, b, a), 0.0)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.ShrinkageTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'shrinkage_katsayisi'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 4
@@ -639,12 +639,12 @@ def stake_hesapla(p_ham, s, b, a, lam=1.0):
     return {"f": f, "p_kullanilan": p_kullanilan, "p0": p0, "not": ""}
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.ShrinkageTesti test_llm_trading_v3.ShrinkageKellyEntegrasyonTesti -v`
 Expected: PASS (9 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -668,7 +668,7 @@ git commit -m "feat: shrinkage - kanit yoksa stake matematiksel olarak sifir"
 
 `barlar` biçimi: `[{"o":float,"h":float,"l":float,"c":float}, ...]`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class GeometriTesti(unittest.TestCase):
@@ -723,12 +723,12 @@ class GeometriTesti(unittest.TestCase):
         self.assertEqual(m.beklenen_log(0.5, 1.0, 1.0, 1.0), float("-inf"))
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.GeometriTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'ilk_gecis_olcum'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 5
@@ -785,12 +785,12 @@ def beklenen_log(p_hedef, f, b, a):
     return p_hedef * math.log(kazanc) + (1.0 - p_hedef) * math.log(kayip)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.GeometriTesti -v`
 Expected: PASS (7 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -813,7 +813,7 @@ git commit -m "feat: ilk-gecis olcumu ve E[log] - geometri karar degiskeni"
   - `stake_kirp(f_ham: float, f_max: float) -> dict`
   - `likidasyon_tavani(giris: float, likidasyon: float | None, kaldirac_azami: float, guvenlik: float) -> float`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class GeometriSecimTesti(unittest.TestCase):
@@ -874,12 +874,12 @@ class GeometriSecimTesti(unittest.TestCase):
         self.assertFalse(r["kirpildi"])
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.GeometriSecimTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'geometri_sec'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # Aday geometri izgarasi: (stop_k, hedef_k) ATR carpanlari.
@@ -960,12 +960,12 @@ def geometri_sec(barlar, indeksler, yon, atr_serisi, p_yon,
     return en_iyi
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.GeometriSecimTesti -v`
 Expected: PASS (7 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -990,7 +990,7 @@ git commit -m "feat: E[log] ile geometri secimi, likidasyon tavani ve stake kirp
 
 **Not:** ağ çağrısı `getir_fn` parametresiyle enjekte edilir; testler sahte `getir_fn` verir. Bu, ağsız test edilebilirliğin tek koşuludur.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class AdaptorTesti(unittest.TestCase):
@@ -1039,12 +1039,12 @@ class AdaptorTesti(unittest.TestCase):
         self.assertNotEqual(r["kanallar"]["funding"], 0.0)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.AdaptorTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'BinanceAdaptor'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 6
@@ -1124,12 +1124,12 @@ def veri_topla(sembol, adaptorler, getir_fn):
             "dusen": list(KANALLAR), "yedege_dusuldu": True}
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.AdaptorTesti -v`
 Expected: PASS (5 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -1152,7 +1152,7 @@ git commit -m "feat: cift adaptor (Binance ana / OKX yedek), kapsam skoru, uydur
   - `TokenSozlugu` sınıfı: `.kimlik(sembol, zaman_dilimi, aile, gecikme) -> int`, `.boyut -> int`
   - `token_listesi(semboller, gecikme_sayisi) -> list[dict]`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class TokenSozluguTesti(unittest.TestCase):
@@ -1193,12 +1193,12 @@ class TokenSozluguTesti(unittest.TestCase):
         self.assertIn("turev", m.AILELER)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.TokenSozluguTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'TokenSozlugu'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 7a
@@ -1248,12 +1248,12 @@ def token_listesi(semboller, gecikme_sayisi):
     return tokenlar
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.TokenSozluguTesti -v`
 Expected: PASS (7 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -1275,7 +1275,7 @@ git commit -m "feat: ozellik-token sozlugu, 15m ve 4h ayri zaman dilimi tokenlar
   - `zaman_konumu(gecikme: int, boyut: int) -> list[float]`
   - `sembol_konumu(sembol_indeksi: int, boyut: int) -> list[float]`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class OlcekleyiciTesti(unittest.TestCase):
@@ -1335,12 +1335,12 @@ class KonumKoduTesti(unittest.TestCase):
         self.assertEqual(len(m.sembol_konumu(2, 16)), 16)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.OlcekleyiciTesti test_llm_trading_v3.KonumKoduTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'Olcekleyici'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 7b
@@ -1412,12 +1412,12 @@ def sembol_konumu(sembol_indeksi, boyut):
     return [x * 0.10 for x in _sinuzoidal(sembol_indeksi, boyut, 97.0)]
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.OlcekleyiciTesti test_llm_trading_v3.KonumKoduTesti -v`
 Expected: PASS (8 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -1443,7 +1443,7 @@ git commit -m "feat: train-only olcekleyici (sabit kolon korumasi) ve ayri zaman
 
 **Kritik:** `Kodlayici.ileri` üç anahtar alır (`qk_acik`, `maske_acik`, `ffn_acik`). Bunlar üretimde daima `True`'dur; **yalnız ölü-halka testleri için** vardır. Test, her anahtarı kapatınca çıktının DEĞİŞTİĞİNİ kanıtlar.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class OluHalkaTesti(unittest.TestCase):
@@ -1520,12 +1520,12 @@ class SoftmaxTesti(unittest.TestCase):
         self.assertTrue(all(math.isfinite(x) for x in p))
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.OluHalkaTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'Kodlayici'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 7c
@@ -1637,12 +1637,12 @@ class Kodlayici:
         return katman_norm(h_vek)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.OluHalkaTesti test_llm_trading_v3.SoftmaxTesti -v`
 Expected: PASS (8 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -1664,7 +1664,7 @@ git commit -m "feat: nedensel attention + FFN, olu-halka testleriyle kanitlanmis
   - `Baslik` sınıfı: `.logit(x) -> list[float]`, `.egit(ornekler, devir, ogrenme_hizi)`
   - `sizinti_var_mi(bolme, ufuk, giris_penceresi) -> bool`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class SizintiTesti(unittest.TestCase):
@@ -1724,12 +1724,12 @@ class BaslikTesti(unittest.TestCase):
         self.assertAlmostEqual(p[0], 0.5, places=1)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.SizintiTesti test_llm_trading_v3.BaslikTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'kronolojik_bol'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 7d
@@ -1834,12 +1834,12 @@ class Baslik:
                 self.b[k] -= hiz * grad_b[k] / payda
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.SizintiTesti test_llm_trading_v3.BaslikTesti -v`
 Expected: PASS (8 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -1864,7 +1864,7 @@ git commit -m "feat: purge/embargo kronolojik bolme ve egitilen iki-sinifli logi
 
 **Kritik:** `sicaklik_fit`, `topluluk_olasilik`'ın ürettiği **aynı** dağılım üzerinde NLL minimize eder (63-bulgu #28'in panzehiri).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class KalibrasyonFitTesti(unittest.TestCase):
@@ -1923,12 +1923,12 @@ class KalibrasyonFitTesti(unittest.TestCase):
         self.assertTrue(math.isfinite(r["nll"]))
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.KalibrasyonFitTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'topluluk_olasilik'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 7e
@@ -2022,12 +2022,12 @@ def kalibrasyon_sec(kal_ornekler, basliklar):
             "sinirda": sicaklik["sinirda"]}
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.KalibrasyonFitTesti -v`
 Expected: PASS (5 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -2049,7 +2049,7 @@ git commit -m "feat: kalibrasyon fit - dagitilan dagilimda sicaklik + izotonik y
   - `seviyeler(giris, atr, yon, stop_k, hedef_k) -> dict`
   - `karar_uret(baglam: dict) -> dict` — tek sembol için nihai karar sözlüğü
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class DecodingTesti(unittest.TestCase):
@@ -2125,12 +2125,12 @@ class DecodingTesti(unittest.TestCase):
         }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.DecodingTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'decode'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 8
@@ -2206,12 +2206,12 @@ def karar_uret(baglam):
     }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.DecodingTesti -v`
 Expected: PASS (9 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -2233,7 +2233,7 @@ git commit -m "feat: decoding (HOLD yok) + kosulsuz seviyeler + surekli stake ek
   - `satir_uret(barlar15, barlar4h, turev, indeks) -> dict`
   - `BoruHatti` sınıfı: `.calistir(veri_paketi) -> dict`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class GostergeTesti(unittest.TestCase):
@@ -2310,12 +2310,12 @@ class BoruHattiTesti(unittest.TestCase):
         self.assertNotAlmostEqual(r1["p_ham"], r2["p_ham"], places=6)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.GostergeTesti test_llm_trading_v3.BoruHattiTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'ema'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Bu görev iki parçadır. Önce göstergeler:
 
@@ -2370,12 +2370,12 @@ Sonra boru hattı (`BoruHatti.calistir` içinde 12 halkanın her biri `iz` sözl
 konum kodu → kodlayıcı → bölme → başlık eğitimi → kalibrasyon → topluluk → decode →
 geometri → stake → iz.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3.GostergeTesti test_llm_trading_v3.BoruHattiTesti -v`
 Expected: PASS (9 test)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -2398,7 +2398,7 @@ git commit -m "feat: gostergeler ve uctan uca boru hatti, 12 halka izi"
   - `metin_rapor(karar) -> str`
   - `main(argv) -> int`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 class CiktiTesti(unittest.TestCase):
@@ -2444,12 +2444,12 @@ class CiktiTesti(unittest.TestCase):
         self.assertEqual(m.main(["--self-test"]), 0)
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest test_llm_trading_v3.CiktiTesti -v`
 Expected: FAIL with `AttributeError: module 'llm_trading_v3' has no attribute 'metin_rapor'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 # ---------------------------------------------------------------- BOLUM 10
@@ -2542,12 +2542,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest test_llm_trading_v3 -v`
 Expected: PASS (tüm testler)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add llm_trading_v3.py test_llm_trading_v3.py
@@ -2576,3 +2576,50 @@ basabas_p/not` alanlarıyla Task 6, 13, 15'te tutarlı; `stake_kirp` dönüşü 
 "f_ham","f_max"}` Task 6 ve 13'te tutarlı; `shrinkage_katsayisi` dönüşü `{"s","s_kanit",
 "s_kalibrasyon","s_kapsam"}` Task 4, 13, 15'te tutarlı.
 
+
+---
+
+## Uygulama sapmaları (plan → kod), gerekçeleriyle
+
+Plan bir sözleşmedir; sapmalar sessiz kalamaz. 75 adımın tamamı uygulandı,
+her grup bağımsız denetçiden PASS aldı (`denetim_sicili.md`). Aşağıdakiler
+plandan **bilinçli** ayrılmalardır.
+
+1. **`Adaptor.kline(sembol, aralik, limit)` / `.turev(sembol)` → tek
+   `Adaptor.uc(kanal, sembol)`.** Plandaki iki metot ad olarak VERİ ÇEKMEYİ
+   ima ediyor. Bu depoda ağ çağrısı yapılmaz: adaptör yalnız **public GET
+   URL'i üretir**, isteği kullanıcı/dış katman atar. Altı kanalın tamamı
+   (`KANALLAR`) tek bir sözlükten çözülüyor; iki ayrı metot aynı sözlüğü
+   ikiye bölüp isim üzerinden yanlış bir yetenek vaat ederdi.
+
+2. **`AZAMI_ORNEK` sabit 120 → türetilmiş 200.** Plan bunu bir hesap
+   bütçesi olarak sabitliyordu. Ölçüldü ki 120, kalibrasyon dilimini
+   yapısal olarak 24'te tavanlıyor ve `kalibrasyon_sec`'in adil yarışma
+   şartını (`2 × ASGARI_OLCUM = 40`) **hiçbir veri miktarında**
+   sağlayamıyor. Değer artık `ceil(2 × ASGARI_OLCUM / BOLME_ORANLARI[1])`
+   ile modülün kendi sabitlerinden türetiliyor. **Yarışmayı açmak için
+   büyütülmedi** — 200'de de `kal < 40` kalıyor ve doğru cevap "yarışma
+   yapılamaz" demektir (izde beyan ediliyor). Eşiği geçiren değere çekmek
+   aşırı-uyumdur.
+
+3. **`ema()` özyinelemeli → sonlu pencerede kesilmiş.** Planda EMA'nın
+   yazımı belirtilmemişti. Ölçüldü ki özyinelemeli (IIR) yazımın geriye
+   erişimi **toleransa bağlı** (1e-15'te 301, 1e-9'da 168 bar) ve bu
+   yüzden purge korkuluğu olarak kullanılamaz. Üstel ağırlık profili
+   korunup `periyot × EMA_KESME_KATI` barda kesiliyor ve normalize
+   ediliyor.
+
+4. **Fikstür 700 → 6000 bar.** Erişim dürüstçe türetilince purge boşluğu
+   1046 bara çıkıyor ve 700 barlık pencerede bölme tamamen dejenere
+   oluyor (train=0). Bu bir eşik gevşetmesi değil, fikstürün gerçekçi
+   kılınmasıdır: 700 barda "boru hattı geçti" demek tiyatro olurdu.
+
+5. **`girdi_erisimi` eklendi (planda yoktu).** Plan purge'u
+   `ufuk + embargo` olarak tanımlıyordu. Ölçüldü ki örneğin gerçek geriye
+   erişimi gösterge zincirlerinden geliyor (`_z(atr)` → 48 + 14 = 62) ve
+   4H tokeni varken 16 katına çıkıyor. Eski hali `sizinti: False`
+   raporluyordu — **ölçülmüş bir fail-open**.
+
+6. **`_bicim()` + dejenere dalın anahtar denkliği (planda yoktu).**
+   Fail-closed dal, tüketiciler (`metin_rapor`) None değerlerde
+   patladığı için çökme dalına dönüşmüştü.
