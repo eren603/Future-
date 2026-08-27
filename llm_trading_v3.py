@@ -665,6 +665,112 @@ class OkxAdaptor(Adaptor):
         }[kanal]
 
 
+_KLINE_ALANLARI = (
+    ("KLINE_ACILIS_ZAMANI", 0), ("KLINE_ACILIS", 1), ("KLINE_YUKSEK", 2),
+    ("KLINE_DUSUK", 3), ("KLINE_KAPANIS", 4), ("KLINE_HACIM", 5),
+    ("KLINE_TAKER_ALIS", 9),
+)
+for _ad, _i in _KLINE_ALANLARI:
+    globals()[_ad] = esik_kaydet(
+        _ad, _i, "YAPISAL",
+        "Binance USD-M kline satirindaki alan indeksi (12 alanli liste). "
+        "Borsa dokumantasyonundan gelir; istatistiksel secim DEGILDIR. "
+        "Yanlis indeks sessiz veri bozulmasi demektir, o yuzden beyanli.")
+del _ad, _i
+
+# Bu kanallar tek ANLIK deger dondurur (seri DEGIL). Bir anlik degeri
+# tum barlara yazmak kolonun std'sini 0 yapar; Olcekleyici onu dogru
+# bicimde sifirlar ve bilgi modele HIC ulasmaz - ama kapsam skoru "dolu"
+# saymaya devam ederdi. Bu fail-open'dir, o yuzden kapsama SAYILMAZLAR.
+ANLIK_KANALLAR = ("funding", "derinlik")
+
+
+def _kline_cevir(satirlar):
+    """Binance kline listesini bar sozluklerine cevirir."""
+    barlar = []
+    for s in satirlar or []:
+        barlar.append({
+            "t": int(s[KLINE_ACILIS_ZAMANI]),
+            "o": float(s[KLINE_ACILIS]), "h": float(s[KLINE_YUKSEK]),
+            "l": float(s[KLINE_DUSUK]), "c": float(s[KLINE_KAPANIS]),
+            "v": float(s[KLINE_HACIM]),
+            "taker_alis": float(s[KLINE_TAKER_ALIS]),
+        })
+    return barlar
+
+
+def _seri_hizala(kayitlar, barlar, alan, zaman_alani="timestamp"):
+    """Zaman damgali bir kanali 15M bar indeksine hizalar.
+
+    Hizalama GECMISE dogru yapilir: her bar icin zamani <= bar acilisi
+    olan SON kayit. Ileri doldurma YOK - gelecek kayit gecmis bara
+    yazilirsa look-ahead sizintisi olur.
+    """
+    if not kayitlar:
+        return None
+    sirali = sorted(kayitlar, key=lambda k: int(k.get(zaman_alani, 0)))
+    cikti, j, son = [], 0, None
+    for bar in barlar:
+        while j < len(sirali) and int(sirali[j].get(zaman_alani, 0)) <= bar["t"]:
+            son = sirali[j]
+            j += 1
+        cikti.append(None if son is None else float(son[alan]))
+    return cikti
+
+
+def _turev_serisi_kur(barlar15, kanallar):
+    """Turev kanallarini bar basina sozluk SERISINE cevirir.
+
+    Anlik kanallar (funding, derinlik) SERIYE CEVRILMEZ: tek deger tum
+    barlara yazilamaz (bkz. ANLIK_KANALLAR). CVD kullanicinin KENDI
+    kline'indan cevrimdisi hesaplanir: delta = 2*taker_alis - hacim.
+    """
+    oi = _seri_hizala(kanallar.get("oi"), barlar15, "sumOpenInterest")
+    taker = _seri_hizala(kanallar.get("taker"), barlar15, "buySellRatio")
+    seri = []
+    for i, bar in enumerate(barlar15):
+        kayit = {}
+        if oi and oi[i] is not None and i > 0 and oi[i - 1]:
+            kayit["oi_degisim"] = kirp((oi[i] - oi[i - 1]) / oi[i - 1] * 100.0)
+        if taker and taker[i] is not None:
+            kayit["taker_dengesi"] = kirp((taker[i] - 1.0))
+        hacim = bar["v"] or EPSILON
+        kayit["cvd"] = kirp((2.0 * bar["taker_alis"] - hacim) / hacim)
+        seri.append(kayit)
+    return seri
+
+
+def paket_kur(sembol, toplama, **ek):
+    """veri_topla ciktisini BoruHatti.calistir paketine cevirir.
+
+    Bu, ham borsa JSON'u ile boru hatti arasindaki TEK kopru. Kline yoksa
+    fail-closed: ValueError yukselir, uydurma bar URETILMEZ.
+
+    KAPSAM DURUSTLUGU: yalniz SERI olarak modele ULASAN kanallar dolu
+    sayilir. Anlik kanallar (funding, derinlik) sayilmaz ve `anlik_kanallar`
+    alaninda BEYAN edilir - modele ulasmayan veri stake'i buyutemez.
+    """
+    kanallar = toplama.get("kanallar") or {}
+    barlar15 = _kline_cevir(kanallar.get("kline_15m"))
+    if not barlar15:
+        raise ValueError("kline_15m YOK - uydurma bar uretilmez (fail-closed)")
+    barlar4h = _kline_cevir(kanallar.get("kline_4h")) or None
+
+    seri_kanallar = [k for k in KANALLAR
+                     if k not in ANLIK_KANALLAR and kanallar.get(k) is not None]
+    anlik = sorted(k for k in ANLIK_KANALLAR if kanallar.get(k) is not None)
+
+    paket = {"sembol": sembol, "barlar15": barlar15, "barlar4h": barlar4h,
+             "turev_serisi": _turev_serisi_kur(barlar15, kanallar),
+             "dolu_kanal": len(seri_kanallar),
+             "toplam_kanal": len(KANALLAR),
+             "anlik_kanallar": anlik,
+             "adaptor": toplama.get("adaptor"),
+             "azami_ornek": AZAMI_ORNEK}
+    paket.update(ek)
+    return paket
+
+
 def veri_topla(sembol, adaptorler, getir_fn):
     """TUM adaptorleri dener, EN YUKSEK kapsamli olani secer.
 

@@ -803,6 +803,121 @@ class GeometriSecimTesti(unittest.TestCase):
 
 # ----------------------------------------------------------------- Task 7
 
+class PaketKurTesti(unittest.TestCase):
+    """veri_topla ciktisi ile calistir girdisi arasindaki KOPRU.
+
+    Bu koprusuz sistem KULLANILAMAZ: veri_topla ham Binance JSON'u
+    donduruyordu, calistir ise {barlar15, barlar4h, turev_serisi, ...}
+    bekliyordu ve arada hicbir sey yoktu.
+    """
+
+    def _kline(self, n, taban=100.0, adim_ms=900000):
+        """Binance USD-M kline bicimi: 12 alanli liste."""
+        satirlar, fiyat = [], taban
+        rng = m.tohumlu_rng("paket-kur")
+        for i in range(n):
+            fiyat *= 1.0 + rng.uniform(-0.003, 0.003)
+            hacim = 100.0 + rng.uniform(0, 50)
+            satirlar.append([
+                i * adim_ms,                      # 0 acilis zamani
+                f"{fiyat:.8f}",                   # 1 acilis
+                f"{fiyat * 1.002:.8f}",           # 2 yuksek
+                f"{fiyat * 0.998:.8f}",           # 3 dusuk
+                f"{fiyat:.8f}",                   # 4 kapanis
+                f"{hacim:.8f}",                   # 5 hacim
+                i * adim_ms + adim_ms - 1,        # 6 kapanis zamani
+                f"{hacim * fiyat:.8f}",           # 7 kote hacim
+                50,                               # 8 islem sayisi
+                f"{hacim * 0.55:.8f}",            # 9 taker alis hacmi
+                f"{hacim * 0.55 * fiyat:.8f}",    # 10 taker alis kote
+                "0",                              # 11 yoksay
+            ])
+        return satirlar
+
+    def _toplama(self, oi=True, taker=True, funding=True, derinlik=True):
+        n = 400
+        k15 = self._kline(n)
+        kanallar = {
+            "kline_15m": k15,
+            "kline_4h": self._kline(n // 16, adim_ms=14400000),
+            "oi": ([{"sumOpenInterest": f"{1000 + i:.2f}",
+                     "timestamp": k15[i][0]} for i in range(n)] if oi else None),
+            "funding": ({"lastFundingRate": "0.0001"} if funding else None),
+            "taker": ([{"buySellRatio": f"{1.0 + 0.1 * (i % 5):.4f}",
+                        "timestamp": k15[i][0]} for i in range(n)]
+                      if taker else None),
+            "derinlik": ({"bids": [["100.0", "5.0"]],
+                          "asks": [["100.1", "3.0"]]} if derinlik else None),
+        }
+        dolu = sum(1 for v in kanallar.values() if v is not None)
+        return {"adaptor": "binance", "kanallar": kanallar,
+                "kapsam": dolu / len(m.KANALLAR), "dusen": [],
+                "yedege_dusuldu": False}
+
+    def test_paket_calistir_tarafindan_TUKETILEBILIR(self):
+        paket = m.paket_kur("BTCUSDT", self._toplama())
+        r = m.BoruHatti(tohum=2026).calistir(paket)
+        self.assertIn(r["yon"], list(m.YON_SOZLUGU) + ["VERI YOK"])
+        self.assertEqual(r["sembol"], "BTCUSDT")
+
+    def test_kline_alanlari_DOGRU_esleniyor(self):
+        paket = m.paket_kur("BTCUSDT", self._toplama())
+        ham = self._toplama()["kanallar"]["kline_15m"][0]
+        bar = paket["barlar15"][0]
+        self.assertAlmostEqual(bar["o"], float(ham[1]), places=8)
+        self.assertAlmostEqual(bar["h"], float(ham[2]), places=8)
+        self.assertAlmostEqual(bar["l"], float(ham[3]), places=8)
+        self.assertAlmostEqual(bar["c"], float(ham[4]), places=8)
+        self.assertAlmostEqual(bar["v"], float(ham[5]), places=8)
+
+    def test_ANLIK_kanal_seriye_CEVRILMEZ_ve_kapsami_BUYUTMEZ(self):
+        """funding/derinlik tek anlik degerdir; tum barlara yazmak KN-1 tuzagi.
+
+        Tek deger tum barlara yazilirsa kolon std=0 olur, Olcekleyici onu
+        dogru bicimde sifirlar ve bilgi modele HIC ulasmaz - ama kapsam
+        skoru "dolu" saymaya devam ederdi. Bu fail-open'dir.
+        """
+        paket = m.paket_kur("BTCUSDT", self._toplama())
+        # 6 kanalin 2'si (funding, derinlik) ANLIK -> seri degil -> sayilmaz
+        self.assertEqual(paket["dolu_kanal"], 4)
+        self.assertEqual(paket["toplam_kanal"], len(m.KANALLAR))
+        self.assertIn("anlik_kanallar", paket)
+        self.assertEqual(sorted(paket["anlik_kanallar"]), ["derinlik", "funding"])
+
+    def test_eksik_turev_kanali_kapsami_DUSURUR(self):
+        tam = m.paket_kur("BTCUSDT", self._toplama())
+        eksik = m.paket_kur("BTCUSDT", self._toplama(oi=False))
+        self.assertLess(eksik["dolu_kanal"], tam["dolu_kanal"])
+
+    def test_turev_serisi_SERIDIR_sabit_degil(self):
+        """Seri gercekten degisiyor mu - std=0 tuzagina dusuluyor mu."""
+        paket = m.paket_kur("BTCUSDT", self._toplama())
+        seri = paket["turev_serisi"]
+        # i=0'da onceki bar YOK: oi_degisim OLCULEMEZ ve anahtar
+        # YAZILMAZ (0.0 enjekte edilmez). Olculebilen barlara bakilir.
+        oi = [x["oi_degisim"] for x in seri if "oi_degisim" in x]
+        taker = [x["taker_dengesi"] for x in seri if "taker_dengesi" in x]
+        cvd = [x["cvd"] for x in seri]
+        self.assertEqual(len(oi), len(seri) - 1, "yalniz ilk bar olculemez")
+        self.assertGreater(len(set(oi)), 1, "oi serisi sabit - bilgi tasimiyor")
+        self.assertGreater(len(set(taker)), 1, "taker serisi sabit")
+        self.assertEqual(len(cvd), len(seri), "CVD her bardan hesaplanabilir")
+
+    def test_kline_yoksa_fail_closed(self):
+        toplama = self._toplama()
+        toplama["kanallar"]["kline_15m"] = None
+        with self.assertRaises(ValueError):
+            m.paket_kur("BTCUSDT", toplama)
+
+    def test_4h_yoksa_paket_yine_kurulur(self):
+        toplama = self._toplama()
+        toplama["kanallar"]["kline_4h"] = None
+        paket = m.paket_kur("BTCUSDT", toplama)
+        self.assertIsNone(paket["barlar4h"])
+        r = m.BoruHatti(tohum=2026).calistir(paket)
+        self.assertFalse(r["iz"]["halka_1"]["h4_var"])
+
+
 class AdaptorTesti(unittest.TestCase):
     def test_kapsam_tam_veride_bir(self):
         def sahte_getir(url, params):
