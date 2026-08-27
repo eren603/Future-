@@ -2239,9 +2239,16 @@ def karar_uret(baglam):
             # SOZLESME: bu dal NORMAL dalla AYNI anahtarlari tasir. Aksi
             # halde tuketiciler yalniz mutlu yolda calisir ve fail-closed
             # dalda coker - yani guvenlik dali, cokme dali olur.
-            lt[str(lam)] = {"f": 0.0, "kirpildi": False, "f_ham": 0.0,
-                            "f_max": f_max, "f_gecit": 0.0,
-                            "f_stake_ham": 0.0, "gecit_bagladi": False}
+            lt[str(lam)] = {
+                "f": 0.0, "kirpildi": False, "f_ham": 0.0,
+                "f_max": f_max, "f_gecit": 0.0,
+                "f_stake_ham": 0.0, "gecit_bagladi": False,
+                # GEREKCE dalin KENDI kosulundan okunur - sonradan tahmin
+                # EDILMEZ. Rapor "f*=0" derken NEDEN'i de tasimak zorunda.
+                "not": ("geometri olcumu YOK (b/a uretilemedi)"
+                        if (b is None or a is None)
+                        else "gecidin f'i sifir - olculen ilk-gecis "
+                             "bahsi desteklemiyor")}
             continue
         ham = stake_hesapla(p_stake, shr["s"], b, a, lam)
         # FAIL-CLOSED KORKULUK: stake, gecidin kendi f'ini ASAMAZ. Iki hesap
@@ -2252,6 +2259,7 @@ def karar_uret(baglam):
         lt[str(lam)]["f_gecit"] = f_gecit
         lt[str(lam)]["f_stake_ham"] = ham["f"]
         lt[str(lam)]["gecit_bagladi"] = gecit_bagladi
+        lt[str(lam)]["not"] = ham["not"]
     secilen = lt[str(float(baglam.get("lam", 1.0)))]
     bref = _basabas_referansi(geo)
     return {
@@ -2265,6 +2273,8 @@ def karar_uret(baglam):
         "R": sev["R"],
         "stake": {"f": secilen["f"], "kirpildi": secilen["kirpildi"],
                   "f_max": f_max, "lambda_tablosu": lt,
+                  "not": secilen.get("not", ""),
+                  "gecit_bagladi": secilen.get("gecit_bagladi", False),
                   "p_stake": p_stake, "p_yon": p_yon,
                   "olay_uyumu": ("GECIT_OLAYI" if geo.get("p_bilesik_alt")
                                  is not None else "ETIKET_OLAYI (gecit olcumu YOK)")},
@@ -2525,6 +2535,57 @@ def metin_rapor(karar):
     return "\n".join(sat)
 
 
+SONUC_BASLIGI = "SONUC (calistirmanin cevabi)"
+
+
+def sonuc_satiri(karar, veri_kaynagi, paket=None):
+    """Kosunun SONUCU: tek blok, IKI ayri hukum.
+
+    (1) YON kosulsuz verilir (LONG/SHORT) - kararsizlik SINIFI yoktur;
+        belirsizlik yon eksenine degil STAKE eksenine gider.
+    (2) ISLEM KALITESI ayri hukumdur: bahis buyuklugu sifir olabilir ve
+        GEREKCE motorun kendi notundan okunur (stake["not"]), sonradan
+        tahmin EDILMEZ.
+    Bu blok yeni bir sey HESAPLAMAZ; yalnizca karar sozlesmesinde ZATEN
+    olan alanlari basar - aksi halde rapor, olctugunden baskasini soylerdi.
+    """
+    g = karar.get("geometri") or {}
+    s = karar.get("stake") or {}
+    h0 = ((karar.get("iz") or {}).get("halka_0")) or {}
+    acilir = bahis_acilir_mi(s)
+    gerekce = (s.get("not") or "").strip()
+    if acilir and s.get("kirpildi"):
+        gerekce = "likidasyon tavani f'i kirpti"
+    elif acilir and s.get("gecit_bagladi"):
+        gerekce = "gecit f'i bagladi (kucuk olan gecerli)"
+    sat = ["=" * 78,
+           "%s | %s | veri: %s" % (SONUC_BASLIGI, karar["sembol"], veri_kaynagi),
+           "-" * 78]
+    if paket is not None:
+        sat.append("BAR        : %d x 15M + %d x 4H"
+                   % (len(paket["barlar15"]), len(paket["barlar4h"] or [])))
+    sat += [
+        "YON        : %s  (kaynak=%s, p_ham=%s) - yon KOSULSUZ verilir"
+        % (karar["yon"], karar.get("yon_kaynagi"), _bicim(karar.get("p_ham"))),
+        "GIRIS      : %s" % _bicim(karar.get("giris"), ".8g"),
+        "STOP       : %s" % _bicim(karar.get("stop"), ".8g"),
+        "HEDEF      : %s" % _bicim(karar.get("hedef"), ".8g"),
+        "R          : %s   (R = hedef_mesafesi / stop_mesafesi)"
+        % _bicim(karar.get("R")),
+        "basabas p  : %s | OLCULEN p_hedef: %s (n=%s)"
+        % (_bicim(g.get("basabas_p")), _bicim(g.get("p_hedef")), g.get("n")),
+        "ISLEM      : %s" % ("BAHIS ACILIR - f*=%s" % _bicim(s.get("f"), ".6f")
+                             if acilir else "BAHIS ACILMAZ - f*=0"),
+        "  gerekce  : %s" % (gerekce or "ek not YOK"),
+        "ONARIM     : guven(gm)=%s | kanal %s/%s | anlik(sayilmaz)=%s"
+        % (_bicim(h0.get("onarim_guveni_gm")), h0.get("dolu_kanal"),
+           h0.get("toplam_kanal"), h0.get("anlik_kanallar")),
+        "-" * 78,
+        KARAR_DESTEK_UYARISI,
+        "=" * 78]
+    return "\n".join(sat)
+
+
 def rapor_yaz(kararlar, dosya):
     """Deterministik JSON. Serilesmeyen alan varsa TypeError YUKSELIR ve dosya
     YAZILMAZ: yazilamayan sey 'yazildi' diye raporlanamaz (fail-closed)."""
@@ -2645,7 +2706,10 @@ def _modul_kaynagi():
     return metin if k < 0 else metin[:k]
 
 
-def _kosu_bas(sembol, getir_fn, baslik):
+def _kosu_bas(sembol, getir_fn, baslik, veri_kaynagi):
+    """Bir kosu basar ve DAIMA SONUC blogu ile biter.
+    Hangi moddan girilirse girilsin cikti ayni sozlesmeyi tasir:
+    once kanit (metin_rapor), en sonda hukum (sonuc_satiri)."""
     karar, paket, toplama = canli_kosu(sembol, getir_fn=getir_fn)
     print("=" * 78)
     print(baslik)
@@ -2656,7 +2720,55 @@ def _kosu_bas(sembol, getir_fn, baslik):
           len(paket["barlar4h"] or []), "x 4H")
     print()
     print(metin_rapor(karar))
+    print()
+    print(sonuc_satiri(karar, veri_kaynagi, paket))
     return karar
+
+
+VARSAYILAN_SEMBOL = "BTCUSDT"
+
+
+def mekanizma_ozeti(cumle=None):
+    """Bozuk cumle -> onarim: piyasa kanallarina uygulanan AYNI matematigin
+    tek bakista okunan gosterimi. argmax_c [ log P(c) + log P(gozlem|c) ]."""
+    r = cumle_onar(cumle or ORNEK_CUMLE)
+    return "\n".join([
+        "MEKANIZMA (ayni matematik kanallara da uygulanir)",
+        "  gozlem  : %s" % (cumle or ORNEK_CUMLE),
+        "  onarim  : %s" % r["onarilan"],
+        "  guven   : gm=%.4f | en zayif halka=%.4f  "
+        "(dusuk guven YON'u degil STAKE'i kucultur)"
+        % (r["guven_gm"], r["en_zayif"])])
+
+
+def varsayilan_kosu(canli_getir=None, rapor=None):
+    """ARGUMANSIZ calistirmanin yaptigi is: KOS ve SONUCU YAZ.
+
+    Once GERCEK veri denenir. Ag yoksa AGSIZ ornege DUSULUR - ama dusuldugu
+    acikca yazilir ve sonuc blogu 'ORNEK (SAHTE VERI)' etiketi tasir:
+    sahte veriden cikan sayi, gercek karar gibi SUNULMAZ (uydurma yasagi).
+    """
+    print(mekanizma_ozeti())
+    print()
+    print("KOSU BASLIYOR - once gercek veri denenir (ag yoksa ornege duser).")
+    print("Bu islem cep telefonunda 1-2 dakika surebilir; bekleyin.")
+    print()
+    try:
+        k = _kosu_bas(VARSAYILAN_SEMBOL, canli_getir,
+                      "CANLI KOSU - " + VARSAYILAN_SEMBOL + " (public GET)",
+                      "CANLI (borsa public GET)")
+    except Exception as h:                      # ag/veri yoksa: DUSUS, gizlenmez
+        print("CANLI VERI ALINAMADI -> %s: %s" % (type(h).__name__, h))
+        print("AGSIZ ORNEGE dusuluyor: asagidaki sayilar SAHTE veriden gelir,")
+        print("GERCEK KARAR DEGILDIR. Gercek karar icin: --canli " + VARSAYILAN_SEMBOL)
+        print()
+        k = _kosu_bas(VARSAYILAN_SEMBOL, _sahte_getir,
+                      "ORNEK KOSU - SAHTE VERI (ag YOK). Gercek karar DEGILDIR.",
+                      "ORNEK (SAHTE VERI - gercek karar DEGIL)")
+    if rapor:
+        rapor_yaz([k], rapor)
+        print("rapor yazildi:", rapor)
+    return k
 
 
 _OZ_TEST_KOSUYOR = False
@@ -2718,15 +2830,18 @@ def main(argv=None):
         print("  P(c)*P(o|c) -> argmax -> guven; HOLD YOK, dusuk guven STAKE'e gider.")
         return 0
     if a.ornek:
-        k = _kosu_bas("BTCUSDT", _sahte_getir,
-                      "ORNEK KOSU - SAHTE VERI (ag YOK). Gercek karar DEGILDIR.")
+        k = _kosu_bas(VARSAYILAN_SEMBOL, _sahte_getir,
+                      "ORNEK KOSU - SAHTE VERI (ag YOK). Gercek karar DEGILDIR.",
+                      "ORNEK (SAHTE VERI - gercek karar DEGIL)")
         if a.rapor:
             rapor_yaz([k], a.rapor)
             print("rapor yazildi:", a.rapor)
         return 0
     if a.canli:
         try:
-            k = _kosu_bas(a.canli, None, "CANLI KOSU - " + a.canli + " (public GET)")
+            k = _kosu_bas(a.canli, None,
+                          "CANLI KOSU - " + a.canli + " (public GET)",
+                          "CANLI (borsa public GET)")
             if a.rapor:
                 rapor_yaz([k], a.rapor)
                 print("rapor yazildi:", a.rapor)
@@ -2736,13 +2851,12 @@ def main(argv=None):
             return 1
         return 0
 
-    print(SURUM + " - tek dosya. Secenekler:")
-    print("  --self-test        testleri kosturur")
-    print("  --esikler          sabit beyani (kaynak + gerekce)")
-    print("  --cumle            ornek bozuk cumleyi onarir (mekanizma)")
-    print("  --ornek            AGSIZ ornek kosu (bozulma ENJEKTE edilmis)")
-    print("  --canli BTCUSDT    gercek veriyle kosu")
-    print("  --rapor r.json     kosuyu JSON'a yazar")
+    # ARGUMANSIZ CALISTIRMA = TAM KOSU + SONUC. Secenek listesi basmak bir
+    # cikti DEGILDIR; dosya calistirildiginda hukmunu yazmak zorundadir.
+    varsayilan_kosu(rapor=a.rapor)
+    print()
+    print("Diger modlar: --self-test | --esikler | --cumle | --ornek | "
+          "--canli SEMBOL | --rapor r.json")
     return 0
 
 
@@ -3521,6 +3635,162 @@ class TriadDenetimTesti(unittest.TestCase):
                     r = stake_hesapla(p0, s, b, a)
                     self.assertFalse(bahis_acilir_mi({"f": r["f"]}),
                                      "R=%s cost=%s s=%s -> f=%r" % (R, cost, s, r["f"]))
+
+
+class ArgumansizKosuTesti(unittest.TestCase):
+    """Kullanicinin sarti: dosya ARGUMANSIZ calistirilinca KOSAR ve SONUC
+    yazar. Secenek listesi basmak bir cikti DEGILDIR."""
+
+    @staticmethod
+    def _yakala(fn, *a, **k):
+        import contextlib as _c
+        import io as _io
+        tampon = _io.StringIO()
+        with _c.redirect_stdout(tampon):
+            sonuc = fn(*a, **k)
+        return sonuc, tampon.getvalue()
+
+    def test_argumansiz_main_menu_BASMAZ_kosu_yapar(self):
+        mod = _sys_modulu()
+        esk, cagri = mod.varsayilan_kosu, {}
+
+        def sahte(**kw):
+            cagri["kw"] = kw
+            return {"sembol": "X"}
+
+        mod.varsayilan_kosu = sahte
+        try:
+            kod, cikti = self._yakala(mod.main, [])
+        finally:
+            mod.varsayilan_kosu = esk
+        self.assertEqual(kod, 0)
+        self.assertIn("kw", cagri, "argumansiz calistirma KOSU yapmadi")
+        self.assertNotIn("Secenekler:", cikti)
+
+    def test_canli_patlarsa_ORNEGE_duser_ve_ETIKETLER(self):
+        """Dusus gizlenemez: sahte veriden cikan sayi 'canli' diye sunulamaz."""
+        mod = _sys_modulu()
+        esk, cagrilar = mod._kosu_bas, []
+
+        def sahte(sembol, getir_fn, baslik, veri_kaynagi):
+            cagrilar.append((getir_fn, veri_kaynagi))
+            if len(cagrilar) == 1:
+                raise RuntimeError("ag YOK (test)")
+            print("SONUC (test govdesi)")
+            return {"sembol": sembol}
+
+        mod._kosu_bas = sahte
+        try:
+            _, cikti = self._yakala(mod.varsayilan_kosu)
+        finally:
+            mod._kosu_bas = esk
+        self.assertEqual(len(cagrilar), 2, "canli patlayinca ornege DUSULMEDI")
+        self.assertIsNone(cagrilar[0][0])              # 1. deneme: GERCEK ag
+        self.assertIs(cagrilar[1][0], _sahte_getir)    # 2. deneme: AGSIZ ornek
+        self.assertIn("SAHTE VERI", cagrilar[1][1])
+        self.assertIn("CANLI VERI ALINAMADI", cikti)
+        self.assertIn("GERCEK KARAR DEGILDIR", cikti)
+
+    def test_canli_calisirsa_ORNEK_etiketi_KULLANILMAZ(self):
+        mod = _sys_modulu()
+        esk, cagrilar = mod._kosu_bas, []
+
+        def sahte(sembol, getir_fn, baslik, veri_kaynagi):
+            cagrilar.append((getir_fn, veri_kaynagi))
+            return {"sembol": sembol}
+
+        mod._kosu_bas = sahte
+        try:
+            _, cikti = self._yakala(mod.varsayilan_kosu)
+        finally:
+            mod._kosu_bas = esk
+        self.assertEqual(len(cagrilar), 1)
+        self.assertIn("CANLI", cagrilar[0][1])
+        self.assertNotIn("SAHTE", cagrilar[0][1])
+        self.assertNotIn("CANLI VERI ALINAMADI", cikti)
+
+    def test_sonuc_blogu_YON_ve_SEVIYE_tasir(self):
+        k, paket, _ = _fikstur_kosu()
+        m = sonuc_satiri(k, "TEST", paket)
+        self.assertIn("SONUC", m)
+        self.assertRegex(m, r"YON\s+: (LONG|SHORT)\b")
+        for alan in ("GIRIS", "STOP", "HEDEF", "R ", "ISLEM"):
+            self.assertIn(alan, m)
+        self.assertIn(KARAR_DESTEK_UYARISI, m)
+
+    def test_kosu_bas_SONUC_blogunu_BASAR(self):
+        """Her kosu modu sonuc blogu ile biter; blok koddan DUSURULEMEZ."""
+        mod = _sys_modulu()
+        fikstur = _fikstur_kosu()
+        esk = mod.canli_kosu
+        mod.canli_kosu = lambda sembol, getir_fn=None, **kw: fikstur
+        try:
+            _, cikti = self._yakala(mod._kosu_bas, "BTCUSDT", None,
+                                    "TEST BASLIK", "TEST-KAYNAK")
+        finally:
+            mod.canli_kosu = esk
+        self.assertIn(SONUC_BASLIGI, cikti)
+        self.assertIn("TEST-KAYNAK", cikti)
+        self.assertRegex(cikti, r"YON\s+: (LONG|SHORT)\b")
+
+    def test_sonuc_gerekcesi_MOTORUN_notudur_uydurulmaz(self):
+        """f*=0 gerekcesi sonradan TAHMIN edilmez; stake['not']'tan gelir."""
+        k, paket, _ = _fikstur_kosu()
+        k = dict(k)
+        k["stake"] = dict(k["stake"])
+        k["stake"]["f"] = 0.0
+        k["stake"]["not"] = "OZGUN-GEREKCE-IZI"
+        self.assertIn("OZGUN-GEREKCE-IZI", sonuc_satiri(k, "TEST", paket))
+
+    def test_stake_notu_karar_sozlesmesinde_VAR(self):
+        k, _, _ = _fikstur_kosu()
+        self.assertIn("not", k["stake"])
+        for v in k["stake"]["lambda_tablosu"].values():
+            self.assertIn("not", v)
+        if not bahis_acilir_mi(k["stake"]):
+            self.assertTrue((k["stake"]["not"] or "").strip(),
+                            "f*=0 ama GEREKCE bos - rapor nedenini soyleyemez")
+
+    def test_stake_notu_BAHIS_ACILAN_dalda_da_VAR(self):
+        """Fikstur fail-closed dala dusuyor; sozlesme POZITIF dalda da
+        gecerli olmali - yoksa test tiyatrodur (olculdu: bu test olmadan
+        'lt[...]["not"] = ham["not"]' silinse HICBIR test dusmuyordu)."""
+        k = _pozitif_f_karari()
+        self.assertTrue(bahis_acilir_mi(k["stake"]), "kurgu f>0 uretmedi")
+        for lam, v in k["stake"]["lambda_tablosu"].items():
+            self.assertIn("not", v, "lambda=%s dalinda GEREKCE alani YOK" % lam)
+        self.assertIn("not", k["stake"])
+
+    def test_mekanizma_ozeti_bozuk_cumleyi_onarir(self):
+        m = mekanizma_ozeti()
+        self.assertIn(ORNEK_CUMLE, m)
+        self.assertIn("gm=", m)
+
+
+def _pozitif_f_karari():
+    """f* > 0 uretan KURGU baglam (guclu, gurultusuz trend). Fikstur kosusu
+    daima fail-closed dala dustugu icin pozitif dal baska turlu sinanamaz."""
+    rng = tohumlu_rng("pozitif-f")
+    n, barlar, f = 400, [], 100.0
+    for i in range(n):
+        f *= 1.0 + 0.004 + rng.uniform(-0.0005, 0.0005)
+        barlar.append({"t": i * 900000, "o": f, "h": f * 1.004, "l": f * 0.999,
+                       "c": f, "v": 1000.0, "taker_alis": 600.0})
+    atr = [f * 0.002] * n
+    return karar_uret({
+        "sembol": "TEST", "barlar": barlar, "atr_serisi": atr,
+        "indeksler": list(range(50, 340)), "p_ham": 0.95,
+        "yon_kaynagi": "TEST", "dogru": 95, "toplam": 100, "ece_enkotu": 0.01,
+        "taban_oran": 0.5, "ece_tek_bin": False, "sicaklik_sinirda": False,
+        "onarim_guveni": 1.0, "dolu_kanal": 6, "toplam_kanal": 6,
+        "giris": barlar[350]["c"], "atr": atr[350],
+        "likidasyon": barlar[350]["c"] * 0.5, "kaldirac_azami": 10,
+        "komisyon": 0.0, "kayma": 0.0, "funding": 0.0, "lam": 1.0})
+
+
+def _sys_modulu():
+    import sys as _sys
+    return _sys.modules[__name__]
 
 
 if __name__ == "__main__":
