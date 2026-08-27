@@ -738,38 +738,94 @@ class SizintiTesti(unittest.TestCase):
 
     # -- 4H token erisimi: purge/embargo penceresi 15M gecikmesi DEGILDIR --
 
-    def test_girdi_erisimi_4h_varken_bar_orani_kadar_buyur(self):
-        """Bir 4H token'i 16 adet 15M barini OZETLER; erisim 16 kat uzar."""
-        self.assertEqual(m.girdi_erisimi(4, h4_var=False), 4)
-        self.assertEqual(m.girdi_erisimi(4, h4_var=True), 4 * m.H4_BAR_ORANI)
+    def test_girdi_erisimi_gosterge_penceresinden_turetilir(self):
+        """Erisim TOKEN GECIKMESI DEGIL, ozniteligin okudugu bar sayisidir.
+
+        Olculdu: gecikme yalniz 4 bar sayarken _z(atr) uzerinden gercek
+        okuma 62 bara uzaniyordu; 4 barlik pencereyle yapilan sizinti
+        denetimi fail-open bir rapordur.
+        """
+        W = m.oznitelik_penceresi()
+        self.assertGreaterEqual(W, m.YUVARLANAN_PENCERE + 14,
+                                "_z(atr) zinciri: 48 pencere USTUNE ATR periyodu")
+        self.assertEqual(m.girdi_erisimi(4, h4_var=False),
+                         (4 - 1) + W)
+        self.assertEqual(m.girdi_erisimi(4, h4_var=True),
+                         (4 - 1) + (2 * m.H4_BAR_ORANI - 1) + m.H4_BAR_ORANI * W)
+
+    def test_girdi_erisimi_gercek_okumayi_KAPSAR(self):
+        """Beyan edilen erisim, perturbasyonla OLCULEN erisimden kucuk olamaz.
+
+        Fail-closed yon: beyan >= gercek. Bu test formulu gercege karsi
+        sinar; formul kucuk kalirsa sizinti raporu yalan olur.
+        """
+        rng = m.tohumlu_rng("erisim-kapsam")
+        n, hedef = 400, 350
+        barlar, f = [], 100.0
+        for _ in range(n):
+            f *= 1.0 + rng.uniform(-0.004, 0.004)
+            barlar.append({"o": f, "h": f * 1.003, "l": f * 0.997, "c": f,
+                           "v": rng.uniform(80.0, 120.0)})
+
+        def satir(bs):
+            return m.satir_uret(bs, m._gostergeler(bs), None, hedef)
+
+        taban = satir(barlar)
+        en_uzak = 0
+        for d in range(1, hedef + 1):
+            bozuk = [dict(b) for b in barlar]
+            for anahtar in ("o", "h", "l", "c"):
+                bozuk[hedef - d][anahtar] *= 1.001
+            if satir(bozuk) != taban:
+                en_uzak = d
+        self.assertLessEqual(en_uzak, m.girdi_erisimi(1, h4_var=False),
+                             f"olculen erisim {en_uzak} beyani asti")
+        self.assertGreater(en_uzak, m.YUVARLANAN_PENCERE,
+                           "olcum kurulumu bozuk: erisim pencereden kucuk cikti")
 
     def test_sizinti_denetimi_4h_erisimini_hesaba_katar(self):
         """Ayni bolme: 15M penceresiyle 'temiz', gercek erisimle SIZINTILI.
 
         Fail-open rapor yasagi: olculmeyen sey 'yok' diye raporlanamaz.
         """
-        bolme = {"train": list(range(0, 400, 8)),
-                 "kalibrasyon": list(range(423, 540, 8)),
-                 "test": list(range(556, 660, 8))}
-        self.assertFalse(m.sizinti_var_mi(bolme, 16, m.girdi_erisimi(4, False)))
-        self.assertTrue(m.sizinti_var_mi(bolme, 16, m.girdi_erisimi(4, True)))
+        e15 = m.girdi_erisimi(4, h4_var=False)      # olculdu: 65
+        e4h = m.girdi_erisimi(4, h4_var=True)       # olculdu: 1026
+        bolme = {"train": list(range(0, 4000, 40)),
+                 "kalibrasyon": list(range(4200, 5400, 40)),
+                 "test": list(range(5600, 6600, 40))}
+        self.assertFalse(m.sizinti_var_mi(bolme, 16, e15),
+                         "15M penceresiyle bu bolme temiz gorunur")
+        self.assertTrue(m.sizinti_var_mi(bolme, 16, e4h),
+                        "4H erisimiyle AYNI bolme sizintilidir")
 
     def test_bolme_giris_erisimi_kadar_purge_eder(self):
-        indeksler = list(range(0, 700, 7))
         erisim = m.girdi_erisimi(4, h4_var=True)
+        indeksler = list(range(0, 30000, 60))
         b = m.kronolojik_bol(indeksler, ufuk=16, embargo=4, giris_erisimi=erisim)
         self.assertTrue(b["train"] and b["kalibrasyon"] and b["test"],
-                        "erisim eklenince bolme dejenere OLMAMALI")
+                        "yeterli veride erisim eklenince bolme dejenere OLMAMALI")
         self.assertGreaterEqual(b["kalibrasyon"][0] - b["train"][-1], 16 + 4 + erisim)
         self.assertFalse(m.sizinti_var_mi(b, 16, erisim))
+
+    def test_veri_yetmezse_bolme_fail_closed_bos_doner(self):
+        """Durust erisim, az veride bolmeyi DEJENERE eder - ve etmelidir.
+
+        700 barlik bir pencere 4H tokenleriyle egitilemez. Dogru cevap
+        kucuk bir pencereye SIGDIRMAK degil, "yetersiz" demektir.
+        """
+        b = m.kronolojik_bol(list(range(0, 700, 7)), ufuk=16, embargo=4,
+                             giris_erisimi=m.girdi_erisimi(4, h4_var=True))
+        self.assertEqual(b["train"], [])
+        self.assertIn("yetersiz", b["not"])
 
     def test_dejenere_kapisi_ornek_biriminde_olculur(self):
         """Kapi bar-boslugunu ornek sayisiyla kiyaslarsa alt-orneklemde yanilir.
 
-        700 barda 100 ornek (adim 7) purge'u ~12 ornege mal olur, 84'e DEGIL.
+        Bosluk BAR cinsindendir; ornekler alt-orneklenmis olabilir. 30000
+        barda 500 ornek (adim 60) icin 1046 barlik bosluk ~17 ornege mal
+        olur, 1046'ya DEGIL.
         """
-        indeksler = list(range(0, 700, 7))
-        b = m.kronolojik_bol(indeksler, ufuk=16, embargo=4,
+        b = m.kronolojik_bol(list(range(0, 30000, 60)), ufuk=16, embargo=4,
                              giris_erisimi=m.girdi_erisimi(4, True))
         self.assertEqual(b["not"], "")
 
@@ -1095,6 +1151,10 @@ class GostergeTesti(unittest.TestCase):
             self.assertLessEqual(x, 100.0)
 
 
+FIKSTUR_BARI = 6000   # 62.5 gun 15M; durust purge boslugu (1046) altinda
+                      # bolmenin dejenere OLMAMASI icin gereken mertebe
+
+
 def _agrega4h(barlar15):
     """16 adet 15M barini GERCEK bir 4H barina toplar (ornekleme DEGIL).
 
@@ -1111,6 +1171,72 @@ def _agrega4h(barlar15):
                       "c": dilim[-1]["c"],
                       "v": sum(b["v"] for b in dilim)})
     return cikti
+
+
+class SonluErisimTesti(unittest.TestCase):
+    """Gostergelerin geriye erisimi KANITLANABILIR bicimde SONLU olmali.
+
+    Ozyinelemeli (IIR) EMA'nin erisimi SONLU DEGILDIR: cikti[i] cikti[i-1]'e,
+    o da cikti[i-2]'ye bagli - zincir serinin BASINA kadar gider ve pratikte
+    yalniz float64 alt-tasmasiyla kesilir. Bu, erisimin VERIYE ve TOLERANSA
+    bagli olmasi demektir; olcum bunu dogruladi (ayni bar, tol 1e-15 -> 313
+    bar, tol 1e-9 -> 168 bar). Toleransa bagli bir sayi purge korkulugu
+    OLAMAZ: sizinti penceresi kanitlanabilir bir ust sinir ister.
+
+    Cozum ustel agirligi TERK ETMEK degil, onu SONLU pencereye KESMEKTIR:
+    ayni agirlik profili, kanitlanabilir sinir.
+    """
+
+    def _seri(self, n=400):
+        rng = m.tohumlu_rng("sonlu-erisim")
+        return [100.0 + rng.uniform(-1.0, 1.0) for _ in range(n)]
+
+    def _erisim(self, fn, seri, i, tolerans):
+        """i'inci ciktiyi degistiren EN UZAK gecmis barin mesafesi."""
+        taban = fn(seri)[i]
+        en_uzak = 0
+        for d in range(1, i + 1):
+            bozuk = list(seri)
+            bozuk[i - d] *= 1.001
+            if abs(fn(bozuk)[i] - taban) > tolerans:
+                en_uzak = d
+        return en_uzak
+
+    def test_ema_erisimi_toleranstan_bagimsiz(self):
+        """IIR'de bu test DUSER: erisim toleransla degisir."""
+        seri = self._seri()
+        i = 350
+        kati = self._erisim(lambda s: m.ema(s, 21), seri, i, 1e-15)
+        maddi = self._erisim(lambda s: m.ema(s, 21), seri, i, 1e-9)
+        self.assertEqual(kati, maddi,
+                         "erisim toleransa bagliysa ust sinir kanitlanamaz")
+
+    def test_ema_erisimi_beyan_edilen_pencereyi_asmaz(self):
+        seri = self._seri()
+        i = 350
+        for periyot in (8, 21):
+            erisim = self._erisim(lambda s: m.ema(s, periyot), seri, i, 1e-15)
+            self.assertLessEqual(erisim, m.gosterge_penceresi("ema", periyot),
+                                 f"ema({periyot}) beyan edilen pencereyi asti")
+
+    def test_ema_hala_ustel_agirlikli(self):
+        """Kesme, ustel agirligi TERK ETMEK degildir: son bar en agir olmali."""
+        n = 200
+        for periyot in (8, 21):
+            # Tek bir bara birim darbe: agirlik profili dogrudan okunur.
+            agirliklar = []
+            for d in range(0, 6):
+                seri = [0.0] * n
+                seri[n - 1 - d] = 1.0
+                agirliklar.append(m.ema(seri, periyot)[n - 1])
+            for k in range(1, len(agirliklar)):
+                self.assertLess(agirliklar[k], agirliklar[k - 1],
+                                "agirlik gecmise dogru AZALMALI (ustel profil)")
+
+    def test_gosterge_penceresi_beyan_edilmis(self):
+        """Kesme uzunlugu etiketsiz gizli esik OLAMAZ."""
+        self.assertIn("EMA_KESME_KATI", m.ESIK_KAYNAGI)
+        self.assertEqual(m.ESIK_KAYNAGI["EMA_KESME_KATI"]["kaynak"], "YAPISAL")
 
 
 class HesapKarmasikligiTesti(unittest.TestCase):
@@ -1165,9 +1291,30 @@ class HesapKarmasikligiTesti(unittest.TestCase):
 
 class BoruHattiTesti(unittest.TestCase):
     def _paket(self, turev_var=True, tohum="boru"):
+        """Fikstur, boru hattinin GERCEKTEN egitebilecegi kadar veri icermeli.
+
+        FIKSTUR_BARI 700 idi. Erisim durustce gosterge pencerelerinden
+        turetilince (15M 65, 4H 1026 bar) 700 barlik pencerede purge
+        boslugu 1046'ya cikiyor ve bolme TAMAMEN dejenere oluyor - egitim
+        de kalibrasyon da degerlendirme de hic kosmuyor. O halde 700 barlik
+        fikstur uzerinde "boru hatti gecti" demek TIYATRODUR: testler
+        bosluga karsi gecer.
+
+        Cozum esigi gevsetmek DEGIL, fiksturu gercekci kilmaktir: 6000 bar
+        = 62.5 gun 15M verisi, gercek sistemin de bekledigi mertebe.
+        Uretim maliyeti onbellege alinir; aksi halde her cagride yeniden
+        kurulur (suite ~20 kez cagiriyor).
+        """
+        anahtar = (turev_var, tohum)
+        onbellek = getattr(BoruHattiTesti, "_ONBELLEK", None)
+        if onbellek is None:
+            onbellek = BoruHattiTesti._ONBELLEK = {}
+        if anahtar in onbellek:
+            return dict(onbellek[anahtar])
+
         rng = m.tohumlu_rng(tohum)
         barlar15, fiyat = [], 100.0
-        for _ in range(700):
+        for _ in range(FIKSTUR_BARI):
             fiyat *= (1.0 + rng.uniform(-0.003, 0.0032))
             barlar15.append({"o": fiyat, "h": fiyat * 1.002, "l": fiyat * 0.998,
                              "c": fiyat, "v": 1000 + rng.uniform(0, 100)})
@@ -1182,11 +1329,13 @@ class BoruHattiTesti(unittest.TestCase):
                     "funding_z": 0.2 + 0.5 * math.sin(i / 11.0),
                     "taker_dengesi": 0.1 + 0.3 * math.cos(i / 5.0),
                     "derinlik_dengesi": -0.05 + 0.2 * math.sin(i / 13.0)})
-        return {"sembol": "BTCUSDT", "barlar15": barlar15,
-                "barlar4h": _agrega4h(barlar15), "turev_serisi": turev_serisi,
-                "dolu_kanal": 6 if turev_var else 3, "toplam_kanal": 6,
-                "likidasyon": barlar15[-1]["c"] * 0.8, "kaldirac_azami": 10.0,
-                "azami_ornek": 90}
+        paket = {"sembol": "BTCUSDT", "barlar15": barlar15,
+                 "barlar4h": _agrega4h(barlar15), "turev_serisi": turev_serisi,
+                 "dolu_kanal": 6 if turev_var else 3, "toplam_kanal": 6,
+                 "likidasyon": barlar15[-1]["c"] * 0.8, "kaldirac_azami": 10.0,
+                 "azami_ornek": m.AZAMI_ORNEK}
+        onbellek[anahtar] = paket
+        return dict(paket)
 
     def test_uctan_uca_karar_uretir(self):
         r = m.BoruHatti(tohum=2026).calistir(self._paket())

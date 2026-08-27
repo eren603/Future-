@@ -93,13 +93,25 @@ EMBARGO = esik_kaydet(
     "Kucultulurse sizinti riski artar, buyutulurse ornek kaybi artar. "
     "Olcum yolu: embargo'ya karsi train-test dagilim farkinin olculmesi.")
 
+BOLME_ORANLARI = esik_kaydet(
+    "BOLME_ORANLARI", (0.6, 0.2, 0.2), "YAPISAL",
+    "train / kalibrasyon / test paylari. Tek yerde beyan edilir cunku "
+    "AZAMI_ORNEK tabani bu paylardan TURETILIR; iki yerde ayri yazilirsa "
+    "butce sessizce yarismayi imkansiz kilar.")
+
 AZAMI_ORNEK = esik_kaydet(
-    "AZAMI_ORNEK", 120, "YAPISAL",
-    "HESAP BUTCESI (istatistik esigi DEGIL): her ornek bir Kodlayici.ileri "
-    "cagrisidir, attention O(n^2). Hedef ortam Pydroid 3 (telefon). Butce "
-    "bolmeyi dejenere edecek kadar kucultulemez: kronolojik_bol en az "
-    "3*(ufuk+embargo+5) ornek ister; altina dusulurse bolme BOS kalir ve "
-    "egitim/kalibrasyon/degerlendirme hic kosmaz.")
+    "AZAMI_ORNEK", int(math.ceil(2 * ASGARI_OLCUM / BOLME_ORANLARI[1])), "YAPISAL",
+    "HESAP BUTCESI (istatistik esigi DEGIL) - ama degeri KEYFI DEGIL, "
+    "modulun kendi sabitlerinden TURETILIR: kalibrasyon_sec adil yarisma "
+    "icin kalibrasyon kumesini ikiye bolup her yariya ASGARI_OLCUM ornek "
+    "dusurmek zorundadir (2*20 = 40) ve kalibrasyon payi BOLME_ORANLARI[1] "
+    "= 0.2'dir, yani taban 40/0.2 = 200 ornektir. Bu bir TABANDIR, garanti "
+    "DEGIL: purge bosluguna gore kalibrasyon dilimi bunun altina duser ve o "
+    "durumda yarisma KOSMAZ, fail-closed sicaklik secilir ve bu iz'de BEYAN "
+    "edilir. Butce, yarismayi ACMAK icin buyutulmez - esigi geciren degere "
+    "cekmek asiri-uyumdur; olculdu ki 200'de bile 12000 barlik pencerede "
+    "kal=23 < 40 kaliyor ve dogru cevap 'yarisma yapilamaz' demektir. "
+    "Hedef ortam Pydroid 3 (telefon): 200 ornek + 12000 bar = 1.26 s.")
 
 LIKIDASYON_GUVENLIK_PAYI = esik_kaydet(
     "LIKIDASYON_GUVENLIK_PAYI", 0.5, "VARSAYIM",
@@ -113,6 +125,50 @@ H4_BAR_ORANI = esik_kaydet(
     "Bir 4H bari kac 15M barini kapsar (4*60/15). Zaman dilimi tanimindan "
     "gelir, istatistiksel secim DEGILDIR.")
 
+
+YUVARLANAN_PENCERE = esik_kaydet(
+    "YUVARLANAN_PENCERE", 48, "YAPISAL",
+    "Yuvarlanan istatistik pencereleri (_z, _kanal_konumu) icin bar sayisi. "
+    "Tek yerde beyan edilir cunku girdi erisimi - dolayisiyla purge boslugu - "
+    "bu sayidan TURETILIR; iki yerde ayri ayri yazilirsa erisim beyani "
+    "sessizce gercekten kucuk kalir (fail-open sizinti raporu).")
+
+EMA_HIZLI_PERIYODU = esik_kaydet(
+    "EMA_HIZLI_PERIYODU", 8, "VARSAYIM",
+    "Hizli EMA periyodu. Kalibre EDILMEDI - yaygin bir kisa-vade secimi. "
+    "Erisim aritmetigine girer. Olcum yolu: periyoda karsi holdout AUROC.")
+
+EMA_YAVAS_PERIYODU = esik_kaydet(
+    "EMA_YAVAS_PERIYODU", 21, "VARSAYIM",
+    "Yavas EMA periyodu. Kalibre EDILMEDI. oznitelik_penceresi'ne girdigi "
+    "icin dogrudan purge boslugunu ve kalan ornek sayisini etkiler.")
+
+ATR_PERIYODU = esik_kaydet(
+    "ATR_PERIYODU", 14, "VARSAYIM",
+    "ATR periyodu. Kalibre EDILMEDI. En uzun erisim zinciri bundan gecer "
+    "(_z(atr) = YUVARLANAN_PENCERE + ATR_PERIYODU), yani purge boslugunun "
+    "belirleyicisidir.")
+
+RSI_PERIYODU = esik_kaydet(
+    "RSI_PERIYODU", 14, "VARSAYIM",
+    "RSI periyodu. Kalibre EDILMEDI.")
+
+EN_UZUN_GETIRI_GECIKMESI = esik_kaydet(
+    "EN_UZUN_GETIRI_GECIKMESI", 16, "YAPISAL",
+    "Log getiri ozniteliklerinin en uzun gecikmesi (1, 4, 16). 16 = bir 4H "
+    "barin 15M karsiligi; zaman dilimi tanimindan gelir. Erisim "
+    "aritmetigine girer.")
+
+EMA_KESME_KATI = esik_kaydet(
+    "EMA_KESME_KATI", 2, "YAPISAL",
+    "EMA'nin ustel agirlik profilinin kac PERIYOT sonra kesilecegi. "
+    "Istatistiksel secim DEGIL, erisim aritmetiginden gelir: en uzun EMA "
+    "periyodu 21'dir, 21*2 = 42 <= YUVARLANAN_PENCERE (48). Yani EMA, "
+    "erisime zaten var olan 48 barlik pencerenin OTESINDE hicbir sey "
+    "EKLEMEZ - kesme kati buyutulurse purge boslugu buyur ve ayni veriyle "
+    "daha az ornek kalir. Kesilen kuyrugun agirligi normalize edilerek "
+    "kalan barlara oranli dagitilir (olculdu: periyot=21 icin kesilen "
+    "agirlik ~1.8e-2).")
 
 ISINMA_BARI = esik_kaydet(
     "ISINMA_BARI", 20, "YAPISAL",
@@ -817,18 +873,49 @@ class Kodlayici:
 # Kronolojik bolme + purge/embargo + egitilen logit basligi (V = LONG/SHORT).
 
 
-def girdi_erisimi(gecikme_sayisi=None, h4_var=True, bar_orani=None):
-    """Bir ornegin GERIYE dogru okudugu 15M bar sayisi.
+def oznitelik_penceresi():
+    """Bir OZNITELIK SATIRININ geriye okudugu azami bar sayisi (ust sinir).
 
-    15M ailesi `gecikme_sayisi` bar geriye bakar. 4H ailesi ayni sayida 4H
-    bar geriye bakar ve her 4H bar `bar_orani` adet 15M barini OZETLER -
-    yani erisim 16 kat uzar. Purge/embargo bu erisime gore olculmelidir:
-    daha kisa bir pencereyle yapilan sizinti denetimi sizintiyi OLCEMEZ,
-    "yok" diye raporlar (fail-open yalan).
+    Zincirleri tek tek toplamak sart: `_z(atr, i)` once atr[i-48:i]'yi okur,
+    her atr[j] de kendi 14 barini okur -> zincir 48 + 14 = 62 bar. En uzun
+    zincir budur. Token gecikmesini saymak (eski hali) bu zinciri GORMEZ ve
+    erisimi 4 bar sanip sizintiyi "yok" diye raporlar.
     """
-    gecikme_sayisi = GECIKME_SAYISI if gecikme_sayisi is None else int(gecikme_sayisi)
-    bar_orani = H4_BAR_ORANI if bar_orani is None else int(bar_orani)
-    return gecikme_sayisi * (bar_orani if h4_var else 1)
+    z = gosterge_penceresi("z")
+    atr_p = gosterge_penceresi("atr", ATR_PERIYODU)
+    return max(
+        gosterge_penceresi("kanal"),                       # _kanal_konumu
+        z,                                                 # _z(hacim)
+        z + atr_p,                                         # _z(atr) zinciri
+        gosterge_penceresi("rsi", RSI_PERIYODU),           # rsi
+        EN_UZUN_GETIRI_GECIKMESI,                          # log getiri
+        max(gosterge_penceresi("ema", EMA_YAVAS_PERIYODU), atr_p),  # ema/atr
+    )
+
+
+def girdi_erisimi(gecikme_sayisi=None, h4_var=True, bar_orani=None):
+    """Bir ORNEGIN geriye dogru okudugu 15M bar sayisi (beyanli ust sinir).
+
+    Iki bilesen carpisir:
+      (1) TOKEN GECIKMESI - ornek `gecikme_sayisi` adet satir gorur, en
+          eskisi (gecikme_sayisi - 1) bar geridedir.
+      (2) OZNITELIK PENCERESI - her satir kendisi W bar geriye okur.
+    Toplam 15M erisimi (gecikme-1) + W'dir.
+
+    4H tarafi ayrica bar_orani ile buyur: en eski 4H token'in kendi penceresi
+    W adet 4H bari, yani bar_orani*W adet 15M barini ozetler; ustune 4H
+    hizalamasinin kendi gecikmesi (2*bar_orani - 1) biner.
+
+    Purge/embargo bu sayidan turetilir. Daha kisa bir pencereyle yapilan
+    sizinti denetimi sizintiyi OLCEMEZ, "yok" diye raporlar (fail-open).
+    """
+    gecikme = GECIKME_SAYISI if gecikme_sayisi is None else int(gecikme_sayisi)
+    oran = H4_BAR_ORANI if bar_orani is None else int(bar_orani)
+    W = oznitelik_penceresi()
+    erisim = max(0, gecikme - 1) + W
+    if h4_var:
+        erisim = max(erisim, max(0, gecikme - 1) + (2 * oran - 1) + oran * W)
+    return erisim
 
 
 def _ornek_adimi(sirali):
@@ -838,14 +925,14 @@ def _ornek_adimi(sirali):
     return max(1.0, (sirali[-1] - sirali[0]) / float(len(sirali) - 1))
 
 
-def kronolojik_bol(indeksler, ufuk, embargo, giris_erisimi=0,
-                   oranlar=(0.6, 0.2, 0.2)):
+def kronolojik_bol(indeksler, ufuk, embargo, giris_erisimi=0, oranlar=None):
     """Train/kalibrasyon/test; sinirlarda purge + embargo + girdi erisimi.
 
     Bosluk UC bilesenlidir: etiket ufku (ileri), embargo (guvenlik) ve
     girdi erisimi (geri). Ucuncusu olmadan onceki bolmenin ETIKET penceresi
     sonraki bolmenin GIRDI penceresiyle ortusur.
     """
+    oranlar = BOLME_ORANLARI if oranlar is None else oranlar
     sirali = sorted(indeksler)
     n = len(sirali)
     bosluk = int(ufuk) + int(embargo) + int(giris_erisimi)
@@ -1183,13 +1270,53 @@ def karar_uret(baglam):
 # Gostergeler (stdlib, kayan pencere).
 
 
+def gosterge_penceresi(ad, periyot=None):
+    """Bir gostergenin GERIYE dogru okudugu bar sayisi (beyanli ust sinir).
+
+    Purge/embargo bu sayilardan turetilir; etiketsiz gizli esik olamaz.
+    """
+    if ad == "ema":
+        return max(1, int(periyot)) * EMA_KESME_KATI
+    if ad in ("atr", "rsi"):
+        return max(1, int(periyot))
+    if ad in ("z", "kanal"):
+        return YUVARLANAN_PENCERE
+    raise KeyError(f"bilinmeyen gosterge: {ad}")
+
+
 def ema(degerler, periyot):
+    """Ustel agirlikli ortalama, SONLU pencerede KESILMIS ve normalize.
+
+    NEDEN OZYINELEMELI (IIR) YAZIM TERK EDILDI: `cikti[i] = a*x[i] +
+    (1-a)*cikti[i-1]` zinciri serinin BASINA kadar uzanir; pratikte yalniz
+    float64 alt-tasmasi keser. Yani erisim VERIYE ve TOLERANSA baglidir -
+    olculdu: ayni bar icin tolerans 1e-15'te 313, 1e-9'da 168 bar. Toleransa
+    bagli bir sayi purge korkulugu OLAMAZ; sizinti penceresi KANITLANABILIR
+    bir ust sinir ister, yoksa "sizinti yok" raporu fail-open olur.
+
+    Kesme, ustel agirligi TERK ETMEK DEGILDIR: ayni alfa*(1-alfa)^L profili
+    kullanilir, yalniz `periyot * EMA_KESME_KATI` barda kesilip yeniden
+    normalize edilir. Normalizasyon sayesinde sonuc hala gecerli bir
+    agirlikli ortalamadir (agirliklar toplami 1), yani kesilen kuyruk
+    kaybolmaz, kalan agirliklara ORANLI dagitilir.
+    """
     if not degerler:
         return []
+    periyot = max(1, int(periyot))
     alfa = 2.0 / (periyot + 1.0)
-    cikti = [float(degerler[0])]
-    for x in degerler[1:]:
-        cikti.append(alfa * float(x) + (1.0 - alfa) * cikti[-1])
+    pencere = gosterge_penceresi("ema", periyot)
+    agirliklar = [alfa * (1.0 - alfa) ** gecikme for gecikme in range(pencere)]
+    kumulatif = []
+    toplam = 0.0
+    for a in agirliklar:
+        toplam += a
+        kumulatif.append(toplam)
+
+    cikti = []
+    for i in range(len(degerler)):
+        n = min(i + 1, pencere)
+        pay = sum(agirliklar[g] * float(degerler[i - g]) for g in range(n))
+        cikti.append(pay / kumulatif[n - 1])
     return cikti
 
 
@@ -1255,7 +1382,8 @@ def _ornek_indeksleri(baslangic, bitis, azami=AZAMI_ORNEK):
     return [adaylar[round(k * adim)] for k in range(azami)]
 
 
-def _kanal_konumu(barlar, i, pencere=48):
+def _kanal_konumu(barlar, i, pencere=None):
+    pencere = gosterge_penceresi("kanal") if pencere is None else pencere
     onceki = barlar[max(0, i - pencere):i]
     if not onceki:
         return 0.0
@@ -1267,7 +1395,8 @@ def _kanal_konumu(barlar, i, pencere=48):
     return kirp((barlar[i]["c"] - en_dusuk) / genislik * 2.0 - 1.0)
 
 
-def _z(degerler, i, pencere=48):
+def _z(degerler, i, pencere=None):
+    pencere = gosterge_penceresi("z") if pencere is None else pencere
     gecmis = degerler[max(0, i - pencere):i]
     if len(gecmis) < 5:
         return 0.0
@@ -1296,7 +1425,8 @@ def satir_uret(barlar, gostergeler, turev_serisi, i):
     fiyat = [
         kirp(math.log(kapanislar[i] / kapanislar[i - 1])) if i >= 1 else 0.0,
         kirp(math.log(kapanislar[i] / kapanislar[i - 4])) if i >= 4 else 0.0,
-        kirp(math.log(kapanislar[i] / kapanislar[i - 16])) if i >= 16 else 0.0,
+        kirp(math.log(kapanislar[i] / kapanislar[i - EN_UZUN_GETIRI_GECIKMESI]))
+        if i >= EN_UZUN_GETIRI_GECIKMESI else 0.0,
         kirp((gostergeler["ema_hizli"][i] - gostergeler["ema_yavas"][i])
              / max(gostergeler["atr"][i], EPSILON) / 2.0),
         kirp((gostergeler["rsi"][i] - 50.0) / 20.0),
@@ -1331,10 +1461,10 @@ def _gostergeler(barlar):
             "hacimler": hacimler,
             # Hacim x fiyat serisi: bar basina DEGIL, seri basina bir kez.
             "hacim_deger": [h * k for h, k in zip(hacimler, kapanislar)],
-            "ema_hizli": ema(kapanislar, 8),
-            "ema_yavas": ema(kapanislar, 21),
-            "atr": atr(barlar, 14),
-            "rsi": rsi(kapanislar, 14)}
+            "ema_hizli": ema(kapanislar, EMA_HIZLI_PERIYODU),
+            "ema_yavas": ema(kapanislar, EMA_YAVAS_PERIYODU),
+            "atr": atr(barlar, ATR_PERIYODU),
+            "rsi": rsi(kapanislar, RSI_PERIYODU)}
 
 
 def etiket_uret(barlar, i, atr_serisi, ufuk=ETIKET_UFKU):
