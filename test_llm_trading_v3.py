@@ -72,6 +72,79 @@ class KirpTesti(unittest.TestCase):
 
 # ----------------------------------------------------------------- Task 2
 
+class StakeSifirGarantisiTesti(unittest.TestCase):
+    """Sistemin BAS GARANTISI: kanit yoksa f* TAM OLARAK 0.
+
+    Onceki hali kayan noktada tutmuyordu: p0 = a/(a+b) iken Kelly payi
+    p0*b - (1-p0)*a ancak TAM aritmetikte sadelesir; float64'te 1e-16
+    mertebesinde artik kaliyor. Bu bir yuvarlama merakı DEGIL, sozlesme
+    ihlali: defter_guncelle `f > 0.0` kapisiyla POZISYON ACIYOR ve o
+    sembolun yuvasini isgal ediyor; metin_rapor ise `f == 0.0` kapisiyla
+    "bahis buyuklugu sifir" satirini BASTIRIYOR - iki tuketici ayni karar
+    hakkinda ZIT hukum veriyor.
+    """
+
+    def _izgara(self):
+        for R in (1.05, 1.2, 1.35, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 8.0, 10.0):
+            for cost in (0.0, 0.001, 0.002, 0.005, 0.01):
+                b, a = m.net_kanatlar(R, cost)
+                for p_ham in (0.0, 0.2, 0.4, 0.5, 0.8, 1.0):
+                    yield R, cost, p_ham, b, a
+
+    def test_kanit_yokken_f_TAM_SIFIR(self):
+        ihlal = []
+        for R, cost, p_ham, b, a in self._izgara():
+            f = m.stake_hesapla(p_ham, 0.0, b, a)["f"]
+            if f != 0.0:
+                ihlal.append((R, cost, p_ham, f))
+        self.assertEqual(ihlal, [], f"{len(ihlal)} durumda f* tam sifir degil")
+
+    def test_kanit_yokken_lambda_ne_olursa_olsun_sifir(self):
+        b, a = m.net_kanatlar(1.05, 0.0)
+        for lam in m.LAMBDA_TABLOSU:
+            self.assertEqual(m.stake_hesapla(0.95, 0.0, b, a, lam=lam)["f"], 0.0)
+
+    def test_kanit_yokken_defter_POZISYON_ACMAZ(self):
+        """Tuketici etkisi: 1e-16'lik stake yuvayi isgal ediyordu."""
+        b, a = m.net_kanatlar(1.05, 0.0)
+        stake = m.stake_hesapla(0.95, 0.0, b, a)
+        karar = {"sembol": "X", "yon": "LONG", "giris": 100.0, "stop": 99.0,
+                 "hedef": 101.05, "stake": stake}
+        yeni = m.defter_guncelle({"sermaye": 1000.0, "pozisyonlar": {}}, karar,
+                                 {"o": 100.0, "h": 100.2, "l": 99.8, "c": 100.0})
+        self.assertEqual(yeni["pozisyonlar"], {})
+
+    def test_iki_tuketici_ayni_yuklemi_kullanir(self):
+        """defter ve rapor ayni karar hakkinda ZIT hukum veremez."""
+        b, a = m.net_kanatlar(1.05, 0.0)
+        stake = dict(m.stake_hesapla(0.95, 0.0, b, a),
+                     f_max=0.1, kirpildi=False,
+                     lambda_tablosu={"1.0": {"f": 0.0}})
+        karar = {"sembol": "X", "yon": "LONG", "giris": 100.0, "stop": 99.0,
+                 "hedef": 101.05, "p_ham": 0.95, "p_kullanilan": 0.5,
+                 "shrinkage": {"s": 0.0, "s_kanit": 0.0, "s_kalibrasyon": 0.0,
+                               "s_kapsam": 0.0},
+                 "geometri": {"stop_k": 1.0, "hedef_k": 1.05, "R": 1.05,
+                              "p_hedef": None, "n": 0, "basabas_p": None,
+                              "not": ""},
+                 "stake": stake}
+        metin = m.metin_rapor(karar)
+        yeni = m.defter_guncelle({"sermaye": 1000.0, "pozisyonlar": {}}, karar,
+                                 {"o": 100.0, "h": 100.2, "l": 99.8, "c": 100.0})
+        acti = bool(yeni["pozisyonlar"])
+        sifir_denildi = "bahis buyuklugu sifir" in metin
+        self.assertNotEqual(acti, sifir_denildi,
+                            "rapor 'sifir' derken defter pozisyon acamaz")
+        self.assertFalse(acti)
+        self.assertTrue(sifir_denildi)
+
+    def test_kanit_VARKEN_f_hala_pozitif_olabilir(self):
+        """Snap yalniz s=0'a bakmali; kanit varken stake KISITLANMAMALI."""
+        b, a = m.net_kanatlar(2.0, 0.0)
+        f = m.stake_hesapla(0.9, 1.0, b, a)["f"]
+        self.assertGreater(f, 0.0)
+
+
 class KellyTesti(unittest.TestCase):
     def test_net_kanatlar(self):
         b, a = m.net_kanatlar(R=1.3333, cost_r=0.6)
@@ -185,6 +258,88 @@ class KalibrasyonMetrikTesti(unittest.TestCase):
 
 
 # ----------------------------------------------------------------- Task 4
+
+class OlculupYOKSAYILANTesti(unittest.TestCase):
+    """Olculen bir uyari kapiyi ETKILEMIYORSA, olculmemis sayilir.
+
+    Kod incelemesinin uc bulgusu ayni sinifta: sistem dogru teshisi
+    KOYUYOR ama hukmu ona BAGLAMIYOR - yani fail-open. Tasarimin tezi
+    fail-closed oldugu icin bunlar celiski.
+    """
+
+    def _tek_kovali_ciftler(self, n=40):
+        """Tum guvenler AYNI kovaya duser -> ECE hicbir bilgi tasimaz."""
+        return [(0.52 if i % 2 else 0.53, i % 2) for i in range(n)]
+
+    def test_tek_bine_cokmus_ece_kalibrasyon_kanitini_SIFIRLAR(self):
+        ciftler = self._tek_kovali_ciftler()
+        duyarlilik = m.ece_duyarlilik(ciftler)
+        self.assertTrue(duyarlilik["tek_bine_cokme"], "kurulum bozuk: cokme yok")
+        s = m.shrinkage_katsayisi(dogru=30, toplam=40,
+                                  ece_enkotu=m.ece(ciftler),
+                                  dolu_kanal=6, toplam_kanal=6,
+                                  ece_tek_bin=True)
+        self.assertEqual(s["s_kalibrasyon"], 0.0)
+        self.assertEqual(s["s"], 0.0)
+
+    def test_cok_kovali_ece_kaniti_SIFIRLAMAZ(self):
+        s = m.shrinkage_katsayisi(dogru=30, toplam=40, ece_enkotu=0.02,
+                                  dolu_kanal=6, toplam_kanal=6,
+                                  ece_tek_bin=False)
+        self.assertGreater(s["s_kalibrasyon"], 0.0)
+
+    def test_sinirda_sicaklik_kalibrasyon_kanitini_SIFIRLAR(self):
+        """T izgara kenarinda ise fit TANIMSIZDIR; kanit sayilmaz."""
+        s = m.shrinkage_katsayisi(dogru=30, toplam=40, ece_enkotu=0.02,
+                                  dolu_kanal=6, toplam_kanal=6,
+                                  sicaklik_sinirda=True)
+        self.assertEqual(s["s_kalibrasyon"], 0.0)
+
+    def test_s_kanit_TABAN_ORANA_gore_olculur(self):
+        """%50 degil, kumenin KENDI cogunluk orani referanstir.
+
+        Dengesiz etikette (or. taban 0.70) sabit-cogunluk tahmincisi
+        %70 dogruluk alir ve BECERI YOKKEN stake kazanirdi. Etiket
+        `16 bar icinde +1 ATR mi -1 ATR mi` trend penceresinde carpiktir,
+        yani bu varsayimsal degil.
+        """
+        for n in (40, 100, 200):
+            dogru = int(round(0.70 * n))
+            beceriksiz = m.shrinkage_katsayisi(dogru, n, ece_enkotu=0.0,
+                                               dolu_kanal=6, toplam_kanal=6,
+                                               taban_oran=0.70)
+            self.assertEqual(beceriksiz["s_kanit"], 0.0,
+                             f"n={n}: taban orani kadar dogruluk BECERI DEGIL")
+
+    def test_taban_oranin_uzerinde_kanit_hala_sayilir(self):
+        s = m.shrinkage_katsayisi(dogru=95, toplam=100, ece_enkotu=0.0,
+                                  dolu_kanal=6, toplam_kanal=6, taban_oran=0.70)
+        self.assertGreater(s["s_kanit"], 0.0)
+
+    def test_dengeli_etikette_eski_davranis_korunur(self):
+        """taban 0.5 iken formul eski haliyle AYNI sonucu vermeli."""
+        yeni = m.shrinkage_katsayisi(dogru=70, toplam=100, ece_enkotu=0.0,
+                                     dolu_kanal=6, toplam_kanal=6, taban_oran=0.5)
+        alt, _ = m.wilson_araligi(70, 100)
+        self.assertAlmostEqual(yeni["s_kanit"],
+                               m.kirp(2.0 * (alt - 0.5), 0.0, 1.0), places=12)
+
+    def test_boru_hatti_taban_orani_izde_beyan_eder(self):
+        iz = m.BoruHatti(tohum=2026).calistir(
+            BoruHattiTesti("test_determinizm")._paket())["iz"]
+        self.assertIn("taban_oran", iz["halka_8"])
+        self.assertGreaterEqual(iz["halka_8"]["taban_oran"], 0.5)
+
+    def test_boru_hatti_tek_bin_ve_sinirda_bayraklarini_TASIR(self):
+        paket = BoruHattiTesti("test_determinizm")._paket()
+        r = m.BoruHatti(tohum=2026).calistir(paket)
+        h8 = r["iz"]["halka_8"]
+        self.assertIn("ece_tek_bin", h8)
+        self.assertIn("dolu_kova", h8)
+        if h8["ece_tek_bin"] or r["iz"]["halka_7"]["sinirda"]:
+            self.assertEqual(r["shrinkage"]["s_kalibrasyon"], 0.0,
+                             "olculen uyari kapiyi etkilemiyor = fail-open")
+
 
 class ShrinkageTesti(unittest.TestCase):
     def test_kanit_yoksa_s_sifir(self):
@@ -379,6 +534,176 @@ class GeometriTesti(unittest.TestCase):
 
 
 # ----------------------------------------------------------------- Task 6
+
+class BariyerTekKaynakTesti(unittest.TestCase):
+    """OLCULEN bariyer ile YAYINLANAN seviye AYNI nesne olmali.
+
+    Iki yerde bagimsiz hesaplaniyordu (`ilk_gecis_olcum` ve `seviyeler`).
+    Ayrisirlarsa p_hedef, yayinlanan stop/hedeften BASKA bariyerler icin
+    olculmus olur - hem de sessizce.
+    """
+
+    def _barlar(self, n=200):
+        rng = m.tohumlu_rng("bariyer")
+        barlar, fiyat = [], 100.0
+        for _ in range(n):
+            fiyat *= 1.0 + rng.uniform(-0.003, 0.003)
+            barlar.append({"o": fiyat, "h": fiyat * 1.004, "l": fiyat * 0.996,
+                           "c": fiyat, "v": 100.0})
+        return barlar
+
+    def test_olcum_seviyeler_fonksiyonunu_KULLANIR(self):
+        kaynak = inspect.getsource(m.ilk_gecis_olcum)
+        self.assertIn("seviyeler(", kaynak,
+                      "bariyer ikinci kez elle hesaplanamaz")
+        self.assertNotIn("giris - stop_k * atr_deger", kaynak)
+        self.assertNotIn("giris + stop_k * atr_deger", kaynak)
+
+    def test_iki_yol_ayni_seviyeleri_verir(self):
+        for yon in ("LONG", "SHORT"):
+            for stop_k, hedef_k in ((1.0, 2.0), (1.5, 3.0), (2.0, 6.0)):
+                s = m.seviyeler(100.0, 2.0, yon, stop_k, hedef_k)
+                isaret = 1.0 if yon == "LONG" else -1.0
+                self.assertAlmostEqual(s["stop"], 100.0 - isaret * stop_k * 2.0,
+                                       places=12)
+                self.assertAlmostEqual(s["hedef"], 100.0 + isaret * hedef_k * 2.0,
+                                       places=12)
+
+    def test_olcum_yayinlanan_bariyerle_TUTARLI(self):
+        """Ayni (giris, atr, yon, k) icin olcum ve cikti ayni sinirlari gorur."""
+        barlar = self._barlar()
+        atr_serisi = m.atr(barlar)
+        i = 100
+        olcum = m.ilk_gecis_olcum(barlar, [i], "LONG", 1.5, 3.0, atr_serisi, 32)
+        sev = m.seviyeler(barlar[i]["c"], atr_serisi[i], "LONG", 1.5, 3.0)
+        # Bariyerleri ELLE yeniden kurup olcumu tekrar uret: ayni cikmali
+        vurus = None
+        for j in range(i + 1, min(len(barlar), i + 33)):
+            if barlar[j]["l"] <= sev["stop"]:
+                vurus = "stop"
+                break
+            if barlar[j]["h"] >= sev["hedef"]:
+                vurus = "hedef"
+                break
+        beklenen = {"stop": olcum["stop"], "hedef": olcum["hedef"]}
+        if vurus:
+            self.assertEqual(beklenen[vurus], 1, f"{vurus} sayimi tutmadi")
+        else:
+            self.assertEqual(olcum["zaman_asimi"], 1)
+
+
+class BasabasReferansiTesti(unittest.TestCase):
+    """Raporlanan p_kullanilan, modulun kendi "hata" dedigi referansa DUSEMEZ.
+
+    `hedef=(geo.get("basabas_p") or 0.5)` iki ayri kusur tasiyordu:
+    (1) geometri fail-closed dondugunde referans 0.5 oluyordu - PD-1'de
+        tam olarak bu referans "kok neden" diye kayda gecmisti;
+    (2) `or` mesru bir 0.0'i da EKSIK sayiyordu.
+    Olculemeyen bir sey uydurulmaz: basabas yoksa p_kullanilan VERI YOK.
+    """
+
+    def _baglam(self, olculebilir):
+        rng = m.tohumlu_rng("basabas-ref")
+        barlar, fiyat = [], 100.0
+        n = 300 if olculebilir else 30
+        for _ in range(n):
+            fiyat *= 1.0 + rng.uniform(-0.002, 0.004)
+            barlar.append({"o": fiyat, "h": fiyat * 1.004, "l": fiyat * 0.996,
+                           "c": fiyat, "v": 100.0})
+        atr_serisi = m.atr(barlar)
+        return {"sembol": "X", "barlar": barlar, "atr_serisi": atr_serisi,
+                "indeksler": list(range(m.ISINMA_BARI, max(m.ISINMA_BARI + 1,
+                                                           len(barlar) - 40))),
+                "p_ham": 0.8, "dogru": 30, "toplam": 40, "ece_enkotu": 0.02,
+                "dolu_kanal": 6, "toplam_kanal": 6,
+                "giris": barlar[-1]["c"], "atr": atr_serisi[-1],
+                "likidasyon": None, "kaldirac_azami": None,
+                "komisyon": 0.0004, "kayma": 0.0005, "funding": 0.0,
+                "lam": 1.0}
+
+    def test_basabas_olculemezse_p_kullanilan_VERI_YOK(self):
+        karar = m.karar_uret(self._baglam(olculebilir=False))
+        self.assertIsNone(karar["geometri"]["basabas_p"],
+                          "kurulum bozuk: basabas olculebilmis")
+        self.assertIsNone(karar["p_kullanilan"])
+        self.assertIn("VERI YOK", m.metin_rapor(karar))
+
+    def test_basabas_olculebilirse_p_kullanilan_ONA_daraltilir(self):
+        karar = m.karar_uret(self._baglam(olculebilir=True))
+        p0 = karar["geometri"]["basabas_p"]
+        self.assertIsNotNone(p0, "kurulum bozuk: basabas olculememis")
+        p_yon = karar["p_ham"] if karar["yon"] == "LONG" else 1.0 - karar["p_ham"]
+        self.assertAlmostEqual(
+            karar["p_kullanilan"],
+            m.daralt(p_yon, karar["shrinkage"]["s"], hedef=p0), places=12)
+
+    def test_sifir_basabas_EKSIK_sayilmaz(self):
+        """`or` deyimi mesru 0.0'i None gibi ele aliyordu."""
+        self.assertEqual(m._basabas_referansi({"basabas_p": 0.0}), 0.0)
+        self.assertIsNone(m._basabas_referansi({"basabas_p": None}))
+        self.assertIsNone(m._basabas_referansi({}))
+
+
+class SecimYanliligiTesti(unittest.TestCase):
+    """11 aday arasindan argmax, secim cezasi olmadan yapilamaz.
+
+    Ayni 40 test ornegi hem p_hedef'i OLCUYOR hem kazanan geometriyi
+    SECIYOR. Nokta tahmini uzerinden argmax, gurultuyu kenar sanir:
+    olculdu ki kazananin elog'u 1.5e-06 ve p_hedef'in SE'si ~0.074 iken
+    kazanan basabasi ~0.016 SE ile geciyordu. `elog <= 0 -> f=0` kapisi
+    ISARETI yakalar, "gurultu icinde pozitif"i yakalamaz.
+
+    Cozum modulun KENDI deyimi: kanit, nokta tahminiyle degil Wilson ALT
+    siniriyla olculur (shrinkage_katsayisi zaten boyle yapiyor).
+    """
+
+    def _barlar(self, n=500, tohum="secim"):
+        rng = m.tohumlu_rng(tohum)
+        barlar, fiyat = [], 100.0
+        for _ in range(n):
+            fiyat *= 1.0 + rng.uniform(-0.002, 0.004)
+            barlar.append({"o": fiyat, "h": fiyat * 1.004, "l": fiyat * 0.996,
+                           "c": fiyat, "v": 100.0})
+        return barlar
+
+    def _sec(self, p_yon=0.6, tohum="secim"):
+        barlar = self._barlar(tohum=tohum)
+        atr_serisi = m.atr(barlar)
+        indeksler = list(range(m.ISINMA_BARI, len(barlar) - 40))
+        return m.geometri_sec(barlar, indeksler, "LONG", atr_serisi,
+                              p_yon=p_yon, cost_r_fn=lambda k: 0.001)
+
+    def test_adaylar_p_hedef_ALT_SINIRINI_tasir(self):
+        for aday in self._sec()["denenen"]:
+            if aday.get("p_hedef") is None:
+                continue
+            self.assertIn("p_hedef_alt", aday)
+            self.assertLessEqual(aday["p_hedef_alt"], aday["p_hedef"])
+
+    def test_secim_ALT_SINIR_uzerinden_yapilir(self):
+        """Kazanan, nokta tahmininin degil alt sinirin argmax'i olmali."""
+        secim = self._sec()
+        gecerli = [a for a in secim["denenen"] if a.get("elog") is not None]
+        self.assertTrue(gecerli, "kurulum bozuk: gecerli aday yok")
+        en_iyi = max(gecerli, key=lambda a: a["elog"])
+        self.assertEqual((secim["stop_k"], secim["hedef_k"]),
+                         (en_iyi["stop_k"], en_iyi["hedef_k"]))
+        # elog artik alt sinirdan uretilmis p ile hesaplanmali
+        self.assertIn("p_bilesik_alt", secim)
+
+    def test_az_ornekli_aday_CEZALANIR(self):
+        """Ayni p_hedef'te n kucukse alt sinir duser, aday geri kalir."""
+        genis = m.wilson_araligi(30, 40)[0]
+        dar = m.wilson_araligi(75, 100)[0]
+        self.assertLess(genis, dar, "kurulum bozuk: alt sinir n ile artmali")
+
+    def test_gurultu_icinde_pozitif_elog_stake_URETMEZ(self):
+        """Alt sinir basabasin altindaysa f=0 olmali (fail-closed)."""
+        secim = self._sec(p_yon=0.5001)
+        if secim.get("p_bilesik_alt") is not None and secim.get("basabas_p"):
+            if secim["p_bilesik_alt"] <= secim["basabas_p"]:
+                self.assertEqual(secim["f"], 0.0)
+
 
 class GeometriDaireselTesti(unittest.TestCase):
     """Kazanan geometri, denenen listesinin ICINDE olamaz (dairesel referans).

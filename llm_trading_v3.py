@@ -354,12 +354,34 @@ def grup_ece(ciftler_gruplu, bin_sayisi=10):
 # Shrinkage: kanit yoksa olasilik sansa cekilir, boylece stake kendiliginden
 # sifira iner. Sabit esik YOKTUR; uc carpan da veriden gelir.
 
-def shrinkage_katsayisi(dogru, toplam, ece_enkotu, dolu_kanal, toplam_kanal):
-    """s = s_kanit * s_kalibrasyon * s_kapsam, hepsi [0,1]."""
-    alt, _ = wilson_araligi(dogru, toplam)
-    s_kanit = kirp(2.0 * (alt - 0.5), 0.0, 1.0)
+def shrinkage_katsayisi(dogru, toplam, ece_enkotu, dolu_kanal, toplam_kanal,
+                        taban_oran=0.5, ece_tek_bin=False,
+                        sicaklik_sinirda=False):
+    """s = s_kanit * s_kalibrasyon * s_kapsam, hepsi [0,1].
 
-    if ece_enkotu is None:
+    OLCULEN UYARI KAPIYA BAGLANIR. Bir uyariyi olcup hukme baglamamak,
+    olcmemekle aynidir - ustelik daha kotusudur, cunku "olctuk" denir.
+    Uc kapi:
+
+    (1) taban_oran: yon dogrulugu %50'ye DEGIL, kumenin KENDI cogunluk
+        oranina gore olculur. Dengesiz etikette (etiket "16 bar icinde
+        +1 ATR mi -1 ATR mi" - trend penceresinde carpiktir) sabit-yonlu
+        bir tahminci taban orani kadar dogruluk alir; bu BECERI DEGILDIR
+        ve stake kazanmamalidir.
+    (2) ece_tek_bin: tum guvenler tek kovaya duserse ECE hicbir
+        kalibrasyon bilgisi TASIMAZ (ECE == MCE olur). Boyle bir ECE'den
+        pozitif carpan uretmek fail-open'dir.
+    (3) sicaklik_sinirda: T izgara kenarinda bulunduysa fit TANIMSIZDIR
+        (optimum izgaranin disinda olabilir). Tanimsiz bir fit kalibrasyon
+        kaniti sayilmaz.
+    """
+    taban = kirp(float(taban_oran), 0.5, 1.0)
+    alt, _ = wilson_araligi(dogru, toplam)
+    # Taban 0.5 iken bu ifade eski `2*(alt-0.5)` formuluyle OZDESTIR.
+    pay = max(0.0, 1.0 - taban)
+    s_kanit = 0.0 if pay <= 0.0 else kirp((alt - taban) / pay, 0.0, 1.0)
+
+    if ece_enkotu is None or ece_tek_bin or sicaklik_sinirda:
         s_kalibrasyon = 0.0
     else:
         s_kalibrasyon = kirp(1.0 - float(ece_enkotu) / ECE_TAVANI, 0.0, 1.0)
@@ -389,16 +411,32 @@ def daralt(p, s, hedef=0.5):
 
 
 def stake_hesapla(p_ham, s, b, a, lam=1.0):
-    """Stake sozlesmesinin TEK garanti noktasi: kanit yoksa f* tam olarak 0.
+    """Stake sozlesmesinin TEK garanti noktasi: kanit yoksa f* TAM OLARAK 0.
 
     p_ham kanit gucune gore bahsin basabas olasiligina daraltilir; s=0 iken
-    p = p0 olur ve Kelly tanim geregi 0 doner.
+    p = p0 olur ve Kelly TAM aritmetikte 0 doner.
+
+    KAYAN NOKTA KORKULUGU (olculdu): p0 = a/(a+b) iken Kelly payi
+    p0*b - (1-p0)*a ancak TAM aritmetikte sadelesir. float64'te 165 ayri
+    (R, maliyet, p) kombinasyonunda 1e-16 mertebesinde artik kaliyor ve
+    bu artik ZARARSIZ DEGIL: defter_guncelle `f > 0` kapisiyla POZISYON
+    ACIP sembolun yuvasini isgal ediyor, metin_rapor ise `f == 0` kapisiyla
+    "bahis sifir" satirini bastiriyordu - iki tuketici ZIT hukum veriyordu.
+
+    Bu yuzden s <= 0 dalinda f DOGRUDAN 0.0 doner. Bu bir esik DEGIL,
+    TANIM: s = 0 "kanit yok" demektir ve kanit yokken bahis sifirdir;
+    kirpma toleransi secilmis bir sayi olsaydi ESIK_KAYNAGI'na girmesi
+    gerekirdi - burada secilmis sayi YOK.
     """
     p0 = basabas_p(b, a)
     if p0 is None:                      # kazanc kanadi yok: bahis imkansiz
         return {"f": 0.0, "p_kullanilan": None, "p0": None,
                 "not": "kazanc kanadi <= 0 - bahis matematiksel olarak imkansiz"}
+    s = kirp(s, 0.0, 1.0)
     p_kullanilan = daralt(p_ham, s, hedef=p0)
+    if s <= 0.0:
+        return {"f": 0.0, "p_kullanilan": p_kullanilan, "p0": p0,
+                "not": "kanit yok (s=0) - f* tanim geregi 0"}
     f = kelly_asimetrik(p_kullanilan, b, a) * max(0.0, float(lam))
     return {"f": f, "p_kullanilan": p_kullanilan, "p0": p0, "not": ""}
 
@@ -422,12 +460,12 @@ def ilk_gecis_olcum(barlar, indeksler, yon, stop_k, hedef_k, atr_serisi, azami_b
             continue
         giris = barlar[i]["c"]
         atr_deger = max(atr_serisi[i], EPSILON)
-        if yon == "LONG":
-            stop_seviye = giris - stop_k * atr_deger
-            hedef_seviye = giris + hedef_k * atr_deger
-        else:
-            stop_seviye = giris + stop_k * atr_deger
-            hedef_seviye = giris - hedef_k * atr_deger
+        # TEK KAYNAK: olculen bariyerler ile YAYINLANAN seviyeler AYNI
+        # fonksiyondan gelir. Iki ayri hesap, p_hedef'in yayinlanandan
+        # BASKA bariyerler icin olculmesi demektir - olcum ile ciktinin
+        # ayni nesne olmasi gereken tam nokta.
+        _sev = seviyeler(giris, atr_deger, yon, stop_k, hedef_k)
+        stop_seviye, hedef_seviye = _sev["stop"], _sev["hedef"]
 
         sonuc = "zaman_asimi"
         son = min(len(barlar), i + 1 + azami_bar)
@@ -483,6 +521,35 @@ def stake_kirp(f_ham, f_max):
     return {"f": f_ham, "kirpildi": False, "f_ham": f_ham, "f_max": f_max}
 
 
+def _aday_degerlendir(stop_k, hedef_k, R, cost_r, b, a, olcum, p_yon, lam):
+    """Bir (stop_k, hedef_k) adayini puanlar.
+
+    SECIM YANLILIGI KORKULUGU: 11 aday AYNI orneklem uzerinde yarisiyor ve
+    kazanan ayni orneklemle puanlaniyor. Nokta tahmini uzerinden argmax
+    gurultuyu kenar sanir - olculdu ki kazanan basabasi ~0.016 SE ile
+    geciyordu. Bu yuzden secim ve stake, p_hedef'in NOKTA tahmininden
+    degil WILSON ALT SINIRINDAN uretilir. Deyim modulun kendisinden:
+    shrinkage_katsayisi da kaniti alt sinirla olcer. Az ornekli aday
+    boylece KENDILIGINDEN cezalanir (alt sinir n ile daralir); ayri bir
+    n-cezasi sabiti UYDURULMAZ.
+    """
+    p_hedef_alt, _ = wilson_araligi(
+        int(round(olcum["p_hedef"] * olcum["n"])), olcum["n"])
+    # Karar olasiligi: modelin yon olasiligi ile olculen ilk-gecis
+    # birlestirilir (ikisi de ayni olayi tahmin eder; geometrik ortalama
+    # muhafazakardir).
+    p_bilesik = math.sqrt(max(0.0, p_yon) * max(0.0, olcum["p_hedef"]))
+    p_bilesik_alt = math.sqrt(max(0.0, p_yon) * max(0.0, p_hedef_alt))
+    f = kelly_asimetrik(p_bilesik_alt, b, a) * lam
+    return {"stop_k": stop_k, "hedef_k": hedef_k, "R": R, "cost_r": cost_r,
+            "b": b, "a": a, "p_hedef": olcum["p_hedef"],
+            "p_hedef_alt": p_hedef_alt, "p_bilesik": p_bilesik,
+            "p_bilesik_alt": p_bilesik_alt,
+            "n": olcum["n"], "f": f,
+            "elog": beklenen_log(p_bilesik_alt, f, b, a),
+            "basabas_p": basabas_p(b, a), "not": ""}
+
+
 def geometri_sec(barlar, indeksler, yon, atr_serisi, p_yon,
                  cost_r_fn, lam=1.0, azami_bar=32):
     """E[log] maksimize eden (stop_k, hedef_k) adayini secer.
@@ -504,24 +571,18 @@ def geometri_sec(barlar, indeksler, yon, atr_serisi, p_yon,
             denenen.append({"stop_k": stop_k, "hedef_k": hedef_k, "elog": None,
                             "n": olcum["n"], "not": "OLCUM YOK"})
             continue
-        # Karar olasiligi: modelin yon olasiligi ile olculen ilk-gecis birlestirilir
-        # (ikisi de ayni olayi tahmin eder; geometrik ortalama muhafazakardir).
-        p_bilesik = math.sqrt(max(0.0, p_yon) * max(0.0, olcum["p_hedef"]))
-        f = kelly_asimetrik(p_bilesik, b, a) * lam
-        elog = beklenen_log(p_bilesik, f, b, a)
-        aday = {"stop_k": stop_k, "hedef_k": hedef_k, "R": R, "cost_r": cost_r,
-                "b": b, "a": a, "p_hedef": olcum["p_hedef"], "p_bilesik": p_bilesik,
-                "n": olcum["n"], "f": f, "elog": elog,
-                "basabas_p": basabas_p(b, a), "not": ""}
+        aday = _aday_degerlendir(stop_k, hedef_k, R, cost_r, b, a,
+                                 olcum, p_yon, lam)
         denenen.append(aday)
-        if en_iyi is None or elog > en_iyi["elog"]:
+        if en_iyi is None or aday["elog"] > en_iyi["elog"]:
             en_iyi = aday
 
     if en_iyi is None:
         varsayilan = IZGARA[5]  # (1.5, 3.0) - rapor icin notr referans
         return {"stop_k": varsayilan[0], "hedef_k": varsayilan[1],
                 "R": varsayilan[1] / varsayilan[0], "p_hedef": None,
-                "p_bilesik": None, "n": 0, "f": 0.0, "elog": None,
+                "p_hedef_alt": None, "p_bilesik": None, "p_bilesik_alt": None,
+                "n": 0, "f": 0.0, "elog": None,
                 "cost_r": None, "b": None, "a": None, "basabas_p": None,
                 "not": "OLCUM YOK - yeterli ilk-gecis ornegi yok (fail-closed)",
                 "denenen": denenen}
@@ -1221,11 +1282,29 @@ def seviyeler(giris, atr_deger, yon, stop_k, hedef_k):
             "stop_mesafesi": abs(giris - stop), "R": hedef_k / stop_k}
 
 
+def _basabas_referansi(geo):
+    """Daraltma hedefi olarak kullanilacak basabas olasiligi, ya da None.
+
+    `geo.get("basabas_p") or 0.5` YAZILAMAZ: (1) geometri fail-closed
+    donunce referans 0.5 olur ve bu, PD-1'de kok neden olarak kayda
+    gecmis referansin ta kendisidir; (2) `or` mesru bir 0.0'i da EKSIK
+    sayar. Olculemeyen referans UYDURULMAZ - None doner ve p_kullanilan
+    "VERI YOK" olarak raporlanir.
+    """
+    if not isinstance(geo, dict):
+        return None
+    deger = geo.get("basabas_p")
+    return None if deger is None else float(deger)
+
+
 def karar_uret(baglam):
     """Tek sembol icin nihai karar: YON (zorunlu) + STAKE (surekli)."""
     shr = shrinkage_katsayisi(baglam["dogru"], baglam["toplam"],
                               baglam.get("ece_enkotu"),
-                              baglam["dolu_kanal"], baglam["toplam_kanal"])
+                              baglam["dolu_kanal"], baglam["toplam_kanal"],
+                              taban_oran=baglam.get("taban_oran", 0.5),
+                              ece_tek_bin=baglam.get("ece_tek_bin", False),
+                              sicaklik_sinirda=baglam.get("sicaklik_sinirda", False))
 
     # YON kosulsuz ve DARALTILMAMIS olasiliktan gelir: shrinkage stake'i
     # sifirlar ama yon BILGISINI yok etmez (belgenin Gerekce 2'si korunur).
@@ -1262,8 +1341,9 @@ def karar_uret(baglam):
     return {
         "sembol": baglam["sembol"], "yon": yon,
         "p_ham": baglam["p_ham"],
-        "p_kullanilan": daralt(p_yon, shr["s"],
-                               hedef=(geo.get("basabas_p") or 0.5)),
+        "p_kullanilan": (None if _basabas_referansi(geo) is None
+                         else daralt(p_yon, shr["s"],
+                                     hedef=_basabas_referansi(geo))),
         "shrinkage": shr, "geometri": geo,
         "giris": sev["giris"], "stop": sev["stop"], "hedef": sev["hedef"],
         "R": sev["R"],
@@ -1661,15 +1741,28 @@ class BoruHatti:
                 p = kalib["fn"](p)
             ciftler.append((p, o["y"]))
         dogru = sum(1 for p, y in ciftler if (1 if p >= 0.5 else 0) == y)
+        # TABAN ORAN: kumenin kendi cogunluk sinifi. Yon dogrulugu buna
+        # gore olculur; %50 referansi dengesiz etikette beceri UYDURUR.
+        pozitif = sum(1 for _, y in ciftler if y == 1)
+        taban_oran = (max(pozitif, len(ciftler) - pozitif) / len(ciftler)
+                      if ciftler else 0.5)
+        # ECE TEK KOVAYA COKTU MU: coktu ise ECE bilgi TASIMAZ (ECE == MCE).
+        duyarlilik = ece_duyarlilik(ciftler) if ciftler else {
+            "tek_bine_cokme": True, "dolu_kova": 0}
         iz["halka_8"] = {"ad": "softmax/yon ekseni", "test_ornek": len(ciftler),
                          "dogru": dogru,
+                         "taban_oran": taban_oran,
                          "ece": ece(ciftler) if ciftler else None,
                          "mce": mce(ciftler) if ciftler else None,
+                         "ece_tek_bin": duyarlilik["tek_bine_cokme"],
+                         "dolu_kova": duyarlilik["dolu_kova"],
                          "brier": brier(ciftler) if ciftler else None,
                          "auroc": auroc(ciftler) if ciftler else None,
                          "wilson": wilson_araligi(dogru, len(ciftler))}
         ctx["ciftler"] = ciftler
         ctx["dogru"] = dogru
+        ctx["taban_oran"] = taban_oran
+        ctx["ece_tek_bin"] = duyarlilik["tek_bine_cokme"]
 
     def _halka_olasilik(self, ctx, iz):
         """Halka 9-10: son barin olasiligi + self-consistency."""
@@ -1759,6 +1852,10 @@ class BoruHatti:
             "p_ham": ctx["p_ham"], "dogru": ctx["dogru"],
             "toplam": len(ctx["ciftler"]),
             "ece_enkotu": ece_grup["en_kotu"][1],
+            # OLCULEN UYARILAR KAPIYA BAGLI (fail-closed):
+            "taban_oran": ctx.get("taban_oran", 0.5),
+            "ece_tek_bin": ctx.get("ece_tek_bin", False),
+            "sicaklik_sinirda": bool(iz["halka_7"].get("sinirda")),
             "dolu_kanal": self._kapsam(ctx, paket, iz),
             "toplam_kanal": paket["toplam_kanal"],
             "giris": barlar[son]["c"], "atr": gost["atr"][son],
@@ -1790,6 +1887,15 @@ class BoruHatti:
 
 # ---------------------------------------------------------------- BOLUM 10
 # Cikti, kagit defteri, CLI. GERCEK EMIR YOK.
+
+
+def bahis_acilir_mi(stake):
+    """Bahis ACILIR mi? Stake'i okuyan HER tuketici bu yuklemden gecer.
+
+    Ayni karar hakkinda defter "pozisyon actim", rapor "bahis sifir"
+    diyemez. Iki ayri kapi (`f > 0` ve `f == 0`) tam da bunu yapiyordu.
+    """
+    return float((stake or {}).get("f") or 0.0) > 0.0
 
 
 def _bicim(deger, kalip=".4f"):
@@ -1837,7 +1943,7 @@ def metin_rapor(karar):
     for kaynak in (g, s, karar):
         if kaynak.get("not"):
             satirlar.append(f"NOT: {kaynak['not']}")
-    if s.get("f") == 0.0:
+    if not bahis_acilir_mi(s):
         satirlar.append("f*=0: yon ve seviyeler yine uretildi; bahis buyuklugu sifir.")
     return "\n".join(satirlar)
 
@@ -1887,7 +1993,7 @@ def defter_guncelle(durum, karar, bar):
             yeni["sermaye"] += isaret * (cikis - mevcut["giris"]) * mevcut["miktar"]
             yeni["pozisyonlar"].pop(sembol, None)
 
-    if sembol not in yeni["pozisyonlar"] and karar["stake"]["f"] > 0.0:
+    if sembol not in yeni["pozisyonlar"] and bahis_acilir_mi(karar["stake"]):
         risk_tutari = yeni["sermaye"] * karar["stake"]["f"]
         mesafe = abs(karar["giris"] - karar["stop"]) or EPSILON
         yeni["pozisyonlar"][sembol] = {
