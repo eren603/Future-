@@ -49,3 +49,36 @@ Madde Grup-B (Task 7-9) | Deneme 1/3 | Ajan kod-denetci#2 | Kapı: **SAHTE_KANIT
 - **PD-3** `ECE_TAVANI=0.10` ve `ASGARI_OLCUM=20` etiketsiz sabit eşik. Depo sözleşmesi
   (`CLAUDE.md`: "etiketsiz gizli eşik yasak") `esik_kaynagi`/varsayım etiketi istiyor.
   → `ESIK_KAYNAGI` sözlüğü eklendi, çıktıda beyan ediliyor.
+
+---
+
+## Tur 2 — Grup C/D kapanisi ve Grup E
+
+Madde Grup-C+D (Task 10-15) | Deneme 3/3 | Ajan kod-denetci#5 | Kapı: — (5/5 PASS, kapı 6 N/A) | Kanıt: denetçi `python3 -m unittest test_llm_trading_v3` komutunu KENDİ koşturdu → 148 test OK, exit 0, 8.132s; `_h4_hizala`'yı ESKİ kurala (`i//16`) monkeypatch edip iki hizalama testinin de FAIL verdiğini gösterdi (test boş değil); kendi agregasyon fikstürüyle yalnız GELECEĞİ bozup HEAD kuralında geçmiş satırların 0 tanesinin değiştiğini, BASE kuralında i=320 satırının DEĞİŞTİĞİNİ ölçtü; `dolu_kanal`'a elle dokunmadan `s_kapsam` 1.0 → 0.8333333 ölçtü ve `dolu_kanal -= 1` satırını mutasyonla etkisizleştirince testin düşeceğini doğruladı; `token_sayisi` 32 → 16 ölçtü; `setattr(m,"DENETCI_GIZLI_ESIK",0.77)` ile etiketsiz-eşik tarayıcısının FAIL verdiğini gösterdi | Karar: PASS — madde kapandı | Arşiv: `reddedilen/grup-cd-1`, `reddedilen/grup-cd-2`
+
+Madde Grup-E (eksen + sızıntı penceresi + kalibrasyon adaleti) | Deneme 1/3 | Ajan kod-denetci#6 | Kapı: — (5/5 PASS, kapı 6 N/A) | Kanıt: denetçi `python3 -m unittest test_llm_trading_v3` KENDİ koşturdu → 162 test OK, exit 0, 8.110s; yedi ayrı mutasyonla testlerin boş olmadığını kanıtladı (`long_olasiligi`→`p[0]`: 6 testin 5'i düştü; purge'dan `giris_erisimi` çıkarıldı: 1 test düştü (21 < 84); dejenere kapısı bar birimine geri alındı: 3 test düştü; boru hattı erişimi `GECIKME_SAYISI`'ya döndürüldü: paket FAILED; `kalibrasyon_sec` aynı kümede fit+puanla: `test_ezberleyen_izotonik_secilmez` düştü; fail-closed dalı kapatıldı: 1 test düştü; kazanan yeniden fit edilmedi: 1 test düştü); sızıntıyı bağımsız ölçtü (BASE bölme train 399 / kal 422 = boşluk 23 bar, gereken 84; eski kod False = fail-open, gerçek erişimle True; HEAD boşluk 90 ≥ 84); `kal-b` tohumunda iç-örneklem izo 0.6582423822880017 < sıc 0.69314390820297, dış-örneklem izo 0.7922594861062632 > sıc 0.6933847196318571 ölçtü; raporlanan holdout NLL'i ve tüm-küme T'sini kendi hesabıyla birebir doğruladı | Karar: PASS | Arşiv: —
+
+### Grup-E denetçisinin kapı DÜŞÜRMEYEN gözlemleri (açık, sonraki turda)
+
+- **G-1 [SAHTE_KANIT sınırında — orkestratör kabulü]** `c9ba8cd` commit mesajındaki
+  `p = [0.0018, 0.9982]` vektörü depo artefaktından yeniden ÜRETİLEMİYOR (denetçi aynı
+  kümede en yüksek `p1`'i 0.789 ölçtü). Sayı gerçekten ölçüldü ama ölçüm o sırada
+  scratchpad'deki geçici bir sondaydı ve SİLİNDİ; `CLAUDE.md` sert yasak #1 gereği
+  kaynağı olmayan nicel iddia gerçek gibi sunulamaz. Ayrıca "154 test bunu yakalamamıştı"
+  YANLIŞ: yakalayamayan paket **148** testti (154, yakalayan 6 testin EKLENDİĞİ commit'in
+  sayısı). Her iki düzeltme de bu sicile işlendi; sayı ya artefakta kilitlenecek ya çıkarılacak.
+- **G-2** `(B)+(C) etkileşimi:` yeni purge kalibrasyon kümesini 16 → 7'ye düşürdüğü için
+  `kalibrasyon_sec` boru hattında DAİMA fail-closed sıcaklık dalına giriyor; izotonik
+  uçtan uca yolda pratikte ölü kod. Beyan edilmiş ve fail-closed, ama plan düzeyinde
+  `azami_ornek`/oran kararı gerekiyor.
+- **G-3** `girdi_erisimi = GECIKME_SAYISI × H4_BAR_ORANI = 64` yalnız TOKEN gecikmesini
+  sayıyor; 4H göstergeleri (EMA48 gibi) çok daha geriye uzanıyor (48 × 16 ≈ 768 15M barı).
+  Sızıntı penceresi hâlâ ALT SINIR.
+- **G-4** `iz["halka_11"]["giris_erisimi"]` ve `iz["halka_7"]["yarisma"]` hiçbir testte
+  DOĞRUDAN iddia edilmiyor (yalnız dolaylı kilit var).
+- **G-5** `BoruHatti.calistir` **155 satır** — plan Global Constraint "tek fonksiyon 60
+  satırı aşmaz" ihlali. Bu maddeden gelmedi, devralındı.
+- **G-6 [orkestratör bulgusu, denetçiden bağımsız]** Plan Task 15 `rapor_yaz(kararlar, dosya)`
+  fonksiyonunu çıktı olarak beyan ediyor ama modülde YOK — ATLAMA. (`Adaptor.kline/.turev`
+  ise ihlal değil: tek `uc(kanal, sembol)` URL üreticisine bilinçli olarak konsolide edildi,
+  ağ çağrısı yok.)
