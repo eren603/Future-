@@ -679,6 +679,43 @@ def gereken_acikllik(bosluk, kal_orani, hedef_kal, pay_orani=0.5):
 # Kalibrasyon metrikleri. Dusuk ECE tek basina kanit DEGILDIR.
 
 
+AZAMI_BAR_BUTCESI = esik_kaydet(
+    "AZAMI_BAR_BUTCESI", 4000, "VARSAYIM",
+    "Kac bar CEKILECEGININ ust siniri. Istatistiksel bir esik DEGIL, HESAP "
+    "butcesidir: bu makinede olculdu - 2400 bar 11.3s, 4000 bar 18.7s, 6000 "
+    "bar 27.4s (tek sembol). Uc sembol x cep telefonu carpanini tasiyabilmek "
+    "icin 4000 secildi. Bar sayisi yukari cikarsa bolme daha da saglamlasir "
+    "(kal 60 -> 140), yani sinir ISTATISTIGE degil SUREYE bagli.",
+    "hedef cihazda `--canli` suresini olc; kabul edilebilir sure ile bar "
+    "sayisi arasindaki egriden butceyi yeniden turet")
+
+
+def hedef_bar_sayisi(h4_var=True, butce=None):
+    """Kac 15M bar cekilecegi SECILMEZ, bolmenin kendi aritmetiginden gelir:
+    hesap butcesine SIGAN en zengin profil ciftinin gerektirdigi bar sayisi.
+    Hicbiri sigmiyorsa EN UCUZ ciftin gereksinimi alinir (butce asilsa bile
+    beyan edilir) - az veriyle kosup 'kal=0' almak sessiz bir arizadir.
+    """
+    butce = int(AZAMI_BAR_BUTCESI if butce is None else butce)
+
+    def yap(pr):
+        yuv, atr, eh, ey, r, ad = pr
+        return {"yuvarlanan": yuv, "atr": atr, "ema_hizli": eh,
+                "ema_yavas": ey, "rsi": r, "ad": ad}
+
+    adaylar = [yap(x) for x in PROFIL_ADAYLARI]
+    gereken = []
+    for pr in adaylar:
+        for h4p in (adaylar if h4_var else [None]):
+            b = purge_boslugu(pr, h4_var, h4p)
+            g = max(3 * (b + 5),
+                    gereken_ornek_butcesi(butce, b, BOLME_ORANLARI[1],
+                                          2 * ASGARI_OLCUM) or 0)
+            gereken.append(g)
+    sigan = [g for g in gereken if g <= butce]
+    return max(sigan) if sigan else min(gereken)
+
+
 def profil_sec(bar_sayisi, h4_var=True, h4_profil_adi=None):
     """Eldeki bar sayisiyla DEJENERE OLMAYAN en UZUN pencereli profil CIFTINI
     (15M profili, 4H profili) secer.
@@ -1633,6 +1670,7 @@ class Adaptor:
 
 class BinanceAdaptor(Adaptor):
     ad = "binance"
+    sayfalanir = True        # endTime ile geriye sayfalanabilir
     taban = "https://fapi.binance.com"
 
     def uc(self, kanal, sembol):
@@ -1872,6 +1910,80 @@ def paket_kur(sembol, toplama, **ek):
     return paket
 
 
+def sayfali_getir(getir_fn, url, params, hedef, zaman_al, azami_sayfa=8):
+    """Bir uctan HEDEF kadar kayit toplanana dek GERIYE dogru sayfalar.
+
+    Neden gerekli: Binance kline ucu tek cagrida en cok 1500 bar verir.
+    Kullanicinin canli kosusunda olculdu - 1500 bar ile hicbir profil cifti
+    sigmadi, kalibrasyon dilimi BOS kaldi (kal=0) ve karar yazi-turaya dustu.
+    Sayfalama olmadan sistem canli veriyle OGRENEMEZ.
+
+    Korkuluklar: (a) ayni zaman damgasi iki kez sayilmaz, (b) yeni kayit
+    gelmiyorsa dongu biter (sonsuz sayfa yok), (c) azami_sayfa sert sinir.
+    """
+    toplam, gorulen, bitis = [], set(), None
+    for _ in range(int(azami_sayfa)):
+        istek = dict(params)
+        if bitis is not None:
+            istek["endTime"] = str(int(bitis))
+        parca = getir_fn(url, istek)
+        if not parca:
+            break
+        yeni, en_eski = [], None
+        for x in parca:
+            t = zaman_al(x)
+            if t is None or t in gorulen:
+                continue
+            gorulen.add(t)
+            yeni.append((t, x))
+            en_eski = t if en_eski is None else min(en_eski, t)
+        if not yeni:
+            break
+        toplam.extend(yeni)
+        if len(gorulen) >= int(hedef) or en_eski is None:
+            break
+        bitis = en_eski - 1
+    toplam.sort(key=lambda p: p[0])
+    return [x for _, x in toplam[-int(hedef):]]
+
+
+def _kline_zamani(satir):
+    try:
+        return int(satir[0])
+    except (TypeError, ValueError, IndexError, KeyError):
+        return None
+
+
+def _kayit_zamani(kayit):
+    try:
+        return int(kayit["timestamp"])
+    except (TypeError, ValueError, KeyError):
+        return None
+
+
+# Sayfalanabilir kanallar: (hedef_fn, zaman_alici). Binance'in gecmis sinirlari
+# BEYAN: kline sinirsiz gecmis, OI/taker ucu ~30 gun (15m periyotta 2880 kayit).
+TUREV_GECMIS_TAVANI = esik_kaydet(
+    "TUREV_GECMIS_TAVANI", 2880, "YAPISAL",
+    "Binance futures-data uclari (openInterestHist, takerlongshortRatio) "
+    "yaklasik 30 gun tutar; 15m periyotta 30*96 = 2880 kayit. Bir SECIM degil, "
+    "borsanin ilan ettigi saklama penceresi.",
+    "uctan endTime ile daha eski sayfa iste; bos donen ilk sayfa tavani verir")
+
+
+def sayfa_plani(kanal, h4_var=True):
+    """Hangi kanal kac kayit ister? kline hedefi profil aritmetiginden gelir."""
+    if kanal == "kline_15m":
+        # HEDEF = butcenin tamami. Butcenin ALTINA inmek dairesel olurdu:
+        # cekilen bar sayisi profil secimini, profil secimi de gereken bar
+        # sayisini belirliyor. Butce zaten hesap siniridir; daha cok bar
+        # bolmeyi SAGLAMLASTIRIR (olculdu: kal 44 -> 60 -> 140).
+        return int(AZAMI_BAR_BUTCESI), _kline_zamani
+    if kanal in ("oi", "taker"):
+        return min(hedef_bar_sayisi(h4_var), TUREV_GECMIS_TAVANI), _kayit_zamani
+    return None
+
+
 def veri_topla(sembol, adaptorler, getir_fn):
     """TUM adaptorleri dener, EN YUKSEK kapsamli olani secer. Esitlikte ILK."""
     en_iyi = None
@@ -1879,8 +1991,14 @@ def veri_topla(sembol, adaptorler, getir_fn):
         kanallar, dusen = {}, []
         for kanal in KANALLAR:
             url, params = ad.uc(kanal, sembol)
+            plan = sayfa_plani(kanal) if getattr(ad, "sayfalanir", False) else None
             try:
-                kanallar[kanal] = getir_fn(url, params)
+                if plan is not None:
+                    hedef, zaman_al = plan
+                    kanallar[kanal] = sayfali_getir(getir_fn, url, params,
+                                                    hedef, zaman_al)
+                else:
+                    kanallar[kanal] = getir_fn(url, params)
             except Exception:
                 kanallar[kanal] = None       # UYDURMA YOK
                 dusen.append(kanal)
@@ -2117,19 +2235,69 @@ class BoruHatti:
         ctx.update({"ciftler": ciftler, "dogru": dogru, "taban_oran": taban,
                     "ece_tek_bin": duy["tek_bine_cokme"]})
 
+    def _emisyon(self, ctx, i, egitildi):
+        """Tek barin KENDI kaniti. Model kalibre degilse yerine OLCULEN
+        yapisal skor konur - bos birakilmaz, yazi-tura da sunulmaz."""
+        if egitildi:
+            x = self.kodlayici.ileri(
+                self._durumlar(ctx["satir_kumesi"], ctx["olcekleyiciler"], i))
+            top = topluluk_olasilik(x, ctx["basliklar"], ctx["kalib"]["T"])
+            e = long_olasiligi(top["p"])
+            if ctx["kalib"]["fn"] is not None:
+                e = ctx["kalib"]["fn"](e)
+            return e, top
+        y = yapisal_yon_skoru(ctx["barlar"], ctx["gost"], ctx["profil"], i)
+        return y["p_long"], None
+
+    def _egitim_etiketleri(self, ctx):
+        """Egitim penceresinin ARDISIK bar etiketleri (gecis matrisi icin).
+        Pencere disina TASILMAZ: kaynak yalniz bolme["train"] araligidir."""
+        tr = ctx["bolme"]["train"]
+        if not tr:
+            return []
+        bas, bit = min(tr), max(tr)
+        azami = 2000                     # hesap korkulugu; ilk `azami` bar
+        bit = min(bit, bas + azami - 1)
+        return [etiket_uret(ctx["barlar"], i, ctx["gost"]["atr"])
+                for i in range(bas, bit + 1)]
+
     def _h11_olasilik(self, ctx, iz):
-        bs, kal = ctx["basliklar"], ctx["kalib"]
+        """DECODING — cumle tarafindaki Viterbi'nin piyasa karsiligi.
+
+        Yon artik SON BARIN tek basina puanindan gelmez: emisyonlar
+        OLCULEN gecis matrisiyle suzulur. Kalibrasyon dilimi bossa model
+        'egitilmis' SAYILMAZ (kullanicinin canli ciktisinda olculdu:
+        kal=0 iken p=0.5053 'kaynak=MODEL' diye sunuluyordu = yazi-tura).
+        """
+        kal = ctx["kalib"]
         son = len(ctx["barlar"]) - 1
-        x = self.kodlayici.ileri(
-            self._durumlar(ctx["satir_kumesi"], ctx["olcekleyiciler"], son))
-        top = topluluk_olasilik(x, bs, kal["T"])
-        p = long_olasiligi(top["p"])
-        if kal["fn"] is not None:
-            p = kal["fn"](p)
-        egitildi = bool(ctx["train"])
-        iz["halka_11"] = {"ad": "decoding (HOLD YOK)", "p_long": p,
+        kalibre = str(kal.get("yontem")) != "YOK"
+        egitildi = bool(ctx["train"]) and kalibre
+        # OLCEK UYUSMAZLIGI DUZELTMESI: ctx["train"] SEYREK orneklenmis
+        # indekslerden gelir (_ornek_indeksleri azami ile kirpar). O dizinin
+        # ardisik ciftleri BIR BAR degil, ORNEK ADIMI kadar uzaktir; oysa
+        # suzgec matrisi BAR BASINA uyguluyor. Matris bu yuzden egitim
+        # penceresinin ARDISIK barlarindan olculur (ayni pencere, purge
+        # disina cikilmaz - look-ahead yok).
+        gec = gecis_matrisi(self._egitim_etiketleri(ctx))
+        pen = hmm_penceresi(gec["lambda2"])
+        emisyonlar, top_son = [], None
+        for i in range(max(0, son - pen + 1), son + 1):
+            e, top = self._emisyon(ctx, i, egitildi)
+            emisyonlar.append(e)
+            top_son = top if i == son else top_son
+        suz = hmm_suz(emisyonlar, gec["P"])
+        p = suz["p"]
+        iz["halka_11"] = {"ad": "decoding (kararsizlik sinifi YOK)", "p_long": p,
                           "hold": False, "egitildi": egitildi,
-                          "uzlasi": top["uzlasi"], "dagilim": top["dagilim"]}
+                          "kalibre": kalibre,
+                          "emisyon_son": emisyonlar[-1] if emisyonlar else None,
+                          "gecis": {"P": gec["P"], "n": gec["n"],
+                                    "kalicilik": gec["kalicilik"],
+                                    "pencere": pen, "not": gec["not"]},
+                          "gecis_kaymasi": suz["kayma"],
+                          "uzlasi": (top_son or {}).get("uzlasi"),
+                          "dagilim": (top_son or {}).get("dagilim")}
         ctx["p_ham"] = p
         ctx["egitildi"] = egitildi
         ctx["son"] = son
@@ -2177,6 +2345,126 @@ esik_kaydet("YAPISAL_LOJISTIK_EGIM", 2.0, "YAPISAL",
             "Yapisal skor [-1,1] araligina kirpili oldugundan egim 2.0, "
             "skor=+-1'de p=0.88/0.12 verir. Bir performans ayari DEGIL, "
             "kirpma araligindan gelen olcek.")
+
+
+# ========================================================== BOLUM 17.4
+# FIYAT KANALINDA GURULTU AYRIMI — 'yan yana uzatilan harf' karsiligi.
+#
+# Cumlede 'pugoreeeewu' icindeki 'eeee' fazladan gurultudur: once AYRILIR,
+# sonra kalan harflerle karar verilir. Fiyat kanalinda birebir karsiligi:
+#   UZATMA      = ardisik OZDES kapanis (donmus tick / tekrarlanan snapshot)
+#   DEGISTIRME  = log-getiride robust-z spike (tek barlik sicrama)
+# Bu barlar OLCUME sokuldugunda ATR sisar -> stop genisler -> R bozulur.
+# Bu yuzden KARAR ANINDAKI olcek gurultulu barlar DISARIDA birakilarak
+# hesaplanir. Fiyatin KENDISI onarilmaz: islem gormemis bir seviye giris
+# diye YAZILAMAZ (uydurma yasagi). Gurultulu son bar yalniz BAYRAKLANIR.
+
+def fiyat_gurultu_ayikla(barlar, adim_ms=900000):
+    """Fiyat kanalinin bozulma raporu + onarim becerisi (OLCULEN)."""
+    if not barlar:
+        return {"sayim": {}, "beceri": None, "spike": [], "donmus": 0,
+                "son_bar_gurultulu": False, "not": "bar YOK"}
+    kayitlar = [{"t": b["t"], "deger": b["c"]} for b in barlar]
+    tespit = bozulma_tespit(kayitlar, int(adim_ms), "deger", "t")
+    beceri = onarim_becerisi([b["c"] for b in barlar])
+    spike = sorted(set(tespit.get("spike_indeksleri") or []))
+    donmus = sum(1 for b in tespit["bulgular"] if b["mod"] == "UZATMA")
+    return {"sayim": tespit["sayim"], "beceri": beceri, "spike": spike,
+            "donmus": donmus, "son_bar_gurultulu": (len(barlar) - 1) in set(spike),
+            "bulgular": tespit["bulgular"][:20], "not": tespit.get("not", "")}
+
+
+def atr_gurultusuz(barlar, i, periyot, gurultulu):
+    """ATR'yi GURULTULU barlari disarida birakarak olcer.
+
+    Deger UYDURULMAZ: spike barin gercek araligi bir baskasiyla DEGISTIRILMEZ,
+    yalnizca ortalamaya KATILMAZ. Pencerede temiz bar kalmazsa None doner ve
+    cagiran ham ATR'ye duser (fail-closed: sessizce sifir/tahmin YOK).
+    """
+    if not barlar or i is None or i < 0 or i >= len(barlar):
+        return None
+    gurultulu = set(gurultulu or ())
+    ar = []
+    for j in range(max(0, i - int(periyot) + 1), i + 1):
+        if j in gurultulu:
+            continue
+        b = barlar[j]
+        onceki = barlar[j - 1]["c"] if j else b["c"]
+        ar.append(max(b["h"] - b["l"], abs(b["h"] - onceki), abs(b["l"] - onceki)))
+    return (sum(ar) / len(ar)) if ar else None
+
+
+# ========================================================== BOLUM 17.5
+# PIYASANIN BIGRAMI — yonu BAGLAMA baglayan OLCULEN gecis matrisi.
+#
+# Cumle tarafinda 'eskisis' tek basina en ucuz kanala ('eskisi') cokuyordu;
+# dogru cevap 'eksiksiz' ancak KOMSULARIYLA kazandi. Piyasada ayni kusur:
+# son bar TEK BASINA puanlaniyordu. Kullanicinin canli ciktisinda olculdu:
+# kalibrasyon dilimi BOS (kal=0) oldugu halde yon 'kaynak=MODEL, p=0.5053'
+# diye sunuluyordu - yani yazi-tura, MODEL kaniti gibi. Iki duzeltme:
+#   (1) EGITILDI artik kalibrasyon dilimini de sart kosar (asagida _h11).
+#   (2) Yon, tek barin emisyonundan degil, OLCULEN gecis matrisiyle
+#       suzulmus DIZIDEN gelir (HMM ileri suzgeci) - cumledeki bigramin
+#       tam karsiligi. Eksik/okunamayan kanit, komsuluk bilgisiyle baglanir;
+#       'okunamadi' diye ucuncu bir sinifa DUSULMEZ.
+
+def gecis_matrisi(etiketler):
+    """P(y_t | y_{t-1}) - egitim diliminden SAYILIR, secilmez.
+
+    Laplace (add-1) duzeltmesi: gorulmemis gecis SIFIR olamaz, yoksa suzgec
+    o yone bir daha ASLA gecemez (mutlak kesinlik = uydurma).
+    """
+    say = [[1.0, 1.0], [1.0, 1.0]]
+    n = 0
+    for a, b in zip(etiketler, etiketler[1:]):
+        if a is None or b is None:
+            continue
+        say[int(a)][int(b)] += 1.0
+        n += 1
+    P = [[say[i][j] / (say[i][0] + say[i][1]) for j in (0, 1)] for i in (0, 1)]
+    kalicilik = 0.5 * (P[0][0] + P[1][1])
+    return {"P": P, "n": n, "kalicilik": kalicilik,
+            "lambda2": P[0][0] + P[1][1] - 1.0,
+            "not": "" if n >= ASGARI_OLCUM else
+                   "ornek az (n=%d) - gecis matrisi ZAYIF" % n}
+
+
+def hmm_penceresi(lambda2, tolerans=0.01):
+    """Suzgec penceresi SECILMEZ: zincirin karisma suresinden TURETILIR.
+    |lambda2|^k <= tolerans -> k = ln(tol)/ln|lambda2|. Kalicilik yuksekse
+    gecmis uzun sure konusur, dusukse zincir hemen unutur."""
+    l = abs(float(lambda2))
+    if l <= 1e-9:
+        return 1
+    if l >= 0.999:
+        return 64
+    return int(max(1, min(64, math.ceil(math.log(tolerans) / math.log(l)))))
+
+
+def hmm_suz(emisyonlar, P):
+    """Ileri suzgec: p(y_t | gozlem_1..t). Cumledeki Viterbi'nin olasilik
+    surumudur - tek fark, dizi degil SON durum raporlanir.
+
+    emisyonlar: her bar icin p(LONG) (model ya da yapisal taban).
+    Doner: son bardaki suzulmus p(LONG) + suzgecin ne kadar oynattigi.
+
+    BEYAN EDILEN YAKLASIKLIK: emisyon bir OLABILIRLIK degil, ~0.5 onsel
+    altinda uretilmis bir SONSAL'dir; olabilirlik gibi kullanmak onseli
+    hafifce iki kez sayar. Egitim etiketleri dengeye yakin oldugu surece
+    (taban_oran ~ 0.5, halka_10'da OLCULUR ve raporlanir) duzeltme ihmal
+    edilebilir; taban_oran dengeden uzaklasirsa bu yanlilik BUYUR.
+    """
+    if not emisyonlar:
+        return {"p": 0.5, "kayma": 0.0, "adim": 0}
+    durum = [1.0 - emisyonlar[0], emisyonlar[0]]
+    for e in emisyonlar[1:]:
+        ileri = [durum[0] * P[0][0] + durum[1] * P[1][0],
+                 durum[0] * P[0][1] + durum[1] * P[1][1]]
+        yeni = [ileri[0] * (1.0 - e), ileri[1] * e]
+        t = yeni[0] + yeni[1]
+        durum = [0.5, 0.5] if t <= 0.0 else [yeni[0] / t, yeni[1] / t]
+    return {"p": durum[1], "kayma": durum[1] - emisyonlar[-1],
+            "adim": len(emisyonlar)}
 
 
 # ============================================================ BOLUM 18
@@ -2284,16 +2572,28 @@ def karar_uret(baglam):
 def _bh_karar(self, ctx, paket, iz):
     barlar, gost, son = ctx["barlar"], ctx["gost"], ctx["son"]
     egitildi = ctx["egitildi"]
-    if egitildi:
-        p_ham = ctx["p_ham"]
-        kaynak = "MODEL"
-        yapisal = None
-    else:
+    # p_ham ARTIK her iki dalda da halka_11'den gelir: emisyon (model ya da
+    # yapisal taban) + OLCULEN gecis suzgeci. Eskiden yapisal dal suzgeci
+    # EZIYORDU - yani baglam bilgisi cope gidiyordu.
+    p_ham = ctx["p_ham"]
+    kaynak = ("MODEL+GECIS" if egitildi else "YAPISAL_TABAN+GECIS")
+    yapisal = None
+    if not egitildi:
         yapisal = yapisal_yon_skoru(barlar, gost, ctx["profil"], son)
-        p_ham = yapisal["p_long"]
-        kaynak = "YAPISAL_TABAN"
-        iz["halka_11"]["p_long"] = p_ham
         iz["halka_11"]["yapisal_taban"] = yapisal
+    # GURULTU AYRIMI (cumledeki 'eeee' ile ayni is): spike/donmus barlar
+    # KARAR ANINDAKI olcekten cikarilir. Fiyatin kendisi ONARILMAZ.
+    gur = fiyat_gurultu_ayikla(barlar)
+    atr_ham = gost["atr"][son]
+    atr_temiz = atr_gurultusuz(barlar, son, ctx["profil"]["atr"], gur["spike"])
+    atr_kullanilan = atr_ham if atr_temiz is None else atr_temiz
+    iz["halka_11"]["fiyat_gurultusu"] = {
+        "sayim": gur["sayim"], "spike_adet": len(gur["spike"]),
+        "donmus": gur["donmus"], "son_bar_gurultulu": gur["son_bar_gurultulu"],
+        "beceri": (gur["beceri"] or {}).get("beceri"),
+        "atr_ham": atr_ham, "atr_gurultusuz": atr_temiz,
+        "olcek_kaynagi": "HAM (temiz bar kalmadi)" if atr_temiz is None
+                         else "GURULTUSUZ"}
     grup = ({"test": ctx["ciftler"]} if ctx.get("ciftler") else None)
     ece_enkotu = None
     if grup:
@@ -2310,7 +2610,7 @@ def _bh_karar(self, ctx, paket, iz):
         "sicaklik_sinirda": bool(iz.get("halka_9", {}).get("sinirda")),
         "onarim_guveni": ctx.get("onarim_guveni", 1.0),
         "dolu_kanal": ctx["dolu_kanal"], "toplam_kanal": paket["toplam_kanal"],
-        "giris": barlar[son]["c"], "atr": gost["atr"][son],
+        "giris": barlar[son]["c"], "atr": atr_kullanilan,
         "likidasyon": paket.get("likidasyon"),
         "kaldirac_azami": paket.get("kaldirac_azami"),
         "komisyon": paket.get("komisyon", 0.0004),
@@ -2325,6 +2625,13 @@ def _bh_karar(self, ctx, paket, iz):
     karar["kalibrasyon"] = iz["halka_10"]
     karar["adaptor"] = paket.get("adaptor")
     karar["egitildi"] = egitildi
+    karar["fiyat_gurultusu"] = iz["halka_11"]["fiyat_gurultusu"]
+    if gur["son_bar_gurultulu"]:
+        # Gurultulu bar GIRIS REFERANSI olamaz: o kapanis bir spike'tir.
+        # Fiyat uydurulmaz - MARKET kapanir, LIMIT beklenir ve sebebi yazilir.
+        karar["not"] = ((karar.get("not") or "") + " | SON BAR GURULTULU "
+                        "(spike): giris referansi guvenilmez, MARKET YOK - "
+                        "temiz bar bekle").strip(" |")
     return karar
 
 
@@ -2360,30 +2667,162 @@ BoruHatti.calistir = _bh_calistir
 
 # ============================================================ BOLUM 19
 # CUMLE ONARIMI — mekanizmanin CALISAN gosterimi (trading ile AYNI matematik).
+#
+# argmax_c [ log P(c) + log P(gozlem|c) ]  —  iki terim, iki AYRI kaynak:
+#   log P(c)         DIL MODELI  : derlemden SAYILAN bigram (baglam)
+#   log P(gozlem|c)  KANAL       : tipli duzenleme mesafesi (bozulma modeli)
+# Trading tarafinda birebir karsiligi: log P(yon) = OLCULEN gecis matrisi
+# (BOLUM 17.5), log P(gozlem|yon) = model kaniti. Ayni ayrisim, ayni argmax.
+#
+# v4.1'de olculen ve duzeltilen UC yapisal kusur (kullanici ciktisi kanit):
+#   (1) UZATMA gurultusu ('pugoreeeewu') AYRILMIYORDU - yalniz DP icinde ucuz
+#       gecisti; artik once ayiklanir ve SAYILIR (rapora girer).
+#   (2) Bolumleme IKI parcaliydi; 'geteranladinsen' UC parcadir ve eksik
+#       TOKEN ('mi') hic kurtarilamiyordu.
+#   (3) BAGLAM YOKTU: her kelime tek basina puanlaniyordu. OLCULDU: 'eskisis'
+#       gozlemi tek basina 'eskisi'ye cozulur (tek harf fazlasi, en ucuz
+#       kanal: -2.30 nat); dogru cevap 'eksiksiz' (-5.88) ancak komsulariyla
+#       kazanir. Ayrica kelime olasiligi unigram+bigram
+#       olarak IKI KEZ sayiliyordu (yanlis carpanlara ayirma); artik dil
+#       terimi YALNIZ bigramdir, kanal terimi ondan AYRIDIR.
 
-CUMLE_SOZLUGU = {
-    "simdi": .90, "sana": .80, "bana": .85, "sen": .90, "sende": .50,
-    "verdigim": .60, "verdigin": .55, "erdigim": .05, "eskisi": .60,
-    "eskisin": .10, "yerinde": .70, "anladin": .70, "anladim": .60,
-    "getir": .50, "gonderdigim": .40, "programi": .35, "gorevi": .30,
-    "soru": .40, "gore": .50, "sorunu": .35, "yerine": .60, "gecti": .40,
-}
+CUMLE_DERLEM = (
+    "sana verdigim isi zamaninda yerine getir",
+    "bana verdigin sozu yerine getir",
+    "istedigim seyi eksiksiz yap anladin mi",
+    "simdi soyledigim gibi yap tamam mi",
+    "dediklerimi eksiksiz uygula anladin mi",
+    "gorevi eksiksiz tamamla",
+    "bu gorevi bugun bitir",
+    "simdi bu isi bitir",
+    "verdigim gorevi yerine getir",
+    "sana soyledigim gibi yap",
+    "duydun mu beni",
+    "anladin mi sen",
+    "beni anladin mi",
+    "sozunu yerine getir",
+    "isini eksiksiz yap",
+    "simdi bana cevap ver",
+    "bu soruyu eksiksiz cevapla",
+    "gonderdigim dosyayi eskisi yerine koy",
+    "eskisi gibi devam et",
+    "programi eskisi gibi calistir",
+    "sana gore bu dogru mu",
+    "bu gorevi eksiksiz yerine getir",
+    "verdigim sozu tuttum",
+    "simdi sana bir sey soyleyecegim",
+    "anladin mi anlatabildim mi",
+    "bu isi eksiksiz yerine getir",
+    "bu sozu yerine getir anladin mi",
+    "sana verdigim gorevi bitir",
+    "bana verdigin isi eksiksiz yap",
+    "simdi bu gorevi yap",
+    "bu dosyayi eksiksiz kontrol et",
+    "verdigim isi eksiksiz yerine getir anladin mi",
+    "soyledigim gibi bu isi bitir",
+    "bu gorevi zamaninda tamamla anladin mi",
+    "istedigim gibi eksiksiz yap sen",
+    "beni dinle anladin mi sen",
+    "bu soruyu dogru cevapla anladin mi",
+    "sana soyluyorum anladin mi sen",
+    "simdi bu dosyayi gonder",
+    "bu isi yarina birakma",
+    "verdigim gorevi eksiksiz tamamla",
+    "bu gorevi eksiksiz bitir anladin mi sen",
+    "bana bu konuda cevap ver",
+    "simdi bu sozu tut",
+    "eksiksiz yerine getir",
+    "bu isi eksiksiz bitir",
+    "gorevi yerine getir anladin mi",
+    "sana verdigim bu gorevi bitir",
+    "bu gorevi dogru yap anladin mi sen",
+    "istedigim seyi bugun yap",
+)
+
+# Gozlemde HIC IZ birakmadan dusebilen kisa tokenlar. Viterbi bunlari yalniz
+# BAGLAM kazanci silme maliyetini asarsa geri koyar - bedava kelime UYDURULMAZ.
+CUMLE_EKLENEBILIR = ("mi", "mu", "bu", "sen", "beni")
+
+_KATLAMA = {"ş": "s", "ğ": "g", "ı": "i", "ü": "u",
+            "ö": "o", "ç": "c", "İ": "i", "â": "a"}
+
+
+def katla(metin):
+    """Sapkali harfleri ASCII karsiligina katlar - YALNIZ esleme icin."""
+    return "".join(_KATLAMA.get(h, h) for h in str(metin)).lower()
+
+
+KANAL_OLCEGI = esik_kaydet(
+    "KANAL_OLCEGI", math.log(10.0), "YAPISAL",
+    "Kanal maliyeti DUZENLEME biriminde, dil modeli NAT'ta olculur; toplanmalari "
+    "icin ortak birim gerekir. Olcek ln(10) = 'bir harf hatasi ~ bir ondalik "
+    "basamak seyrek kelime' denkligidir - bir AYAR DEGIL, iki terimi ayni "
+    "birime getiren donusum. Olceksiz toplama olculdu: uzun gozlem kisa "
+    "kelimeye cokuyordu ('geteranladinsen' -> 'getir').",
+    "iki terimli kayipla capraz-dogrulama: olcegi degistirip tutulan "
+    "derlem uzerinde token dogrulugunu olc")
+
 CUMLE_MALIYETI = {"silme": 1.0, "ekleme": 1.0, "degistirme": 1.3,
-                  "uzatma": 0.25, "birlestirme": 1.6}
-ESDEGER = {("s", "b"): .6, ("s", "ş"): .2, ("i", "ı"): .15, ("k", "g"): .6,
-           ("g", "ğ"): .15, ("m", "n"): .5, ("u", "ü"): .15, ("o", "ö"): .15,
-           ("c", "ç"): .15, ("e", "a"): .7}
+                  "uzatma": 0.25, "yerdegistirme": 1.1}
+# BIRLESTIRME = silinen BOSLUK (bir silme). Ayri bir ceza DEGILDIR.
+CUMLE_MALIYETI["birlestirme"] = CUMLE_MALIYETI["silme"]
+
+
+def token_ekleme_maliyeti(w):
+    """Gozlemden tamamen dusmus bir kelimenin maliyeti = harfleri + boslugu.
+    Serbest bir ceza DEGIL; ayni silme birimiyle sayilir."""
+    return (len(katla(w)) + 1) * CUMLE_MALIYETI["silme"]
+
+
+# Ses/tus yakinligi: 1.0 = tam yabanci harf, kucuk = kolay karisan cift.
+ESDEGER = {
+    ("s", "s"): .15, ("g", "g"): .15, ("i", "i"): .15, ("u", "u"): .15,
+    ("o", "o"): .15, ("c", "c"): .15,
+    ("p", "b"): .35, ("t", "d"): .35, ("k", "g"): .35, ("f", "v"): .35,
+    ("s", "z"): .35, ("c", "j"): .45,
+    ("w", "v"): .20, ("q", "k"): .20, ("x", "k"): .30,
+    ("m", "n"): .50, ("l", "r"): .60, ("n", "r"): .70,
+    ("e", "a"): .55, ("i", "e"): .55, ("u", "o"): .55, ("a", "o"): .70,
+    ("i", "u"): .70, ("e", "o"): .75,
+}
+
+def uzatma_ayikla(token):
+    """YAN YANA UZATILAN harf = FAZLADAN GURULTU. Once AYRILIR, sonra SAYILIR.
+
+    'pugoreeeewu' -> 'pugoreewu' + 2 fazla harf. Trading tarafindaki birebir
+    karsiligi: ardisik AYNI deger (donmus tick, tekrarlanan anlik goruntu)
+    yeni bilgi DEGILDIR; tekrar sayilirsa hareket sanilir. Turkcede ayni
+    harf en cok 2 kez yan yana gelir (dikkat, cadde) - esik bir SECIM degil,
+    dilin kendi kisitidir.
+    """
+    temiz, kaldirilan, kosu = [], 0, 0
+    for h in token:
+        if temiz and h == temiz[-1]:
+            kosu += 1
+            if kosu >= 2:                 # 3. ve sonraki tekrar = GURULTU
+                kaldirilan += 1
+                continue
+        else:
+            kosu = 0
+        temiz.append(h)
+    return "".join(temiz), kaldirilan
 
 
 def _harf_yakinligi(a, b):
     if a == b:
         return 0.0
-    return CUMLE_MALIYETI["degistirme"] * ESDEGER.get((a, b), ESDEGER.get((b, a), 1.0))
+    return CUMLE_MALIYETI["degistirme"] * ESDEGER.get(
+        (a, b), ESDEGER.get((b, a), 1.0))
 
 
 def cumle_kanal_maliyeti(gozlem, aday):
-    """Tipli duzenleme mesafesi -> -log P(gozlem|aday).
-    Bes bozulma modunun HEPSI burada: silme, ekleme, degistirme, uzatma."""
+    """Tipli duzenleme mesafesi -> -log P(gozlem|aday) (duzenleme biriminde).
+
+    ALTI bozulma modu: silme, ekleme, degistirme, uzatma, yerdegistirme
+    (metatez: 'eskisis' <- 'eksiksiz') ve bolumlemeyle birlestirme.
+    Trading tarafinda ayni alti mod kanal bozulmasidir (BOLUM 2).
+    """
+    gozlem, aday = katla(gozlem), katla(aday)
     n, m = len(gozlem), len(aday)
     D = [[0.0] * (m + 1) for _ in range(n + 1)]
     for i in range(1, n + 1):
@@ -2395,55 +2834,300 @@ def cumle_kanal_maliyeti(gozlem, aday):
             en = min(D[i - 1][j] + CUMLE_MALIYETI["ekleme"],
                      D[i][j - 1] + CUMLE_MALIYETI["silme"],
                      D[i - 1][j - 1] + _harf_yakinligi(gozlem[i - 1], aday[j - 1]))
-            if i > 1 and gozlem[i - 1] == gozlem[i - 2]:      # UZATMA
+            if i > 1 and gozlem[i - 1] == gozlem[i - 2]:            # UZATMA
                 en = min(en, D[i - 1][j] + CUMLE_MALIYETI["uzatma"])
+            if (i > 1 and j > 1 and gozlem[i - 1] == aday[j - 2]
+                    and gozlem[i - 2] == aday[j - 1]):              # METATEZ
+                en = min(en, D[i - 2][j - 2] + CUMLE_MALIYETI["yerdegistirme"])
             D[i][j] = en
     return D[n][m]
 
 
-def cumle_adaylari(gozlem, k=5):
-    """posterior ~ P(c) * P(o|c). HOLD YOK: daima en az bir aday doner."""
-    p = [(c, math.log(o) - cumle_kanal_maliyeti(gozlem, c))
-         for c, o in CUMLE_SOZLUGU.items()]
-    p.sort(key=lambda t: -t[1])
-    return p[:k]
+class CumleDili:
+    """Derlemden SAYILAN unigram+bigram dil modeli.
+
+    Sayilar el ile SECILMEZ: CUMLE_DERLEM'den uretilir, duzeltme parametresi
+    k ise birak-bir-cumle-disarida tutulan olabilirlikle OLCULUR. Sozluk de
+    derlemden gelir - yani cevap uzayi BEYAN EDILMISTIR; 'sozlukte olmayan
+    dogru cevap' hatasi yapisal olarak gorunur olur.
+    """
+
+    ADAY_K = (0.02, 0.05, 0.1, 0.2, 0.4, 0.8)
+
+    def __init__(self, derlem=None, k=None):
+        self.derlem = tuple(derlem or CUMLE_DERLEM)
+        self.uni, self.bi, self.onceki = {}, {}, {}
+        for c in self.derlem:
+            kelimeler = ["<bas>"] + katla(c).split() + ["<son>"]
+            for w in kelimeler:
+                self.uni[w] = self.uni.get(w, 0) + 1
+            for a, b in zip(kelimeler, kelimeler[1:]):
+                self.bi[(a, b)] = self.bi.get((a, b), 0) + 1
+                self.onceki[a] = self.onceki.get(a, 0) + 1
+        self.toplam = sum(self.uni.values())
+        self.sozluk = tuple(sorted(w for w in self.uni if not w.startswith("<")))
+        self.V = len(self.uni)
+        self.tutulan_ll = None
+        self.k = float(k) if k is not None else self._k_olc()
+
+    def _k_olc(self):
+        """add-k SECILMEZ, OLCULUR: her cumle sirayla disarida birakilir ve
+        kalanla kurulan model o cumleye ne olasilik veriyor diye bakilir.
+        Elle ayarlanan bir duzeltme parametresi serbest-ayar olurdu."""
+        en, enk = None, self.ADAY_K[0]
+        for k in self.ADAY_K:
+            toplam = 0.0
+            for atlanan in range(len(self.derlem)):
+                egitim = [c for j, c in enumerate(self.derlem) if j != atlanan]
+                alt = CumleDili(egitim, k=k)
+                kelimeler = (["<bas>"] + katla(self.derlem[atlanan]).split()
+                             + ["<son>"])
+                for a, b in zip(kelimeler, kelimeler[1:]):
+                    toplam += alt.log_bi(a, b)
+            if en is None or toplam > en:
+                en, enk = toplam, k
+        self.tutulan_ll = en
+        return enk
+
+    def log_uni(self, w):
+        return math.log((self.uni.get(w, 0) + self.k)
+                        / (self.toplam + self.k * self.V))
+
+    def log_bi(self, a, b):
+        """log P(b|a), add-k. Gorulmemis gecis SIFIR degil, KUCUK olur."""
+        return math.log((self.bi.get((a, b), 0) + self.k)
+                        / (self.onceki.get(a, 0) + self.k * self.V))
 
 
-def cumle_bolumle(gozlem):
-    """BIRLESTIRME onarimi: tek gozlemi iki parcaya bolmeyi dene."""
-    en = (None, -1e18)
-    for i in range(3, max(4, len(gozlem) - 2)):
-        a1 = cumle_adaylari(gozlem[:i], 1)
-        a2 = cumle_adaylari(gozlem[i:], 1)
-        if not a1 or not a2:
+CUMLE_DILI = CumleDili()
+CUMLE_SOZLUGU = dict((w, math.exp(CUMLE_DILI.log_uni(w)))
+                     for w in CUMLE_DILI.sozluk)
+
+
+def cumle_adaylari(gozlem, k=5, dil=None):
+    """Bir gozlem parcasi icin aday kelimeler.
+
+    Doner: [(kelime, kanal_log), ...]. kanal_log = -olcek * duzenleme.
+    DIL TERIMI BURADA YOKTUR: siralama icin unigram kullanilir ama skora
+    KATILMAZ - yoksa kelime olasiligi hem unigram hem bigram olarak IKI KEZ
+    sayilir (v4.0'in hatasiydi; olculdu: 'bu gorevi' bu yuzden kaybediyordu).
+    Karar SINIFI yoktur: daima en az bir aday doner.
+    """
+    dil = dil or CUMLE_DILI
+    p = []
+    for c in dil.sozluk:
+        kanal = -KANAL_OLCEGI * cumle_kanal_maliyeti(gozlem, c)
+        p.append((c, kanal, kanal + dil.log_uni(c)))
+    p.sort(key=lambda t: (-t[2], t[0]))
+    return [(c, kanal) for c, kanal, _ in p[:k]]
+
+
+def cumle_bolumle(gozlem, azami_parca=3, dil=None, k=4):
+    """BIRLESTIRME onarimi: tek gozlemi N parcaya bolmeyi dene (N<=azami).
+
+    Doner: [(parcalar_demeti, ic_skor), ...]; ic_skor = kanal + PARCALAR ARASI
+    bigram - birlestirme. Ilk parcanin dil terimi cumle duzeyine birakilir
+    (onceki tokenla arasindaki gecisi orasi bilir).
+    """
+    dil = dil or CUMLE_DILI
+    bellek = {}
+
+    def coz(alt, kalan_parca):
+        anahtar = (alt, kalan_parca)
+        if anahtar in bellek:
+            return bellek[anahtar]
+        en = [((c,), kanal) for c, kanal in cumle_adaylari(alt, 3, dil)]
+        if kalan_parca > 1 and len(alt) >= 4:
+            for i in range(2, len(alt) - 1):
+                bas = cumle_adaylari(alt[:i], 2, dil)
+                kuyruk = coz(alt[i:], kalan_parca - 1)
+                for c1, s1 in bas:
+                    for p2, s2 in kuyruk[:2]:
+                        taban = (s1 + s2
+                                 - KANAL_OLCEGI * CUMLE_MALIYETI["birlestirme"])
+                        en.append(((c1,) + p2, taban + dil.log_bi(c1, p2[0])))
+                        for w in CUMLE_EKLENEBILIR:   # eksik token ARADA
+                            en.append(((c1, w) + p2,
+                                       taban + dil.log_bi(c1, w)
+                                       + dil.log_bi(w, p2[0])
+                                       - KANAL_OLCEGI * token_ekleme_maliyeti(w)))
+        en.sort(key=lambda t: (-t[1], t[0]))
+        gorulen, tekil = set(), []
+        for parcalar, sk in en:                    # ayni cozum iki kez sayilmaz
+            if parcalar in gorulen:
+                continue
+            gorulen.add(parcalar)
+            tekil.append((parcalar, sk))
+        bellek[anahtar] = tekil[:k]
+        return bellek[anahtar]
+
+    return coz(katla(gozlem), int(azami_parca))
+
+
+def cumle_onar(cumle, dil=None, aday_sayisi=5):
+    """Cumle duzeyinde VITERBI: kanal kaniti + BAGLAM (bigram) birlikte.
+
+    Neden baglam sart (OLCULEN): 'eskisis' gozlemi tek basina 'eskisi'ye
+    cozulur - tek harf fazlasi, en ucuz kanal; dogru cevap 'eksiksiz' ancak
+    komsulariyla kazanir. Trading tarafinda birebir aynidir: tek bar tek
+    basina 'temiz' gorunup dizinin icinde YANLIS olabilir - bu yuzden yon
+    de dizi uzerinden (BOLUM 17.5, olculen gecis matrisi) baglanir.
+    """
+    dil = dil or CUMLE_DILI
+    tokenlar = str(cumle).split()
+    if not tokenlar:
+        return {"onarilan": "", "satirlar": [], "guven_gm": 0.0,
+                "en_zayif": 0.0, "uzatma_gurultusu": 0, "eklenen_tokenlar": []}
+    izler, adaylar = [], []
+    for ham in tokenlar:
+        temiz, kaldirilan = uzatma_ayikla(katla(ham))
+        adaylar.append(cumle_bolumle(temiz, 3, dil, k=aday_sayisi))
+        izler.append({"gozlem": ham, "temiz": temiz,
+                      "uzatma_gurultusu": kaldirilan})
+
+    n = len(adaylar)
+    skor = [[None] * len(a) for a in adaylar]
+    geri = [[None] * len(a) for a in adaylar]
+    for j, (parcalar, ic) in enumerate(adaylar[0]):
+        skor[0][j] = ic + dil.log_bi("<bas>", parcalar[0])
+    for i in range(1, n):
+        for j, (parcalar, ic) in enumerate(adaylar[i]):
+            en, enj = -1e18, None
+            for j0, (onceki, _) in enumerate(adaylar[i - 1]):
+                if skor[i - 1][j0] is None:
+                    continue
+                aday_skor = skor[i - 1][j0] + dil.log_bi(onceki[-1], parcalar[0])
+                ek = None
+                for w in CUMLE_EKLENEBILIR:      # EKSIK TOKEN tokenlar ARASINDA
+                    v = (skor[i - 1][j0] + dil.log_bi(onceki[-1], w)
+                         + dil.log_bi(w, parcalar[0])
+                         - KANAL_OLCEGI * token_ekleme_maliyeti(w))
+                    if v > aday_skor:
+                        aday_skor, ek = v, w
+                if aday_skor > en:
+                    en, enj = aday_skor, (j0, ek)
+            skor[i][j], geri[i][j] = en + ic, enj
+    son_ek = [None] * len(adaylar[n - 1])
+    for j, (parcalar, _) in enumerate(adaylar[n - 1]):
+        if skor[n - 1][j] is None:
             continue
-        p = a1[0][1] + a2[0][1] - CUMLE_MALIYETI["birlestirme"]
-        if p > en[1]:
-            en = ((a1[0][0], a2[0][0]), p)
-    return en
+        en_ek, ek = dil.log_bi(parcalar[-1], "<son>"), None
+        for w in CUMLE_EKLENEBILIR:              # cumle SONUNDA dusen token
+            v = (dil.log_bi(parcalar[-1], w) + dil.log_bi(w, "<son>")
+                 - KANAL_OLCEGI * token_ekleme_maliyeti(w))
+            if v > en_ek:
+                en_ek, ek = v, w
+        skor[n - 1][j] += en_ek
+        son_ek[j] = ek
 
+    j = max(range(len(adaylar[n - 1])), key=lambda x: skor[n - 1][x])
+    yol, eklenen = [], [None] * n
+    for i in range(n - 1, -1, -1):
+        yol.append(j)
+        if i > 0:
+            j, ek = geri[i][j]
+            eklenen[i] = ek
+    yol.reverse()
 
-def cumle_onar(cumle):
-    onarilan, guvenler, satirlar = [], [], []
-    for kelime in cumle.split():
-        tek = cumle_adaylari(kelime, 5)
-        bol = cumle_bolumle(kelime)
-        if bol[0] and bol[1] > tek[0][1]:
-            adlar = [" ".join(bol[0])] + [t[0] for t in tek]
-            lp = [bol[1]] + [t[1] for t in tek]
-        else:
-            adlar = [t[0] for t in tek]
-            lp = [t[1] for t in tek]
-        p = kararli_softmax(lp)
-        onarilan.append(adlar[0])
-        guvenler.append(p[0])
-        satirlar.append({"gozlem": kelime, "onarim": adlar[0], "posterior": p[0],
-                         "marj": (p[0] - p[1]) if len(p) > 1 else 1.0,
-                         "alternatifler": list(zip(adlar[1:4], p[1:4]))})
+    onarilan, satirlar, guvenler = [], [], []
+    for i, j in enumerate(yol):
+        p = kararli_softmax([s for _, s in adaylar[i]])
+        parcalar = adaylar[i][j][0]
+        if eklenen[i]:
+            onarilan.append(eklenen[i])
+        onarilan.append(" ".join(parcalar))
+        if i == n - 1 and son_ek[j]:
+            onarilan.append(son_ek[j])
+        guvenler.append(p[j])
+        satirlar.append({
+            "gozlem": izler[i]["gozlem"], "onarim": " ".join(parcalar),
+            "uzatma_gurultusu": izler[i]["uzatma_gurultusu"],
+            "eklenen_token": eklenen[i],
+            "posterior": p[j],
+            "marj": p[j] - max([x for q, x in enumerate(p) if q != j] or [0.0]),
+            "alternatifler": [(" ".join(c), p[q])
+                              for q, (c, _) in enumerate(adaylar[i])
+                              if q != j][:3]})
     pozitif = [max(g, 1e-9) for g in guvenler]
     gm = math.exp(sum(math.log(g) for g in pozitif) / len(pozitif))
+    ekler = [w for w in eklenen if w] + ([son_ek[yol[-1]]] if son_ek[yol[-1]] else [])
     return {"onarilan": " ".join(onarilan), "satirlar": satirlar,
-            "guven_gm": gm, "en_zayif": min(guvenler)}
+            "guven_gm": gm, "en_zayif": min(guvenler),
+            "uzatma_gurultusu": sum(z["uzatma_gurultusu"] for z in izler),
+            "eklenen_tokenlar": ekler}
+
+
+def cumle_bozan(cumle, tohum="bozma"):
+    """Bes bozulma modunu MEKANIK uygular (olcum icin; kullanicinin ornegiyle
+    ayni aile). Rastgelelik tohumlanmistir - olcum tekrarlanabilir."""
+    rng = tohumlu_rng(tohum, cumle)
+    kelimeler = katla(cumle).split()
+    cikti = []
+    for w in kelimeler:
+        h = list(w)
+        mod = rng.randint(0, 4)
+        if mod == 0 and len(h) > 2:                       # SILME
+            h.pop(rng.randint(0, len(h) - 1))
+        elif mod == 1 and h:                              # DEGISTIRME
+            i = rng.randint(0, len(h) - 1)
+            h[i] = {"a": "e", "e": "a", "i": "e", "n": "m",
+                    "v": "w", "b": "p", "k": "g"}.get(h[i], h[i])
+        elif mod == 2 and h:                              # UZATMA
+            i = rng.randint(0, len(h) - 1)
+            h = h[:i] + [h[i]] * 4 + h[i:]
+        elif mod == 3 and len(h) > 3:                     # YER DEGISTIRME
+            i = rng.randint(0, len(h) - 2)
+            h[i], h[i + 1] = h[i + 1], h[i]
+        cikti.append("".join(h))
+    # BIRLESTIRME: rastgele bir sinir silinir
+    if len(cikti) > 2:
+        i = rng.randint(0, len(cikti) - 2)
+        cikti[i:i + 2] = [cikti[i] + cikti[i + 1]]
+    return " ".join(cikti)
+
+
+def cumle_becerisi(derlem=None, tohum="olcum"):
+    """ONARIM BECERISI - cumle tarafinin OLCULEN skoru (trading tarafindaki
+    `onarim_becerisi` ile ayni rol). Her derlem cumlesi SIRAYLA disarida
+    birakilir, KALANLA kurulan dille bozuk hali onarilir ve token dogrulugu
+    sayilir. Tek bir gosteri cumlesine bakip 'calisiyor' demek TIYATRO olurdu;
+    bu olcum tutulan veriyle yapilir.
+    """
+    derlem = tuple(derlem or CUMLE_DERLEM)
+    dogru = toplam = 0
+    for atlanan, cumle in enumerate(derlem):
+        dil = CumleDili([c for j, c in enumerate(derlem) if j != atlanan])
+        bozuk = cumle_bozan(cumle, tohum=tohum)
+        onarim = cumle_onar(bozuk, dil=dil)["onarilan"].split()
+        hedef = katla(cumle).split()
+        for a, b in zip(hedef, onarim + [""] * len(hedef)):
+            toplam += 1
+            dogru += 1 if a == b else 0
+    return {"dogru": dogru, "toplam": toplam,
+            "oran": (dogru / toplam) if toplam else 0.0,
+            "not": "birak-bir-cumle-disarida; gosteri cumlesi OLCUME girmez"}
+
+
+# GOSTERIM KATMANI: sozluk ASCII-katlanmis tutulur (esleme icin), ama kullanici
+# gercek Turkce yazim gorur. Bu SUNUM'dur - karara girmez, olcume girmez.
+YAZIM = {"simdi": "şimdi", "verdigim": "verdiğim", "verdigin": "verdiğin",
+         "gorevi": "görevi", "anladin": "anladın", "isi": "işi", "isini": "işini",
+         "sozu": "sözü", "sozunu": "sözünü", "seyi": "şeyi", "sey": "şey",
+         "soyledigim": "söylediğim", "soyluyorum": "söylüyorum",
+         "soyleyecegim": "söyleyeceğim", "gonderdigim": "gönderdiğim",
+         "dosyayi": "dosyayı", "soruyu": "soruyu", "yarina": "yarına",
+         "birakma": "bırakma", "calistir": "çalıştır", "cevapla": "cevapla",
+         "zamaninda": "zamanında", "istedigim": "istediğim",
+         "dediklerimi": "dediklerimi", "anlatabildim": "anlatabildim",
+         "gore": "göre", "dogru": "doğru", "bugun": "bugün", "mi": "mı",
+         "duydun": "duydun", "tamam": "tamam", "programi": "programı",
+         "eskisi": "eskisi", "eksiksiz": "eksiksiz", "yerine": "yerine",
+         "getir": "getir", "bitir": "bitir", "tamamla": "tamamla"}
+
+
+def yazimla(metin):
+    """ASCII cozumu Turkce yazimla gosterir. Kelime SECIMI degismez."""
+    return " ".join(YAZIM.get(w, w) for w in str(metin).split())
 
 
 ORNEK_CUMLE = "imdi sama erdikim pugoreeeewu eskisis yerinde geteranladinsen"
@@ -2552,6 +3236,8 @@ def sonuc_satiri(karar, veri_kaynagi, paket=None):
     g = karar.get("geometri") or {}
     s = karar.get("stake") or {}
     h0 = ((karar.get("iz") or {}).get("halka_0")) or {}
+    gc = ((karar.get("iz") or {}).get("halka_11")) or {}
+    fg = karar.get("fiyat_gurultusu") or {}
     acilir = bahis_acilir_mi(s)
     gerekce = (s.get("not") or "").strip()
     if acilir and s.get("kirpildi"):
@@ -2580,9 +3266,132 @@ def sonuc_satiri(karar, veri_kaynagi, paket=None):
         "ONARIM     : guven(gm)=%s | kanal %s/%s | anlik(sayilmaz)=%s"
         % (_bicim(h0.get("onarim_guveni_gm")), h0.get("dolu_kanal"),
            h0.get("toplam_kanal"), h0.get("anlik_kanallar")),
+        "GURULTU    : spike=%s donmus=%s | olcek=%s (ATR ham=%s -> %s)"
+        % (fg.get("spike_adet"), fg.get("donmus"), fg.get("olcek_kaynagi"),
+           _bicim(fg.get("atr_ham"), ".6g"),
+           _bicim(fg.get("atr_gurultusuz"), ".6g")),
+        "BAGLAM     : gecis kaliciligi=%s pencere=%s | suzgec kaymasi=%s"
+        % (_bicim((gc.get("gecis") or {}).get("kalicilik")),
+           (gc.get("gecis") or {}).get("pencere"),
+           _bicim(gc.get("gecis_kaymasi"))),
         "-" * 78,
         KARAR_DESTEK_UYARISI,
         "=" * 78]
+    return "\n".join(sat)
+
+
+# ========================================================== BOLUM 20.5
+# COK SEMBOLLU KARAR — BTC ve BTC-KORELASYONLU semboller birlikte.
+#
+# Tek sembol koşmak, korelasyonlu iki pozisyonu BAGIMSIZ iki bahis sanmaya
+# yol acar. Olculen rho >= TEK_BAHIS_ESIGI iken ayni yonlu ikinci pozisyon
+# yeni bir bahis DEGIL, ayni bahsin BUYUTULMUS halidir (toplam risk x2).
+
+VARSAYILAN_SEMBOLLER = ("BTCUSDT", "ETHUSDT", "DOGEUSDT")
+
+TEK_BAHIS_ESIGI = esik_kaydet(
+    "TEK_BAHIS_ESIGI", 0.85, "VARSAYIM",
+    "Bu esigin USTUNDE iki sembol ayni yonde TEK bahis sayilir (STRATEJI.md "
+    "'tek bahis kurali'). Depo sozlesmesinden gelir, bu dosyada OLCULMEDI; "
+    "rho'nun kendisi HER kosuda olculur ve raporlanir - gizlenen sabit yok.",
+    "kapanan islemlerin es-zamanli getirilerinden ortak-zarar sikligini olc; "
+    "esigi o dagilimin kuyrugundan turet")
+
+
+def korelasyon(barlar_a, barlar_b, azami=None):
+    """Ortak zaman damgalarinda log-getiri Pearson korelasyonu.
+
+    Zaman EŞLEŞTIRILIR (indeksle degil): iki sembolun bar sayisi farkli
+    olabilir ve indeks eslemesi sessizce YANLIS rho uretir.
+    """
+    ha = dict((b["t"], b["c"]) for b in (barlar_a or []))
+    hb = dict((b["t"], b["c"]) for b in (barlar_b or []))
+    ortak = sorted(set(ha) & set(hb))
+    if azami:
+        ortak = ortak[-int(azami):]
+    ga, gb = [], []
+    for i in range(1, len(ortak)):
+        pa0, pa1 = ha[ortak[i - 1]], ha[ortak[i]]
+        pb0, pb1 = hb[ortak[i - 1]], hb[ortak[i]]
+        if min(pa0, pa1, pb0, pb1) <= 0:
+            continue
+        ga.append(math.log(pa1 / pa0))
+        gb.append(math.log(pb1 / pb0))
+    n = len(ga)
+    if n < ASGARI_OLCUM:
+        return {"rho": None, "n": n,
+                "not": "ortak ornek YETERSIZ (n=%d) - rho UYDURULMAZ" % n}
+    ma, mb = sum(ga) / n, sum(gb) / n
+    sa = math.sqrt(sum((x - ma) ** 2 for x in ga))
+    sb = math.sqrt(sum((x - mb) ** 2 for x in gb))
+    if sa <= EPSILON or sb <= EPSILON:
+        return {"rho": None, "n": n, "not": "varyans SIFIR - rho tanimsiz"}
+    kov = sum((x - ma) * (y - mb) for x, y in zip(ga, gb))
+    return {"rho": kov / (sa * sb), "n": n, "not": ""}
+
+
+def portfoy_karari(kayitlar):
+    """Cok sembollu hukum: hangi sembol ISLEM, hangisi KOPYA.
+
+    kayitlar: [{"sembol", "karar", "paket"}, ...] (ilk kayit ANA sembol).
+    Kural: |rho| >= TEK_BAHIS_ESIGI ve AYNI yon -> ikinci sembol KOPYA;
+    bahis buyuklugu en yuksek olan tasinir, digeri gerekcesiyle ATLANIR.
+    f* zaten 0 ise zaten islem yoktur - bu kural onu degistirmez.
+    """
+    if not kayitlar:
+        return {"rho": {}, "secilen": None, "satirlar": [],
+                "not": "kayit YOK"}
+    ana = kayitlar[0]
+    rho = {}
+    for k in kayitlar[1:]:
+        rho[k["sembol"]] = korelasyon(ana["paket"]["barlar15"],
+                                      k["paket"]["barlar15"])
+    satirlar, adaylar = [], []
+    for i, k in enumerate(kayitlar):
+        kr = k["karar"]
+        f = float((kr.get("stake") or {}).get("f") or 0.0)
+        r = rho.get(k["sembol"], {"rho": None, "n": None, "not": "ANA sembol"})
+        kopya, gerekce = False, ""
+        if i > 0 and r.get("rho") is not None:
+            ayni_yon = kr["yon"] == ana["karar"]["yon"]
+            if abs(r["rho"]) >= TEK_BAHIS_ESIGI and ayni_yon:
+                kopya = True
+                gerekce = ("rho=%.4f >= %.2f ve yon ANA ile AYNI - bagimsiz "
+                           "bahis DEGIL" % (r["rho"], TEK_BAHIS_ESIGI))
+            elif abs(r["rho"]) >= TEK_BAHIS_ESIGI:
+                gerekce = ("rho=%.4f yuksek ama yon ZIT - ayni bahsin tersi; "
+                           "iki pozisyon birbirini KISMEN kapatir" % r["rho"])
+        satirlar.append({"sembol": k["sembol"], "yon": kr["yon"], "f": f,
+                         "R": kr.get("R"), "rho": r.get("rho"),
+                         "rho_n": r.get("n"), "kopya": kopya,
+                         "gerekce": gerekce or r.get("not", "")})
+        if not kopya:
+            adaylar.append((f, -i, k["sembol"]))
+    adaylar.sort(reverse=True)
+    secilen = adaylar[0][2] if adaylar and adaylar[0][0] > 0.0 else None
+    return {"rho": rho, "secilen": secilen, "satirlar": satirlar,
+            "not": ("" if secilen else
+                    "hicbir sembolde f*>0 - portfoy hukmu: POZISYON YOK")}
+
+
+def portfoy_raporu(pf):
+    sat = ["=" * 78,
+           "PORTFOY HUKMU (TEK BAHIS kurali; esik |rho| >= %.2f)" % TEK_BAHIS_ESIGI,
+           "-" * 78,
+           "%-10s %-6s %10s %8s %9s  %s"
+           % ("sembol", "yon", "f*", "R", "rho(ANA)", "hukum")]
+    for r in pf["satirlar"]:
+        sat.append("%-10s %-6s %10s %8s %9s  %s"
+                   % (r["sembol"], r["yon"], _bicim(r["f"], ".6f"),
+                      _bicim(r["R"]), _bicim(r["rho"]),
+                      "KOPYA - ATLA" if r["kopya"] else "bagimsiz"))
+        if r["gerekce"]:
+            sat.append("           %s" % r["gerekce"])
+    sat.append("-" * 78)
+    sat.append("SECILEN: %s" % (pf["secilen"] or "POZISYON YOK"))
+    if pf["not"]:
+        sat.append("NOT: %s" % pf["not"])
+    sat.append("=" * 78)
     return "\n".join(sat)
 
 
@@ -2722,53 +3531,91 @@ def _kosu_bas(sembol, getir_fn, baslik, veri_kaynagi):
     print(metin_rapor(karar))
     print()
     print(sonuc_satiri(karar, veri_kaynagi, paket))
-    return karar
+    return {"sembol": sembol, "karar": karar, "paket": paket,
+            "toplama": toplama, "veri_kaynagi": veri_kaynagi}
 
 
-VARSAYILAN_SEMBOL = "BTCUSDT"
+VARSAYILAN_SEMBOL = VARSAYILAN_SEMBOLLER[0]
 
 
-def mekanizma_ozeti(cumle=None):
+def mekanizma_ozeti(cumle=None, beceri=True):
     """Bozuk cumle -> onarim: piyasa kanallarina uygulanan AYNI matematigin
-    tek bakista okunan gosterimi. argmax_c [ log P(c) + log P(gozlem|c) ]."""
-    r = cumle_onar(cumle or ORNEK_CUMLE)
-    return "\n".join([
-        "MEKANIZMA (ayni matematik kanallara da uygulanir)",
-        "  gozlem  : %s" % (cumle or ORNEK_CUMLE),
-        "  onarim  : %s" % r["onarilan"],
-        "  guven   : gm=%.4f | en zayif halka=%.4f  "
-        "(dusuk guven YON'u degil STAKE'i kucultur)"
-        % (r["guven_gm"], r["en_zayif"])])
+    tek bakista okunan gosterimi. argmax_c [ log P(c) + log P(gozlem|c) ].
 
-
-def varsayilan_kosu(canli_getir=None, rapor=None):
-    """ARGUMANSIZ calistirmanin yaptigi is: KOS ve SONUCU YAZ.
-
-    Once GERCEK veri denenir. Ag yoksa AGSIZ ornege DUSULUR - ama dusuldugu
-    acikca yazilir ve sonuc blogu 'ORNEK (SAHTE VERI)' etiketi tasir:
-    sahte veriden cikan sayi, gercek karar gibi SUNULMAZ (uydurma yasagi).
+    Uc satirin trading karsiligi ACIKCA yazilir - gosteri degil, esleme:
+      UZATMA gurultusu  -> spike/donmus bar (olcekten cikarilir)
+      BAGLAM (bigram)   -> OLCULEN gecis matrisi (HMM suzgeci)
+      posterior         -> stake (yon degil)
     """
+    r = cumle_onar(cumle or ORNEK_CUMLE)
+    sat = ["MEKANIZMA (ayni matematik piyasa kanallarina da uygulanir)",
+           "  gozlem  : %s" % (cumle or ORNEK_CUMLE),
+           "  onarim  : %s" % yazimla(r["onarilan"]),
+           "  ayiklanan UZATMA gurultusu: %d harf  ->  piyasada: spike/donmus "
+           "bar olcekten cikarilir" % r["uzatma_gurultusu"]]
+    if r["eklenen_tokenlar"]:
+        sat.append("  baglamla GERI KONAN eksik token: %s"
+                   % ", ".join(r["eklenen_tokenlar"]))
+    sat.append("  guven   : gm=%.4f | en zayif halka=%.4f  "
+               "(dusuk guven YON'u degil STAKE'i kucultur)"
+               % (r["guven_gm"], r["en_zayif"]))
+    if beceri:
+        o = cumle_becerisi()
+        sat.append("  OLCULEN onarim becerisi (tutulan veri, %d token): %.4f  "
+                   "-> tek gosteri cumlesi kanit sayilmaz"
+                   % (o["toplam"], o["oran"]))
+    return "\n".join(sat)
+
+
+def varsayilan_kosu(canli_getir=None, rapor=None, semboller=None):
+    """ARGUMANSIZ calistirmanin yaptigi is: BUTUN sembolleri KOS, SONUCU YAZ.
+
+    Tek sembol kosmak, korelasyonlu iki pozisyonu bagimsiz iki bahis sanmaya
+    yol acar; bu yuzden varsayilan BTC + BTC-korelasyonlu semboldur ve
+    sonunda TEK BAHIS kurali uygulanir.
+
+    Once GERCEK veri denenir. Hicbir sembolde ag yoksa AGSIZ ornege DUSULUR -
+    ama dusuldugu acikca yazilir ve sonuc blogu 'ORNEK (SAHTE VERI)' etiketi
+    tasir: sahte veriden cikan sayi gercek karar gibi SUNULMAZ.
+    """
+    semboller = tuple(semboller or VARSAYILAN_SEMBOLLER)
     print(mekanizma_ozeti())
     print()
-    print("KOSU BASLIYOR - once gercek veri denenir (ag yoksa ornege duser).")
-    print("Bu islem cep telefonunda 1-2 dakika surebilir; bekleyin.")
+    print("KOSU BASLIYOR - %d sembol: %s" % (len(semboller), ", ".join(semboller)))
+    print("Once gercek veri denenir (ag yoksa ornege duser).")
+    print("Bu islem cep telefonunda birkac dakika surebilir; bekleyin.")
     print()
-    try:
-        k = _kosu_bas(VARSAYILAN_SEMBOL, canli_getir,
-                      "CANLI KOSU - " + VARSAYILAN_SEMBOL + " (public GET)",
-                      "CANLI (borsa public GET)")
-    except Exception as h:                      # ag/veri yoksa: DUSUS, gizlenmez
-        print("CANLI VERI ALINAMADI -> %s: %s" % (type(h).__name__, h))
-        print("AGSIZ ORNEGE dusuluyor: asagidaki sayilar SAHTE veriden gelir,")
-        print("GERCEK KARAR DEGILDIR. Gercek karar icin: --canli " + VARSAYILAN_SEMBOL)
+    kayitlar, dusenler = [], []
+    for sembol in semboller:
+        try:
+            kayitlar.append(_kosu_bas(
+                sembol, canli_getir, "CANLI KOSU - " + sembol + " (public GET)",
+                "CANLI (borsa public GET)"))
+        except Exception as h:                  # sembol bazinda DUSUS, gizlenmez
+            dusenler.append((sembol, "%s: %s" % (type(h).__name__, h)))
+            print("!! %s CANLI VERI ALINAMADI -> %s: %s"
+                  % (sembol, type(h).__name__, h))
+            print("   Bu sembol icin karar URETILMEZ (uydurma veri yok).")
+            print()
+    if not kayitlar:
+        print("HICBIR sembolde canli veri alinamadi. AGSIZ ORNEGE dusuluyor:")
+        print("asagidaki sayilar SAHTE veriden gelir, GERCEK KARAR DEGILDIR.")
         print()
-        k = _kosu_bas(VARSAYILAN_SEMBOL, _sahte_getir,
-                      "ORNEK KOSU - SAHTE VERI (ag YOK). Gercek karar DEGILDIR.",
-                      "ORNEK (SAHTE VERI - gercek karar DEGIL)")
+        kayitlar.append(_kosu_bas(
+            semboller[0], _sahte_getir,
+            "ORNEK KOSU - SAHTE VERI (ag YOK). Gercek karar DEGILDIR.",
+            "ORNEK (SAHTE VERI - gercek karar DEGIL)"))
+    print()
+    pf = portfoy_karari(kayitlar)
+    print(portfoy_raporu(pf))
+    if dusenler:
+        print("VERI ALINAMAYAN SEMBOLLER (karar YOK):")
+        for sembol, sebep in dusenler:
+            print("   %-10s %s" % (sembol, sebep))
     if rapor:
-        rapor_yaz([k], rapor)
+        rapor_yaz([k["karar"] for k in kayitlar], rapor)
         print("rapor yazildi:", rapor)
-    return k
+    return {"kayitlar": kayitlar, "portfoy": pf, "dusenler": dusenler}
 
 
 _OZ_TEST_KOSUYOR = False
@@ -2832,7 +3679,7 @@ def main(argv=None):
     if a.ornek:
         k = _kosu_bas(VARSAYILAN_SEMBOL, _sahte_getir,
                       "ORNEK KOSU - SAHTE VERI (ag YOK). Gercek karar DEGILDIR.",
-                      "ORNEK (SAHTE VERI - gercek karar DEGIL)")
+                      "ORNEK (SAHTE VERI - gercek karar DEGIL)")["karar"]
         if a.rapor:
             rapor_yaz([k], a.rapor)
             print("rapor yazildi:", a.rapor)
@@ -2841,7 +3688,7 @@ def main(argv=None):
         try:
             k = _kosu_bas(a.canli, None,
                           "CANLI KOSU - " + a.canli + " (public GET)",
-                          "CANLI (borsa public GET)")
+                          "CANLI (borsa public GET)")["karar"]
             if a.rapor:
                 rapor_yaz([k], a.rapor)
                 print("rapor yazildi:", a.rapor)
@@ -2904,7 +3751,8 @@ class HoldYasagiTesti(unittest.TestCase):
                  "adaptor": "test"}
         k = BoruHatti(tohum=7).calistir(paket)
         self.assertIn(k["yon"], YON_SOZLUGU)
-        self.assertEqual(k["yon_kaynagi"], "YAPISAL_TABAN")
+        self.assertTrue(k["yon_kaynagi"].startswith("YAPISAL_TABAN"),
+                        k["yon_kaynagi"])
         self.assertFalse(k["egitildi"])
         self.assertEqual(k["stake"]["f"], 0.0)      # kanit yok -> bahis 0
 
@@ -3275,21 +4123,79 @@ class KalibrasyonTesti(unittest.TestCase):
 class CumleTesti(unittest.TestCase):
     def test_ornek_cumle_onarilir(self):
         r = cumle_onar(ORNEK_CUMLE)
-        self.assertIn("simdi", r["onarilan"])
-        self.assertIn("eskisi", r["onarilan"])
-        self.assertIn("yerinde", r["onarilan"])
-        self.assertGreater(r["guven_gm"], 0.4)
+        for beklenen in ("simdi", "sana", "verdigim", "gorevi", "eksiksiz",
+                         "yerine", "getir", "anladin"):
+            self.assertIn(beklenen, r["onarilan"].split(), r["onarilan"])
+        self.assertGreater(r["guven_gm"], 0.2)
 
-    def test_her_kelime_icin_cikti_uretilir_hold_yok(self):
+    def test_BAGLAM_tek_kelimeyi_YENER(self):
+        """Can alici nokta - OLCULEN ornek: 'eskisis' gozlemi TEK BASINA
+        'eskisi'ye cozulur (tek harf fazlasi, en ucuz kanal). Dogru cevap
+        'eksiksiz' ancak KOMSULARIYLA ('gorevi ... yerine') kazanir.
+        Baglam kaldirilirsa bu test duser - trading tarafindaki gecis
+        suzgecinin gerekcesi de birebir ayni."""
+        tek = cumle_adaylari("eskisis", 1)[0][0]
+        self.assertEqual(tek, "eskisi")             # baglamsiz: en ucuz kanal
+        r = cumle_onar(ORNEK_CUMLE)                 # baglamli
+        self.assertIn("eksiksiz", r["onarilan"].split(), r["onarilan"])
+        self.assertNotIn("eskisi", r["onarilan"].split())
+
+    def test_UZATMA_gurultusu_AYRILIR_ve_SAYILIR(self):
+        temiz, kaldirilan = uzatma_ayikla("pugoreeeewu")
+        self.assertEqual(temiz, "pugoreewu")
+        self.assertEqual(kaldirilan, 2)
+        self.assertEqual(cumle_onar(ORNEK_CUMLE)["uzatma_gurultusu"], 2)
+
+    def test_METATEZ_modu_calisir(self):
+        """'eskisis' <- 'eksiksiz': yer degistirme (sk <-> ks) ayri moddur."""
+        yer = cumle_kanal_maliyeti("eskisis", "eksiksiz")
+        CUMLE_MALIYETI["yerdegistirme"] = 9.9      # modu KAPAT
+        try:
+            kapali = cumle_kanal_maliyeti("eskisis", "eksiksiz")
+        finally:
+            CUMLE_MALIYETI["yerdegistirme"] = 1.1
+        self.assertLess(yer, kapali)
+
+    def test_her_kelime_icin_cikti_uretilir_kararsizlik_yok(self):
         r = cumle_onar(ORNEK_CUMLE)
         self.assertEqual(len(r["satirlar"]), len(ORNEK_CUMLE.split()))
         for s in r["satirlar"]:
             self.assertTrue(s["onarim"])
             self.assertGreater(s["posterior"], 0.0)
 
-    def test_birlestirme_bolunur(self):
+    def test_birlestirme_UC_parcaya_bolunur(self):
+        """'geteranladinsen' UC kelimedir. Iki parcali bolumleme bunu
+        cozemez (eski surumun kusuru): 'getir anladin' der, 'sen'i
+        gurultu sayip atar. Bu test IKI parcaya dususu yakalar."""
         r = cumle_onar("geteranladinsen")
-        self.assertIn(" ", r["onarilan"])
+        parcalar = r["onarilan"].split()
+        self.assertGreaterEqual(len(parcalar), 3, r["onarilan"])
+        self.assertIn("getir", parcalar)
+        self.assertIn("anladin", parcalar)
+
+    def test_bolumleme_azami_parcaya_SAYGI_duyar(self):
+        """azami_parca bir ZORUNLULUK degil TAVANDIR: 3 parcali aday
+        URETILEBILIR olmali (kazanmasi cumle duzeyinde belli olur), 2
+        tavaninda ise HIC uretilmemeli."""
+        gozlem = "goreviekssiztamamla"          # UC gercek kelime
+        iki = set(a for a, _ in cumle_bolumle(gozlem, 2, k=12))
+        uc = set(a for a, _ in cumle_bolumle(gozlem, 3, k=12))
+        uc_bolme = [a for a in uc
+                    if len([w for w in a if w not in CUMLE_EKLENEBILIR]) >= 3]
+        self.assertTrue(uc_bolme, "3 gercek parcali aday HIC uretilmedi")
+        self.assertTrue(set(uc_bolme) - iki,
+                        "azami_parca=2 ile ayni adaylar - tavan etkisiz")
+
+    def test_add_k_OLCULUR_secilmez(self):
+        self.assertIn(CUMLE_DILI.k, CumleDili.ADAY_K)
+        self.assertIsNotNone(CUMLE_DILI.tutulan_ll)
+
+    def test_onarim_becerisi_TUTULAN_veriyle_olculur(self):
+        """Tek gosteri cumlesine bakip 'calisiyor' demek TIYATRO olurdu.
+        Beceri birak-bir-cumle-disarida olculur ve rastgeleyi ASMALIDIR."""
+        o = cumle_becerisi()
+        self.assertGreater(o["toplam"], 100)
+        self.assertGreater(o["oran"], 0.5, "onarim rastgeleden iyi DEGIL")
 
 
 class DeterminizmTesti(unittest.TestCase):
@@ -3667,27 +4573,37 @@ class ArgumansizKosuTesti(unittest.TestCase):
         self.assertIn("kw", cagri, "argumansiz calistirma KOSU yapmadi")
         self.assertNotIn("Secenekler:", cikti)
 
+    @staticmethod
+    def _sahte_kayit(sembol, karar=None, paket=None):
+        k, pk, _ = _fikstur_kosu()
+        k = dict(karar or k)
+        k["sembol"] = sembol
+        return {"sembol": sembol, "karar": k, "paket": paket or pk,
+                "toplama": {}, "veri_kaynagi": "TEST"}
+
     def test_canli_patlarsa_ORNEGE_duser_ve_ETIKETLER(self):
         """Dusus gizlenemez: sahte veriden cikan sayi 'canli' diye sunulamaz."""
         mod = _sys_modulu()
         esk, cagrilar = mod._kosu_bas, []
 
         def sahte(sembol, getir_fn, baslik, veri_kaynagi):
-            cagrilar.append((getir_fn, veri_kaynagi))
-            if len(cagrilar) == 1:
+            cagrilar.append((sembol, getir_fn, veri_kaynagi))
+            if getir_fn is not _sahte_getir:
                 raise RuntimeError("ag YOK (test)")
             print("SONUC (test govdesi)")
-            return {"sembol": sembol}
+            return self._sahte_kayit(sembol)
 
         mod._kosu_bas = sahte
         try:
             _, cikti = self._yakala(mod.varsayilan_kosu)
         finally:
             mod._kosu_bas = esk
-        self.assertEqual(len(cagrilar), 2, "canli patlayinca ornege DUSULMEDI")
-        self.assertIsNone(cagrilar[0][0])              # 1. deneme: GERCEK ag
-        self.assertIs(cagrilar[1][0], _sahte_getir)    # 2. deneme: AGSIZ ornek
-        self.assertIn("SAHTE VERI", cagrilar[1][1])
+        canli = [c for c in cagrilar if c[1] is None]
+        ornek = [c for c in cagrilar if c[1] is _sahte_getir]
+        self.assertEqual(len(canli), len(VARSAYILAN_SEMBOLLER),
+                         "her sembol icin CANLI denenmedi")
+        self.assertEqual(len(ornek), 1, "canli patlayinca ornege DUSULMEDI")
+        self.assertIn("SAHTE VERI", ornek[0][2])
         self.assertIn("CANLI VERI ALINAMADI", cikti)
         self.assertIn("GERCEK KARAR DEGILDIR", cikti)
 
@@ -3696,18 +4612,39 @@ class ArgumansizKosuTesti(unittest.TestCase):
         esk, cagrilar = mod._kosu_bas, []
 
         def sahte(sembol, getir_fn, baslik, veri_kaynagi):
-            cagrilar.append((getir_fn, veri_kaynagi))
-            return {"sembol": sembol}
+            cagrilar.append((sembol, getir_fn, veri_kaynagi))
+            return self._sahte_kayit(sembol)
 
         mod._kosu_bas = sahte
         try:
             _, cikti = self._yakala(mod.varsayilan_kosu)
         finally:
             mod._kosu_bas = esk
-        self.assertEqual(len(cagrilar), 1)
-        self.assertIn("CANLI", cagrilar[0][1])
-        self.assertNotIn("SAHTE", cagrilar[0][1])
+        self.assertEqual([c[0] for c in cagrilar], list(VARSAYILAN_SEMBOLLER))
+        for _, getir_fn, kaynak in cagrilar:
+            self.assertIsNone(getir_fn)
+            self.assertIn("CANLI", kaynak)
+            self.assertNotIn("SAHTE", kaynak)
         self.assertNotIn("CANLI VERI ALINAMADI", cikti)
+
+    def test_UC_sembol_kosulur_ve_PORTFOY_hukmu_basilir(self):
+        """Kullanicinin sarti: yalniz BTC degil, korelasyonlu semboller de."""
+        mod = _sys_modulu()
+        esk, gorulen = mod._kosu_bas, []
+
+        def sahte(sembol, getir_fn, baslik, veri_kaynagi):
+            gorulen.append(sembol)
+            return self._sahte_kayit(sembol)
+
+        mod._kosu_bas = sahte
+        try:
+            _, cikti = self._yakala(mod.varsayilan_kosu)
+        finally:
+            mod._kosu_bas = esk
+        self.assertIn("BTCUSDT", gorulen)
+        self.assertGreaterEqual(len(gorulen), 3, "tek sembol kosuldu")
+        self.assertIn("PORTFOY HUKMU", cikti)
+        self.assertIn("TEK BAHIS", cikti)
 
     def test_sonuc_blogu_YON_ve_SEVIYE_tasir(self):
         k, paket, _ = _fikstur_kosu()
@@ -3765,6 +4702,272 @@ class ArgumansizKosuTesti(unittest.TestCase):
         m = mekanizma_ozeti()
         self.assertIn(ORNEK_CUMLE, m)
         self.assertIn("gm=", m)
+
+
+class BaglamGecisTesti(unittest.TestCase):
+    """Cumledeki BIGRAM'in piyasa karsiligi: OLCULEN gecis matrisi."""
+
+    def test_gecis_matrisi_OLCULUR_secilmez(self):
+        P = gecis_matrisi([1] * 30 + [0] * 30)["P"]
+        self.assertGreater(P[1][1], 0.9)          # kalici seri
+        self.assertGreater(P[0][0], 0.9)
+        for i in (0, 1):                          # Laplace: mutlak 0/1 YOK
+            for j in (0, 1):
+                self.assertGreater(P[i][j], 0.0)
+                self.assertLess(P[i][j], 1.0)
+
+    def test_gecis_bos_veriyle_NOTR_kalir(self):
+        g = gecis_matrisi([])
+        self.assertEqual(g["n"], 0)
+        self.assertAlmostEqual(g["P"][0][0], 0.5, places=9)
+        self.assertIn("ZAYIF", g["not"])
+
+    def test_hmm_suzgeci_KALICILIGA_dogru_ceker(self):
+        """Zayif ama tutarli kanit, kaliciligi yuksek zincirde birikir -
+        cumlede 'yerine getir' esbicimliliginin yaptigi isin aynisi."""
+        P = gecis_matrisi([1] * 40 + [0] * 5 + [1] * 40)["P"]
+        suz = hmm_suz([0.55] * 8, P)
+        self.assertGreater(suz["p"], 0.55)
+        self.assertGreater(suz["kayma"], 0.0)
+
+    def test_hmm_penceresi_KARISMA_suresinden_gelir(self):
+        kalici = hmm_penceresi(0.95)              # yavas karisan zincir
+        cabuk = hmm_penceresi(0.10)               # hemen unutan zincir
+        self.assertGreater(kalici, cabuk)
+        self.assertLessEqual(kalici, 64)
+        self.assertGreaterEqual(cabuk, 1)
+
+    def test_gecis_BAR_cozunurlugunde_olculur(self):
+        """Suzgec matrisi BAR BASINA uyguluyor; matris de BAR BASINA
+        olculmeli. Seyrek orneklenmis indekslerden olculurse kalicilik
+        sistematik olarak DUSUK cikar ve suzgec etkisiz kalir."""
+        k, _, _ = _fikstur_kosu()
+        h3, h11 = k["iz"]["halka_3"], k["iz"]["halka_11"]
+        train_ornek = h3["train"]
+        self.assertGreater(h11["gecis"]["n"], 0)
+        # ardisik barlardan olculdugu icin gecis sayisi, ornek sayisiyla
+        # ayni mertebede ya da DAHA BUYUK olmali (seyreltilmis degil)
+        self.assertGreaterEqual(h11["gecis"]["n"] + 1,
+                                min(train_ornek, 2000) * 0.5)
+
+    def test_kalibrasyon_YOKSA_model_EGITILMIS_sayilmaz(self):
+        """Kullanicinin CANLI ciktisinin BIREBIR yeniden uretimi:
+        1500 bar -> train=554, kal=0. Eski surum bunu 'kaynak=MODEL,
+        p=0.5053' diye sunuyordu; kalibre edilmemis bir ag yazi-turadir.
+        Kosul BAGLAYICI olmali - 'kal doluysa atla' bicimindeki bir test
+        TIYATRODUR (olculdu: o testle kalibrasyon sarti silinse hicbir
+        test dusmuyordu)."""
+        rng = tohumlu_rng("kal-bos")
+        barlar, f = [], 100.0
+        for i in range(1500):
+            f *= 1.0 + rng.uniform(-0.002, 0.0021)
+            barlar.append({"t": i * 900000, "o": f, "h": f * 1.002,
+                           "l": f * 0.998, "c": f, "v": 1000.0,
+                           "taker_alis": 520.0})
+        b4 = [{"t": i * 14400000, "o": 100.0, "h": 101.0, "l": 99.0,
+               "c": 100.0, "v": 10.0, "taker_alis": 5.0}
+              for i in range(1500 // H4_BAR_ORANI + 2)]
+        k = BoruHatti(tohum=11).calistir(
+            {"sembol": "T", "barlar15": barlar, "barlar4h": b4,
+             "turev_serisi": None, "onarim_izi": None, "onarim_raporu": {},
+             "dolu_kanal": 2, "toplam_kanal": 6, "anlik_kanallar": [],
+             "adaptor": "test"})
+        h3, h11 = k["iz"]["halka_3"], k["iz"]["halka_11"]
+        self.assertGreater(h3["train"], 0, "kurgu train uretmedi")
+        self.assertEqual(h3["kalibrasyon"], 0, "kurgu kal=0 uretmedi")
+        self.assertFalse(h11["kalibre"])
+        self.assertFalse(h11["egitildi"], "kalibrasyonsuz ag EGITILMIS sayildi")
+        self.assertTrue(k["yon_kaynagi"].startswith("YAPISAL_TABAN"),
+                        k["yon_kaynagi"])
+        self.assertIn(k["yon"], YON_SOZLUGU)      # yon YINE de verilir
+
+    def test_yon_HER_zaman_uretilir(self):
+        k, _, _ = _fikstur_kosu()
+        self.assertIn(k["yon"], YON_SOZLUGU)
+        self.assertIn("GECIS", k["yon_kaynagi"])
+
+
+class FiyatGurultusuTesti(unittest.TestCase):
+    """'pugoreeeewu' icindeki 'eeee' ne ise, spike/donmus bar da odur."""
+
+    @staticmethod
+    def _barlar(n=200, spike_indeksleri=()):
+        rng = tohumlu_rng("gurultu-testi")
+        barlar, f = [], 100.0
+        for i in range(n):
+            f *= 1.0 + rng.uniform(-0.001, 0.001)
+            b = {"t": i * 900000, "o": f, "h": f * 1.001, "l": f * 0.999,
+                 "c": f, "v": 100.0, "taker_alis": 50.0}
+            if i in spike_indeksleri:
+                b["h"] = f * 1.08
+                b["c"] = f * 1.07
+            barlar.append(b)
+        return barlar
+
+    def test_spike_TESPIT_edilir(self):
+        g = fiyat_gurultu_ayikla(self._barlar(200, {150}))
+        self.assertGreater(g["sayim"]["DEGISTIRME"], 0)
+        temiz = fiyat_gurultu_ayikla(self._barlar(200))
+        self.assertEqual(temiz["sayim"]["DEGISTIRME"], 0)
+
+    def test_gurultulu_bar_OLCEKTEN_cikarilir(self):
+        barlar = self._barlar(200, {197, 199})
+        g = fiyat_gurultu_ayikla(barlar)
+        son = len(barlar) - 1
+        ham = atr(barlar, 14)[son]
+        tem = atr_gurultusuz(barlar, son, 14, g["spike"])
+        self.assertIsNotNone(tem)
+        self.assertLess(tem, ham, "spike ATR'yi sisiriyor ama ayiklanmiyor")
+
+    def test_SEVIYELER_gurultusuz_olcekten_turer(self):
+        """Baglayici test: spike'li seride stop/hedef mesafesi HAM ATR'den
+        DEGIL, gurultusuz olcekten gelmeli. Olculdu: ham 2.7929 vs
+        gurultusuz 0.2297 - yani stop 12 KAT genis cikiyordu."""
+        rng = tohumlu_rng("spike-kosu")
+        barlar, f, n = [], 100.0, 900
+        for i in range(n):
+            f *= 1.0 + rng.uniform(-0.0015, 0.0016)
+            b = {"t": i * 900000, "o": f, "h": f * 1.001, "l": f * 0.999,
+                 "c": f, "v": 1000.0, "taker_alis": 510.0}
+            if i in (n - 2, n - 6):
+                b["h"], b["c"] = f * 1.09, f * 1.08
+            barlar.append(b)
+        k = BoruHatti(tohum=4).calistir(
+            {"sembol": "T", "barlar15": barlar, "barlar4h": None,
+             "turev_serisi": None, "onarim_izi": None, "onarim_raporu": {},
+             "dolu_kanal": 2, "toplam_kanal": 6, "anlik_kanallar": [],
+             "adaptor": "test"})
+        fg, geo = k["fiyat_gurultusu"], k["geometri"]
+        self.assertGreater(fg["spike_adet"], 0, "kurgu spike uretmedi")
+        self.assertLess(fg["atr_gurultusuz"], fg["atr_ham"] * 0.5,
+                        "spike ATR'yi sismedi - kurgu gecersiz")
+        turetilen = abs(k["giris"] - k["stop"]) / geo["stop_k"]
+        self.assertAlmostEqual(turetilen, fg["atr_gurultusuz"], places=9,
+                               msg="seviyeler HAM (sismis) ATR'den turemis")
+        self.assertTrue(fg["son_bar_gurultulu"])
+        self.assertIn("GURULTULU", k.get("not") or "")
+
+    def test_deger_UYDURULMAZ_sadece_disarida_birakilir(self):
+        """Spike barin araligi baskasiyla DEGISTIRILMEZ. Kanit: butun
+        pencere gurultuluyse sonuc None'dir (fail-closed), tahmin DEGIL."""
+        barlar = self._barlar(60)
+        self.assertIsNone(atr_gurultusuz(barlar, 40, 5, range(30, 45)))
+
+    def test_gurultulu_SON_bar_karar_notuna_yazilir(self):
+        k, _, _ = _fikstur_kosu()
+        self.assertIn("fiyat_gurultusu", k)
+        fg = k["fiyat_gurultusu"]
+        self.assertIn(fg["olcek_kaynagi"], ("GURULTUSUZ", "HAM (temiz bar kalmadi)"))
+        if fg["son_bar_gurultulu"]:
+            self.assertIn("GURULTULU", k.get("not", ""))
+
+
+class PortfoyTesti(unittest.TestCase):
+    @staticmethod
+    def _seri(t0=0, n=300, egim=0.0005, tohum="a", gurultu=0.001):
+        rng = tohumlu_rng(tohum)
+        barlar, f = [], 100.0
+        for i in range(n):
+            f *= 1.0 + egim + rng.uniform(-gurultu, gurultu)
+            barlar.append({"t": t0 + i * 900000, "o": f, "h": f, "l": f,
+                           "c": f, "v": 1.0, "taker_alis": 0.5})
+        return barlar
+
+    def test_rho_ZAMANLA_eslesir_indeksle_degil(self):
+        """Iki sembolun bar sayisi farkliysa indeks eslemesi sessizce YANLIS
+        rho uretir. Ayni seriyi 10 bar kaydirinca rho 1.0 KALMAMALIDIR."""
+        a = self._seri()
+        b = [dict(x) for x in a[10:]]
+        r = korelasyon(a, b)
+        self.assertIsNotNone(r["rho"])
+        self.assertAlmostEqual(r["rho"], 1.0, places=6)   # ortak zaman: ayni
+        kaydirilmis = [{"t": x["t"] + 900000, "o": x["o"], "h": x["h"],
+                        "l": x["l"], "c": x["c"], "v": x["v"],
+                        "taker_alis": x["taker_alis"]} for x in a]
+        r2 = korelasyon(a, kaydirilmis)
+        self.assertLess(abs(r2["rho"]), 0.999)
+
+    def test_rho_yetersiz_ornekte_UYDURULMAZ(self):
+        r = korelasyon(self._seri(n=5), self._seri(n=5, tohum="b"))
+        self.assertIsNone(r["rho"])
+        self.assertIn("YETERSIZ", r["not"])
+
+    def test_yuksek_rho_ayni_yon_KOPYA_sayilir(self):
+        a = self._seri(tohum="x")
+        kayit = []
+        for i, sembol in enumerate(("ANA", "KOPYA")):
+            k, pk, _ = _fikstur_kosu()
+            k = dict(k)
+            k["sembol"] = sembol
+            k["yon"] = "LONG"
+            k["stake"] = dict(k["stake"], f=0.01)
+            pk = dict(pk, barlar15=a)
+            kayit.append({"sembol": sembol, "karar": k, "paket": pk})
+        pf = portfoy_karari(kayit)
+        self.assertTrue(pf["satirlar"][1]["kopya"], pf["satirlar"])
+        self.assertEqual(pf["secilen"], "ANA")
+        self.assertIn("TEK BAHIS", portfoy_raporu(pf))
+
+    def test_zit_yon_KOPYA_sayilmaz(self):
+        a = self._seri(tohum="y")
+        kayit = []
+        for sembol, yon in (("ANA", "LONG"), ("DIGER", "SHORT")):
+            k, pk, _ = _fikstur_kosu()
+            k = dict(k)
+            k["sembol"], k["yon"] = sembol, yon
+            k["stake"] = dict(k["stake"], f=0.01)
+            kayit.append({"sembol": sembol, "karar": k,
+                          "paket": dict(pk, barlar15=a)})
+        pf = portfoy_karari(kayit)
+        self.assertFalse(pf["satirlar"][1]["kopya"])
+        self.assertIn("ZIT", pf["satirlar"][1]["gerekce"])
+
+
+class SayfalamaTesti(unittest.TestCase):
+    """1500 bar ile hicbir profil cifti sigmiyordu (kullanici ciktisi)."""
+
+    @staticmethod
+    def _uc(sayfa_boyu=500, toplam=3000):
+        durum = {"cagri": 0}
+
+        def getir(url, params):
+            durum["cagri"] += 1
+            limit = int(params.get("limit", sayfa_boyu))
+            bitis = int(params.get("endTime", (toplam - 1) * 900000))
+            son = min(bitis // 900000, toplam - 1)
+            bas = max(0, son - limit + 1)
+            return [{"timestamp": i * 900000, "v": i} for i in range(bas, son + 1)]
+        return getir, durum
+
+    def test_hedefe_kadar_SAYFALANIR(self):
+        getir, durum = self._uc()
+        kayit = sayfali_getir(getir, "u", {"limit": "500"}, 2000, _kayit_zamani)
+        self.assertEqual(len(kayit), 2000)
+        self.assertGreater(durum["cagri"], 1)
+        zamanlar = [k["timestamp"] for k in kayit]
+        self.assertEqual(zamanlar, sorted(zamanlar))
+        self.assertEqual(len(set(zamanlar)), len(zamanlar))   # cift kayit YOK
+
+    def test_yeni_kayit_gelmezse_DURUR(self):
+        """endTime'i yok sayan bir uc sonsuz donguye sokmamali."""
+        durum = {"cagri": 0}
+
+        def sabit(url, params):
+            durum["cagri"] += 1
+            return [{"timestamp": i * 900000} for i in range(10)]
+        kayit = sayfali_getir(sabit, "u", {}, 5000, _kayit_zamani)
+        self.assertEqual(len(kayit), 10)
+        self.assertLessEqual(durum["cagri"], 2)
+
+    def test_hedef_bar_sayisi_TURETILIR(self):
+        h = hedef_bar_sayisi(True)
+        self.assertGreater(h, 1500, "1500 bar dejenere bolme uretiyordu")
+        self.assertLessEqual(h, AZAMI_BAR_BUTCESI)
+        self.assertEqual(sayfa_plani("kline_15m")[0], AZAMI_BAR_BUTCESI)
+        self.assertLessEqual(sayfa_plani("oi")[0], TUREV_GECMIS_TAVANI)
+
+    def test_binance_sayfalanir_diye_BEYAN_eder(self):
+        self.assertTrue(getattr(BinanceAdaptor, "sayfalanir", False))
 
 
 def _pozitif_f_karari():
