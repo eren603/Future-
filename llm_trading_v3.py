@@ -1640,7 +1640,17 @@ class BoruHatti:
         p_ham = long_olasiligi(top["p"])
         if kalib["fn"] is not None:
             p_ham = kalib["fn"](p_ham)
-        iz["halka_9"] = {"ad": "decoding", "p_long": p_ham, "hold": False}
+        # EGITILMEMIS MODELDEN YON BEYAN EDILMEZ. Bolme dejenere ise
+        # basliklar rastgele baslangic degerlerindedir; p_ham bir OLCUM
+        # degil bir tohum artefaktidir. Onu "yon" diye sunmak uydurmadir.
+        # Sozluk kurali (V = {LONG, SHORT}, HOLD YOK) DECODER'in sinif
+        # kumesi hakkindadir - burada decoder egitilmis bir model uzerinde
+        # hic kosmamistir, yani ucuncu bir sinif eklenmiyor; olcum YOK.
+        egitildi = bool(train)
+        if not egitildi:
+            p_ham = None
+        iz["halka_9"] = {"ad": "decoding", "p_long": p_ham, "hold": False,
+                         "egitildi": egitildi}
         iz["halka_10"] = {"ad": "self-consistency", "uzlasi": top["uzlasi"],
                           "dagilim": top["dagilim"],
                           "T_karari_cevirir": sicaklik_karari_cevirir_mi(
@@ -1656,6 +1666,25 @@ class BoruHatti:
         if not h4_var:
             dolu_kanal = max(0, dolu_kanal - 1)
             iz["halka_0"]["h4_kanali_dusuldu"] = True
+        if not egitildi:
+            karar = {"sembol": paket["sembol"], "yon": "VERI YOK",
+                     "p_ham": None, "p_kullanilan": None,
+                     "giris": None, "stop": None, "hedef": None, "R": None,
+                     "geometri": None,
+                     "shrinkage": {"s": 0.0, "s_kanit": 0.0,
+                                   "s_kalibrasyon": 0.0, "s_kapsam": 0.0},
+                     "stake": {"f": 0.0, "p_kullanilan": None, "p0": None,
+                               "not": "model EGITILMEDI - bolme dejenere"},
+                     "not": ("bolme dejenere: egitim/kalibrasyon/degerlendirme "
+                             "kosmadi. Yon bir OLCUM degil tohum artefakti "
+                             "olurdu - beyan edilmiyor (fail-closed).")}
+            iz["halka_12"] = {"ad": "detokenizasyon", "giris": None,
+                              "stop": None, "hedef": None, "R": None, "f": 0.0}
+            karar["iz"] = iz
+            karar["kalibrasyon"] = iz["halka_8"]
+            karar["adaptor"] = paket.get("adaptor")
+            return karar
+
         karar = karar_uret({
             "sembol": paket["sembol"], "barlar": barlar, "atr_serisi": gost["atr"],
             "indeksler": bolme["test"] or tum_indeksler[-40:],

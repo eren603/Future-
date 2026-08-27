@@ -1337,6 +1337,37 @@ class BoruHattiTesti(unittest.TestCase):
         onbellek[anahtar] = paket
         return dict(paket)
 
+    def test_egitilmemis_modelden_yon_BEYAN_EDILMEZ(self):
+        """Bolme dejenere ise baslik hic egitilmemistir - p rastgele baslangictir.
+
+        Bunu "yon" diye sunmak UYDURMADIR. Sozluk kurali (V = {LONG, SHORT},
+        HOLD YOK) DECODER'in sinif kumesi hakkindadir; burada decoder
+        egitilmis bir model uzerinde hic KOSMAMISTIR. Dogru cevap ucuncu
+        bir sinif degil, "VERI YOK"tur (fail-closed).
+        """
+        kucuk = self._paket()
+        kucuk["barlar15"] = kucuk["barlar15"][:400]
+        kucuk["barlar4h"] = _agrega4h(kucuk["barlar15"])
+        if kucuk["turev_serisi"] is not None:
+            kucuk["turev_serisi"] = kucuk["turev_serisi"][:400]
+        r = m.BoruHatti(tohum=2026).calistir(kucuk)
+
+        self.assertTrue(r["iz"]["halka_11"]["not"], "kurulum bozuk: bolme dejenere degil")
+        self.assertFalse(r["iz"]["halka_9"]["egitildi"])
+        self.assertEqual(r["yon"], "VERI YOK")
+        self.assertIsNone(r["iz"]["halka_9"]["p_long"])
+        self.assertEqual(r["stake"]["f"], 0.0)
+        self.assertIsNone(r["giris"])
+        self.assertIsNone(r["stop"])
+        self.assertIsNone(r["hedef"])
+
+    def test_egitilmis_modelde_yon_yine_kosulsuz_uretilir(self):
+        """Fail-closed dal, normal yolda yon uretimini KISITLAMAMALI."""
+        r = m.BoruHatti(tohum=2026).calistir(self._paket())
+        self.assertTrue(r["iz"]["halka_9"]["egitildi"])
+        self.assertIn(r["yon"], m.YON_SOZLUGU)
+        self.assertIsNotNone(r["giris"])
+
     def test_uctan_uca_karar_uretir(self):
         r = m.BoruHatti(tohum=2026).calistir(self._paket())
         self.assertIn(r["yon"], m.YON_SOZLUGU)
