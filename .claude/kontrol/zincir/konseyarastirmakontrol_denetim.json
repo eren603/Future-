@@ -1,5 +1,5 @@
 {
- "gorev": "satır satır kontrol et susturalan yalnis mantık ters einyal karar baglanmayan ne varsa incele. (9bab9c05-konseyarastirmakontrol zip)",
+ "gorev": "satır satır kontrol et susturalan yalnis mantık ters einyal karar baglanmayan ne varsa incele. (9bab9c05-konseyarastirmakontrol zip) + tamamlanmis tamir edilmis Nihai surumu satir satir kontrol ederek buradan ver",
  "gorev_maddeleri": [
   {
    "id": "M1",
@@ -314,11 +314,72 @@
    ],
    "kapi": "gerçek/varsayım/yorum + düzeltme planı",
    "gecti": true
+  },
+  {
+   "id": "Z7",
+   "ad": "TAMIR + 3 TUR YENIDEN DENETIM",
+   "ajan": "tamirci+dogrulayicilar",
+   "bagimsiz": false,
+   "girdi_id": [
+    "Z6"
+   ],
+   "gordugu_adimlar": [
+    "Z6"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/scratchpad/konseyarastirmakontrol_tamirli.zip",
+     "okundu": true,
+     "sayilar": []
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/tasks/wotxb2uqs.output",
+     "okundu": true,
+     "sayilar": [
+      27,
+      30,
+      37
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/tasks/wfw26ly1t.output",
+     "okundu": true,
+     "sayilar": [
+      37,
+      8
+     ]
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "Tur1: 30 bulgu yamalandi; tur2 denetimi 27/30 cozuldu dedi + 37 yeni bulgu cikardi; tur3 yamasi sonrasi 37/37 cozuldu + 8 kenar puruzu; kenarlar kapatildi ve elle satir satir okundu",
+     "sayilar": [
+      30,
+      27,
+      37,
+      8
+     ],
+     "kaynak": "wotxb2uqs.output + wfw26ly1t.output"
+    }
+   ],
+   "kapi": "tamirli surum bagimsiz ajanlarla YENIDEN denetlendi; kalan riskler teslimde beyan edildi",
+   "gecti": true
   }
  ],
  "teslim": {
   "girdi_id": [
-   "Z6"
+   "Z6",
+   "Z7"
   ],
   "aciklama": "Z6 teslim adiminin ciktisi kullaniciya verilen nihai cevaptir"
  }
