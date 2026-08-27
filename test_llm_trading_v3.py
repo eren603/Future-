@@ -1278,6 +1278,20 @@ class SonluErisimTesti(unittest.TestCase):
         self.assertEqual(kati, maddi,
                          "erisim toleransa bagliysa ust sinir kanitlanamaz")
 
+    def test_docstringteki_erisim_sayilari_ARTEFAKTA_KILITLI(self):
+        """Uretim docstring'indeki tablo bu fikstürden URETILIR.
+
+        Sicildeki G-1/H-2 ihlalinin kapagi: kaynagi olmayan nicel iddia
+        yasak. Deger degisirse hem test duser hem docstring guncellenir.
+        """
+        seri, i, periyot = self._seri(), 350, 21
+        kesik = [self._erisim(lambda s: m.ema(s, periyot), seri, i, tol)
+                 for tol in (1e-15, 1e-12, 1e-9, 1e-6)]
+        self.assertEqual(kesik, [41, 41, 41, 41])
+        alfa = 2.0 / (periyot + 1.0)
+        kuyruk = (1.0 - alfa) ** m.gosterge_penceresi("ema", periyot)
+        self.assertAlmostEqual(kuyruk, 0.018260, places=6)
+
     def test_ema_erisimi_beyan_edilen_pencereyi_asmaz(self):
         seri = self._seri()
         i = 350
@@ -1455,15 +1469,44 @@ class BoruHattiTesti(unittest.TestCase):
                            m.GECIKME_SAYISI * m.H4_BAR_ORANI,
                            "erisim token gecikmesinden BUYUK olmali")
 
-    def test_iz_yarisma_hukmunu_DOGRUDAN_beyan_eder(self):
-        """Yarisma kosmadiysa bu SESSIZ kalamaz: gerekcesiyle yazilmali."""
+    def test_iz_yarisma_hukmu_GERCEKLE_UYUSMALI(self):
+        """Kosulsuz kilit: beyan edilen hukum, kalibrasyon boyutuyla TUTMALI.
+
+        Onceki hali kosulluydu ("YAPILMADI ise sunlari kontrol et") ve
+        yarismayi yalanla "ic-holdout" gosteren bir mutasyondan GECIYORDU.
+        Hukum artik ize degil OLCULEN n'e karsi sinaniyor.
+        """
         iz = m.BoruHatti(tohum=2026).calistir(self._paket())["iz"]
         yarisma = iz["halka_7"]["yarisma"]
-        self.assertIn(yarisma.split(" ")[0], ("ic-holdout", "YAPILMADI"))
-        if yarisma.startswith("YAPILMADI"):
+        kal_n = iz["halka_11"]["kalibrasyon"]
+        if kal_n < 2 * m.ASGARI_OLCUM:
+            self.assertTrue(yarisma.startswith("YAPILMADI"),
+                            f"kal={kal_n} < {2 * m.ASGARI_OLCUM} iken "
+                            f"yarisma kosmus gibi beyan edilemez: {yarisma}")
             self.assertIn("yetersiz ornek", yarisma)
             self.assertIn("fail-closed", yarisma)
             self.assertEqual(iz["halka_7"]["yontem"], "sicaklik")
+            self.assertIn(str(kal_n), yarisma, "beyan olculen n'i TASIMALI")
+        else:
+            self.assertEqual(yarisma, "ic-holdout")
+
+    def test_iz_giris_erisimi_gercek_olcumu_KAPSAR(self):
+        """Kosulsuz kilit: ize yazilan erisim, perturbasyonla olculeni kapsar."""
+        paket = self._paket()
+        iz = m.BoruHatti(tohum=2026).calistir(paket)["iz"]
+        barlar = paket["barlar15"]
+        gost = m._gostergeler(barlar)
+        hedef = 300
+        taban = m.satir_uret(barlar, gost, None, hedef)
+        en_uzak = 0
+        for d in range(1, hedef + 1):
+            bozuk = [dict(b) for b in barlar]
+            for anahtar in ("o", "h", "l", "c"):
+                bozuk[hedef - d][anahtar] *= 1.001
+            if m.satir_uret(bozuk, m._gostergeler(bozuk), None, hedef) != taban:
+                en_uzak = d
+        self.assertLessEqual(en_uzak, iz["halka_11"]["giris_erisimi"])
+        self.assertGreater(en_uzak, 0, "olcum kurulumu bozuk")
 
     def test_uctan_uca_karar_uretir(self):
         r = m.BoruHatti(tohum=2026).calistir(self._paket())
@@ -1623,6 +1666,53 @@ class CiktiTesti(unittest.TestCase):
 
     def test_metin_rapor_yon_icerir(self):
         self.assertIn("LONG", m.metin_rapor(self._karar()))
+
+    # -- tuketiciler GERCEK boru hatti kararlariyla da sinanmali (H-1) --
+    #
+    # Bulundu: metin_rapor suite'te YALNIZ elle kurulmus sentetik bir
+    # kararla cagriliyordu; dejenere bolmenin urettigi karar (p_ham=None,
+    # geometri=None) ona hic verilmemisti ve TypeError ile patliyordu.
+    # Kusuru bir denetci yakaladi, bir test degil - kapak burada.
+
+    def _boru_karari(self, bar_sayisi=None):
+        paket = BoruHattiTesti("test_determinizm")._paket()
+        if bar_sayisi is not None:
+            paket["barlar15"] = paket["barlar15"][:bar_sayisi]
+            paket["barlar4h"] = _agrega4h(paket["barlar15"])
+            if paket["turev_serisi"] is not None:
+                paket["turev_serisi"] = paket["turev_serisi"][:bar_sayisi]
+        return m.BoruHatti(tohum=2026).calistir(paket)
+
+    def test_metin_rapor_gercek_boru_hatti_kararini_yazar(self):
+        metin = m.metin_rapor(self._boru_karari())
+        self.assertIn("KARAR-DESTEK", metin)
+        self.assertIn("STAKE", metin)
+
+    def test_metin_rapor_dejenere_kararda_PATLAMAZ(self):
+        karar = self._boru_karari(400)
+        self.assertEqual(karar["yon"], "VERI YOK", "kurulum bozuk: dejenere degil")
+        metin = m.metin_rapor(karar)
+        self.assertIn("VERI YOK", metin)
+        self.assertIn("EGITILMEDI", metin.upper())
+
+    def test_dejenere_karar_normal_karar_ANAHTARLARINI_TASIR(self):
+        """Iki dal ayni sozlesmeyi konusmali; aksi halde tuketiciler patlar."""
+        normal = self._boru_karari()
+        dejenere = self._boru_karari(400)
+        eksik = set(normal) - set(dejenere)
+        self.assertEqual(eksik, set(), f"dejenere dalda eksik anahtar: {eksik}")
+        for alt in ("stake", "shrinkage"):
+            eksik_alt = set(normal[alt]) - set(dejenere[alt])
+            self.assertEqual(eksik_alt, set(),
+                             f"dejenere {alt} eksik anahtar: {eksik_alt}")
+
+    def test_defter_guncelle_dejenere_kararda_PATLAMAZ(self):
+        durum = {"sermaye": 1000.0, "pozisyonlar": {}}
+        karar = self._boru_karari(400)
+        bar = {"o": 100.0, "h": 101.0, "l": 99.0, "c": 100.0}
+        yeni = m.defter_guncelle(durum, karar, bar)
+        self.assertEqual(yeni["pozisyonlar"], {})
+        self.assertEqual(yeni["sermaye"], 1000.0)
 
     # -- rapor_yaz: plan Task 15'in beyan ettigi cikti (G-6) --
 

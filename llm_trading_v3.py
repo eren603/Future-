@@ -1295,10 +1295,15 @@ def ema(degerler, periyot):
 
     NEDEN OZYINELEMELI (IIR) YAZIM TERK EDILDI: `cikti[i] = a*x[i] +
     (1-a)*cikti[i-1]` zinciri serinin BASINA kadar uzanir; pratikte yalniz
-    float64 alt-tasmasi keser. Yani erisim VERIYE ve TOLERANSA baglidir -
-    olculdu: ayni bar icin tolerans 1e-15'te 313, 1e-9'da 168 bar. Toleransa
-    bagli bir sayi purge korkulugu OLAMAZ; sizinti penceresi KANITLANABILIR
-    bir ust sinir ister, yoksa "sizinti yok" raporu fail-open olur.
+    float64 alt-tasmasi keser. Yani erisim VERIYE ve TOLERANSA baglidir.
+    Olculdu (kurulum: SonluErisimTesti._seri - tohumlu_rng("sonlu-erisim"),
+    n=400, i=350, bozma x1.001; periyot=21):
+        tolerans  1e-15  1e-12  1e-9  1e-6
+        IIR         301    240   168     95     <- toleransa BAGLI
+        kesilmis     41     41    41     41     <- toleranstan BAGIMSIZ
+    Toleransa bagli bir sayi purge korkulugu OLAMAZ; sizinti penceresi
+    KANITLANABILIR bir ust sinir ister, yoksa "sizinti yok" raporu
+    fail-open olur. Bu sayilar test_ema_erisimi_* ile artefakta baglidir.
 
     Kesme, ustel agirligi TERK ETMEK DEGILDIR: ayni alfa*(1-alfa)^L profili
     kullanilir, yalniz `periyot * EMA_KESME_KATI` barda kesilip yeniden
@@ -1712,17 +1717,32 @@ class BoruHatti:
         return karar
 
     def _dejenere_karar(self, paket, iz):
-        """Fail-closed cikti: model hic egitilmedi, olcum YOK."""
+        """Fail-closed cikti: model hic egitilmedi, olcum YOK.
+
+        SOZLESME: bu dal NORMAL dalla AYNI anahtarlari tasir. Aksi halde
+        tuketiciler (metin_rapor, defter_guncelle, rapor_yaz) yalniz mutlu
+        yolda calisir ve fail-closed dalda COKER - yani guvenlik dali,
+        cokme dali olur. Eksik olan DEGERLER None'dir; eksik olan
+        ANAHTARLAR degil.
+        """
         iz["halka_12"] = {"ad": "detokenizasyon", "giris": None, "stop": None,
                           "hedef": None, "R": None, "f": 0.0}
         return self._tamamla({
             "sembol": paket["sembol"], "yon": "VERI YOK",
             "p_ham": None, "p_kullanilan": None,
             "giris": None, "stop": None, "hedef": None, "R": None,
-            "geometri": None,
+            "geometri": {"stop_k": None, "hedef_k": None, "R": None,
+                         "p_hedef": None, "p_bilesik": None, "n": 0,
+                         "f": 0.0, "elog": None, "cost_r": None,
+                         "b": None, "a": None, "basabas_p": None,
+                         "denenen": [],
+                         "not": "OLCUM YOK - model egitilmedi"},
             "shrinkage": {"s": 0.0, "s_kanit": 0.0, "s_kalibrasyon": 0.0,
                           "s_kapsam": 0.0},
-            "stake": {"f": 0.0, "p_kullanilan": None, "p0": None,
+            "stake": {"f": 0.0, "f_max": 0.0, "kirpildi": False,
+                      "lambda_tablosu": {str(lam): {"f": 0.0}
+                                         for lam in LAMBDA_TABLOSU},
+                      "p_kullanilan": None, "p0": None,
                       "not": "model EGITILMEDI - bolme dejenere"},
             "not": ("bolme dejenere: egitim/kalibrasyon/degerlendirme "
                     "kosmadi. Yon bir OLCUM degil tohum artefakti "
@@ -1772,30 +1792,52 @@ class BoruHatti:
 # Cikti, kagit defteri, CLI. GERCEK EMIR YOK.
 
 
+def _bicim(deger, kalip=".4f"):
+    """OLCULMEMIS deger "VERI YOK" diye yazilir, 0.0000 diye DEGIL.
+
+    Eksigi sifirla doldurmak sayisal bir iddia uydurmaktir; ayrica
+    None'i dogrudan bicimlendirmek TypeError verir - rapor katmani
+    fail-closed dalda cokerdi.
+    """
+    if deger is None:
+        return "VERI YOK"
+    try:
+        return format(deger, kalip)
+    except (TypeError, ValueError):
+        return str(deger)
+
+
 def metin_rapor(karar):
-    g, s = karar["geometri"], karar["stake"]
+    g = karar.get("geometri") or {}
+    s = karar.get("stake") or {}
+    sh = karar.get("shrinkage") or {}
     satirlar = [
         "=" * 78,
         f"{karar['sembol']} | {SURUM} | YALNIZ KARAR-DESTEK (gercek emir YOK)",
-        f"YON: {karar['yon']}   (p_ham={karar['p_ham']:.4f} -> "
-        f"p_kullanilan={karar['p_kullanilan']:.4f})",
-        f"SHRINKAGE s={karar['shrinkage']['s']:.4f} "
-        f"(kanit={karar['shrinkage']['s_kanit']:.3f} "
-        f"kalibrasyon={karar['shrinkage']['s_kalibrasyon']:.3f} "
-        f"kapsam={karar['shrinkage']['s_kapsam']:.3f})",
-        f"GEOMETRI stop_k={g['stop_k']} hedef_k={g['hedef_k']} "
-        f"R={g['R']:.4f} p_hedef={g['p_hedef']} n={g['n']}",
-        f"basabas p (f*>0 icin gereken) = {g['basabas_p']}",
-        f"SEVIYELER giris={karar['giris']:.8g} stop={karar['stop']:.8g} "
-        f"hedef={karar['hedef']:.8g}",
-        f"STAKE f*={s['f']:.6f}  (f_max={s['f_max']:.6f}, "
-        f"kirpildi={'EVET' if s['kirpildi'] else 'hayir'})",
-        "  lambda: " + "  ".join(f"{lam}->{v['f']:.6f}"
-                                 for lam, v in s["lambda_tablosu"].items()),
+        f"YON: {karar['yon']}   (p_ham={_bicim(karar.get('p_ham'))} -> "
+        f"p_kullanilan={_bicim(karar.get('p_kullanilan'))})",
+        f"SHRINKAGE s={_bicim(sh.get('s'))} "
+        f"(kanit={_bicim(sh.get('s_kanit'), '.3f')} "
+        f"kalibrasyon={_bicim(sh.get('s_kalibrasyon'), '.3f')} "
+        f"kapsam={_bicim(sh.get('s_kapsam'), '.3f')})",
+        f"GEOMETRI stop_k={g.get('stop_k', 'VERI YOK')} "
+        f"hedef_k={g.get('hedef_k', 'VERI YOK')} "
+        f"R={_bicim(g.get('R'))} p_hedef={g.get('p_hedef')} n={g.get('n')}",
+        f"basabas p (f*>0 icin gereken) = {g.get('basabas_p')}",
+        f"SEVIYELER giris={_bicim(karar.get('giris'), '.8g')} "
+        f"stop={_bicim(karar.get('stop'), '.8g')} "
+        f"hedef={_bicim(karar.get('hedef'), '.8g')}",
+        f"STAKE f*={_bicim(s.get('f'), '.6f')}  "
+        f"(f_max={_bicim(s.get('f_max'), '.6f')}, "
+        f"kirpildi={'EVET' if s.get('kirpildi') else 'hayir'})",
+        "  lambda: " + ("  ".join(f"{lam}->{_bicim(v.get('f'), '.6f')}"
+                                  for lam, v in s["lambda_tablosu"].items())
+                        if s.get("lambda_tablosu") else "VERI YOK"),
     ]
-    if g.get("not"):
-        satirlar.append(f"NOT: {g['not']}")
-    if s["f"] == 0.0:
+    for kaynak in (g, s, karar):
+        if kaynak.get("not"):
+            satirlar.append(f"NOT: {kaynak['not']}")
+    if s.get("f") == 0.0:
         satirlar.append("f*=0: yon ve seviyeler yine uretildi; bahis buyuklugu sifir.")
     return "\n".join(satirlar)
 

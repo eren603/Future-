@@ -82,3 +82,42 @@ Madde Grup-E (eksen + sızıntı penceresi + kalibrasyon adaleti) | Deneme 1/3 |
   fonksiyonunu çıktı olarak beyan ediyor ama modülde YOK — ATLAMA. (`Adaptor.kline/.turev`
   ise ihlal değil: tek `uc(kanal, sembol)` URL üreticisine bilinçli olarak konsolide edildi,
   ağ çağrısı yok.)
+
+---
+
+## Tur 3 — Grup F (denetci #6'nin actigi alti madde + curutme bulgulari)
+
+Madde Grup-F (G-1..G-6 + curutme) | Deneme 1/3 | Ajan kod-denetci#7 | Kapı: — (5/5 PASS, kapı 6 N/A) | Kanıt: denetçi `python3 -m unittest test_llm_trading_v3` KENDİ koşturdu (3 kez) → 189 OK exit 0, 23.3–25.4 s; ayrıca `--self-test` → 189 OK; **11 hedefli mutasyon** ile testlerin boş olmadığını kanıtladı (girdi_erisimi eski formüle döndü → 4 test düştü; ema IIR'e döndü → tolerans testi düştü; `en_iyi = dict(en_iyi)` kaldırıldı → 3 test düştü, biri `ValueError: Circular reference`; fail-closed dal kaldırıldı → 1 test düştü ve diğer 17 geçmeye devam etti = normal yol kısıtlanmamış; listcomp geri kondu → kaynak-kilidi düştü; iz alanı sahte değere çekildi → düştü; `default=str` fail-open → düştü; boş bölmede `sizinti=False` → düştü); KENDİ perturbasyon ölçümüyle `satir_uret` erişimi 62 ≤ beyan 62 ve 4H yolunda 997 ≤ beyan 1026 (fail-closed); `ema(21)` erişimi 1e-15/1e-12/1e-9/1e-6'da hepsinde 41 ≤ 42, BASE IIR'de 300/240/168/95; ağırlık toplamı 1.0, oran sabiti tam `1-α`, kesilen kuyruk 0.018260; `ceil(2*20/0.2)=200`; kal 6/23/34/37 (6k/12k/30k/60k bar) hepsi < 40; davranış-nötrlüğü kendi hash'iyle doğruladı (hoist `15878f9a0d79ecba…`, refactor `48e7a7247989a968…`) | Karar: PASS | Arşiv: —
+
+### Grup-F denetçisinin kapı DÜŞÜRMEYEN bulguları ve KAPANIŞLARI
+
+- **H-1 [P1 — GERÇEK REGRESYON, bu turda ben soktum]** `metin_rapor` dejenere
+  kararda `TypeError: unsupported format string passed to NoneType.__format__`
+  ile patlıyordu; ayrıca dejenere `stake`/`geometri` anahtarları normal daldan
+  FARKLIYDI. Yani fail-closed dal, çökme dalı olmuştu. Kök neden bir kapsam
+  boşluğu: `metin_rapor` pakette YALNIZ elle kurulmuş sentetik bir kararla
+  çağrılıyordu, boru hattı kararıyla hiç çağrılmamıştı.
+  → KAPANDI: `_bicim()` ile ölçülmemiş değer "VERİ YOK" yazılıyor (0.0000 ile
+  doldurulmuyor — eksiği sıfırla doldurmak sayısal iddia uydurmaktır); dejenere
+  dal normal dalla AYNI anahtarları taşıyor; dört yeni test tüketicileri
+  GERÇEK boru hattı kararlarıyla sınıyor.
+- **H-2 [P2 — G-1 ile AYNI SINIF, tekrarladım]** `ema` docstring'indeki
+  "1e-15'te 313" artefakttan üretilemiyordu (testin kendi fikstürüyle 301).
+  → KAPANDI: docstring artık kurulumu (tohum, n, i, bozma katsayısı) ve tam
+  tabloyu veriyor (301/240/168/95 IIR, 41/41/41/41 kesilmiş);
+  `test_docstringteki_erisim_sayilari_ARTEFAKTA_KILITLI` değeri çiviliyor.
+- **H-3 [P2]** `test_iz_yarisma_hukmunu_DOGRUDAN_beyan_eder` KOŞULLUYDU ve
+  yarışmayı yalanla "ic-holdout" gösteren mutasyondan GEÇİYORDU.
+  → KAPANDI: hüküm artık ize değil ÖLÇÜLEN `kal` sayısına karşı sınanıyor
+  (koşulsuz kilit) + beyanın ölçülen n'i taşıması şart. Ayrıca ize yazılan
+  erişimin perturbasyonla ölçüleni kapsadığını sınayan ikinci koşulsuz test.
+- **H-4 [P2 — KISMEN KABUL, kısmen İTİRAZ]** Denetçi "32 hane = MD5
+  uzunluğu, sha256 değil" dedi. **Bu çıkarım YANLIŞ:** kod
+  `hashlib.sha256(...).hexdigest()[:32]` — sha256'nın ilk 32 hanesi
+  (tam sha256 = 64 hane, md5 = 32 hane; ikisi de ölçüldü). **Ama etiket
+  yanıltıcıydı** (kırpıldığı yazmıyordu) ve commit metnindeki "sha256
+  önce/sonra AYNI (3d7ef01d…, bdf148da…)" ifadesi iki FARKLI fikstürün
+  (tam / 4h-yok) değerlerini tek bir eşitlik iddiası gibi okutuyordu —
+  her satır kendi içinde önce=sonra, satırlar birbirine eşit değil.
+  → Etiket `sha256_ilk32` olarak düzeltildi; ifade burada netleştirildi.
+  Denetçi davranış-nötrlüğü zaten KENDİ hash'iyle bağımsız doğruladı.
