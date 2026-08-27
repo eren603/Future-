@@ -1,0 +1,59 @@
+{
+  "gorev": "satır satır kontrol et susturalan yalnis mantık ters einyal karar baglanmayan ne varsa incele. (9bab9c05-konseyarastirmakontrol zip)",
+  "gorev_maddeleri": [
+    {"id": "M1", "metin": "Paketi satır satır oku (5 dosya, 2075 satır)"},
+    {"id": "M2", "metin": "SUSTURULAN (bastırılan kural/rapor) bul"},
+    {"id": "M3", "metin": "YANLIŞ MANTIK (çelişen/imkânsız koşul) bul"},
+    {"id": "M4", "metin": "TERS SİNYAL (fail-open, kapı atlaması) bul"},
+    {"id": "M5", "metin": "KARAR BAĞLANMAYAN (tanımlı ama zorlanmayan statü/şema) bul"}
+  ],
+  "dislanan_maddeler": [],
+  "adimlar": [
+    {"id": "Z1", "ad": "GÖREV ÇÖZÜMLEME", "ajan": "cozumleyici", "bagimsiz": false,
+     "girdi_id": [], "gordugu_adimlar": [], "kapsanan_maddeler": ["M1","M2","M3","M4","M5"],
+     "artefaktlar": [{"tur": "girdi", "ref": "kullanıcı istemi", "okundu": true, "sayilar": []}],
+     "iddialar": [{"metin": "istek 5 maddeye ayrıldı; 4 kusur sınıfı + tam okuma", "sayilar": [5,4], "kaynak": "kullanıcı istemi"}],
+     "kapi": "her madde bir adıma atandı", "gecti": true},
+    {"id": "Z2", "ad": "KANIT TOPLAMA", "ajan": "kanitci", "bagimsiz": false,
+     "girdi_id": ["Z1"], "gordugu_adimlar": ["Z1"], "kapsanan_maddeler": ["M1"],
+     "artefaktlar": [
+       {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/scratchpad/kontrolzip/SKILL.md", "okundu": true, "sayilar": [190]},
+       {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/scratchpad/kontrolzip/references/konsey_v8_1_protokol.md", "okundu": true, "sayilar": [1074]},
+       {"tur": "arac", "ref": "diff -rq konsey/ kontrolzip/ (yalnız SKILL.md farklı)", "okundu": true, "sayilar": []}
+     ],
+     "iddialar": [
+       {"metin": "SKILL.md 190 satır; protokol 1074 satır; 4 referans önceki zip ile bayt bayt aynı", "sayilar": [190,1074,4], "kaynak": "wc -l + diff -rq"}
+     ],
+     "kapi": "iddia üreten her adımın okunmuş artefaktı var", "gecti": true},
+    {"id": "Z3a", "ad": "ÜRETİM — dosya-başına okuma ajanları (6) + çapraz (2)", "ajan": "workflow wf_19d4c26f-cea", "bagimsiz": true,
+     "girdi_id": ["Z2"], "gordugu_adimlar": ["Z2"], "kapsanan_maddeler": ["M2","M3","M4","M5"],
+     "artefaktlar": [{"tur": "dosya", "ref": "/root/.claude/projects/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/subagents/workflows/wf_19d4c26f-cea/journal.jsonl", "okundu": true, "sayilar": [40]}],
+     "iddialar": [{"metin": "8 izole ajan 40 ham bulgu üretti", "sayilar": [8,40], "kaynak": "journal.jsonl"}],
+     "kapi": "izole koşu — ajanlar birbirinin çıktısını görmedi (ayrı context)", "gecti": true},
+    {"id": "Z3b", "ad": "ÜRETİM — elle ikinci-göz (bağımsız okuma + grep)", "ajan": "elle-okuma", "bagimsiz": true,
+     "girdi_id": ["Z2"], "gordugu_adimlar": ["Z2"], "kapsanan_maddeler": ["M2","M4","M5"],
+     "artefaktlar": [
+       {"tur": "arac", "ref": "grep CATEGORY/BLIND_PHASE_INTEGRITY/ACCEPTED_RISK/REPAIR_TEXT references/", "okundu": true, "sayilar": [0]}
+     ],
+     "iddialar": [
+       {"metin": "CATEGORY enum referansların hiçbirinde yok (0 eşleşme); ACCEPTED_RISK referanslarda 0; REPAIR_TEXT/LOGIC/SOURCE referanslarda 0", "sayilar": [0], "kaynak": "grep"},
+       {"metin": "protokol satır 907 ve triad satır 223 yalnız FAIL'i yasaklıyor; UNKNOWN yayın kapısına bağlanmamış", "sayilar": [907,223], "kaynak": "grep -n"}
+     ],
+     "kapi": "izole koşu — workflow bulguları görülmeden önce yapıldı", "gecti": true},
+    {"id": "Z4", "ad": "ÇAPRAZ DOĞRULAMA", "ajan": "curutucu-ajanlar", "bagimsiz": true,
+     "girdi_id": ["Z3a","Z3b"], "gordugu_adimlar": ["Z3a","Z3b"], "kapsanan_maddeler": ["M2","M3","M4","M5"],
+     "artefaktlar": [{"tur": "dosya", "ref": "/root/.claude/projects/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/subagents/workflows/wf_19d4c26f-cea/journal.jsonl", "okundu": true, "sayilar": []}],
+     "iddialar": [{"metin": "her bulgu şüpheci ajanca dosyaya karşı sınandı; çürüyenler elendi", "sayilar": [], "kaynak": "journal.jsonl"}],
+     "kapi": "onaylamak değil çürütmek görev — şüphede çürüt talimatı verildi", "gecti": true},
+    {"id": "Z5", "ad": "SENTEZ", "ajan": "sentezci", "bagimsiz": false,
+     "girdi_id": ["Z4"], "gordugu_adimlar": ["Z4"], "kapsanan_maddeler": ["M2","M3","M4","M5"],
+     "artefaktlar": [{"tur": "dosya", "ref": "/root/.claude/projects/-home-user-Future-/7912968b-54fb-582b-8e9c-e576af128489/subagents/workflows/wf_19d4c26f-cea/journal.jsonl", "okundu": true, "sayilar": []}],
+     "iddialar": [{"metin": "doğrulanan bulgular önem sırasıyla (P0→P2) rapora girdi; elenenler sayıyla beyan edildi", "sayilar": [], "kaynak": "journal.jsonl"}],
+     "kapi": "güven-ağırlıklı, severity sıralı", "gecti": true},
+    {"id": "Z6", "ad": "TESLİM", "ajan": "teslimci", "bagimsiz": false,
+     "girdi_id": ["Z5"], "gordugu_adimlar": ["Z5"], "kapsanan_maddeler": ["M1","M2","M3","M4","M5"],
+     "artefaktlar": [{"tur": "girdi", "ref": "nihai cevap metni", "okundu": true, "sayilar": []}],
+     "iddialar": [{"metin": "gerçek/varsayım/yorum ayrıldı; her bulgu dosya:satır kanıtlı", "sayilar": [], "kaynak": "nihai cevap"}],
+     "kapi": "gerçek/varsayım/yorum + düzeltme planı", "gecti": true}
+  ]
+}
