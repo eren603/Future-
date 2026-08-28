@@ -734,7 +734,7 @@
             3.17,
             1.25
           ],
-          "sure_saniye": 0.0014
+          "sure_saniye": 0.001
         },
         "elenen": [],
         "uyarilar": [],
@@ -1124,7 +1124,7 @@
         "kayda değer sürücü değişimi yok"
       ],
       "danisman_donusleri": [
-        "gorsel-teyit: VERİ YOK → flat"
+        "danışman duruşları aynı"
       ]
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
@@ -1144,7 +1144,7 @@
           3.17,
           1.25
         ],
-        "sure_saniye": 0.0014
+        "sure_saniye": 0.001
       },
       "elenen": [],
       "uyarilar": [],
@@ -1328,7 +1328,7 @@
       "kayda değer sürücü değişimi yok"
     ],
     "danisman_donusleri": [
-      "gorsel-teyit: VERİ YOK → flat"
+      "danışman duruşları aynı"
     ],
     "varsayimlar": [
       "anlamlı değişim eşikleri: skor 0.15, oransal %10, ADX 3.0 (konvansiyon)",

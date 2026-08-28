@@ -139,13 +139,13 @@
             "neden": "BEKLE: dönüş dizisi 4/4 TAMAM (LONG, 64772.3 süpürüldü) ama kurulumun FVG'si mitige — giriş ce=64775.4 bölge %50 tükendikten sonra zaten geçilmiş, kurulum BAYAT. Alt zincire devredilmez (fail-closed)."
           },
           "son_bar_utc": "2026-08-06 08:00",
-          "akibet_onceki": "Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-08-06 08:00).",
+          "akibet_onceki": "İLK KOŞU — kıyas yok.",
           "rejim_4h": {
             "rejim": "UP",
             "fark": 698.4100000000035,
             "esik": 576.4460000000049
           },
-          "rapor_metni": "\nVeri: 15M 200 bar (2026-08-04 06:15→2026-08-06 08:00), 4H 200 bar (2026-07-04 04:00→2026-08-06 08:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: Takip edilen açık karar yok — önceki koşunun kararı BEKLE idi (2026-08-06 08:00).\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35 FVG_MITIGASYON=0.50\nVARSAYIM: FVG_MITIGASYON=0.50 KALİBRE EDİLMEMİŞ tasarım varsayımıdır (consequent encroachment konvansiyonu; edge kanıtı DEĞİL). Giriş fiyatı da bölgenin orta noktasıdır — eşik onunla hizalıdır. 1.00 = eski davranış (uzak kenar), 0.00 = ilk dokunuş.\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=96.36 | son bar hacim sırası=0.25 | 4H |MA5-MA20| eşiği=576.446 (fark=698.41, rejim=UP)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: dönüş dizisi 4/4 TAMAM (LONG, 64772.3 süpürüldü) ama kurulumun FVG'si mitige — giriş ce=64775.4 bölge %50 tükendikten sonra zaten geçilmiş, kurulum BAYAT. Alt zincire devredilmez (fail-closed).\n----------------------------------------------------------------\nUYARI : dönüş dizisi 4/4 TAMAM (LONG) ama FVG mitige — giriş ce=64775.4 bölgenin %50'i tükendikten sonra geçilmiş, kurulum BAYAT. Zincir-1 düştü ve alt zincire DEVREDİLMEDİ (fail-closed).\n================================================================",
+          "rapor_metni": "===\nKARAR MOTORU v1 — koşu: son 15M bar 2026-08-06 08:00 UTC\nVeri: 15M 200 bar (2026-08-04 06:15→2026-08-06 08:00), 4H 200 bar (2026-07-04 04:00→2026-08-06 08:00)\n----------------------------------------------------------------\nÖNCEKİ KARAR AKIBETİ: İLK KOŞU — kıyas yok.\n----------------------------------------------------------------\nSABİTLER (yapısal, beyan): N_VOL=96 VOL_RANK_MIN=0.80 N_BODY=48 BODY_Q=0.90 MA=5/20 TREND_Q=0.60 SWING_K=2 RECENT_N=24 R_fallback=1.5/2.5 R_MIN=1.35 FVG_MITIGASYON=0.50\nVARSAYIM: FVG_MITIGASYON=0.50 KALİBRE EDİLMEMİŞ tasarım varsayımıdır (consequent encroachment konvansiyonu; edge kanıtı DEĞİL). Giriş fiyatı da bölgenin orta noktasıdır — eşik onunla hizalıdır. 1.00 = eski davranış (uzak kenar), 0.00 = ilk dokunuş.\nBU KOŞUNUN EŞİKLERİ (veriden hesaplandı): gövde q90=96.36 | son bar hacim sırası=0.25 | 4H |MA5-MA20| eşiği=576.446 (fark=698.41, rejim=UP)\n----------------------------------------------------------------\nKARAR : BEKLE\nNEDEN : BEKLE: dönüş dizisi 4/4 TAMAM (LONG, 64772.3 süpürüldü) ama kurulumun FVG'si mitige — giriş ce=64775.4 bölge %50 tükendikten sonra zaten geçilmiş, kurulum BAYAT. Alt zincire devredilmez (fail-closed).\n----------------------------------------------------------------\nUYARI : dönüş dizisi 4/4 TAMAM (LONG) ama FVG mitige — giriş ce=64775.4 bölgenin %50'i tükendikten sonra geçilmiş, kurulum BAYAT. Zincir-1 düştü ve alt zincire DEVREDİLMEDİ (fail-closed).\n================================================================",
           "state_dir": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu"
         },
         "smc_tespit": {
@@ -728,7 +728,7 @@
             3.17,
             1.25
           ],
-          "sure_saniye": 0.0013
+          "sure_saniye": 0.0012
         },
         "elenen": [],
         "uyarilar": [],
@@ -1142,7 +1142,7 @@
         "kayda değer sürücü değişimi yok"
       ],
       "danisman_donusleri": [
-        "gorsel-teyit: VERİ YOK → flat"
+        "danışman duruşları aynı"
       ]
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu/onceki_kosu.json",
@@ -1162,7 +1162,7 @@
           3.17,
           1.25
         ],
-        "sure_saniye": 0.0013
+        "sure_saniye": 0.0012
       },
       "elenen": [],
       "uyarilar": [],
@@ -1346,7 +1346,7 @@
       "kayda değer sürücü değişimi yok"
     ],
     "danisman_donusleri": [
-      "gorsel-teyit: VERİ YOK → flat"
+      "danışman duruşları aynı"
     ],
     "varsayimlar": [
       "anlamlı değişim eşikleri: skor 0.15, oransal %10, ADX 3.0 (konvansiyon)",
@@ -1672,7 +1672,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'karar-motoru', 'turev-akis', 'gorsel-teyit'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'karar-motoru', 'gorsel-teyit', 'turev-akis', 'grafik-calisma'}",
           "oneri": ""
         },
         {
