@@ -1,0 +1,388 @@
+{
+  "rapor": {
+    "provider": "yerel-olcum",
+    "model_output": {
+      "claims": [
+        "C011",
+        "C012",
+        "C013",
+        "C021",
+        "C022",
+        "C023"
+      ],
+      "decision": "PUBLISH_FULL",
+      "epistemic_verdict": "PARTIAL",
+      "limitations": [
+        "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu",
+        "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu",
+        "turev kanali (kanca uretti)",
+        "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu",
+        "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu",
+        "turev kanali (kanca uretti)"
+      ]
+    },
+    "independent_audit": {
+      "critical_claim_count": 6,
+      "critical_claims_with_evidence": 6,
+      "missing_evidence_claims": [],
+      "invalid_references": [],
+      "unresolved_contradictions": 0,
+      "open_external_checks_pending": 2,
+      "counter_evidence_pending": [],
+      "freshness": "LIMITED",
+      "decision": "REPAIR",
+      "reasons": [
+        "Bekleyen dis kontroller var.",
+        "En az bir kaynagin guncelligi sinirli veya bilinmiyor."
+      ],
+      "audited_at": "2026-08-29T15:06:23.412021+00:00"
+    },
+    "final_decision": "REPAIR",
+    "publish_allowed": false
+  },
+  "kayit": {
+    "task_id": "TASK-20260829150620",
+    "task_type": "MARKET_SIGNAL",
+    "language": "tr",
+    "risk_level": "HIGH",
+    "side_effect_level": "NONE",
+    "method_layers_applied": [
+      "Kanit katalogu (Source/Evidence/Claim) — her seviye bir EVIDENCE_ID'ye bagli",
+      "GRADE-benzeri kesinlik: VERIFIED/LIMITED/UNKNOWN ayrimi",
+      "Deterministik yayin kapisi (core.audit) — model beyani kanit sayilmaz"
+    ],
+    "method_layers_omitted": [
+      "OWASP SAMM / PRISMA / Cochrane: bu gorev turu icin kapsam disi",
+      "Bagimsiz dis guvence (BIST/IOSCO): yok — tek sistem"
+    ],
+    "sources": {
+      "S01A": {
+        "source_id": "S01A",
+        "location": "/home/user/Future-/engine/girdi/m15.json",
+        "access_method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:20.596305+00:00",
+        "freshness": "STALE",
+        "dependency_group": "G1",
+        "digest": "a1c77b290e2105592759485d809e19801fa4b157907c158693267c1dd0c3cebd",
+        "note": "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu"
+      },
+      "S01B": {
+        "source_id": "S01B",
+        "location": "/home/user/Future-/engine/girdi/h4.json",
+        "access_method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:20.860413+00:00",
+        "freshness": "STALE",
+        "dependency_group": "G1",
+        "digest": "9bc82ac6ab86ece0e1a58cde65c84e58635dc81cc65c3668ee62bbab3e53924d",
+        "note": "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu"
+      },
+      "S01C": {
+        "source_id": "S01C",
+        "location": "/home/user/Future-/engine/girdi/turev.json",
+        "access_method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:21.110594+00:00",
+        "freshness": "LIMITED",
+        "dependency_group": "G3",
+        "digest": "75e2d9a4c2a86a8119bed5a69d06554592449bf370a337fd3bb742f5d0c15ae6",
+        "note": "turev kanali (kanca uretti)"
+      },
+      "S02A": {
+        "source_id": "S02A",
+        "location": "/home/user/Future-/engine/girdi/eth/m15.json",
+        "access_method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:22.196571+00:00",
+        "freshness": "STALE",
+        "dependency_group": "G2",
+        "digest": "b65450a5a8f82ccb2086e33bd20495e36d53c8bb7d7f590dd6a8e0a253fc564c",
+        "note": "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu"
+      },
+      "S02B": {
+        "source_id": "S02B",
+        "location": "/home/user/Future-/engine/girdi/eth/h4.json",
+        "access_method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:22.453418+00:00",
+        "freshness": "STALE",
+        "dependency_group": "G2",
+        "digest": "a4cb4d1fc770aa8342c23e4f79342725c271f5d2563f6ac9868b2603d5e3dcce",
+        "note": "canli uc KAPALI (URLError: <urlopen error Tunnel connection failed: 403 Forbidden>) -> yerel arsive dusuldu"
+      },
+      "S02C": {
+        "source_id": "S02C",
+        "location": "/home/user/Future-/engine/girdi/eth/turev.json",
+        "access_method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:22.468303+00:00",
+        "freshness": "LIMITED",
+        "dependency_group": "G3",
+        "digest": "c8ed7064af08483cf7cb79165f5bf713917989090d93ca188756019943a3bf10",
+        "note": "turev kanali (kanca uretti)"
+      }
+    },
+    "evidence": {
+      "E01A": {
+        "evidence_id": "E01A",
+        "source_id": "S01A",
+        "method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:20.596400+00:00",
+        "description": "BTCUSDT 15m: 200 bar, son kapanis 64765.0",
+        "observed": "son_bar_utc=2026-08-06 08:00 yas=33546dk tazelik=STALE kaynak=yerel-arsiv",
+        "exit_code": null
+      },
+      "E01B": {
+        "evidence_id": "E01B",
+        "source_id": "S01B",
+        "method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:20.860507+00:00",
+        "description": "BTCUSDT 4H: 200 bar, son kapanis 64765.0",
+        "observed": "son_bar_utc=2026-08-06 08:00 yas=33546dk tazelik=STALE kaynak=yerel-arsiv",
+        "exit_code": null
+      },
+      "E01C": {
+        "evidence_id": "E01C",
+        "source_id": "S01A",
+        "method": "smc_tespit.detect (olculdu)",
+        "accessed_at": "2026-08-29T15:06:21.103431+00:00",
+        "description": "BTCUSDT 15M yapi olcumu",
+        "observed": "trend=bull adx=18.46 rejim=range atr=94.74216823 acik_fvg=3 likidite=17",
+        "exit_code": null
+      },
+      "E01D": {
+        "evidence_id": "E01D",
+        "source_id": "S01B",
+        "method": "smc_tespit.detect (olculdu)",
+        "accessed_at": "2026-08-29T15:06:21.110342+00:00",
+        "description": "BTCUSDT 4H yapi olcumu",
+        "observed": "trend=bull adx=22.14 rejim=gecis atr=524.60124895 acik_fvg=3 likidite=12",
+        "exit_code": null
+      },
+      "E01E": {
+        "evidence_id": "E01E",
+        "source_id": "S01C",
+        "method": "turev.json okumasi",
+        "accessed_at": "2026-08-29T15:06:21.110629+00:00",
+        "description": "turev yon skoru",
+        "observed": "yon_skoru=None kapsam=None",
+        "exit_code": null
+      },
+      "E01F": {
+        "evidence_id": "E01F",
+        "source_id": "S01A",
+        "method": "emir_plani.plan (olculdu)",
+        "accessed_at": "2026-08-29T15:06:21.905549+00:00",
+        "description": "BTCUSDT emir adaylari",
+        "observed": "{\"LONG\": \"EMİR YOK\"}",
+        "exit_code": null
+      },
+      "E02A": {
+        "evidence_id": "E02A",
+        "source_id": "S02A",
+        "method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:22.196661+00:00",
+        "description": "ETHUSDT 15m: 200 bar, son kapanis 1908.74",
+        "observed": "son_bar_utc=2026-08-06 08:00 yas=33546dk tazelik=STALE kaynak=yerel-arsiv",
+        "exit_code": null
+      },
+      "E02B": {
+        "evidence_id": "E02B",
+        "source_id": "S02B",
+        "method": "yerel dosya",
+        "accessed_at": "2026-08-29T15:06:22.453513+00:00",
+        "description": "ETHUSDT 4H: 200 bar, son kapanis 1908.73",
+        "observed": "son_bar_utc=2026-08-06 08:00 yas=33546dk tazelik=STALE kaynak=yerel-arsiv",
+        "exit_code": null
+      },
+      "E02C": {
+        "evidence_id": "E02C",
+        "source_id": "S02A",
+        "method": "smc_tespit.detect (olculdu)",
+        "accessed_at": "2026-08-29T15:06:22.461424+00:00",
+        "description": "ETHUSDT 15M yapi olcumu",
+        "observed": "trend=bear adx=18.28 rejim=range atr=4.29968911 acik_fvg=4 likidite=13",
+        "exit_code": null
+      },
+      "E02D": {
+        "evidence_id": "E02D",
+        "source_id": "S02B",
+        "method": "smc_tespit.detect (olculdu)",
+        "accessed_at": "2026-08-29T15:06:22.468029+00:00",
+        "description": "ETHUSDT 4H yapi olcumu",
+        "observed": "trend=bull adx=13.82 rejim=range atr=22.19124703 acik_fvg=2 likidite=14",
+        "exit_code": null
+      },
+      "E02E": {
+        "evidence_id": "E02E",
+        "source_id": "S02C",
+        "method": "turev.json okumasi",
+        "accessed_at": "2026-08-29T15:06:22.468332+00:00",
+        "description": "turev yon skoru",
+        "observed": "yon_skoru=None kapsam=None",
+        "exit_code": null
+      },
+      "E02F": {
+        "evidence_id": "E02F",
+        "source_id": "S02A",
+        "method": "emir_plani.plan (olculdu)",
+        "accessed_at": "2026-08-29T15:06:23.410729+00:00",
+        "description": "ETHUSDT emir adaylari",
+        "observed": "{\"LONG\": \"MARKET LONG @1908.61 | stop 1875.276667 | T1 1953.61 | R 1.35\"}",
+        "exit_code": null
+      }
+    },
+    "claims": {
+      "C011": {
+        "claim_id": "C011",
+        "statement": "BTCUSDT yon = LONG (agirlikli skor 1.0)",
+        "status": "VERIFIED",
+        "evidence_ids": [
+          "E01C",
+          "E01D",
+          "E01E"
+        ],
+        "counter_evidence_status": "DONE",
+        "critical": true,
+        "note": ""
+      },
+      "C012": {
+        "claim_id": "C012",
+        "statement": "BTCUSDT emir seviyeleri emir_plani.plan ciktisidir (uydurma yok)",
+        "status": "VERIFIED",
+        "evidence_ids": [
+          "E01F"
+        ],
+        "counter_evidence_status": "DONE",
+        "critical": true,
+        "note": ""
+      },
+      "C013": {
+        "claim_id": "C013",
+        "statement": "BTCUSDT veri canli ve taze (yas 33546 dk <= 30 dk)",
+        "status": "LIMITED",
+        "evidence_ids": [
+          "E01A"
+        ],
+        "counter_evidence_status": "DONE",
+        "critical": true,
+        "note": ""
+      },
+      "C021": {
+        "claim_id": "C021",
+        "statement": "ETHUSDT yon = LONG (agirlikli skor 0.5385)",
+        "status": "VERIFIED",
+        "evidence_ids": [
+          "E02C",
+          "E02D",
+          "E02E"
+        ],
+        "counter_evidence_status": "DONE",
+        "critical": true,
+        "note": ""
+      },
+      "C022": {
+        "claim_id": "C022",
+        "statement": "ETHUSDT emir seviyeleri emir_plani.plan ciktisidir (uydurma yok)",
+        "status": "VERIFIED",
+        "evidence_ids": [
+          "E02F"
+        ],
+        "counter_evidence_status": "DONE",
+        "critical": true,
+        "note": ""
+      },
+      "C023": {
+        "claim_id": "C023",
+        "statement": "ETHUSDT veri canli ve taze (yas 33546 dk <= 30 dk)",
+        "status": "LIMITED",
+        "evidence_ids": [
+          "E02A"
+        ],
+        "counter_evidence_status": "DONE",
+        "critical": true,
+        "note": ""
+      }
+    },
+    "contradictions": [],
+    "external_checks_pending": [
+      "BTCUSDT: canli fiyat dogrulanamadi (kaynak=yerel-arsiv, yas=33546 dk, tazelik=STALE)",
+      "ETHUSDT: canli fiyat dogrulanamadi (kaynak=yerel-arsiv, yas=33546 dk, tazelik=STALE)"
+    ],
+    "counter_evidence_search": "DONE",
+    "payload": {
+      "sinyaller": [
+        {
+          "sembol": "BTCUSDT",
+          "yon": {
+            "yon": "LONG",
+            "skor": 1.0,
+            "bilesenler": [
+              {
+                "ad": "4H trend",
+                "deger": "bull",
+                "agirlik": 0.5,
+                "katki": 0.5,
+                "evidence_id": "E01D"
+              },
+              {
+                "ad": "15M trend",
+                "deger": "bull",
+                "agirlik": 0.15,
+                "katki": 0.15,
+                "evidence_id": "E01C",
+                "not": "rejim=range -> agirlik 50% kirpildi"
+              },
+              {
+                "ad": "turev skoru",
+                "deger": "VERI YOK",
+                "agirlik": 0.0,
+                "katki": 0.0,
+                "evidence_id": null,
+                "not": "kanal yok -> agirliga GIRMEDI (uydurma yok)"
+              }
+            ],
+            "agirlik_toplam": 0.65
+          },
+          "fiyat": 64765.0,
+          "emirler": {
+            "LONG": "EMİR YOK"
+          }
+        },
+        {
+          "sembol": "ETHUSDT",
+          "yon": {
+            "yon": "LONG",
+            "skor": 0.5385,
+            "bilesenler": [
+              {
+                "ad": "4H trend",
+                "deger": "bull",
+                "agirlik": 0.5,
+                "katki": 0.5,
+                "evidence_id": "E02D"
+              },
+              {
+                "ad": "15M trend",
+                "deger": "bear",
+                "agirlik": 0.15,
+                "katki": -0.15,
+                "evidence_id": "E02C",
+                "not": "rejim=range -> agirlik 50% kirpildi"
+              },
+              {
+                "ad": "turev skoru",
+                "deger": "VERI YOK",
+                "agirlik": 0.0,
+                "katki": 0.0,
+                "evidence_id": null,
+                "not": "kanal yok -> agirliga GIRMEDI (uydurma yok)"
+              }
+            ],
+            "agirlik_toplam": 0.65
+          },
+          "fiyat": 1908.74,
+          "emirler": {
+            "LONG": "MARKET LONG @1908.61 | stop 1875.276667 | T1 1953.61 | R 1.35"
+          }
+        }
+      ]
+    }
+  },
+  "metin": "==============================================================================\nKONSEY SINYAL — YON + GIRIS/CIKIS\n==============================================================================\n\n### BTCUSDT   fiyat=64765.00  (son-kapanis (canli uc kapali))\nYON      : LONG   agirlikli skor +1.0000\n   - 4H trend     = bull      agirlik 0.5   katki +0.5000  kanit=E01D\n   - 15M trend    = bull      agirlik 0.15  katki +0.1500  kanit=E01C  [rejim=range -> agirlik 50% kirpildi]\n   - turev skoru  = VERI YOK  agirlik 0.0   katki +0.0000  kanit=None  [kanal yok -> agirliga GIRMEDI (uydurma yok)]\nEMIR      : EMİR YOK — hiçbir aday kapıları geçemedi\n   x giriş 64765.0: rr_denetim ŞİŞİRİLMİŞ (R 2.37) — reddedildi\n   x giriş 64750.0: rr_denetim ŞİŞİRİLMİŞ (R 2.56) — reddedildi\n   x giriş 64712.6: R 0.7 < r_min 1.35 — reddedildi\nSEVIYELER (LONG) — YER ve YON bilgisi; ISLEM ONERISI DEGIL:\n   tip     giris      stop       hedef      R_rap   R_ger   hukum        stop/ATR mesafe\n   MARKET  64765.0    64750.0    64944.3    11.95   2.37    ŞİŞİRİLMİŞ   0.16     0.0\n   LIMIT   64750.0    64712.6    64944.3    5.2     2.56    ŞİŞİRİLMİŞ   0.39     15.0\n   LIMIT   64712.6    64636.0    64766.2    0.7     0.7     TUTARLI      0.81     52.4\n   LIMIT   64636.0    64635.6    64766.2    325.5   1.72    ŞİŞİRİLMİŞ   0.00     129.0\n   LIMIT   64635.6    64622.1    64766.2    9.67    1.72    ŞİŞİRİLMİŞ   0.14     129.4\n   LIMIT   64623.8    64622.1    64766.2    83.76   1.88    ŞİŞİRİLMİŞ   0.02     141.2\n   not: stop/ATR < 0.8 = gurultu seviyesi stop (kurulum olcegi disi); R_rap sisirilmis ise gecerli olan R_ger'dir\nVERI     : 15M yerel-arsiv yas 33546 dk (STALE) | 4H yerel-arsiv\n\n### ETHUSDT   fiyat=1908.74  (son-kapanis (canli uc kapali))\nYON      : LONG   agirlikli skor +0.5385\n   - 4H trend     = bull      agirlik 0.5   katki +0.5000  kanit=E02D\n   - 15M trend    = bear      agirlik 0.15  katki -0.1500  kanit=E02C  [rejim=range -> agirlik 50% kirpildi]\n   - turev skoru  = VERI YOK  agirlik 0.0   katki +0.0000  kanit=None  [kanal yok -> agirliga GIRMEDI (uydurma yok)]\nEMIR      : MARKET LONG @1908.61 | stop 1875.276667 | T1 1953.61 | R 1.35\n   >> MARKET LONG @1908.61 | stop 1875.276667 | hedef 1953.61 | R 1.35 | rr_denetim TUTARLI\n      giris  : 15M teyitli swing desteği\n      stop   : sabit-USDT profili: 100.0 USDT / 3.0 kontrat = 33.3333 puan\n      hedef  : sabit-USDT profili: 135.0 USDT / 3.0 kontrat = 45.0 puan\n      gecersizlik: 1875.276667 ötesinde 15M gövde kapanışı → kurulum iptal\n      usd_hedef  : UYGUN kazanc [130.42, 145.42] dusen []\n   x giriş 1908.74: usd_hedef UYGUN DEĞİL — düşen kapı ['yapı hedefi bandın içinde']\nSEVIYELER (LONG) — YER ve YON bilgisi; ISLEM ONERISI DEGIL:\n   tip     giris      stop       hedef      R_rap   R_ger   hukum        stop/ATR mesafe\n   MARKET  1908.74    1875.41    1953.74    1.35    1.35    TUTARLI      7.75     0.0\n   MARKET  1908.61    1875.28    1953.61    1.35    1.35    TUTARLI      7.75     0.13\n   LIMIT   1906.5     1873.17    1951.5     1.35    1.35    TUTARLI      7.75     2.24\n   LIMIT   1906.16    1872.83    1951.16    1.35    1.35    TUTARLI      7.75     2.58\n   LIMIT   1905.43    1872.1     1950.43    1.35    1.35    TUTARLI      7.75     3.31\n   LIMIT   1903.86    1870.53    1948.86    1.35    1.35    TUTARLI      7.75     4.88\n   not: stop/ATR < 0.8 = gurultu seviyesi stop (kurulum olcegi disi); R_rap sisirilmis ise gecerli olan R_ger'dir\nVERI     : 15M yerel-arsiv yas 33546 dk (STALE) | 4H yerel-arsiv\n\n------------------------------------------------------------------------------\nKONSEY KAPISI : REPAIR   yayin=DURDURULDU\n   ! Bekleyen dis kontroller var.\n   ! En az bir kaynagin guncelligi sinirli veya bilinmiyor.\n   kritik iddia 6/6 kanitli | tazelik LIMITED\n   >> Seviyeler GOSTERILIYOR ama ISLEM ONERISI DEGILDIR (fail-closed).\n==============================================================================\nYalniz karar-destek; canli/otomatik emir DAHIL DEGIL."
+}

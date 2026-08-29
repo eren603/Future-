@@ -1,0 +1,2 @@
+[console_scripts]
+konsey = konsey_engine.cli:main
