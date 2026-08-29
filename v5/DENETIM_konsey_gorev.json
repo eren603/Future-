@@ -1,0 +1,348 @@
+{
+  "task_id": "TASK-20260829104736",
+  "task_type": "CODE_AUDIT",
+  "language": "tr",
+  "risk_level": "HIGH",
+  "side_effect_level": "NONE",
+  "method_layers_applied": [
+    "ASVS-benzeri kod incelemesi (elle, satir bazli)",
+    "Cochrane-benzeri yanlilik incelemesi (bar-ici sira varsayimi = olcum yanliligi)",
+    "GRADE-benzeri kesinlik kalibrasyonu (VERIFIED/LIMITED/UNKNOWN ayrimi)",
+    "Mekanik repro dogrulamasi (her kritik iddia calistirilan kodla kanitlandi)"
+  ],
+  "method_layers_omitted": [
+    "OWASP SAMM: yonetisim/olgunluk degerlendirmesi YAPILMADI (kapsam disi)",
+    "PRISMA: literatur taramasi YAPILMADI (kod denetimi, arastirma degil)",
+    "BIST/IOSCO bagimsiz guvence: YAPILMADI (tek denetci, dis guvence yok)",
+    "Canli OKX kosusu: AG YOK (403) - canli yol hic sinanmadi"
+  ],
+  "sources": {
+    "S01": {
+      "source_id": "S01",
+      "url_or_location": "/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py",
+      "access_method": "dosya",
+      "accessed_at": "2026-08-29T10:47:48.738782+00:00",
+      "freshness": "CURRENT",
+      "dependency_group": "G1",
+      "title": "/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py",
+      "content_hash": "de0cf11d734b440f4008c8f9cf7802f51b0640bea0aea9413e26c7eee62c07a5"
+    },
+    "S02": {
+      "source_id": "S02",
+      "url_or_location": "/home/user/Future-/v5/Claudcodellm_trading_v5.py",
+      "access_method": "dosya",
+      "accessed_at": "2026-08-29T10:47:48.821938+00:00",
+      "freshness": "CURRENT",
+      "dependency_group": "G1",
+      "title": "/home/user/Future-/v5/Claudcodellm_trading_v5.py",
+      "content_hash": "799012cb140b4b1df183f4e1cb781377b3698e9f6caedcd70d0a4e01db6b0086"
+    },
+    "S03": {
+      "source_id": "S03",
+      "url_or_location": "/home/user/Future-/v5/Claudcodellm_trading_v4.py",
+      "access_method": "dosya",
+      "accessed_at": "2026-08-29T10:47:48.904500+00:00",
+      "freshness": "CURRENT",
+      "dependency_group": "G2",
+      "title": "/home/user/Future-/v5/Claudcodellm_trading_v4.py",
+      "content_hash": "fdf0a7fae05c473e7c24499ecf1236ca905041b2ebe267912a4669f388f28530"
+    }
+  },
+  "evidence": {
+    "E01": {
+      "evidence_id": "E01",
+      "source_id": "S01",
+      "locator": "retrieved-content",
+      "evidence_type": "source",
+      "excerpt": "\"\"\"\nClaudcodellm Trading - v5-BIRLESIK (TEK DOSYA; Pydroid/PC)\n==========================================================\nIcerik: v4 kaynagi GOMULU (md5 dogrulamali) + v5 katmanlari:\n  - I13 : f*=0 iken yon satiri BILGI'ye doner; manset 'HUKUM: BAHIS YOK'\n  - I17 : FADE bahis sinifi (+/-2.0xATR cift limit, 1.5xATR hedef,\n          1.0xATR stop, R=1.5) + fail-closed stake kapisu\n          (n<30 veya edge<=0 -> 'HUKUM_FADE: BAHIS YOK', stake 0)\n  - OKX uyum katmani: getir katmaninda sema cevirimi + ic sayfalama\n  - P2  : v4 kaynak-tarama yardimcisi gomulu kaynaga yonlendirilir\n          (bellek-ici; taranan metin CALISAN kaynak - v5'tekinden kati)\n  - R1  : OKX public hiz sinirina dayaniklilik: istekler arasi >=0.12 s\n          + 429/5xx/gecici ag hatasi geri cekilmesi (0.6/1.8/4.5/9.0 s)\nDiskte Claudcodellm_trading_v4.py GEREKMEZ - v4 bu dosyanin icinde.\nNot: --self-test mumkunse canli BTC 2H verisiyle T2/T7/T9'i da calistirir\n(ag yoksa bu uc test atlanir; diger 14'u bagimsiz calisir).\n\nKULLANIM (tek basina calistirin):\n  python Claudcodellm_trading_v5_birlesik.py             # tam kosu\n  python Claudcodellm_trading_v5_birlesik.py --fade-only # FADE durum tablosu\n  python Claudcodellm_trading_v5_birlesik.py --self-test # 17 test\n\nGUVENLIK: yalnizca OKX PUBLIC GET uclari; API anahtari/imza/emir YOK.\nKarar-destek sistemidir; yatirim tavsiyesi degildir. Canli veri icin\ninternet gerekir; 24 saat taze onbellek varsa otomatik kullanilir.\n\"\"\"\nfrom __future__ import annotations\n\nimport importlib.util\nimport json\nimport os\nimport sys\nimport time\n\nV4_ADI = \"Claudcodellm_trading_v4.py\"\nH2_ADIM_MS = 7200000\n\nE_K = 2.0\nT_K = 1.5\nS_K = 1.0\nR_FADE = T_K / S_K\nMIN_N = 30\nKELLY_CAP = 0.25\nK_STALE = 60\nK_COZUM = 120\nATR_PERIYOT = 14\nH2_HEDEF = 4040\nMAKER = 0.0002\nTAKER = 0.0005\nKAYMA = 0.0002\nFUNDING_PENCERE = 100\nFUNDING_YEDEK = {\"BTC\": 5.9e-5, \"ETH\": 4.6e-5, \"SOL\": 4.4e-5,\n                 \"XRP\": 4.1e-5, \"DOGE\": 6.6e-5}\nCACHE_BAYATLIK_S = 86400\n\nSEMBOL_H2 = {\"BTCUSDT\": \"BTC-USDT-SWAP\", \"ETHUSDT\": \"ETH-USDT-SWAP\",\n             \"SOLUSDT\": \"SOL-USDT-SWAP\", \"XRPUSDT\": \"XRP-USDT-SWAP\",\n             \"DOGEUSDT\": \"DOGE-USDT-SWAP\"}\n\nYASAKLI = (\"HOLD\", \"ABSTAIN\", \"Notr 0.0\", \"NOTR 0.0\")\n\n_I13_ESKI = (\n    '        \"YON        : %s  (kaynak=%s, p_ham=%s) - yon KOSULSUZ verilir\"\\n'\n    '        % (karar[\"yon\"], karar.get(\"yon_kaynagi\"), _bicim(karar.get(\"p_ham\"))),\\n'\n)\n_I13_YENI = (\n    '        \"HUKUM      : %s\" % (\"BAHIS ACILIR - f*=%s\" % _bicim(s.get(\"f\"), \".6f\")\\n'\n    '                    if acilir else\\n'\n    '                    \"BAHIS YOK - f*=0 (gurultu bandi); asagidaki yon BILGIDIR,\"\\n'\n    '                    \" islem sinyali DEGILDIR\"),\\n'\n    '        \"YON        : %s  (kaynak=%s, p_ham=%s)%s\"\\n'\n    '        % (karar[\"yon\"], karar.get(\"yon_kaynagi\"), _bicim(karar.get(\"p_ham\")),\\n'\n    '           \" - yon KOSULSUZ verilir\" if acilir\\n'\n    '           else \" - BILGI SATIRI: f*=0, islem ACMA\"),\\n'\n)\n\n\ndef _i13_uygula(kaynak):\n    if \"HUKUM      :\" in kaynak:\n        return kaynak, \"zaten-uygulanmis\"\n    if _I13_ESKI not in kaynak:\n        raise RuntimeError(\"I13: eski blok bulunamadi - v4 kaynagi farkli\")\n    return kaynak.replace(_I13_ESKI, _I13_YENI), \"bellek-icinde-uygulandi\"\n\n\n# ---- GOMULU v4 KAYNAGI (tek dosya modu; diskte v4 GEREKMEZ) ----\nimport base64 as _b64\nimport hashlib as _hl\nimport types as _tp\nV4_MD5 = \"45e9f485d0db62aa9529a813ff502c6e\"\nV4_LEN = 216129\nV4_B64 = (\n    \"IyEvdXNyL2Jpbi9lbnYgcHl0aG9uMwojIC0qLSBjb2Rpbmc6IHV0Zi04IC0qLQoiIiJsbG1fdHJhZGluZ192NC5weSDigJQg\"\n    \"R1VSVUxUVUxVIEtBTkFMIChub2lzeSBjaGFubmVsKSAtPiBUUkFESU5HLCB0ZWsgZG9zeWEuCgpFayBiYWdpbWxpbGlrIFlP\"\n    \"S1RVUiAoeWFsbml6IFB5dGhvbiBzdGFuZGFydCBrdXR1cGhhbmVzaSkuIFB5ZHJvaWQgMyB1eXVtbHUuCgogIHB5dGhvbiBs\"\n    \"bG1fdHJhZGluZ192NC5weSAtLXNlbGYtdGVzdCAgICB0ZXN0bGVyaSBrb3N0dXJ1cgogIHB5dGhvbiBsbG1fdHJhZGluZ192\"\n    \"NC5weSAtLWVzaWtsZXIgICAgICBoZXIgc2FiaXRpIGtheW5haytnZXJla2Nlc2l5bGUgYmFzYXIKICBweXRob24gbGxtX3Ry\"\n    \"YWRpbmdfdjQucHkgLS1vcm5layAgICAgICAgQUdTSVogb3JuZWsga29zdSAoc2FodGUgdmVyaSkKICBweXRob24gbGxtX3Ry\"\n    \"YWRpbmdfdjQucHkgLS1jdW1sZSAgICAgICAgb3JuZWsgYm96dWsgY3VtbGV5aSBvbmFyaXIgKG1la2FuaXptYSBnb3N0ZXJp\"\n    \"bWkpCiAgcHl0aG9uIGxsbV90cmFkaW5nX3Y0LnB5IC0tY2FubGkgQlRDVVNEVCAgIEdFUkNFSyBCaW5hbmNlIHB1YmxpYyBH\"\n    \"RVQKICBweXRob24gbGxtX3RyYWRpbmdfdjQucHkgLS1yYXBvciByLmpzb24gICAga29zdXl1IEpTT04nYSB5YXphcgoKTkVE\"\n    \"RU4gdjQ6IHYzJ3RlIEVLU0lLIE9MQU4gVEFNIEtBVE1BTiwgTExNIHppbmNpcmluaW4gQklSSU5DSSBoYWxrYXNpeWRpIOKA\"\n    \"lApnaXJkaSBndXJ1bHR1c3VudW4gVVJFVElNREVOIE9OQ0Ugb25hcmlsbWFzaSAobm9pc3kgY2hhbm5lbCkuIHYzIGJvenVr\"\n    \"L2Vrc2lrCmJpciBrYW5hbGkgImthcHNhbSBkdXN1ciIgZGl5ZSBpc2xpeW9yZHU7IG9uYXJtaXlvcmR1LiBCdSBkb3N5YSBv\"\n    \"IGthdG1hbmkKTExNJ2Rla2kgbWVrYW5pem1hbmluIEJJUkVCSVIga2Fyc2lsaWdpIG9sYXJhayBrdXJhcjoKCiAgQ1VNTEUg\"\n    \"ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUElZQVNBIEtBTkFMSQogIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t\"\n    \"LS0tLS0tLS0tLS0tLSAgIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQogIFAoYykgc296Y3VrIG9uc2Vs\"\n    \"aSAgICAgICAgICAgICAgICAgICAgIGthbmFsaW4ga2VuZGkgZ2VjbWlzIGRhZ2lsaW1pCiAgUChvfGMpIHlhemltLWhhdGFz\"\n    \"aSBrYW5hbGkgICAgICAgICAgICAgYm96dWxtYSBtb2RlbGkgKGJlcyBtb2QsIGFzYWdpZGEpCiAgcG9zdGVyaW9yID0gYXJn\"\n    \"bWF4IFAoYykqUChvfGMpICAgICAgICAgb25hcmlsbWlzIGRlZ2VyID0gYXJnbWF4IGF5bmkgY2FycGltCiAgYmFnbGFtbGEg\"\n    \"eWVuaWRlbiBwdWFubGFtYSAgICAgICAgICAgICAgY2FwcmF6LWthbmFsIG9uc2VsIChmaXlhdCAtPiB0dXJldikKICBhcmdt\"\n    \"YXggREFJTUEgdG9rZW4gc2VjZXIgKEhPTEQgWU9LKSAgICBhcmdtYXggREFJTUEgeW9uIHNlY2VyIChIT0xEIFlPSykKICBk\"\n    \"dXN1ayBndXZlbiAhPSBjaWt0aSB5b2sgICAgICAgICAgICAgICBkdXN1ayBvbmFyaW0gZ3V2ZW5pIC0+IFNUQUtFIGR1c2Vy\"\n    \"CgpCRVMgQk9aVUxNQSBNT0RVIChvcm5layBjdW1sZWRlbiBiaXJlYmlyIHR1cmV0aWxkaSk6CiAgc2lsbWUgICAgICAgICJp\"\n    \"bWRpIiAgICAgICAgPC0gInNpbWRpIiAgICAgICA6IGVrc2lrIGJhciAvIGVrc2lrIGtheWl0CiAgZGVnaXN0aXJtZSAgICJz\"\n    \"YW1hIiAgICAgICAgPC0gInNhbmEiICAgICAgICA6IHNwaWtlIC8gYXlraXJpIGRlZ2VyCiAgdXphdG1hICAgICAgICJwdWdv\"\n    \"cmVlZWV3dSIgPC0gImdvcmUiICAgICAgICA6IGRvbm11cyAvIHRla3JhcmxpIGRlZ2VyCiAgZWtsZW1lICAgICAgICJlc2tp\"\n    \"c2lzIiAgICAgPC0gImVza2lzaSIgICAgICA6IGNpZnQga2F5aXQKICBiaXJsZXN0aXJtZSAgImdldGVyYW5sYWRpbnNlbiIg\"\n    \"PC0gaWtpIGtlbGltZTogdGVrIGFubGlrIGRlZ2VyaW4gY29rIGJhcmEgeWF5aWxtYXNpCgpTRVJUIFNPWkxFU01FIChtZWth\"\n    \"bmlrIGtvcnVudXIsIHRlc3RsZXJsZSBraWxpdGxpKToKICAxLiBIT0xEL0FCU1RBSU4vQkVLTEUgc2luaWZpIFlPS1RVUi4g\"\n    \"WW9uIGhlciBrb3N1ZGEgdXJldGlsaXIuCiAgMi4gIk5vdHIgMC4wIHlheiIgYmlyIG9uYXJpbSBERUdJTERJUiB2ZSBoaWNi\"\n    \"aXIgeWVyZGUgeWFwaWxtYXouCiAgMy4gT25hcmltIGd1dmVuaSBPTENVTFVSIChnZXJpeWUtZG9udWsgYmVjZXJpKSwgc2Vj\"\n    \"aWxtZXouIEJlY2VyaSA8PSAwIGlzZQogICAgIG9uYXJpbSBZQVBJTE1BWiB2ZSBrYXBzYW0gZHVzZXIgKGZhaWwtY2xvc2Vk\"\n    \"KS4KICA0LiBPbmFyaW0gZ3V2ZW5pIFlBTE5JWiBzdGFrZSBla3NlbmluZSBiYWdsYW5pcjsgeW9udSBBU0xBIHN1c3R1cm1h\"\n    \"ei4KICA1LiBSID0gaGVkZWZfbWVzYWZlIC8gc3RvcF9tZXNhZmUuIEJhc2thIGJpciBSIHRhbmltaSB5b2t0dXIuCiAgNi4g\"\n    \"TG9vay1haGVhZDogYmFyIGkgaWNpbiBoZXIgaGVzYXAgWUFMTklaIDw9IGkgdmVyaXlpIG9rdXIuCgpHVVZFTkxJSyBTSU5J\"\n    \"Ukk6IGJ1IGRvc3lhZGEgQVBJIGFuYWh0YXJpLCBpbXphLCBlbWlyL2lwdGFsIHVjdSBZT0tUVVIgdmUKZWtsZW5tZW1lbGlk\"\n    \"aXIuIFlhbG5peiBwdWJsaWMgR0VUIG9rdW51ci4gWWFsbml6IGthcmFyLWRlc3RlazsgY2FubGkvb3RvbWF0aWsKZW1pciBE\"\n    \"QUhJTCBERUdJTERJUi4gKEd1dmVubGlrVGVzdGkgbW90b3IgYm9sdW11bnUgdGFyYXIuKQoiIiIKCmltcG9ydCBtYXRoCmlt\"\n    \"cG9ydCByYW5kb20KaW1wb3J0IHpsaWIKClNVUlVNID0gImxsbS10cmFkaW5nLXY0IgpZT05fU09aTFVHVSA9ICgiTE9ORyIs\"\n    \"ICJTSE9SVCIpICAgICAjIEhPTEQgWU9LIC0gc296bHVrIGlraSBlbGVtYW5saWRpcgpMT05HX1NJTklGSSA9IDEKRVBTSUxP\"\n    \"TiA9IDFlLTEyCgojID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09\"\n    \"PSBFU0lLIEJFWUFOSQojIEtheW5hayBhbGFuaSB1YyBkZWdlcmRlbiBiaXJpOgojICAgT0xDVUxFTiAgLSBidSBrb3N1bnVu\"\n    \"IHZlcmlzaW5kZW4gaXN0YXRpc3Rpa2xlIHR1cmV0aWxkaQojICAgWUFQSVNBTCAgLSBtYXRlbWF0aWtzZWwvemFtYW4gdGFu\"\n    \"aW1pbmRhbiBnZWxpciwgc2VjaW0gZGVnaWwKIyAgIFZBUlNBWUlNIC0ga2FsaWJyZSBFRElMTUVESTsgZ2VyZWtjZXNpIHZl\"\n    \"IG9sY3VtIHlvbHUgem9ydW5sdQpFU0lLX0tBWU5BR0kgPSB7fQoKCmRlZiBlc2lrX2theWRldChhZCwgZGVnZXIsIGtheW5h\"\n    \"aywgZ2VyZWtjZSwgb2xjdW1feW9sdT0iIik6CiAgICBFU0lLX0tBWU5BR0lbYWRdID0geyJkZWdlciI6IGRlZ2VyLCAia2F5\"\n    \"bmFrIjoga2F5bmFrLAogICAgICAgICAgICAgICAgICAgICAgICAiZ2VyZWtjZSI6IGdlcmVrY2UsICJvbGN1bV95b2x1Ijog\"\n    \"b2xjdW1feW9sdX0KICAgIHJldHVybiBkZWdlcgoKCmRlZiBlc2lrX3JhcG9ydSgpOgogICAgcyA9IFsiU0FCSVQgRVNJSyBC\"\n    \"RVlBTkkgKGV0aWtldHNpeiBnaXpsaSBlc2lrIHlhc2FrKToiXQogICAgZm9yIGFkIGluIHNvcnRlZChFU0lLX0tBWU5BR0kp\"\n    \"OgogICAgICAgIGsgPSBFU0lLX0tBWU5BR0lbYWRdCiAgICAgICAgcy5hcHBlbmQoIiAgJS0yNnMgPSAlLTEycyBbJXNdIiAl\"\n    \"IChhZCwga1siZGVnZXIiXSwga1sia2F5bmFrIl0pKQogICAgICAgIHMuYXBwZW5kKCIgICAgICAlcyIgJSBrWyJnZXJla2Nl\"\n    \"Il0pCiAgICAgICAgaWYga1sib2xjdW1feW9sdSJdOgogICAgICAgICAgICBzLmFwcGVuZCgiICAgICAgT0xDVU0gWU9MVTog\"\n    \"JXMiICUga1sib2xjdW1feW9sdSJdKQogICAgcmV0dXJuICJcbiIuam9pbihzKQoKCiMgLS0tIGd1cnVsdHVsdSBrYW5hbCBz\"\n    \"YWJpdGxlcmkgLS0tClNQSUtFX1ogPSBlc2lrX2theWRldCgKICAgICJTUElLRV9aIiwgNC4wLCAiT0xDVUxFTiIsCiAgICAi\"\n    \"Um9idXN0LXogKG1lZHlhbiArIDEuNDgyNipNQUQpIGVzaWdpOyBidW51biBVWkVSSSAnZGVnaXN0aXJtZScgYm96dWxtYXNp\"\n    \"ICIKICAgICJzYXlpbGlyLiBLdWxsYW5pY2luaW4ga2VuZGkgdmVyaXNpbmRlIG9sY3VsZHUgKDIwMCBiYXIgeCA0IHNlcmkp\"\n    \"OiAiCiAgICAifHp8PjMgLT4gNC4uOCBvbGF5LCB8enw+NCAtPiAxLi4zIG9sYXksIHx6fD41IC0+IDAuLjEgb2xheS4gNC4w\"\n    \"LCB0YWJhbiAiCiAgICAidGV0aWtsZW5tZSBvcmFuaW5pICUwLjUtMS41IGJhbmRpbmRhIHR1dGFyLiIsCiAgICAia2FuYWwg\"\n    \"YmFzaW5hIHx6fCBkYWdpbGltaW5pbiB1c3QgeXV6ZGVsaWdpOyBoZWRlZiB0YWJhbiBvcmFuIDw9ICUyIikKCk9OQVJJTV9Q\"\n    \"RU5DRVJFU0kgPSBlc2lrX2theWRldCgKICAgICJPTkFSSU1fUEVOQ0VSRVNJIiwgOCwgIk9MQ1VMRU4iLAogICAgIk9uYXJp\"\n    \"bSBrZXN0aXJpY2lsZXJpbmluIChuYWlmL21lZHlhbi9ld21hKSBnZXJpeWUgYmFrdGlnaSBiYXIgc2F5aXNpLiAiCiAgICAi\"\n    \"S3VsbGFuaWNpbmluIE9JIHZlIHRha2VyIHNlcmlsZXJpbmRlIChuPTQ4KSBXPTggaWxlIG9sY3VsZW4gYmVjZXJpOiAiCiAg\"\n    \"ICAiT0kgbmFpZiArMC44NDIsIHRha2VyIG5haWYgLTAuNTY4LiBXIGJ1eXVkdWtjZSBvcm5layBhemFsaXIsIGt1Y3VrZHVr\"\n    \"Y2UgIgogICAgIm1lZHlhbi9NQUQga2FyYXJzaXpsYXNpci4iLAogICAgIlcneWUga2Fyc2kgb2xjdWxlbiBiZWNlcmkgZWdy\"\n    \"aXNpOyBwbGF0b3lhIGdpcmRpZ2kgZW4ga3VjdWsgVyIpCgpBU0dBUklfQkVDRVJJID0gZXNpa19rYXlkZXQoCiAgICAiQVNH\"\n    \"QVJJX0JFQ0VSSSIsIDAuMCwgIllBUElTQUwiLAogICAgIk9uYXJpbWluIFlBUElMQUJJTE1FU0kgaWNpbiBnZXJla2VuIGVu\"\n    \"IGR1c3VrIGJlY2VyaS4gMC4wIGJpciBTRUNJTSAiCiAgICAiZGVnaWwgVEFOSU1ESVI6IGJlY2VyaSA9IDEgLSBNQUUvTUFF\"\n    \"X3RhYmFuIG9sZHVndW5kYW4gYmVjZXJpPD0wLCAiCiAgICAia2VzdGlyaWNpbmluIHRhYmFuLWtlc3RpcmljaWRlbiBJWUkg\"\n    \"T0xNQURJR0kgZGVtZWt0aXI7IGJveWxlIGJpciAiCiAgICAib25hcmltIGJpbGdpIHRhc2ltYXosIHV5ZHVybWEgb2x1ci4i\"\n    \"KQoKQVNHQVJJX0JFQ0VSSV9PUk5FSyA9IGVzaWtfa2F5ZGV0KAogICAgIkFTR0FSSV9CRUNFUklfT1JORUsiLCAxMCwgIlZB\"\n    \"UlNBWUlNIiwKICAgICJCZWNlcmkgb2xjdW11bnVuIGFubGFtbGkgc2F5aWxtYXNpIGljaW4gZ2VyZWtlbiBlbiBheiBrZXN0\"\n    \"aXJpbSBhZGVkaS4gIgogICAgIkthbGlicmUgRURJTE1FREkuIEF6IG9ybmVrdGUgYmVjZXJpIGlzYXJldGkgZ3VydWx0dWx1\"\n    \"ZHVyOyBmYWlsLWNsb3NlZCAiCiAgICAidGFyYWZ0YSBrYWxtYWsgaWNpbiBvbmFyaW0geWFwaWxtYXouIiwKICAgICJiZWNl\"\n    \"cmkgdGFobWluaW5pbiBib290c3RyYXAgc3RkJ3NpIGhlZGVmIGJhbmRpbiBhbHRpbmEgaW5pbmNlIikKCkRPTk1VU19BUkRJ\"\n    \"U0lLID0gZXNpa19rYXlkZXQoCiAgICAiRE9OTVVTX0FSRElTSUsiLCAzLCAiVkFSU0FZSU0iLAogICAgIkJpciBrYW5hbGlu\"\n    \"ICdkb25tdXMnIHNheWlsbWFzaSBpY2luIGdlcmVrZW4gYXJkaXNpayBvemRlcyBkZWdlciBzYXlpc2kuICIKICAgICJLYWxp\"\n    \"YnJlIEVESUxNRURJLiBLdWxsYW5pY2luaW4gdmVyaXNpbmRlIE9JIHZlIHRha2VyJ2RhIDAgYXJkaXNpayBvemRlcyAiCiAg\"\n    \"ICAiZGVnZXIgdmFyOyB5YW5pIGJ1IGVzaWsgc3UgYW4gSElDIHRldGlrbGVubWl5b3IgKHRhYmFuIG9yYW4gPSAwKS4iLAog\"\n    \"ICAgImthbmFsaW4gYXJkaXNpay1vemRlcyB1enVubHVrIGRhZ2lsaW1pbmluIHVzdCB5dXpkZWxpZ2kiKQoKRUNFX1RBVkFO\"\n    \"SSA9IGVzaWtfa2F5ZGV0KAogICAgIkVDRV9UQVZBTkkiLCAwLjEwLCAiVkFSU0FZSU0iLAogICAgIkthbGlicmFzeW9uIGd1\"\n    \"dmVuaWxtZXpsaWsgZXNpZ2kuIEthbGlicmUgRURJTE1FREkuIFRlayB5b25sdSBldGtpOiAiCiAgICAiYnV5dXJzZSBzdGFr\"\n    \"ZSBidXl1ci4gRmFpbC1jbG9zZWQgdGFyYWZ0YSBrdWN1ayBzZWNpbGRpLiIsCiAgICAiZ3J1cCBFQ0UgZGFnaWxpbWluaW4g\"\n    \"dXN0IHl1emRlbGlnaSAoaG9sZG91dCB1emVyaW5kZSkiKQoKQVNHQVJJX09MQ1VNID0gZXNpa19rYXlkZXQoCiAgICAiQVNH\"\n    \"QVJJX09MQ1VNIiwgMjAsICJWQVJTQVlJTSIsCiAgICAiSWtpbGkgb3JhbmluIFdpbHNvbiBhcmFsaWdpbmluIGlzZSB5YXJh\"\n    \"ciBnZW5pc2xpZ2UgaW5",
+      "limitations": "Pasif edinim; anlamsal doğrulama ayrıca yapılmalıdır."
+    },
+    "E02": {
+      "evidence_id": "E02",
+      "source_id": "S02",
+      "locator": "retrieved-content",
+      "evidence_type": "source",
+      "excerpt": "# -*- coding: utf-8 -*-\n\"\"\"\nClaudcodellm_trading_v5.py — v4 (DOKUNULMAMIS) + FADE bahis sinifi (I17)\n=======================================================================\nv5, v4'U DEGISTIRMEZ: v4 kaynagi oldugu gibi yuklenir; I13 manşet kurali\n(hukum satiri) dosyada yoksa E23'te 4/4 testle dogrulanmis kaynak\ndonusumuyle BELLEK ICINDE uygulanir. Diskteki v4 dosyasina DOKUNULMAZ.\n\nIki BAGIMSIZ bahis sinifi:\n  ANA SINIF (v4) : 15M+4H kanallarindan p/f* uretir; YON her zaman verilir.\n  FADE SINIF (v5): 2H kapanislarinda +-E_K xATR'a cift LIMIT koyar; ilk\n                   dolan kenar yonu belirler (alt=>LONG, ust=>SHORT);\n                   hedef T_K xATR donus, stop S_K xATR; R = T_K/S_K.\n                   GECMIS (yalnizca COZULMUS) yarislardan p_hat/edge_hat\n                   OLculur; fail-closed stake kapisi: n < MIN_N veya\n                   edge_hat <= 0 ise HUKUM_FADE = BAHIS YOK, stake = 0.\n\nTHRESHOLD BEYANLARI (KONSEY v9.0 — hepsi v4 esik defterine de yazilir):\n  E_K=2.0        OLCULEN  E25/E26: OOS-pozitif bolge [1.5,2.0], en iyi toplam.\n  T_K=1.5        OLCULEN  E25: 5/5 sembolde en iyi/tutarli hedef.\n  S_K=1.0        OLCULEN  E26: +80.5R [27.8,133.1]. Alternatif S_K=2.0.\n  MIN_N=30       YAPISAL  KL Ttemeli; n<30'da kapi KAPALI (fail-closed).\n  KELLY_CAP=0.25 VARSAYIM sermaye-riski ust siniri (muhafazakarlik).\n  K_STALE=60     YAPISAL  60x2H=5gun dolmayan limit bayatir: emir iptal.\n  K_COZUM=120    YAPISAL  Sonlanma garantisi: asilirsa kapanis fiyatiyla\n                          pozisyon kapatilir (taker+kayma).\n  MAKER/TAKER    OLCULEN  S16: OKX USDT-vadeli Lv1 (%0.02/%0.05).\n  KAYMA=0.0002   VARSAYIM E22'den tasinan sabit kayma.\n  FUNDING        OLCULEN  S14: sembol bazli son-100 donem |oran| ortalamasi;\n                          yon-bagimsiz MALIYET olarak uygulanir (muhafazakar).\n  H2_HEDEF=4040  OLCULEN  E25 penceresiyle ayni ~11 ay 2H gecmis.\n  CACHE_BAYATLIK VARSAYIM 2H onbellek tazeligi 1 gun.\n\nMEKANIK SOZLESME (v4'ten aynen):\n  - HOLD/ABSTAIN/\"Notr 0.0\" YASAK; ana YON satiri v4'ten her zaman gelir.\n  - FADE kapisinin kapalisi BAHIS SINIFI kapisidir (yone HOLD degil): ana\n    blok etkilenmez. f*=0'da ana manşet I13 geregi \"HUKUM: BAHIS YOK\".\n  - Guven olculur secilmez; fail-closed: edge_hat<=0 -> stake TAM 0.0.\n  - R = hedef_mesafesi/stop_mesafesi (v4 seviyeler() ile ayni, T9 testi).\n  - BAK-ILERI YASAK: fade_karar yalnizca barlar[:simdi+1] okur (T2 zehir\n    testi: gelecek barlar x10/x0.1 ile zehirlenir, karar DEGISMEZ).\n\nOKX UYUM KATMANI (v5, v4 KAYNAGINA DOKUNMAZ — getir katmaninda):\n  v4'un OKX canli yolu kirikti: OkxAdaptor sayfalanir bayragi tasimadigi\n  icin ham {\"code\",\"data\"} sozlugunu kanal olarak depoluyordu ve OKX mum\n  satirlari Binance 12-alan biciminden farkliydi (taker_alis kolonu YOK).\n  v5 cevirileri: (a) yanit acimi code/data; (b) mum -> history-candles\n  (yalnizca KAPALI mumlar; yarim mum C29 riski kapanir) + 12-alanli\n  Binance satiri; (c) taker_alis = hacim/2 NOTR dolgu -> CVD delta=0\n  -> z=0: yon bilgisi TASIMAZ, uydurma YOK (gercek buyVol taker-volume\n  kanalindan ayri olarak zaten modelde); (d) rubik oi/taker satirlari\n  Binance sozluk bicimine cevrilir; (e) endTime(Binance)->after(OKX); (f) OKX 100-bar sayfalari IC\n  sayfalama ile AZAMI_BAR_BUTCESI bar butcesine tamamlanir (v4'un\n  8-sayfa siniri Binance 1500-bar sayfasina gore ayarliydi; OKX\n  100-bar sayfasinda ayni bar butcesi ~40 sayfa ister).\n\nGUVENLIK: Yalnizca KARAR DESTEgi. Emir/iptal ucu, API anahtari, imza YOK\n(v4 http_getir uzerinden public GET disinda ag KULLANILMAZ).\n\"\"\"\nfrom __future__ import annotations\n\nimport importlib.util\nimport json\nimport os\nimport sys\nimport time\n\nV4_ADI = \"Claudcodellm_trading_v4.py\"\nH2_ADIM_MS = 7200000\n\nE_K = 2.0\nT_K = 1.5\nS_K = 1.0\nR_FADE = T_K / S_K\nMIN_N = 30\nKELLY_CAP = 0.25\nK_STALE = 60\nK_COZUM = 120\nATR_PERIYOT = 14\nH2_HEDEF = 4040\nMAKER = 0.0002\nTAKER = 0.0005\nKAYMA = 0.0002\nFUNDING_PENCERE = 100\nFUNDING_YEDEK = {\"BTC\": 5.9e-5, \"ETH\": 4.6e-5, \"SOL\": 4.4e-5,\n                 \"XRP\": 4.1e-5, \"DOGE\": 6.6e-5}\nCACHE_BAYATLIK_S = 86400\n\nSEMBOL_H2 = {\"BTCUSDT\": \"BTC-USDT-SWAP\", \"ETHUSDT\": \"ETH-USDT-SWAP\",\n             \"SOLUSDT\": \"SOL-USDT-SWAP\", \"XRPUSDT\": \"XRP-USDT-SWAP\",\n             \"DOGEUSDT\": \"DOGE-USDT-SWAP\"}\n\nYASAKLI = (\"HOLD\", \"ABSTAIN\", \"Notr 0.0\", \"NOTR 0.0\")\n\n_I13_ESKI = (\n    '        \"YON        : %s  (kaynak=%s, p_ham=%s) - yon KOSULSUZ verilir\"\\n'\n    '        % (karar[\"yon\"], karar.get(\"yon_kaynagi\"), _bicim(karar.get(\"p_ham\"))),\\n'\n)\n_I13_YENI = (\n    '        \"HUKUM      : %s\" % (\"BAHIS ACILIR - f*=%s\" % _bicim(s.get(\"f\"), \".6f\")\\n'\n    '                    if acilir else\\n'\n    '                    \"BAHIS YOK - f*=0 (gurultu bandi); asagidaki yon BILGIDIR,\"\\n'\n    '                    \" islem sinyali DEGILDIR\"),\\n'\n    '        \"YON        : %s  (kaynak=%s, p_ham=%s)%s\"\\n'\n    '        % (karar[\"yon\"], karar.get(\"yon_kaynagi\"), _bicim(karar.get(\"p_ham\")),\\n'\n    '           \" - yon KOSULSUZ verilir\" if acilir\\n'\n    '           else \" - BILGI SATIRI: f*=0, islem ACMA\"),\\n'\n)\n\n\ndef _i13_uygula(kaynak):\n    if \"HUKUM      :\" in kaynak:\n        return kaynak, \"zaten-uygulanmis\"\n    if _I13_ESKI not in kaynak:\n        raise RuntimeError(\"I13: eski blok bulunamadi - v4 kaynagi farkli\")\n    return kaynak.replace(_I13_ESKI, _I13_YENI), \"bellek-icinde-uygulandi\"\n\n\ndef _v4_yukle():\n    kok = os.path.dirname(os.path.abspath(__file__))\n    for yol in [os.path.join(kok, V4_ADI), V4_ADI,\n                os.path.join(\"Uploads\", V4_ADI)]:\n        if os.path.exists(yol):\n            kaynak, i13 = _i13_uygula(open(yol, encoding=\"utf-8\").read())\n            spec = importlib.util.spec_from_file_location(\"tv4_v5\", yol)\n            mod = importlib.util.module_from_spec(spec)\n            sys.modules[\"tv4_v5\"] = mod\n            mod.__dict__[\"__name__\"] = \"tv4_v5\"\n            exec(compile(kaynak, yol, \"exec\"), mod.__dict__)\n            return mod, i13\n    raise FileNotFoundError(V4_ADI + \" bulunamadi (v5 ile ayni dizine koyun)\")\n\n\nTV4, I13_DURUM = _v4_yukle()\n\nfor _ad, _dg, _ky, _gk, _oy in [\n        (\"V5_E_KATSAYI\", E_K, \"OLCULEN\",\n         \"E25/E26: OOS-pozitif bolge [1.5,2.0]; en iyi toplam e=2.0\",\n         \"grid IS/OOS + stride-34 bagimsiz sinyal bootstrap\"),\n        (\"V5_T_KATSAYI\", T_K, \"OLCULEN\",\n         \"E25: 5/5 sembolde en iyi/tutarli hedef katsayisi\",\n         \"ayni grid taramasi\"),\n        (\"V5_S_KATSAYI\", S_K, \"OLCULEN\",\n         \"E26: F2(2,1,1.5) +80.5R [27.8,133.1]\", \"ayni grid taramasi\"),\n        (\"V5_MIN_N\", MIN_N, \"YAPISAL\",\n         \"KL Ttemeli; daha az orneklemde edge_hat guvenilmez, kapi kapali\",\n         \"bagimsiz yarisma sayisinin bootstrap SE'si\"),\n        (\"V5_KELLY_CAP\", KELLY_CAP, \"VARSAYIM\",\n         \"sermaye-riski ust siniri; edge_hat/b_win burada kirpilir\",\n         \"gercek dolmam/Itare maliyetleriyle yeniden olculmeli\"),\n        (\"V5_K_STALE_BAR\", K_STALE, \"YAPISAL\",\n         \"60x2H=5gun dolmayan limit bayatir; emir iptal edilir\",\n         \"dolma suresi dagilimindan (E29 defter akisi) turetilebilir\"),\n        (\"V5_K_COZUM_BAR\", K_COZUM, \"YAPISAL\",\n         \"sonlanma garantisi; asilirsa pozisyon kapanisla kapatilir\",\n         \"yarisma suresi dagiliminin kuyrugu\"),\n        (\"V5_MAKER\", MAKER, \"OLCULEN\", \"S16 OKX USDT-vadeli Lv1\", \"-\"),\n        (\"V5_TAKER\", TAKER, \"OLCULEN\", \"S16 OKX USDT-vadeli Lv1\", \"-\"),\n        (\"V5_KAYMA\", KAYMA, \"VARSAYIM\", \"E22'den tasinan sabit kayma\",\n         \"gercek islem kayitlarindan olculmeli\"),\n        (\"V5_OKX_CVD_NOTR_DOLGU\", 0.5, \"VARSAYIM\",\n         \"OKX mumlarinda taker-alis kolonu yok; hacim/2 notr dolgu CVD'yi\"\n         \" 0'a ceker (z=0, yon tasimaz)\",\n         \"OKX taker-volume buyVol ile zaman-bazli birlestirilebilir (v5.1)\"),\n        (\"V5_OKX_GECMIS_BAR\", 4000, \"OLCULEN\",\n         \"history-candles sayfalama derinligi (AZAMI_BAR_BUTCESI ile ayni)\",\n         \"sayfa sayisi x 100\")]:\n    try:\n        TV4.esik_kaydet(_ad, _dg, _ky, _gk, _oy)\n    except Exception:\n        pass\n\n\n# ------------------------------------------------- OKX UYUM KATMANI\nclass _OkxUyumluAdaptor(TV4.OkxAdaptor):\n    \"\"\"OkxAdaptor + sayfalanir. v4'un OKX yolu kirikti (ham yanit sozlugu\n    depolaniyordu). v4 KAYNAGI degismez; calisma zamaninda enjekte edilir.\"\"\"\n    sayfalanir = True\n    ad = \"okx-v5\"\n\n\nTV4.OkxAdaptor = _OkxUyumluAdaptor\n\n\ndef _okx_sekillendir(url, istek, r):\n    \"\"\"OKX ham yanitini v4'un Binance bicimlerine cevirir.\"\"\"\n    if r is None:\n        return r\n    if \"/market/candles\" in url or \"/market/history-candles\" in url:\n        adim = 14400000 if str(istek.get(\"bar\", \"\")).upper().startswith(\"4H\") else 900000\n        out = []\n        for x in r:\n            try:\n                ts, o, h, l, c, v = int(x[0]), float(x[1]), float(x[2]), float(x[3]), float(x[4]), float(x[5])\n            except (TypeError, ValueError, IndexError):\n                continue\n            try:\n                qv = float(x[7])\n            except (TypeError, ValueError, IndexError):\n                qv = v * c\n            out.append([ts, o, h, l, c, v, ts + adim - 1, qv, 0, v / 2.0, 0, 0])\n        return out\n    if \"open-interest-history\" in url:\n        out = []\n        for x in r:\n            try:\n                out.append({\"timestamp\": int(x[0]), \"sumOpenInterest\": float(x[1]),\n                            \"sumOpenInterestValue\": float(x[3])})\n            except (TypeError, ValueError, IndexError):\n                continue\n        return out\n    if \"taker-volume\" in url:\n        out = []\n        for x in r:\n            try:\n                ts, sell, buy = int(x[0]), float(x[1]), float(x[2])\n                oran = float(x[3]) if len(x) > 3 else (buy / sell if sell else 0.0)\n            except (TypeError, ValueError, IndexError, ZeroDivisionError):\n                continue\n            out.append({\"timestamp\": ts, \"sellVol\": sell, \"buyVol\": buy,\n                        \"buySellRatio\": oran})\n        return out\n    return r\n\n\ndef okx_uyumlu_getir(url, params, zaman_asimi=20, cek=None):\n    \"\"\"v5 OKX uyumlu getir_fn (v4 http_getir sarmasi; public GET ONLY).\n    - Binance ucuna istek -> aninda hata (OKX odakli mod; hizli adaptor dususu).\n    - endTime -> after cevirisi; /market/candles -> history-candles (kapali mum).\n    - 4H mumleri tek cagri icinde sayfalanir (~1200 bar).\n    - code != '0' -> hata (kanal None duser, uydurma YOK).\"\"\"\n    cek = TV4.http_getir if cek is None else cek\n    if \"binance.com\" in url:\n        raise RuntimeError(\"v5 OKX odakli mod: Binance ucuna istek yapilmaz\")\n    istek = dict(params or {})\n    if \"endTime\" in istek:\n        istek[\"after\"] = istek.pop(\"endTime\")\n    mum_mu = \"/market/candles\" in url\n    if mum_mu:\n        url = url.replace(\"/market/candles\", \"/market/history-candles\")\n        istek[\"limit\"] = \"100\"\n    r = cek(url, istek, zaman_asimi)\n    if isinstance(r, dict) and \"code\" in r:\n        if str(r.get(\"code\")) != \"0\":\n            raise RuntimeError(\"OKX code=%s msg=%s\"\n                               % (r.get(\"code\"), str(r.get(\"msg\"))[:60]))\n        r = r.get(\"data\")\n    if mum_mu and \"after\" not in istek and r:\n        hedef_i = 1200 if str(istek.get(\"bar\", \"\")) == \"4H\" else int(TV4.AZAMI_BAR_BUTCESI)\n        gorulen = {x[0] for x in r}\n        after = r[-1][0]\n        for _ in range(80):\n            if len(r) >= hedef_i or not after:\n                break\n            j = cek(url, dict(istek, after=after), zaman_asimi)\n            if isinstance(j, dict):\n                j = j.get(\"data\") or []\n            yeni = [x for x in j if x[0] not in gorulen]\n            if not yeni:\n                break\n            r = r + yeni\n            gorulen |= {x[0] for x in yeni}\n            after = yeni[-1][0]\n    return _okx_sekillendir(url, istek, r)\n\n\n# ---------------------------------------------------------------- KAPI\ndef _kapi(n, kazan, sum_r, sum_kaz_r):\n    \"\"\"Fail-closed stake kapisi. Girdiler YALNIZCA cozulmus yarismalardan.\"\"\"\n    out = {\"acik\": False, \"n\": n, \"p_hat\": None, \"edge_hat\": None,\n           \"b_win\": None, \"stake\": 0.0, \"not\": \"\"}\n    if n == 0:\n        out[\"not\"]",
+      "limitations": "Pasif edinim; anlamsal doğrulama ayrıca yapılmalıdır."
+    },
+    "E03": {
+      "evidence_id": "E03",
+      "source_id": "S03",
+      "locator": "retrieved-content",
+      "evidence_type": "source",
+      "excerpt": "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"llm_trading_v4.py — GURULTULU KANAL (noisy channel) -> TRADING, tek dosya.\n\nEk bagimlilik YOKTUR (yalniz Python standart kutuphanesi). Pydroid 3 uyumlu.\n\n  python llm_trading_v4.py --self-test    testleri kosturur\n  python llm_trading_v4.py --esikler      her sabiti kaynak+gerekcesiyle basar\n  python llm_trading_v4.py --ornek        AGSIZ ornek kosu (sahte veri)\n  python llm_trading_v4.py --cumle        ornek bozuk cumleyi onarir (mekanizma gosterimi)\n  python llm_trading_v4.py --canli BTCUSDT   GERCEK Binance public GET\n  python llm_trading_v4.py --rapor r.json    kosuyu JSON'a yazar\n\nNEDEN v4: v3'te EKSIK OLAN TAM KATMAN, LLM zincirinin BIRINCI halkasiydi —\ngirdi gurultusunun URETIMDEN ONCE onarilmasi (noisy channel). v3 bozuk/eksik\nbir kanali \"kapsam dusur\" diye isliyordu; onarmiyordu. Bu dosya o katmani\nLLM'deki mekanizmanin BIREBIR karsiligi olarak kurar:\n\n  CUMLE                                  PIYASA KANALI\n  ------------------------------------   ------------------------------------\n  P(c) sozcuk onseli                     kanalin kendi gecmis dagilimi\n  P(o|c) yazim-hatasi kanali             bozulma modeli (bes mod, asagida)\n  posterior = argmax P(c)*P(o|c)         onarilmis deger = argmax ayni carpim\n  baglamla yeniden puanlama              capraz-kanal onsel (fiyat -> turev)\n  argmax DAIMA token secer (HOLD YOK)    argmax DAIMA yon secer (HOLD YOK)\n  dusuk guven != cikti yok               dusuk onarim guveni -> STAKE duser\n\nBES BOZULMA MODU (ornek cumleden birebir turetildi):\n  silme        \"imdi\"        <- \"simdi\"       : eksik bar / eksik kayit\n  degistirme   \"sama\"        <- \"sana\"        : spike / aykiri deger\n  uzatma       \"pugoreeeewu\" <- \"gore\"        : donmus / tekrarli deger\n  ekleme       \"eskisis\"     <- \"eskisi\"      : cift kayit\n  birlestirme  \"geteranladinsen\" <- iki kelime: tek anlik degerin cok bara yayilmasi\n\nSERT SOZLESME (mekanik korunur, testlerle kilitli):\n  1. HOLD/ABSTAIN/BEKLE sinifi YOKTUR. Yon her kosuda uretilir.\n  2. \"Notr 0.0 yaz\" bir onarim DEGILDIR ve hicbir yerde yapilmaz.\n  3. Onarim guveni OLCULUR (geriye-donuk beceri), secilmez. Beceri <= 0 ise\n     onarim YAPILMAZ ve kapsam duser (fail-closed).\n  4. Onarim guveni YALNIZ stake eksenine baglanir; yonu ASLA susturmaz.\n  5. R = hedef_mesafe / stop_mesafe. Baska bir R tanimi yoktur.\n  6. Look-ahead: bar i icin her hesap YALNIZ <= i veriyi okur.\n\nGUVENLIK SINIRI: bu dosyada API anahtari, imza, emir/iptal ucu YOKTUR ve\neklenmemelidir. Yalniz public GET okunur. Yalniz karar-destek; canli/otomatik\nemir DAHIL DEGILDIR. (GuvenlikTesti motor bolumunu tarar.)\n\"\"\"\n\nimport math\nimport random\nimport zlib\n\nSURUM = \"llm-trading-v4\"\nYON_SOZLUGU = (\"LONG\", \"SHORT\")     # HOLD YOK - sozluk iki elemanlidir\nLONG_SINIFI = 1\nEPSILON = 1e-12\n\n# ============================================================ ESIK BEYANI\n# Kaynak alani uc degerden biri:\n#   OLCULEN  - bu kosunun verisinden istatistikle turetildi\n#   YAPISAL  - matematiksel/zaman tanimindan gelir, secim degil\n#   VARSAYIM - kalibre EDILMEDI; gerekcesi ve olcum yolu zorunlu\nESIK_KAYNAGI = {}\n\n\ndef esik_kaydet(ad, deger, kaynak, gerekce, olcum_yolu=\"\"):\n    ESIK_KAYNAGI[ad] = {\"deger\": deger, \"kaynak\": kaynak,\n                        \"gerekce\": gerekce, \"olcum_yolu\": olcum_yolu}\n    return deger\n\n\ndef esik_raporu():\n    s = [\"SABIT ESIK BEYANI (etiketsiz gizli esik yasak):\"]\n    for ad in sorted(ESIK_KAYNAGI):\n        k = ESIK_KAYNAGI[ad]\n        s.append(\"  %-26s = %-12s [%s]\" % (ad, k[\"deger\"], k[\"kaynak\"]))\n        s.append(\"      %s\" % k[\"gerekce\"])\n        if k[\"olcum_yolu\"]:\n            s.append(\"      OLCUM YOLU: %s\" % k[\"olcum_yolu\"])\n    return \"\\n\".join(s)\n\n\n# --- gurultulu kanal sabitleri ---\nSPIKE_Z = esik_kaydet(\n    \"SPIKE_Z\", 4.0, \"OLCULEN\",\n    \"Robust-z (medyan + 1.4826*MAD) esigi; bunun UZERI 'degistirme' bozulmasi \"\n    \"sayilir. Kullanicinin kendi verisinde olculdu (200 bar x 4 seri): \"\n    \"|z|>3 -> 4..8 olay, |z|>4 -> 1..3 olay, |z|>5 -> 0..1 olay. 4.0, taban \"\n    \"tetiklenme oranini %0.5-1.5 bandinda tutar.\",\n    \"kanal basina |z| dagiliminin ust yuzdeligi; hedef taban oran <= %2\")\n\nONARIM_PENCERESI = esik_kaydet(\n    \"ONARIM_PENCERESI\", 8, \"OLCULEN\",\n    \"Onarim kestiricilerinin (naif/medyan/ewma) geriye baktigi bar sayisi. \"\n    \"Kullanicinin OI ve taker serilerinde (n=48) W=8 ile olculen beceri: \"\n    \"OI naif +0.842, taker naif -0.568. W buyudukce ornek azalir, kucukdukce \"\n    \"medyan/MAD kararsizlasir.\",\n    \"W'ye karsi olculen beceri egrisi; platoya girdigi en kucuk W\")\n\nASGARI_BECERI = esik_kaydet(\n    \"ASGARI_BECERI\", 0.0, \"YAPISAL\",\n    \"Onarimin YAPILABILMESI icin gereken en dusuk beceri. 0.0 bir SECIM \"\n    \"degil TANIMDIR: beceri = 1 - MAE/MAE_taban oldugundan beceri<=0, \"\n    \"kestiricinin taban-kestiriciden IYI OLMADIGI demektir; boyle bir \"\n    \"onarim bilgi tasimaz, uydurma olur.\")\n\nASGARI_BECERI_ORNEK = esik_kaydet(\n    \"ASGARI_BECERI_ORNEK\", 10, \"VARSAYIM\",\n    \"Beceri olcumunun anlamli sayilmasi icin gereken en az kestirim adedi. \"\n    \"Kalibre EDILMEDI. Az ornekte beceri isareti gurultuludur; fail-closed \"\n    \"tarafta kalmak icin onarim yapilmaz.\",\n    \"beceri tahmininin bootstrap std'si hedef bandin altina inince\")\n\nDONMUS_ARDISIK = esik_kaydet(\n    \"DONMUS_ARDISIK\", 3, \"VARSAYIM\",\n    \"Bir kanalin 'donmus' sayilmasi icin gereken ardisik ozdes deger sayisi. \"\n    \"Kalibre EDILMEDI. Kullanicinin verisinde OI ve taker'da 0 ardisik ozdes \"\n    \"deger var; yani bu esik su an HIC tetiklenmiyor (taban oran = 0).\",\n    \"kanalin ardisik-ozdes uzunluk dagiliminin ust yuzdeligi\")\n\nECE_TAVANI = esik_kaydet(\n    \"ECE_TAVANI\", 0.10, \"VARSAYIM\",\n    \"Kalibrasyon guvenilmezlik esigi. Kalibre EDILMEDI. Tek yonlu etki: \"\n    \"buyurse stake buyur. Fail-closed tarafta kucuk secildi.\",\n    \"grup ECE dagiliminin ust yuzdeligi (holdout uzerinde)\")\n\nASGARI_OLCUM = esik_kaydet(\n    \"ASGARI_OLCUM\", 20, \"VARSAYIM\",\n    \"Ikili oranin Wilson araliginin ise yarar genislige inmesi icin kaba alt \"\n    \"sinir. Kalibre EDILMEDI. n=20'de %95 aralik genisligi ~0.4.\",\n    \"hedeflenen aralik genisligine gore n cozulmeli\")\n\nSABIT_TOLERANSI = esik_kaydet(\n    \"SABIT_TOLERANSI\", 1e-9, \"YAPISAL\",\n    \"Bir kolonun 'sabit' sayilmasi icin std tavani. float64 hassasiyetinden \"\n    \"gelir, istatistiksel secim degil.\")\n\nETIKET_UFKU = esik_kaydet(\n    \"ETIKET_UFKU\", 16, \"VARSAYIM\",\n    \"Etiketin bakacagi ileri bar sayisi (16 x 15dk = 4 saat). Kalibre \"\n    \"EDILMEDI ve DOGRUDAN p'yi, dolayisiyla stake'i belirler.\",\n    \"ufka karsi holdout AUROC ve ilk-gecis karar-veren oraninin taranmasi\")\n\nEMBARGO = esik_kaydet(\n    \"EMBARGO\", 4, \"VARSAYIM\",\n    \"Purge uzerine eklenen guvenlik boslugu (bar). Kalibre EDILMEDI.\",\n    \"embargo'ya karsi train-test dagilim farkinin olculmesi\")\n\nGECIKME_SAYISI = esik_kaydet(\n    \"GECIKME_SAYISI\", 4, \"VARSAYIM\",\n    \"Karar tokeninin gordugu gecmis satir sayisi. Kalibre EDILMEDI. Buyurse \"\n    \"baglam artar ama hesap O(n^2) buyur (Pydroid 3 kisiti).\",\n    \"gecikme sayisina karsi holdout AUROC egrisi - platoya girdigi nokta\")\n\nBOLME_ORANLARI = esik_kaydet(\n    \"BOLME_ORANLARI\", (0.6, 0.2, 0.2), \"YAPISAL\",\n    \"train / kalibrasyon / test paylari. Tek yerde beyan edilir cunku gosterge \"\n    \"butcesi bu paylardan TURETILIR.\")\n\nH4_BAR_ORANI = esik_kaydet(\n    \"H4_BAR_ORANI\", 16, \"YAPISAL\",\n    \"Bir 4H bari kac 15M barini kapsar (4*60/15). Zaman dilimi tanimindan.\")\n\nLIKIDASYON_GUVENLIK_PAYI = esik_kaydet(\n    \"LIKIDASYON_GUVENLIK_PAYI\", 0.5, \"VARSAYIM\",\n    \"Likidasyon mesafesinin ne kadarina kadar stake alinabilecegi. Kalibre \"\n    \"EDILMEDI; likidasyona giden yolun yarisinda durmak = muhafazakar taraf.\",\n    \"gerceklesmis en kotu bar-ici sapmanin dagilimindan ust yuzdelik\")\n\nEMA_KESME_KATI = esik_kaydet(\n    \"EMA_KESME_KATI\", 2, \"YAPISAL\",\n    \"EMA'nin ustel agirlik profilinin kac PERIYOT sonra kesilecegi. Erisim \"\n    \"aritmetiginden gelir: kesme olmadan EMA'nin geriye erisimi SONLU DEGIL \"\n    \"(yalniz float alt-tasmasi keser) ve toleransa bagli bir sayi purge \"\n    \"korkulugu OLAMAZ. Kesilen kuyruk normalize edilerek dagitilir.\")\n\nEN_UZUN_GETIRI_GECIKMESI = esik_kaydet(\n    \"EN_UZUN_GETIRI_GECIKMESI\", 16, \"YAPISAL\",\n    \"Log getiri ozniteliklerinin en uzun gecikmesi (1, 4, 16). 16 = bir 4H \"\n    \"barin 15M karsiligi.\")\n\n\n# ============================================================ BOLUM 1\n# Determinizm ve temel matematik. Modul duzeyi random.* YASAK.\n\ndef sabit_kimlik(*parcalar):\n    return zlib.crc32(\"|\".join(str(p) for p in parcalar).encode(\"utf-8\")) & 0xFFFFFFFF\n\n\ndef tohumlu_rng(*parcalar):\n    return random.Random(sabit_kimlik(*parcalar))\n\n\ndef kirp(x, alt=-1.0, ust=1.0):\n    try:\n        d = float(x)\n    except (TypeError, ValueError):\n        return alt\n    if math.isnan(d) or math.isinf(d):\n        return alt\n    return max(alt, min(ust, d))\n\n\ndef ortalama(xs):\n    return sum(xs) / len(xs) if xs else 0.0\n\n\ndef medyan(xs):\n    if not xs:\n        return 0.0\n    s = sorted(xs)\n    n = len(s)\n    return s[n // 2] if n % 2 else 0.5 * (s[n // 2 - 1] + s[n // 2])\n\n\ndef mad_sigma(xs):\n    \"\"\"Medyan mutlak sapmadan robust sigma. Normal dagilimda std'ye esdeger.\"\"\"\n    if len(xs) < 2:\n        return 0.0\n    m = medyan(xs)\n    return 1.4826 * medyan([abs(x - m) for x in xs])\n\n\ndef std(xs):\n    if len(xs) < 2:\n        return 0.0\n    m = ortalama(xs)\n    return math.sqrt(sum((x - m) ** 2 for x in xs) / (len(xs) - 1))\n\n\ndef kararli_softmax(logitler, sicaklik=1.0):\n    T = max(float(sicaklik), 1e-6)\n    o = [float(z) / T for z in logitler]\n    mx = max(o) if o else 0.0\n    us = [math.exp(max(-60.0, min(60.0, z - mx))) for z in o]\n    t = sum(us) or 1.0\n    return [u / t for u in us]\n\n\ndef wilson_araligi(basari, deneme, z=1.96):\n    if deneme <= 0:\n        return 0.0, 1.0\n    p = basari / deneme\n    payda = 1.0 + z * z / deneme\n    merkez = p + z * z / (2.0 * deneme)\n    yaricap = z * math.sqrt(p * (1.0 - p) / deneme + z * z / (4.0 * deneme * deneme))\n    return (merkez - yaricap) / payda, (merkez + yaricap) / payda\n\n\n# ============================================================ BOLUM 2\n# GURULTULU KANAL — BOZULMA TESPITI (bes mod).\n# Her mod, ornek cumledeki bir yazim-hatasi tipinin BIREBIR karsiligidir.\n# Tespit YALNIZ <= i veriyi okur (look-ahead yok).\n\nBOZULMA_MODLARI = (\"SILME\", \"DEGISTIRME\", \"UZATMA\", \"EKLEME\", \"BIRLESTIRME\")\n\n\ndef bozulma_tespit(kayitlar, beklenen_adim_ms, deger_alani, zaman_alani=\"timestamp\"):\n    \"\"\"Bir zaman damgali kanalda bes bozulma modunu tespit eder.\n\n    kayitlar: [{zaman_alani: int_ms, deger_alani: sayi}, ...]\n    Doner: {\"kayitlar\": temizlenmis, \"bulgular\": [...], \"sayim\": {mod: adet}}\n\n    ONEMLI: bu fonksiyon ONARMAZ, yalniz TESPIT eder ve kanali kronolojik\n    siraya sokar. Onarim BOLUM 4'te ve YALNIZ olculen beceri izin verirse.\n    \"\"\"\n    bulgular = []\n    sayim = dict((m, 0) for m in BOZULMA_MODLARI)\n    if not kayitlar:\n        return {\"kayitlar\": [], \"bulgular\": bulgular, \"sayim\": sayim,\n                \"not\": \"kanal BOS - tespit yapilamadi\"}\n\n    ayikla = []\n    for k in kayitlar:\n        try:\n            t = int(k[zaman_alani])\n            v = float(k[deger_alani])\n        except (KeyError, TypeError, ValueError):\n            continue\n        if math.isnan(v) or math.isinf(v):\n            continue\n        ayikla.append((t, v))\n    ayikla.sort(key=lambda p: p[0])\n\n    # EKLEME: ayni zaman damgasinda birden fazla kayit (\"eskisis\" <- \"eskisi\")\n    tekil = []\n    gorulen = {}\n    for t, v in ayikla:\n        if t in gorulen:\n            sayim[\"EKLEME\"] += 1\n            bulgular.append({\"mod\": \"EKLEME\", \"zaman\": t,\n                             \"aciklama\": \"cift kayit; ilk kayit korundu\"})\n            continue\n        gorulen[t] = True\n        tekil.append((t, v))\n\n    # SILME: beklenen adimdan buyuk atlama (\"imdi\" <- \"simdi\")\n    adim = int(beklenen_adim_ms)\n    eksik_zamanlar = []\n    for i in range(1, len(tekil)):\n        fark = tekil[i][0] - tekil[i - 1][0]\n        if adim > 0 and fark > adim:\n            kayip = fark // adim ",
+      "limitations": "Pasif edinim; anlamsal doğrulama ayrıca yapılmalıdır."
+    },
+    "E10": {
+      "evidence_id": "E10",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:26.968062+00:00",
+      "description": "kazan=0 iken kapi, olculmemis R_FADE paydasiyla ACILIYOR (stake>0)",
+      "repro_sha256": "7e9a63c14e328842",
+      "exit_code": 0,
+      "observed": "acik=True p_hat=0.0 b_win=1.5 stake=0.0667\nR_FADE sabiti = 1.5  -> b_win bu sabitten geldi: True\nDOGRULANDI: sifir kazanan, kapi ACIK, stake 6.67%"
+    },
+    "E11": {
+      "evidence_id": "E11",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:26.991576+00:00",
+      "description": "--self-test FAIL verse bile cikis kodu 0 (CI kapisi olamaz)",
+      "repro_sha256": "82f14a9cd5bde490",
+      "exit_code": 0,
+      "observed": "BIRLESIK _main self-test dali:\n    def _main(argv=None):\n        print(\"v5-birlesik TEK DOSYA: gomulu v4 md5=%s... dogrulandi\"\n              \" (I13=%s)\" % (V4_MD5[:12], I13_DURUM))\n        if argv and argv[0] == \"--self-test\":\n            barlar = None\n            try:\n                barlar, _, _ = h2_barlar(\"BTC\")\n            except Exception:\n                barlar = None\n            for ad, durum, detay in v5_selftest(barlar=barlar):\n                print(\"[%s] %s %s\" % (durum, ad, detay))\n            return 0\n        if argv and argv[0] == \"\n   FAIL sayimi var mi: False\n   kosulsuz return 0: True\nSARMALAYICI _main self-test dali:\n    def _main(argv=None):\n        if argv and argv[0] == \"--self-test\":\n            for ad, durum, detay in v5_selftest():\n                print(\"[%s] %s %s\" % (durum, ad, detay))\n            return 0\n        if argv and argv[0] == \"\n   FAIL sayimi var mi: False\n   kosulsuz return 0: True\nDOGRULANDI: her iki dosyada da FAIL sayilmadan return 0"
+    },
+    "E12": {
+      "evidence_id": "E12",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:28.928560+00:00",
+      "description": "Bar-ici sira varsayimi: dolum barinin KENDI fitili HEDEF sayiliyor; sifir-kenarli veride kapiyi ACIYOR",
+      "repro_sha256": "31856fc11009a886",
+      "exit_code": 0,
+      "observed": "SIFIR-DRIFT rastgele yuruyus (kenar YOK), 30 tur x 700 bar\n  MOTOR      : n=1414 HEDEF=640 edge=+0.0157R kapi=ACIK\n  GERCEK YOL : n=1414 HEDEF=586 edge=-0.0836R kapi=kapali\n  ARTEFAKT   : +0.0993R  fazla HEDEF=+54 (%9.2)\nDOGRULANDI: motor gercekten daha iyi olcuyor ve kapi hukmu AYRISIYOR"
+    },
+    "E13": {
+      "evidence_id": "E13",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:29.140836+00:00",
+      "description": "stake=edge/b_win kayip bacagini 1.0R sayiyor; dogru Kelly edge/(a*b) -> stake yapisal SISIK",
+      "repro_sha256": "2ae7b95fa0eb3b26",
+      "exit_code": 0,
+      "observed": "STOP bacagi net kayip = -(s*atr + ucret)/(s*atr) = -1.0921R  (1.0 DEGIL)\nkodun stake  = edge/b\ndogru Kelly  = edge/(a*b)   -> kod = dogru x a = x1.0921\n=> TABAN sisme = %9.21 (ZAMAN kayiplariyla daha buyuk)\nkod satiri: out[\"stake\"] = min(edge / max(b, 1e-12), KELLY_CAP)\nDOGRULANDI"
+    },
+    "E14": {
+      "evidence_id": "E14",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:29.347946+00:00",
+      "description": "h2_barlar sayfalama dongusunde tavan yok; kardes fonksiyonda var (ayni dosya, iki disiplin)",
+      "repro_sha256": "8547ddaa056615bc",
+      "exit_code": 0,
+      "observed": "h2_barlar     : 'while len(barlar) < hedef' -> True | sayfa tavani -> False\nokx_uyumlu_getir: sayfa tavani -> True | 'if not yeni: break' -> True\nh2_barlar tek cikis kosulu: ['break']\nDOGRULANDI: asimetri gercek"
+    },
+    "E15": {
+      "evidence_id": "E15",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:29.549107+00:00",
+      "description": "v=0 barda 'notr' CVD dolgusu -1.0 (maksimum ayi) uretiyor",
+      "repro_sha256": "c63275581c48ed75",
+      "exit_code": 0,
+      "observed": "v5 dolgusu: taker_alis = v/2.0 (alan 9) | v4: cvd=kirp((2*taker-hacim)/hacim), hacim=v or EPSILON\n   v=1000.0   -> cvd=+0.0000  NOTR\n   v=1.0      -> cvd=+0.0000  NOTR\n   v=0.0      -> cvd=-1.0000  *** MAKSIMUM AYI ***\nDOGRULANDI: sifir hacimli barda notr dolgu -1.0 uretiyor"
+    },
+    "E16": {
+      "evidence_id": "E16",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:29.757535+00:00",
+      "description": "funding isareti abs() ile KAYNAKTA yok ediliyor; rejim filtresi turetilemez",
+      "repro_sha256": "0b21c7bc6ff11d52",
+      "exit_code": 0,
+      "observed": "/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py:3501:        degerler = [abs(float(x[\"fundingRate\"]))\n/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py:3502:                    for x in (jf.get(\"data\") or []) if x.get(\"fundingRate\")]\n/home/user/Future-/v5/Claudcodellm_trading_v5.py:486:        degerler = [abs(float(x[\"fundingRate\"]))\n/home/user/Future-/v5/Claudcodellm_trading_v5.py:487:                    for x in (jf.get(\"data\") or []) if x.get(\"fundingRate\")]\nFUNDING_YEDEK tumu pozitif mi: True {'BTC': 5.9e-05, 'ETH': 4.6e-05, 'SOL': 4.4e-05, 'XRP': 4.1e-05, 'DOGE': 6.6e-05}\nDOGRULANDI: isaret hicbir yolda korunmuyor"
+    },
+    "E17": {
+      "evidence_id": "E17",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:29.965105+00:00",
+      "description": "R1 geri cekilme merdiveninin son basamagi (9.0 s) OLU KOD; docstring yanlis beyan",
+      "repro_sha256": "9266e2a27a8d03c6",
+      "exit_code": 0,
+      "observed": "docstring beyani: 429/5xx/gecici ag hatasinda geri cekilme (0.6/1.8/4.5/9.0 s).\nmerdiven       : for deneme, bekle in enumerate((0.6, 1.8, 4.5, 9.0)):\ncikis kosulu   : if not gecici or deneme >= 3:\n=> deneme==3 iken raise, sleep(9.0) satirina HIC ULASILMIYOR\nDOGRULANDI: 4 bekleme beyan ediliyor, 3 uygulaniyor"
+    },
+    "E18": {
+      "evidence_id": "E18",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:49:29.998569+00:00",
+      "description": "YASAKLI (HOLD/ABSTAIN) taramasi YALNIZ oz-testte; uretim ciktisinda kontrol yok",
+      "repro_sha256": "7404ba3a47932e1f",
+      "exit_code": 0,
+      "observed": "60:YASAKLI = (\"HOLD\", \"ABSTAIN\", \"Notr 0.0\", \"NOTR 0.0\")\n3674:          not any(k in blok1 + blok2 + kapali + acik for k in YASAKLI))\ntoplam gecis: 2 (1 tanim + 1 oz-test = uretim yolunda SIFIR)\nDOGRULANDI"
+    },
+    "E19": {
+      "evidence_id": "E19",
+      "source_id": "S03",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:50:28.515503+00:00",
+      "description": "POZITIF: gomulu v4 = disk v4 birebir; butunluk kapisi tutarli; emir/imza ucu yok",
+      "repro_sha256": "eb0e043a6324b98c",
+      "exit_code": 0,
+      "observed": "V4_LEN beyani      = 216129\ndecode(karakter)   = 216129 -> ESIT: True\ndisk (karakter)    = 216129 -> ESIT: True\ndisk (bayt)        = 216211   (V4_LEN bayt DEGIL karakter sayiyor - 82 fark UTF-8 coklu bayttan)\nV4_MD5 beyani      = 45e9f485d0db62aa9529a813ff502c6e\nmd5(decoded.encode)= 45e9f485d0db62aa9529a813ff502c6e -> ESIT: True\nGOMULU == DISK     : True\nyazma acan open()  : 1 -> yalniz onbellek\nemir/imza ucu taramasi:\n   api_key          -> 0\n   apiKey           -> 0\n   secret           -> 0\n   signature        -> 0\n   hmac             -> 0\n   /api/v5/trade    -> 0\n   private          -> 0\nDOGRULANDI: gomulu v4 diskteki v4 ile BIREBIR, butunluk kapisi tutarli"
+    },
+    "E20": {
+      "evidence_id": "E20",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:51:36.602560+00:00",
+      "description": "E_K/T_K/S_K 'OLCULEN' etiketinin dayanak raporlari depoda yok",
+      "repro_sha256": "3e3bf35a9a1d85e7",
+      "exit_code": 0,
+      "observed": "E25/E26/E22/S14/S16 deney raporlari depoda var mi:\n   E25  -> 1 dosya ['/home/user/Future-/DENETIM_V5_BIRLESIK.md']\n   E26  -> 1 dosya ['/home/user/Future-/DENETIM_V5_BIRLESIK.md']\n   E22  -> 1 dosya ['/home/user/Future-/DENETIM_V5_BIRLESIK.md']\n   S14  -> 1 dosya ['/home/user/Future-/DENETIM_V5_BIRLESIK.md']\n   S16  -> 1 dosya ['/home/user/Future-/DENETIM_V5_BIRLESIK.md']\n\nv5 dosyasinda 'olculen' etiketiyle beyan edilen ama dayanagi olmayan sabitler:\nDOGRULANDI: dayanak dosyalari YOK (yokluk kaniti)"
+    },
+    "E21": {
+      "evidence_id": "E21",
+      "source_id": "S01",
+      "method": "calistirilan repro",
+      "accessed_at": "2026-08-29T10:51:36.652603+00:00",
+      "description": "+238.3R ve GA[157.3,320.8] bu kod tabaninda ne hesaplaniyor ne sabit olarak var",
+      "repro_sha256": "4cff376faf05f6a6",
+      "exit_code": 0,
+      "observed": "FADE R-toplami uzerine bootstrap/guven-araligi hesaplayan kod var mi:\n   bootstrap      -> 2 eslesme\n   percentile     -> 0 eslesme\n   guven_aralig   -> 0 eslesme\n   conf_int       -> 0 eslesme\n   238.3          -> 0 eslesme\n   1092           -> 0 eslesme\n   157.3          -> 0 eslesme\n   320.8          -> 0 eslesme\n   wilson (v5 katmaninda) -> 0\nDOGRULANDI: +238.3R / GA[157.3,320.8] bu boru hattinda URETILEMEZ, sabit olarak da YOK"
+    }
+  },
+  "claims": {
+    "C01": {
+      "claim_id": "C01",
+      "statement": "kazan=0 iken kapi, olculmemis R_FADE paydasiyla ACILIYOR (stake>0)",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E10"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C02": {
+      "claim_id": "C02",
+      "statement": "--self-test FAIL verse bile cikis kodu 0 (CI kapisi olamaz)",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E11"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C03": {
+      "claim_id": "C03",
+      "statement": "Bar-ici sira varsayimi: dolum barinin KENDI fitili HEDEF sayiliyor; sifir-kenarli veride kapiyi ACIYOR",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E12"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C04": {
+      "claim_id": "C04",
+      "statement": "stake=edge/b_win kayip bacagini 1.0R sayiyor; dogru Kelly edge/(a*b) -> stake yapisal SISIK",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E13"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C05": {
+      "claim_id": "C05",
+      "statement": "h2_barlar sayfalama dongusunde tavan yok; kardes fonksiyonda var (ayni dosya, iki disiplin)",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E14"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C06": {
+      "claim_id": "C06",
+      "statement": "v=0 barda 'notr' CVD dolgusu -1.0 (maksimum ayi) uretiyor",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E15"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C07": {
+      "claim_id": "C07",
+      "statement": "funding isareti abs() ile KAYNAKTA yok ediliyor; rejim filtresi turetilemez",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E16"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C08": {
+      "claim_id": "C08",
+      "statement": "R1 geri cekilme merdiveninin son basamagi (9.0 s) OLU KOD; docstring yanlis beyan",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E17"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C09": {
+      "claim_id": "C09",
+      "statement": "YASAKLI (HOLD/ABSTAIN) taramasi YALNIZ oz-testte; uretim ciktisinda kontrol yok",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E18"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C10": {
+      "claim_id": "C10",
+      "statement": "Gomulu v4 diskteki v4 ile birebir ayni; V4_LEN/V4_MD5 kapisi kendi sozlesmesiyle tutarli; v5 katmanlarinda emir/imza/anahtar ucu yok",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E19"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C11": {
+      "claim_id": "C11",
+      "statement": "DENETCI HATASI KAYDI: ilk C10 reprosu V4_LEN'i BAYT sanip diskin bayt uzunluguyla karsilastirdi ve yanlislikla FAIL verdi; kapi kodu (3100-3102) V4_LEN'i KARAKTER olarak tanimliyor. Hata denetcide, kodda degil.",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E19"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": false
+    },
+    "C12": {
+      "claim_id": "C12",
+      "statement": "E_K=2.0/T_K=1.5/S_K=1.0 sabitlerinin 'OLCULEN' etiketi dayanaksiz: E25/E26/E22/S14/S16 deney raporlari depoda YOK",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E20"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C13": {
+      "claim_id": "C13",
+      "statement": "Rapordaki +238.3R, n=1092, GA[157.3,320.8] bu boru hattinda uretilemez ve kodda sabit olarak da yok; kaynagi gosterilmemistir",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E21"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    }
+  },
+  "contradictions": [],
+  "external_checks_pending": [
+    "kronolojik 13-dilim denetimi HALA KOSUYOR (task wr3qde82y) - bulgulari henuz dahil edilmedi"
+  ],
+  "counter_evidence_search": "DONE",
+  "decision": "REPAIR",
+  "epistemic_verdict": "UNKNOWN",
+  "comparison": {
+    "options": [],
+    "audience": "",
+    "primary_query": "",
+    "search_intent": "",
+    "criteria_priority": [
+      "pricing"
+    ],
+    "serp_brief": "",
+    "fact_table": {},
+    "verdict": ""
+  }
+}
