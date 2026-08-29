@@ -192,6 +192,68 @@
       "repro_sha256": "4cff376faf05f6a6",
       "exit_code": 0,
       "observed": "FADE R-toplami uzerine bootstrap/guven-araligi hesaplayan kod var mi:\n   bootstrap      -> 2 eslesme\n   percentile     -> 0 eslesme\n   guven_aralig   -> 0 eslesme\n   conf_int       -> 0 eslesme\n   238.3          -> 0 eslesme\n   1092           -> 0 eslesme\n   157.3          -> 0 eslesme\n   320.8          -> 0 eslesme\n   wilson (v5 katmaninda) -> 0\nDOGRULANDI: +238.3R / GA[157.3,320.8] bu boru hattinda URETILEMEZ, sabit olarak da YOK"
+    },
+    "E30": {
+      "evidence_id": "E30",
+      "source_id": "S01",
+      "method": "calistirilan repro (denetci kosturdu)",
+      "accessed_at": "2026-08-29T13:18:37.994086+00:00",
+      "description": "okx_uyumlu_getir sayfalama dongusu OKX govde hata kodunu (code!=0) YUTUYOR - seri sessizce kesiliyor, kapsam yine 1.00 raporlaniyor ve 4H hizalamasi look-ahead'e donuyor",
+      "kanit_satir": "/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py:3242-3246 (docstring: \"code != '0' -> hata (kanal None duser, uydurma YOK)\"), 3258-3262 (ILK sayfada RuntimeError), 3270-3272 (IC sayfada: j = cek(...); if isinstance(j, dict): j = j.get(\"data\") or []  -- code KONTROLU YOK), 3274-3275 (bos -> sessiz break); capraz: /home/user/Future-/v5/Claudcodellm_trading_v4.py:2021-2027 (_h4_hizala",
+      "repro_sha256": "5a7ec9f9f531057a",
+      "exit_code": 0,
+      "observed": "F1a IC sayfa code=50011 -> istisna YOK, len(r)=100 (hedef=4000)\nF1a ILK sayfa code=50011 -> RuntimeError: OKX code=50011 msg=x\nF1b HATASIZ                n15=4000 n4h=1200 dusen=[] kapsam=1.00 | GELECEKTEN 4H okuyan 15M bar=0 (0.0%) azami sizinti=0 saat\nF1b 2.IC SAYFA code=50011  n15=4000 n4h=100  dusen=[] kapsam=1.00 | GELECEKTEN 4H okuyan 15M bar=3999 (100.0%) azami sizinti=604 saat"
+    },
+    "E31": {
+      "evidence_id": "E31",
+      "source_id": "S01",
+      "method": "calistirilan repro (denetci kosturdu)",
+      "accessed_at": "2026-08-29T13:18:37.994086+00:00",
+      "description": "_yaris_coz: GIRIS BARINDA hedef, ayni barin H/L'sinden okunuyor — bar-ici sira varsayimi hayali HEDEF uretiyor; surukelenmesiz seride kapiyi ACIYOR",
+      "kanit_satir": "/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py:3326 + 3333-3344 (beyan: 3313-3316)",
+      "repro_sha256": "2a9b46f4300c8d52",
+      "exit_code": 0,
+      "observed": "A) sonuc=HEDEF giris_idx=1 cozum=1 ayni_bar=True net_r=1.4605\nB) surukelenmesiz rassal yuruyus (gercek kenar=0) - MOTOR vs TICK-YOLU GERCEGI\n   seed=7   MOTOR: n=196 kazan=84 edge=+0.0086 KAPI=ACIK   stake=0.0059  ||  GERCEK: n=205 kazan=83 edge=-0.0522 KAPI=KAPALI stake=0.0000\n   seed=23  MOTOR: n=214 kazan=96 edge=+0.0598 KAPI=ACIK   stake=0.0409  ||  GERCEK: n=206 kazan=82 edge=-0.0686 KAPI=KAPALI stake=0.0000\n   seed=42  MOTOR: n=216 kazan=94 edge=+0.0252 KAPI=ACIK   stake=0.0172  ||  GERCEK: n=219 kazan=79 edge=-0.1646 KAPI=KAPALI stake=0.0000\n   seed=99  MOTOR: n=214 kazan=105 edge=+0.1663 KAPI=ACIK   stake=0.1137  ||  GERCEK: n=199 kazan=81 edge=-0.0469 KAPI=KAPALI stake=0.0000"
+    },
+    "E32": {
+      "evidence_id": "E32",
+      "source_id": "S01",
+      "method": "calistirilan repro (denetci kosturdu)",
+      "accessed_at": "2026-08-29T13:18:37.994086+00:00",
+      "description": "FADE stake'i TEK BAHIS (korelasyon) kapisina HIC girmiyor - portfoy 'POZISYON YOK' derken 2 korelasyonlu FADE bahsi aciliyor",
+      "kanit_satir": "Claud_gllm_codellm_trading_v5_birlesik.py:3537-3539 (fade kayda konur), 3554-3557 (tabloda stake basilir), 3573-3575 (portfoy_karari cagrisi); Claudcodellm_trading_v4.py:3333-3374 (portfoy_karari YALNIZ k['karar']['stake']['f'] okur)",
+      "repro_sha256": "de9715b6b18f3ee9",
+      "exit_code": 0,
+      "observed": "FADE kapisi (motor cikti): True stake=0.1333 | edge_hat=+0.2000R (n=40, p_hat=0.500) - kapi ACIK\n==============================================================================\nPORTFOY HUKMU (TEK BAHIS kurali; esik |rho| >= 0.85)\n------------------------------------------------------------------------------\nsembol     yon            f*        R  rho(ANA)  hukum\nBTCUSDT    LONG     0.000000   1.5000  VERI YOK  bagimsiz\n           ANA sembol\nETHUSDT    LONG     0.000000   1.5000    0.9851  KOPYA - ATLA\n           rho=0.9851 >= 0.85 ve yon ANA ile AYNI - bagimsiz bahis DEGIL\n------------------------------------------------------------------------------\nSECILEN: POZISYON YOK\nNOT: hicbir sembolde f*>0 - portfoy hukmu: POZISYON YOK\n==============================================================================\nrho olculdu: {'ETHUSDT': 0.9851}\nPORTFOY HUKMU (ana sinif f*): POZISYON YOK\nAYNI KOSUDA ACIK FADE BAHSI  : 2 sembol x 13.33% = 26.67% sermaye-riski\nv4 kaynaginda 'fade' gecisi   : 0\nv5 kaynaginda 'rho|korelasyon|TEK_BAHIS' gecisi: 0"
+    },
+    "E33": {
+      "evidence_id": "E33",
+      "source_id": "S01",
+      "method": "calistirilan repro (denetci kosturdu)",
+      "accessed_at": "2026-08-29T13:18:37.994086+00:00",
+      "description": "v5'in cektigi 4H/15M bar sayisi orani 3.11; v4'un _h4_hizala INDEKS sozlesmesi 16:1 gerektiriyor -> karar barinin 4H oznitelik satiri 173 GUN bayat",
+      "kanit_satir": "/home/user/Future-/v5/Claud_gllm_codellm_trading_v5_birlesik.py:3263-3264 (hedef_i = 1200 if bar==\"4H\" else int(TV4.AZAMI_BAR_BUTCESI)=4000)  ||  /home/user/Future-/v5/Claudcodellm_trading_v4.py:2021-2028 (_h4_hizala: min(max(0,(i+1)//H4_BAR_ORANI-1), n4h-1); docstring: '4H bar k, 15M barlarini [16k,16k+15] araliginda KAPSAR')  ve  :2116-2124 (esl = _h4_hizala(len(barlar), len(barlar4h)); satir_ku",
+      "repro_sha256": "fd9902f39d163cb9",
+      "exit_code": 0,
+      "observed": "n15=4000 n4h=1288 oran=3.11  (v4 _h4_hizala sozlesmesi: 16.00)\nkarar bari  t=1699992000000 -> esl[-1]=249 -> kullanilan 4H t=1685044800000\nDOGRU 4H    idx=1287 t=1699992000000\nSAPMA_GUN=173.0"
+    },
+    "E34": {
+      "evidence_id": "E34",
+      "source_id": "S01",
+      "method": "32 adet calistirilan repro (hepsi exit=0)",
+      "accessed_at": "2026-08-29T13:18:37.994086+00:00",
+      "description": "P1 kumesi: 32 bulgu, HEPSI denetci tarafindan kosturuldu",
+      "exit_code": 0,
+      "observed": "- [D1] Esik sicili 4000 beyan ediyor, kod 4040 cekiyor — V5_OKX_GECMIS_BAR beyani kodda hicbir yerde yok, gercek ceki\n    repro exit=0 | BUTCE ASIMI             = 100 bar / 1 fazla sayfa\n- [D1] CACHE_BAYATLIK_S = 86400 (24 saat) 2H barda 11.5 barlik bosluga izin veriyor ve 'onbellek' isareti FADE tablos\n    repro exit=0 | tabloda bayatlik isareti   = False\n- [D2] _direncli_cek gecici-hata siniflandirmasi HAM SOKET hatalarini kaciriyor: okuma-fazi zaman asimi ve ani baglan\n    repro exit=0 | docstring beyani     -> 429/5xx/gecici ag hatasinda geri cekilme (0.6/1.8/4.5/9.0 s).\n- [D2] Esik beyan blogu (3151-3186) davranis-kapisi sabitlerinin bir kismini beyan etmiyor; ustelik 'except Exception\n    repro exit=0 |   uyari/log uretildi mi     : HAYIR (bare pass)\n- [D3] oi ve taker kanallari OKX yolunda 8 sayfada (800 kayit) tikaniyor: istenen 2880'in %27.8'i geliyor, 15M barlar\n    repro exit=0 | F2 15M bar=4000 | OI dolu bar=800 (20.0%) | taker dolu bar=800 (20.0%) | kapsam=1.00 dusen=[]\n- [D5] fade_blok SHORT tarafinda hedef/stop isaretlerini TERS basiyor (olu `if True` kosullari)\n    repro exit=0 | OLU KOSUL satir 3442: '-' if True else ''\n- [D5] h2_barlar basarisiz/kismi cekimde BAYAT AMA TAM onbellegi SILER; OKX hata kodunu yutup 0 bari 'canli-cekim' di\n    repro exit=0 | DOWNSTREAM: fade_karar -> IndexError: list index out of range\n- [D5] fade_blok kapi ACIK + kenarlar yokken 'BAHIS YOK' hukmunu 'kapi ACIK' gerekcesiyle basiyor ve hesaplanan stake\n    repro exit=0 | BTC    230    1.000  +1.4842   ACIK       25.00%   edge_hat=+1.4842R (n=230, p_hat=1.000) - kap\n- [D5] h2_barlar sayfalama dongusunde ilerleme ve iterasyon korumasi yok -> tekrarli sayfada SONSUZ DONGU (kardes say\n    repro exit=0 | SONSUZ DONGU: 500 cagri sonrasi dongu hala bitmedi | cagri=501 | barlar hep 100'de kaldi\n- [D6] getir_fn enjeksiyonu UCTAN UCA DEGIL: 2H/FADE verisi enjekte edilen fonksiyonu atlayip varsayilan ag yoluna gi\n    repro exit=0 | 2H FADE verisi enjekte edilenden geldi mi: False\n- [D6] getir_fn sozlesme uyusmazligi: v5_kosu_bas'in varsayilani (okx_uyumlu_getir) h2_barlar'a verilirse SESSIZCE 0 \n    repro exit=0 | SESSIZ: istisna yok, sadece 0 bar -> True\n- [D6] 2H/FADE cekimi patlayinca BASARILI v4 ana sinif kararlari sessizce cope gidiyor; hata 'sembol kosulamadi' diye\n    repro exit=0 |     KOSULAMAYANLAR: [('BTCUSDT', 'HTTPError: HTTP Error 403: Forbidden'), ('ETHUSDT', 'HTTPError: HTTP E\n- [D6] Ilk sembol duserse ANA sembol sessizce kayiyor: korelasyon capasi degisir, tek-bahis hukmu yeniden yazilir, uy\n    repro exit=0 | >>> 'KOSULAMAYANLAR' satiri portfoy hukmunden SONRA mi: True\n- [D6] Ayni kosuda ayni sembol icin IKI FARKLI FADE stake'i basiliyor: FADE_BLOK 10.62% derken DURUM OZETI 5.03% diyo\n    repro exit=0 | tablo onbellegi KULLANDI mi: False | ek ag cagrisi = 6\n- [D8] SARMALAYICI'de v4 butunluk kapisi YOK: diskteki/CWD'deki HERHANGI bir v4 sessizce calistirilir (BIRLESIK md5+u\n    repro exit=0 | BIRL: RuntimeError -> GOMULU v4 BOZUK (md5/uzunluk uyusmadi): dosyayi yeni\n- [D8] SARMALAYICI'de hiz-siniri/geri-cekilme katmani (R1 / _direncli_cek) YOK: varsayilan cekim yolunda 429/5xx yeni\n    repro exit=0 | sar: ardisik_istek_araliklari_s=[0.0, 0.0]\n- [D7] --self-test FAIL varken bile cikis kodu 0 doner (dogrulama kapisi sahte)\n    repro exit=0 | MAIN_DONUS = 0\n- [D7] Agsiz kosuda 17 testin 3'u (T2/T7/T9) SESSIZCE kosmuyor; ciktida ATLANDI isareti ve sayac yok\n    repro exit=0 | h2_barlar PATLADI -> URLError <urlopen error Tunnel connection f"
+    },
+    "E35": {
+      "evidence_id": "E35",
+      "source_id": "S01",
+      "method": "34 adet calistirilan repro (hepsi exit=0)",
+      "accessed_at": "2026-08-29T13:18:37.994086+00:00",
+      "description": "P2 kumesi: 34 bulgu, HEPSI denetci tarafindan kosturuldu",
+      "exit_code": 0,
+      "observed": "- [D1] ATR_PERIYOT = 14 esik sicilinde hic kayitli degil, oysa FADE motorunun butun mesafelerini ve R birimini olcekl\n    repro exit=0 |   ATR_PERIYOT=20 -> n=71 sum_r=+0.7815 kapi_acik=True stake=0.007588\n- [D1] V4_ADI sabiti ve 'import importlib.util' olu — disk-yukleyici doneminden kalma, T13 testi ise loader'in import\n    repro exit=0 | T13 iddiasi: ['and \"importlib\" not in _v4_yukle.__code__.co_names)']\n- [D1] Docstring KULLANIM bloğundaki uc komut da diskte olmayan bir dosya adini gosteriyor (Claudcodellm_trading_v5_b\n    repro exit=0 |    python Claudcodellm_trading_v5_birlesik.py --self-test # 17 test\n- [D2] Beyan edilen dorduncu geri cekilme suresi (9.0 s) OLU: gercek yeniden deneme butcesi 15.9 s degil 6.9 s\n    repro exit=0 | toplam geri cekilme    : 6.9 s (beyan edilen 15.9 s degil)\n- [D2] Gomulu v4 kaynagi linecache'e kaydedilmiyor: 5000 satirlik motorun traceback'lerinde kaynak satiri YOK\n    repro exit=0 | TypeError: unsupported operand type(s) for +: 'NoneType' and 'float'\n- [D3] _okx_sekillendir taker dalinda sellVol=0 iken buySellRatio 0.0 uretiliyor: 'tamami taker-ALIS' (azami boga) il\n    repro exit=0 | F3 ayni deger mi?  True\n- [D4] _kapi: 'fail-closed' beyanina ragmen b_win korumasiz — b_win<=0'da kapi KAPANMIYOR, stake AZAMI KELLY_CAP'e ci\n    repro exit=0 | kazan=0 -> b_win=1.5000  (R_FADE=1.5000, OLCUM DEGIL) acik=True stake=0.0667 not=edge_hat=+0.1000R (n=40, p_hat=0.000) -\n- [D4] _yaris_coz: STOP dalinda cikis ucreti STOP fiyati yerine GIRIS fiyati uzerinden hesaplaniyor (HEDEF ve ZAMAN d\n    repro exit=0 |   stop-fiyatli  ucret   = -1.087500\n- [D5] fade_blok basilan R'yi modul sabiti R_FADE'den aliyor; fk['t']/fk['s'] ile bagli degil - t/s ezildiginde ayni \n    repro exit=0 | gercek R = fk['t']/fk['s'] = 3.0000 | basilan sabit R_FADE = 1.5000\n- [D5] _f4 ile basilan funding, olculen degeri sifirdan ayirt edilemez hale getiriyor (4.6e-5 -> '+0.0000')\n    repro exit=0 | sifir funding basimi = +0.0000 | ETH(4.6e-5) basimi = +0.0000 -> ayirt EDILEMEZ\n- [D6] n=0 iken olculmemis edge_hat tabloda '+0.0000' olarak, yani olculmus sifir gibi basiliyor\n    repro exit=0 | edge_hat None iken tabloda basilan deger '+0.0000' mi: True\n- [D8] SARMALAYICI'de v4'un kaynak-tarama guvenlik testleri CALISAN kodu degil DISKTEKI ham v4'u denetler (I13 ile en\n    repro exit=0 | sar: enjekte_kod_CALISIYOR=True guvenlik_taramasi_YAKALADI=False\n- [D8] SARMALAYICI'nin `--self-test` CLI yolu bar gerektiren T2 (bak-ileri yasagi) / T7 (determinizm) / T9 (kenar sev\n    repro exit=0 | sar: --self-test test_sayisi=12 T2/T7/T9=[False, False, False]\n- [D7] T7 determinizm testi ayni ifadeyi iki kez degerlendiriyor (iki taraf BIREBIR ayni AST); kullanilmayan `random`\n    repro exit=0 | v5_selftest importlari: ['copy', 'random', 'unittest'] | HIC KULLANILMAYAN: ['copy', 'random']\n- [D7] T12 (gomulu v4 butunlugu) erisilemez-basarisizlik: md5/uzunluk uyusmazsa modul import'ta patliyor, test hic ko\n    repro exit=0 | T12_ERISILEBILIR_MI : False\n- [D7] T13 'v4 loader disk open/importlib KULLANMAZ' kontrolu yalniz ust kod nesnesinin co_names'ine bakiyor; ic fonk\n    repro exit=0 | DISK OKUYAN fonksiyon icin T13 kosulu -> True | gercekten okudu: 'vm\\n'\n- [C1] STOP ucret dali cikis ucretini GIRIS fiyati uzerinden alir; HEDEF ve ZAMAN dallari CIKIS fiyati kullanir — net\n    repro exit=0 | 3361:            ucret = MAKER * giris + (TAKER + KAYMA) * cp\n- [D9] R1 beyanindaki 4 kademeli geri cekilme (0.6/1.8/4.5/9.0 s) — son kademe 9.0 s HIC uygulanmaz (olu dege"
     }
   },
   "claims": {
@@ -324,12 +386,78 @@
       ],
       "counter_evidence_status": "DONE",
       "critical": true
+    },
+    "C30": {
+      "claim_id": "C30",
+      "statement": "[P0] okx_uyumlu_getir sayfalama dongusu OKX govde hata kodunu (code!=0) YUTUYOR - seri sessizce kesiliyor, kapsam yine 1.00 raporlaniyor ve 4H hizalamasi look-ahead'e donuyor",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E30"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true,
+      "impact": "Karara dogrudan etki: tek bir gecici OKX govde hatasi (HTTP 200 + code=50011 hiz siniri) 4H serisini 1200 -> 100 bara sessizce dusuruyor. kline_4h icin dis sayfalayici YOK (v4 sayfa_plani('kline_4h') None doner), yani hata hicbir yere yansimiyor: dusen=[] , kapsam=1.00. Sonuc: v4 _h4_hizala sayim-tabanli oldugu icin 4000 15M barin 3999'u (%100) KENDINDEN 604 SAATE (25 gun) KADAR ILERIDEKI bir 4H b",
+      "fix": "3270-3272'deki ic sayfa cekimini ilk sayfayla AYNI kapidan gecir: j = cek(...); if isinstance(j, dict) and 'code' in j: if str(j.get('code')) != '0': raise RuntimeError('OKX code=%s msg=%s' % (j.get('code'), str(j.get('msg'))[:60])); j = j.get('data') or []. Boylece kanal veri_topla'da except'e dusup None olur (fail-closed) ve kapsam gercek deger olur. Ek korkuluk: donusten once hedef_i'ye ulasila"
+    },
+    "C31": {
+      "claim_id": "C31",
+      "statement": "[P0] _yaris_coz: GIRIS BARINDA hedef, ayni barin H/L'sinden okunuyor — bar-ici sira varsayimi hayali HEDEF uretiyor; surukelenmesiz seride kapiyi ACIYOR",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E31"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true,
+      "impact": "Karar/stake dogrudan etkileniyor. _kapi'nin TEK ekonomik kapisi edge_hat>0 (3298). Giris barinda 'h >= hedef' yeterli sayildigi icin, gercekte fitil once yukari sonra asagi gidip limiti dolduran barlar +1.46R'lik HAYALI kazanc olarak defterlenir. Izolasyon kosusunda ayni-bar cozumler yarislarin %10-16'si ama edge_hat'in TAMAMINI tasiyor: 4 tohumun 3'unde bunlar cikarilinca edge_hat isaret degistir",
+      "fix": "3342 satirini giris bariyla sinirla: `hd = (j > giris_idx) and (h >= hedef if yon == \"LONG\" else l <= hedef)`. Boylece giris barinda yalnizca yol-garantili STOP cozulebilir; hedef en erken bir SONRAKI barda kabul edilir (mevcut 'alt_d and ust_d -> None' korumasiyla ayni felsefe). Alternatif ve daha sert secenek: giris barinda hd ve sd birlikte belirsizse yarisi 3331-3332'deki gibi tumden dusur (re"
+    },
+    "C32": {
+      "claim_id": "C32",
+      "statement": "[P0] FADE stake'i TEK BAHIS (korelasyon) kapisina HIC girmiyor - portfoy 'POZISYON YOK' derken 2 korelasyonlu FADE bahsi aciliyor",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E32"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true,
+      "impact": "Dogrudan risk yonetimi ihlali (STRATEJI.md #1 'Tek bahis kurali'). v4 kaynaginda 'fade' kelimesi 0 kez, v5 kaynaginda 'rho/korelasyon/TEK_BAHIS' 0 kez geciyor: FADE stake'ini korelasyona gore kirpacak HICBIR kod yolu yok. Kullanici raporun ustunde 'SECILEN: POZISYON YOK' okurken hemen altindaki FADE bloklari/tablosu 3 sembol icin ayri ayri stake yaziyor; ρ~0.98'de bunlar tek bahistir ve toplam ser",
+      "fix": "varsayilan_kosu_v5'te (3573-3576) portfoy hukmunu FADE'i de kapsayacak sekilde kur: kayitlarin fade['kapi']['stake']>0 olanlarini ayni korelasyon matrisiyle (TV4.korelasyon + TEK_BAHIS_ESIGI) elden gecir; |rho|>=0.85 ve ayni yon ise yalniz en yuksek edge_hat'li sembolun FADE bahsini tasi, digerini 'KOPYA - ATLA' isaretle. Asgari (fail-closed) surum: fade_durum_tablosu'na toplam acik FADE stake'i +"
+    },
+    "C33": {
+      "claim_id": "C33",
+      "statement": "[P0] v5'in cektigi 4H/15M bar sayisi orani 3.11; v4'un _h4_hizala INDEKS sozlesmesi 16:1 gerektiriyor -> karar barinin 4H oznitelik satiri 173 GUN bayat",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E33"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true,
+      "impact": "KARARA DOGRUDAN: v4 _h4_hizala ZAMAN degil INDEKS eslemesi yapar ve iki dizinin ayni anda baslayip 16:1 oranda olmasini varsayar. v5'in TEK calisan yolu OKX'tir (birlesik:3248-3249 Binance ucunu sert reddediyor), ve v5 15M icin 4000, 4H icin 1200 bar cekiyor -> oran 3.11. Sonuc: HER 15M bari icin 4H oznitelik satiri s4[(i+1)//16-1] indeksinden okunuyor; karar barinda bu idx 249 (n4h-1=1287 olmaliy",
+      "fix": "(a) Asgari/mekanik: birlesik:3264'te 4H hedefini 15M butcesine BAGLA -> hedef_i = -(-int(TV4.AZAMI_BAR_BUTCESI) // int(TV4.H4_BAR_ORANI))  (4000/16 = 250); boylece esl[-1] == n4h-1 olur. (b) Kalici: _h4_hizala'yi indeks yerine ZAMAN ile esle - her 15M bari icin barlar4h icinde t <= bar['t'] kosulunu saglayan SON bari bisect ile bul (look-ahead yasagi korunur), boylece iki dizinin uzunlugu/baslangi"
+    },
+    "C34": {
+      "claim_id": "C34",
+      "statement": "[P1] 32 adet P1 bulgusu; hepsinin repro kodu denetci tarafindan kosturuldu ve exit=0 ile beklenen ciktiyi verdi",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E34"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": true
+    },
+    "C35": {
+      "claim_id": "C35",
+      "statement": "[P2] 34 adet P2 bulgusu; hepsinin repro kodu denetci tarafindan kosturuldu ve exit=0 ile beklenen ciktiyi verdi",
+      "status": "VERIFIED",
+      "evidence_ids": [
+        "E35"
+      ],
+      "counter_evidence_status": "DONE",
+      "critical": false
     }
   },
   "contradictions": [],
-  "external_checks_pending": [
-    "kronolojik 13-dilim denetimi HALA KOSUYOR (task wr3qde82y) - bulgulari henuz dahil edilmedi"
-  ],
+  "external_checks_pending": [],
   "counter_evidence_search": "DONE",
   "decision": "REPAIR",
   "epistemic_verdict": "UNKNOWN",
