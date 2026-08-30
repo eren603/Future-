@@ -79,7 +79,7 @@ from typing import Any, Callable, Iterable, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-SURUM = "1.0.0"
+SURUM = "1.1.0"
 
 # =============================================================================
 # 1) SABITLER — hepsi BEYAN EDILIR; gizli esik yoktur
@@ -107,6 +107,10 @@ ESIKLER: dict[str, tuple[Any, str, str]] = {
     "AGIRLIK_M15":   (0.30,  "VARSAYIM", "yon agirligi: 15M trend"),
     "AGIRLIK_TUREV": (0.20,  "VARSAYIM", "yon agirligi: turev skoru"),
     "RANGE_KIRPMA":  (0.5,   "VARSAYIM", "rejim=range iken 15M agirligi bu oranla carpilir"),
+    "ANI_PENCERE":   (6,     "VARSAYIM", "ani-hareket taramasi: son N bar"),
+    "ANI_YER_ATR":   (3.0,   "VARSAYIM", "pencere net yer degistirme >= N x ATR -> asiri genisleme"),
+    "ANI_FITIL":     (0.6,   "VARSAYIM", "son barda fitil orani >= esik -> ret/tukenme isareti"),
+    "ANI_HACIM":     (3.0,   "VARSAYIM", "son bar hacmi >= N x medyan(20) -> klimaks hacim"),
 }
 
 
@@ -729,9 +733,14 @@ def acik_fvgler(barlar: Sequence, mitigasyon: float | None = None) -> list[dict]
         for j in range(i + 1, len(barlar)):
             _, hj, lj, _ = bar_ohlc(barlar[j])
             if yon == "bull":
-                kalan_alt = max(kalan_alt, min(lj, kalan_ust))
+                # bull FVG'ye fiyat YUKARIDAN girer: dolan kisim ustten asagi
+                # [lj, ust] -> kalan bolge [alt, lj]. (Onceki surumde dallar
+                # TERSTI: dokunulmamis bosluk kapaniyor, dolan acik kaliyordu.)
+                kalan_ust = min(kalan_ust, max(lj, kalan_alt))
             else:
-                kalan_ust = min(kalan_ust, max(hj, kalan_alt))
+                # bear FVG'ye fiyat ASAGIDAN girer: dolan kisim [alt, hj]
+                # -> kalan bolge [hj, ust].
+                kalan_alt = max(kalan_alt, min(hj, kalan_ust))
         kalan = max(0.0, kalan_ust - kalan_alt)
         if kalan / genislik > (1.0 - mg):
             out.append({"alt": round(kalan_alt, 8), "ust": round(kalan_ust, 8),
@@ -780,6 +789,63 @@ def trend_oku(barlar: Sequence) -> dict:
             "rejim": durum, "atr": wilder_atr(barlar),
             "swing_sayisi": len(sw), "acik_fvg": acik_fvgler(barlar),
             "son_kapanis": bar_ohlc(barlar[-1])[3]}
+
+
+def bar_hacim(b: Any) -> float | None:
+    try:
+        v = float(b[5]) if isinstance(b, (list, tuple)) else float(b.get("v"))
+        return v if math.isfinite(v) and v >= 0 else None
+    except (TypeError, ValueError, IndexError):
+        return None
+
+
+def ani_hareket(barlar: Sequence, atr: float | None) -> dict:
+    """PUMP / DUMP / V-DONUS asiri-genisleme RISK BAYRAGI (kestirim DEGIL).
+
+    Durustluk notu: hicbir yontem V donusunu KESIN onceden bilemez. Burada
+    OLCULEBILIR asirilik kosullari isaretlenir: (1) son ANI_PENCERE barda net
+    yer degistirme / ATR, (2) son barin fitil orani (ret/tukenme), (3) son bar
+    hacmi / onceki 20 bar medyani (klimaks). Bayrak kalkinca MARKET emri
+    yasaklanir (yalniz LIMIT) — kovalama mekanik olarak kapanir. Esikler
+    ESIKLER'de beyanlidir.
+    """
+    n = int(E("ANI_PENCERE"))
+    if not atr or atr <= 0 or len(barlar) < n + 21:
+        return {"tespit": False, "tur": None, "not": "VERI YETERSIZ (olcum yok)"}
+    kap = [bar_ohlc(b)[3] for b in barlar[-(n + 1):]]
+    net = kap[-1] - kap[0]
+    yer_atr = abs(net) / atr
+    o, h, l, c = bar_ohlc(barlar[-1])
+    menzil = h - l
+    fitil = (1.0 - abs(c - o) / menzil) if menzil > 0 else 0.0
+    hacimler = [bar_hacim(b) for b in barlar[-21:-1]]
+    hacimler = sorted(v for v in hacimler if v is not None)
+    son_h = bar_hacim(barlar[-1])
+    if hacimler and son_h is not None and hacimler[len(hacimler) // 2] > 0:
+        hacim_oran = son_h / hacimler[len(hacimler) // 2]
+    else:
+        hacim_oran = None                     # hacim kanali yoksa UYDURULMAZ
+    tespit = yer_atr >= E("ANI_YER_ATR")
+    if not tespit:
+        return {"tespit": False, "tur": None, "yer_atr": round(yer_atr, 2),
+                "fitil_oran": round(fitil, 2), "hacim_oran":
+                (round(hacim_oran, 2) if hacim_oran is not None else None),
+                "not": "asiri genisleme yok"}
+    son_yon = 1 if c >= o else -1
+    pencere_yon = 1 if net > 0 else -1
+    if fitil >= E("ANI_FITIL") or son_yon != pencere_yon:
+        tur = "V-DONUS RISKI"
+    else:
+        tur = "PUMP" if net > 0 else "DUMP"
+    notlar = [f"son {n} barda {net:+.2f} = {yer_atr:.2f}xATR"]
+    if fitil >= E("ANI_FITIL"):
+        notlar.append(f"fitil {fitil:.2f} >= {E('ANI_FITIL')} (ret/tukenme)")
+    if hacim_oran is not None and hacim_oran >= E("ANI_HACIM"):
+        notlar.append(f"hacim {hacim_oran:.1f}x medyan (klimaks)")
+    return {"tespit": True, "tur": tur, "yer_atr": round(yer_atr, 2),
+            "fitil_oran": round(fitil, 2),
+            "hacim_oran": (round(hacim_oran, 2) if hacim_oran is not None else None),
+            "not": "; ".join(notlar)}
 
 
 # =============================================================================
@@ -932,7 +998,7 @@ def hedef_sec(yapi: dict, yon: str, giris: float, risk: float,
 
 def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None,
                profil: dict | None = None, r_min: float | None = None,
-               azami: int = 8) -> dict:
+               azami: int = 8, market_yasak: bool = False) -> dict:
     yon = str(yon).upper()
     if yon not in ("LONG", "SHORT"):
         return {"EMIR": "EMIR YOK", "yon": yon, "adaylar": [], "seviyeler": [],
@@ -984,6 +1050,9 @@ def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None
         if s_atr is not None and not (E("STOP_ATR_ALT") <= s_atr <= E("STOP_ATR_UST")):
             redler.append(f"giris {round(giris,2)}: stop/ATR {s_atr} kurulum bandi "
                           f"[{E('STOP_ATR_ALT')}, {E('STOP_ATR_UST')}] disinda"); continue
+        if market_yasak and tip == "MARKET":
+            redler.append(f"giris {round(giris,2)}: ANI-HAREKET bayragi -> MARKET "
+                          "yasak, yalniz LIMIT (kovalama kapali)"); continue
         gecen.append(kayit)
         if len(gecen) >= azami:
             break
@@ -1012,6 +1081,11 @@ def stake_kapisi(n: int, kazan: int, sum_r: float, sum_kaz_r: float,
                  sum_kayip_r: float, min_n: int = 30,
                  cap: float = 0.25) -> dict:
     """Fail-closed boyutlandirma kapisi.
+
+    KAPSAM NOTU (Q1): bu islev islem-gecmisi olcumu (n, kazan, R toplami)
+    gerektirir; sinyal motoru boyle bir gecmis uretmez, dolayisiyla sinyal
+    yolunda CAGRILMAZ ve ciktida stake BASILMAZ (uydurma boyut yok). FADE
+    benzeri olcum akislari icin kutuphane islevidir.
 
     D5: kazan == 0 iken b_win OLCULEMEZ -> sabit bir tasarim degerine DUSULMEZ,
         kapi KAPANIR. (Eski surum R_FADE=1.5 sabitine dusup kapiyi ACIYORDU.)
@@ -1142,8 +1216,13 @@ def yon_turet(h4: dict, m15: dict, turev: dict | None,
 
     skor = (toplam / agirlik_toplam) if agirlik_toplam else 0.0
     yon = "LONG" if skor > 0 else ("SHORT" if skor < 0 else "NOTR")
+    t4, t15 = str(h4.get("trend")), str(m15.get("trend"))
+    mtf_celiski = ({t4, t15} == {"bull", "bear"})
     return {"yon": yon, "skor": round(skor, 4), "bilesenler": bilesen,
-            "agirlik_toplam": round(agirlik_toplam, 4)}
+            "agirlik_toplam": round(agirlik_toplam, 4),
+            "mtf_celiski": mtf_celiski,
+            "mtf_not": (f"MTF CELISKI: 4H={t4} / 15M={t15} — zaman dilimleri "
+                        "zit; guven DUSUK, iddia LIMITED" if mtf_celiski else "")}
 
 
 # =============================================================================
@@ -1227,6 +1306,15 @@ def sembol_kos(sembol: str, reg: EvidenceRegistry, sira: int,
     reg.add_evidence(f"E{P}D", f"S{P}B", "trend_oku (olculdu)", f"{sembol} 4H yapi",
                      f"trend={o4['trend']} adx={o4['adx']} rejim={o4['rejim']} atr={o4['atr']}")
 
+    uyarilar: list[str] = []          # Q2: hicbir hata sessizce yutulmaz
+
+    # Q1: turev kanali HER sembol icin cozulur (eskiden yalniz 1. sembol)
+    if not (turev_yol and Path(turev_yol).exists()) and yerel_dizin:
+        for aday in (Path(yerel_dizin) / f"{sembol.upper()}_turev.json",
+                     Path(yerel_dizin) / sembol.upper() / "turev.json"):
+            if aday.exists():
+                turev_yol = aday
+                break
     turev = None
     if turev_yol and Path(turev_yol).exists():
         try:
@@ -1240,29 +1328,55 @@ def sembol_kos(sembol: str, reg: EvidenceRegistry, sira: int,
                 reg.add_evidence(f"E{P}E", f"S{P}C", "turev okumasi", "turev yon skoru",
                                  f"yon_skoru={sk} kapsam={d.get('kapsam')}")
                 turev = {"skor": sk, "kapsam": d.get("kapsam")}
-        except Exception:                             # noqa: BLE001
+            else:
+                uyarilar.append(f"turev dosyasi var ama yon_skoru yok: {turev_yol}")
+        except Exception as e:                        # noqa: BLE001
+            uyarilar.append(f"turev OKUNAMADI ({type(e).__name__}: {e}) -> VERI YOK")
             turev = None
 
     y = yon_turet(o4, o15, turev, f"E{P}D", f"E{P}C", f"E{P}E" if turev else "")
+    if y.get("mtf_celiski"):
+        uyarilar.append(y["mtf_not"])
 
     fiyat, fk = o15["son_kapanis"], f"son kapanis ({k15})"
+    funding = None
     if k15.startswith("canli"):
         cfg = VARSAYILAN_SEMBOL.get(sembol.upper(), {})
         if cfg.get("okx"):
             try:
                 fiyat, fk = okx_fiyat(cfg["okx"]), "canli ticker"
-            except Exception:                         # noqa: BLE001
-                pass
+            except Exception as e:                    # noqa: BLE001
+                uyarilar.append(f"canli ticker ALINAMADI ({type(e).__name__}) "
+                                "-> son kapanis kullanildi")
+            funding = funding_oku(cfg["okx"])         # Q1: funding karara baglandi
+            if funding is None:
+                uyarilar.append("funding kanali ALINAMADI -> VERI YOK")
+            else:
+                reg.add_evidence(f"E{P}G", f"S{P}A", "funding-rate-history",
+                                 f"{sembol} funding (isaretli)",
+                                 f"ortalama={funding['ortalama_isaretli']:+.6f} "
+                                 f"son={funding['son']:+.6f} n={funding['n']}")
+
+    # Q6: ani-hareket bayragi — kalkarsa MARKET yasak (yalniz LIMIT)
+    ani = ani_hareket(b15, o15.get("atr"))
+    reg.add_evidence(f"E{P}H", f"S{P}A", "ani_hareket (olculdu)",
+                     f"{sembol} asiri-genisleme taramasi",
+                     f"tespit={ani['tespit']} tur={ani.get('tur')} {ani.get('not','')}")
+    if ani["tespit"]:
+        uyarilar.append(f"ANI HAREKET: {ani['tur']} — {ani['not']} -> MARKET yasak")
 
     hiz = hizalama_sapmasi(b15, b4)
     emirler: dict[str, dict] = {}
     for taraf in ([y["yon"]] if y["yon"] in ("LONG", "SHORT") else ["LONG", "SHORT"]):
-        emirler[taraf] = emir_plani(b15, b4, taraf, fiyat, profil)
+        emirler[taraf] = emir_plani(b15, b4, taraf, fiyat, profil,
+                                    market_yasak=ani["tespit"])
     reg.add_evidence(f"E{P}F", f"S{P}A", "emir_plani (olculdu)", f"{sembol} emir",
                      json.dumps({k: v["EMIR"] for k, v in emirler.items()}, ensure_ascii=False))
 
-    reg.add_claim(f"C{P}1", f"{sembol} yon={y['yon']} (agirlikli skor {y['skor']})",
-                  "VERIFIED" if y["yon"] != "NOTR" else "LIMITED",
+    yon_statu = "VERIFIED" if (y["yon"] != "NOTR" and not y.get("mtf_celiski")) else "LIMITED"
+    reg.add_claim(f"C{P}1", f"{sembol} yon={y['yon']} (agirlikli skor {y['skor']})"
+                  + (" [MTF CELISKI -> LIMITED]" if y.get("mtf_celiski") else ""),
+                  yon_statu,
                   [f"E{P}C", f"E{P}D"] + ([f"E{P}E"] if turev else []), "DONE")
     reg.add_claim(f"C{P}2", f"{sembol} seviyeleri olculen yapidan; uydurma seviye yok",
                   "VERIFIED", [f"E{P}F"], "DONE")
@@ -1278,6 +1392,7 @@ def sembol_kos(sembol: str, reg: EvidenceRegistry, sira: int,
 
     return {"sembol": sembol, "yon": y, "fiyat": fiyat, "fiyat_kaynak": fk,
             "emirler": emirler, "o15": o15, "o4": o4, "turev": turev,
+            "funding": funding, "ani": ani, "uyarilar": uyarilar,
             "hizalama": hiz, "tazelik": {"15m": t15, "yas_dk": y15, "kaynak": k15,
                                          "4H": t4, "kaynak4": k4},
             "_m15": b15, "_h4": b4}
@@ -1325,6 +1440,18 @@ def bas(sonuclar: list[dict], audit: dict, publish: bool) -> str:
                       (x["emir_tipi"], x["giris"], x["stop"], x["hedef"],
                        x["R_rapor"], x["R_gercekci"], x["rr_denetim"],
                        x["stop_atr"], x["mesafe"]))
+        ani = s.get("ani") or {}
+        if ani.get("tespit"):
+            A(f"ANI HAREKET: {ani['tur']}  ({ani['not']})  -> MARKET YASAK, yalniz LIMIT")
+        elif "yer_atr" in ani:
+            A(f"ANI HAREKET: yok  (yer/ATR {ani['yer_atr']}, fitil {ani['fitil_oran']}, "
+              f"hacim {ani['hacim_oran']}x)")
+        f = s.get("funding")
+        if f:
+            A(f"FUNDING  : ort {f['ortalama_isaretli']:+.6f} (isaretli, n={f['n']}) "
+              f"| son {f['son']:+.6f} | muhafazakar maliyet {f['maliyet_muhafazakar']:.6f}")
+        for u in (s.get("uyarilar") or []):
+            A(f"   ~ {u}")
         hz = s["hizalama"]
         A(f"VERI     : 15M {s['tazelik']['kaynak']} yas {s['tazelik']['yas_dk']:.0f} dk "
           f"({s['tazelik']['15m']}) | 4H {s['tazelik']['kaynak4']} ({s['tazelik']['4H']}) "
@@ -1686,6 +1813,108 @@ def oz_test() -> list[tuple[str, str, str]]:
     kayit("T36 cift kapi: kapi2 kor kaldiginda kapi1'in serti kazanir (B4 kapandi)",
           ck["final_decision"] == "REPAIR" and not ck["publish_allowed"],
           f"k1={ck['kapi1_registry']['decision']} k2={ck['kapi2_kullanici']['final_decision']} sert={ck['final_decision']}")
+
+    # ================= 6-SORU DENETIMININ KORUYUCU TESTLERI =================
+    def _b(o, h, l, c, v=1000.0):
+        return {"o": o, "h": h, "l": l, "c": c, "v": v}
+
+    # --- T37/T38 (Q5): FVG mitigasyonu dogru tarafta
+    temel = [_b(99, 100, 98, 99.5), _b(100, 103, 99.5, 102.5), _b(103, 107, 105, 106)]
+    dokunulmamis = temel + [_b(106, 110, 106, 109), _b(109, 112, 108, 111)]
+    fa = [f for f in acik_fvgler(dokunulmamis) if f["bar"] == 2]
+    kayit("T37 Q5: dokunulmamis bull FVG ACIK kalir",
+          len(fa) == 1 and fa[0]["kalan_oran"] == 1.0
+          and fa[0]["alt"] == 100.0 and fa[0]["ust"] == 105.0,
+          str(fa))
+    dolan = temel + [_b(106, 106.5, 99.0, 99.5)]
+    fb = [f for f in acik_fvgler(dolan) if f["bar"] == 2]
+    yarim = temel + [_b(106, 107, 103, 105)]
+    fc = [f for f in acik_fvgler(yarim) if f["bar"] == 2]
+    kayit("T38 Q5: dolan FVG kapanir, yarim dolanin kalani [alt,lj]",
+          not fb and len(fc) == 1 and fc[0]["ust"] == 103.0 and fc[0]["alt"] == 100.0,
+          f"dolan={len(fb)} yarim={fc}")
+
+    # --- T39 (Q3): AYNA SIMETRISI — yon tam ters doner, |skor| ayni
+    ayna_ok, ayna_n = 0, 0
+    for tohum in range(1, 21):
+        b = _sentetik(220, 900_000, egim=0.0, tohum=tohum)
+        tepe = 2 * 100000.0
+        by = [[x[0], f"{tepe-float(x[1]):.2f}", f"{tepe-float(x[3]):.2f}",
+               f"{tepe-float(x[2]):.2f}", f"{tepe-float(x[4]):.2f}"] + list(x[5:])
+              for x in b]
+        y1 = yon_turet(trend_oku(b), trend_oku(b), None)
+        y2 = yon_turet(trend_oku(by), trend_oku(by), None)
+        ayna_n += 1
+        ters = {"LONG": "SHORT", "SHORT": "LONG", "NOTR": "NOTR"}
+        if y2["yon"] == ters[y1["yon"]] and abs(abs(y1["skor"]) - abs(y2["skor"])) < 1e-9:
+            ayna_ok += 1
+    kayit("T39 Q3: ayna simetrisi (yon bias'i yok)",
+          ayna_ok == ayna_n, f"{ayna_ok}/{ayna_n} tohumda tam ters + esit |skor|")
+
+    # --- T40 (Q3): emir seviyeleri de aynada simetrik
+    yuk = _merdiven(True); dus = _merdiven(False)
+    pl = emir_plani(yuk, yuk, "LONG")
+    ps = emir_plani(dus, dus, "SHORT")
+    ayni_durum = (pl["EMIR"] == "EMIR YOK") == (ps["EMIR"] == "EMIR YOK")
+    sim = True
+    if pl["adaylar"] and ps["adaylar"]:
+        tepe2 = max(float(x[2]) for x in
+                    [[0, b["o"], b["h"], b["l"], b["c"]] for b in []] or [[0, 0, 0, 0, 0]])
+        rl = pl["adaylar"][0]["R_gercekci"]; rs = ps["adaylar"][0]["R_gercekci"]
+        sim = abs((rl or 0) - (rs or 0)) < 0.15
+    kayit("T40 Q3: LONG/SHORT emir uretimi simetrik",
+          ayni_durum and sim,
+          f"LONG={pl['EMIR'][:34]} | SHORT={ps['EMIR'][:34]}")
+
+    # --- T41 (Q4): dinamiklik — yeni bar gelince karar girdileri degisir
+    b0 = _sentetik(220, 900_000, egim=10.0, tohum=5)
+    p0 = emir_plani(b0, b0, "LONG")
+    son_t = int(b0[-1][0]); son_c = float(b0[-1][4])
+    patlama = [son_t + 900_000, f"{son_c:.2f}", f"{son_c*1.05:.2f}",
+               f"{son_c*0.999:.2f}", f"{son_c*1.048:.2f}", "9000",
+               son_t + 1_799_999, "0", 0, None, "0", "0"]
+    p1 = emir_plani(b0 + [patlama], b0 + [patlama], "LONG")
+    kayit("T41 Q4: yeni bar -> fiyat/plan guncellenir (onbellek yok)",
+          p1["fiyat"] != p0["fiyat"] and p1["yapi_ozeti"]["atr15"] != p0["yapi_ozeti"]["atr15"],
+          f"fiyat {p0['fiyat']:.2f} -> {p1['fiyat']:.2f}")
+
+    # --- T42 (Q6): ani-hareket bayragi + MARKET yasagi
+    sakin = _sentetik(220, 900_000, egim=0.0, tohum=9)
+    a0 = ani_hareket(sakin, wilder_atr(sakin))
+    pompali = list(sakin)
+    c0 = float(pompali[-1][4]); t0 = int(pompali[-1][0]); atr0 = wilder_atr(sakin)
+    for k in range(6):
+        c1 = c0 + atr0 * 0.9
+        pompali.append([t0 + (k + 1) * 900_000, f"{c0:.2f}", f"{c1*1.001:.2f}",
+                        f"{c0*0.999:.2f}", f"{c1:.2f}", "9000",
+                        t0 + (k + 1) * 900_000 + 899_999, "0", 0, None, "0", "0"])
+        c0 = c1
+    a1 = ani_hareket(pompali, wilder_atr(pompali))
+    pm = emir_plani(pompali, pompali, "LONG", market_yasak=True)
+    market_reddi = any("ANI-HAREKET" in r for r in pm["red_nedenleri"]) or \
+        all(x["emir_tipi"] != "MARKET" for x in pm["adaylar"])
+    kayit("T42 Q6: pump tespiti + MARKET yasagi calisir",
+          (not a0["tespit"]) and a1["tespit"] and a1["tur"] in ("PUMP", "V-DONUS RISKI")
+          and market_reddi,
+          f"sakin={a0['tespit']} pompa={a1.get('tur')} yer/ATR={a1.get('yer_atr')}")
+
+    # --- T43 (Q2): MTF celiskisi SUSTURULMUYOR
+    ymc = yon_turet({"trend": "bull", "rejim": "trend"},
+                    {"trend": "bear", "rejim": "trend"}, None)
+    kayit("T43 Q2: MTF celiskisi yuzeye cikar (LIMITED'e duser)",
+          ymc["mtf_celiski"] and "MTF CELISKI" in ymc["mtf_not"],
+          ymc["mtf_not"][:60])
+
+    # --- T44 (Q6): V-donus bayragi — pencere yukari, son bar sert ret fitili
+    v_seri = list(pompali[:-1])
+    ct = float(v_seri[-1][4]); tt = int(v_seri[-1][0])
+    v_seri.append([tt + 900_000, f"{ct:.2f}", f"{ct + atr0*1.2:.2f}",
+                   f"{ct - atr0*0.1:.2f}", f"{ct + atr0*0.05:.2f}", "9000",
+                   tt + 900_000 + 899_999, "0", 0, None, "0", "0"])
+    av = ani_hareket(v_seri, wilder_atr(v_seri))
+    kayit("T44 Q6: sert fitilli tepe -> V-DONUS RISKI bayragi",
+          av["tespit"] and av["tur"] == "V-DONUS RISKI",
+          f"tur={av.get('tur')} fitil={av.get('fitil_oran')}")
     return R
 
 
