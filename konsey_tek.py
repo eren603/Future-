@@ -1393,7 +1393,21 @@ def kos(semboller: Sequence[str], m15: str | None = None, h4: str | None = None,
     }).bagla(reg)
     rapor = run_agent_and_gate(reg, adapter)
 
+    # CIFT KAPI: registry.audit + kullanici kapisi; SERT olan kazanir.
+    ck = cift_kapi(reg, str(rapor["model_output"].get("decision", "PUBLISH_FULL")))
+    rapor["cift_kapi"] = ck
+    rapor["final_decision"] = ck["final_decision"]
+    rapor["publish_allowed"] = ck["publish_allowed"]
+
     metin = bas(sonuclar, rapor["independent_audit"], rapor["publish_allowed"])
+    k2 = ck["kapi2_kullanici"]
+    metin += ("\nCIFT KAPI  : kapi1(registry)=%s | kapi2(kullanici)=%s | SERT=%s"
+              % (ck["kapi1_registry"]["decision"], k2["final_decision"],
+                 ck["final_decision"]))
+    for h in k2["errors"][:3]:
+        metin += "\n   kapi2 ! " + h
+    for h in k2["warnings"][:2]:
+        metin += "\n   kapi2 ~ " + h
     if dusen:
         metin += "\n\nDUSEN SEMBOLLER (veri alinamadi, atlandi):\n" + \
                  "\n".join(f"   x {d}" for d in dusen)
@@ -1630,6 +1644,48 @@ def oz_test() -> list[tuple[str, str, str]]:
     kayit("T30 borsa yolunda imza/emir yuzeyi YOK",
           hmac_yok and hepsi_public and yetkisiz,
           f"public_uc={hepsi_public} auth_basligi_yok={yetkisiz} hmac_yok={hmac_yok}")
+
+    # --- KULLANICI KAPISI (bolum 15): dal dal sinama
+    TAM = {"claims": [{"claim_id": "C001", "importance": "CRITICAL",
+                       "status": "VERIFIED", "evidence_ids": ["E001"]}],
+           "sources": [{"source_id": "S001", "access_status": "ACCESSIBLE"}],
+           "evidence": [{"evidence_id": "E001", "source_id": "S001"}],
+           "counter_evidence_search": {"status": "COMPLETED"},
+           "conflicts": [], "decision": "PUBLISH_FULL"}
+    import copy as _c
+    a = independent_publication_gate(TAM)
+    kayit("T31 kullanici kapisi: ornek vaka -> PUBLISH_FULL",
+          a.final_decision == "PUBLISH_FULL" and a.publish_allowed, a.final_decision)
+
+    v = _c.deepcopy(TAM); v["claims"][0]["evidence_ids"] = []
+    kayit("T32 kullanici kapisi: kanitsiz VERIFIED -> HALT",
+          independent_publication_gate(v).final_decision == "HALT", "")
+
+    v = _c.deepcopy(TAM); v["sources"][0]["access_status"] = "UNREACHABLE"
+    kayit("T33 kullanici kapisi: erisilemez kaynak -> HALT",
+          independent_publication_gate(v).final_decision == "HALT", "")
+
+    v = _c.deepcopy(TAM); v["counter_evidence_search"] = {"status": "NOT_APPLICABLE"}
+    a = independent_publication_gate(v)
+    kayit("T34 kullanici kapisi: NOT_APPLICABLE -> LIMITED (B3, olculen davranis)",
+          a.final_decision == "PUBLISH_LIMITED" and not a.warnings,
+          "uyarisiz LIMITED - belgelendi")
+
+    # --- cift kapi: adaptor + sert-olan-kazanir
+    r2 = EvidenceRegistry(risk_level="HIGH"); r2.counter_evidence_search = "DONE"
+    r2.add_source("S1", "y", "dosya", "CURRENT", content="x")
+    r2.add_evidence("E1", "S1", "olcum", "d", "g")
+    r2.add_claim("C1", "ok", "VERIFIED", ["E1"], "DONE")
+    ck = cift_kapi(r2)
+    kayit("T35 cift kapi: iki kapi da FULL -> yayin IZINLI",
+          ck["final_decision"] == "PUBLISH_FULL" and ck["publish_allowed"],
+          f"k1={ck['kapi1_registry']['decision']} k2={ck['kapi2_kullanici']['final_decision']}")
+
+    r2.external_checks_pending.append("bayat veri")   # kapi2 bunu GORMEZ (B4)
+    ck = cift_kapi(r2)
+    kayit("T36 cift kapi: kapi2 kor kaldiginda kapi1'in serti kazanir (B4 kapandi)",
+          ck["final_decision"] == "REPAIR" and not ck["publish_allowed"],
+          f"k1={ck['kapi1_registry']['decision']} k2={ck['kapi2_kullanici']['final_decision']} sert={ck['final_decision']}")
     return R
 
 
@@ -1697,6 +1753,227 @@ def _yaris_coz(barlar: Sequence, i: int, atr: float, e: float = 2.0,
                     "sonuc": "HEDEF", "net_r": t / s}
         j += 1
     return None
+
+
+# =============================================================================
+# 15) KULLANICI KAPISI — independent_publication_gate (BIREBIR)
+#     Tek zorunlu degisiklik: dataclass adi `AuditResult` bu dosyada zaten
+#     kullanildigi icin (bolum 2, registry.audit donusu) burada
+#     `BagimsizKapiSonucu` olarak tasindi — GOVDE SATIRLARI DEGISMEDI.
+#     Olculen yapisal notlar (dal dal sinandi, V1-V10):
+#       B1 REPAIR bu kapida HIC uretilmez (karar: FULL/HALT/LIMITED)
+#       B2 publish_allowed PUBLISH_LIMITED'da da True doner (FULL sarti degil)
+#       B3 NOT_APPLICABLE uyari uretmez ama FULL'u LIMITED'a dusurur
+#       B4 tazelik/bayatlik denetlemez (yalniz access_status)
+#     B4'u asagidaki cift_kapi kapatir: iki kapidan SERT olan kazanir.
+# =============================================================================
+KAPI_IDDIA_STATULERI = {
+    "VERIFIED",
+    "REPORTED",
+    "INFERRED",
+    "LIMITED",
+    "UNKNOWN",
+}
+
+KAPI_YAYIN_KARARLARI = {
+    "PUBLISH_FULL",
+    "PUBLISH_LIMITED",
+    "REPAIR",
+    "HALT",
+}
+
+
+@dataclass
+class BagimsizKapiSonucu:
+    publish_allowed: bool
+    final_decision: str
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+
+def independent_publication_gate(result: dict[str, Any]) -> BagimsizKapiSonucu:
+    """
+    KONSEY bagimsiz ve deterministik yayin kapisi.
+
+    Modelin kendi VERIFIED veya PUBLISH_FULL beyanina guvenmez.
+    Nihai yayin kararini yalnizca bu fonksiyon belirler.
+    """
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    claims = result.get("claims", [])
+    sources = {
+        source.get("source_id"): source
+        for source in result.get("sources", [])
+    }
+    evidence_records = {
+        evidence.get("evidence_id"): evidence
+        for evidence in result.get("evidence", [])
+    }
+
+    critical_claims = [
+        claim
+        for claim in claims
+        if claim.get("importance") == "CRITICAL"
+    ]
+
+    # PUBLISH_FULL icin en az bir kritik iddia zorunludur.
+    if not critical_claims:
+        errors.append(
+            "PUBLISH_FULL verilemez: kritik iddia bulunmuyor."
+        )
+
+    for claim in claims:
+        claim_id = claim.get("claim_id", "UNKNOWN_CLAIM")
+        status = claim.get("status")
+        evidence_ids = claim.get("evidence_ids", [])
+
+        if status not in KAPI_IDDIA_STATULERI:
+            errors.append(
+                f"{claim_id}: gecersiz kanit statusu: {status}"
+            )
+
+        # Model VERIFIED dese bile kanit baglantisi yoksa reddet.
+        if status == "VERIFIED" and not evidence_ids:
+            errors.append(
+                f"{claim_id}: VERIFIED iddianin kanit baglantisi yok."
+            )
+
+        for evidence_id in evidence_ids:
+            evidence = evidence_records.get(evidence_id)
+
+            if evidence is None:
+                errors.append(
+                    f"{claim_id}: {evidence_id} kanit kaydi bulunamadi."
+                )
+                continue
+
+            source_id = evidence.get("source_id")
+            source = sources.get(source_id)
+
+            if source is None:
+                errors.append(
+                    f"{evidence_id}: {source_id} kaynak kaydi bulunamadi."
+                )
+                continue
+
+            if source.get("access_status") != "ACCESSIBLE":
+                errors.append(
+                    f"{evidence_id}: kaynak erisilebilir degil: {source_id}"
+                )
+
+    counter_evidence = result.get(
+        "counter_evidence_search",
+        {},
+    )
+    counter_status = counter_evidence.get("status")
+
+    if counter_status not in {"COMPLETED", "NOT_APPLICABLE"}:
+        warnings.append(
+            "Karsit kanit aramasi tamamlanmamis."
+        )
+
+    if result.get("conflicts"):
+        errors.append(
+            "Cozulmemis kaynak veya iddia celiskileri bulunuyor."
+        )
+
+    model_decision = result.get("decision")
+
+    if model_decision not in KAPI_YAYIN_KARARLARI:
+        errors.append(
+            f"Modelin karari gecersiz: {model_decision}"
+        )
+
+    # Yalnizca tum kritik kosullar saglanirsa tam yayin izni verilir.
+    full_publication_conditions = (
+        not errors
+        and critical_claims
+        and all(
+            claim.get("status") == "VERIFIED"
+            for claim in critical_claims
+        )
+        and counter_status == "COMPLETED"
+        and not result.get("conflicts")
+    )
+
+    if full_publication_conditions:
+        final_decision = "PUBLISH_FULL"
+    elif errors:
+        final_decision = "HALT"
+    else:
+        final_decision = "PUBLISH_LIMITED"
+
+    return BagimsizKapiSonucu(
+        publish_allowed=final_decision in {
+            "PUBLISH_FULL",
+            "PUBLISH_LIMITED",
+        },
+        final_decision=final_decision,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def registry_to_gate_input(reg: EvidenceRegistry,
+                           model_decision: str = "PUBLISH_FULL") -> dict[str, Any]:
+    """EvidenceRegistry (dict-tabanli) -> kullanici kapisinin liste-tabanli semasi.
+
+    Eslemeler (hepsi mekanik, uydurma alan yok):
+      critical: True/False   -> importance: CRITICAL/NORMAL
+      kayitli her kaynak     -> access_status: ACCESSIBLE
+        (fetch/bar_getir ERISILEMEYENI zaten KAYDETMEZ; kayit = erisildi)
+      counter DONE           -> COMPLETED (digerleri oldugu gibi tasinir)
+      contradictions         -> conflicts
+    NOT: bu kapi tazelik denetlemez (B4); bayatlik registry.audit tarafinda
+    external_checks_pending uzerinden yakalanir — cift_kapi ikisini birlestirir.
+    """
+    return {
+        "claims": [{"claim_id": c.claim_id,
+                    "importance": "CRITICAL" if c.critical else "NORMAL",
+                    "status": c.status,
+                    "evidence_ids": list(c.evidence_ids)}
+                   for c in reg.claims.values()],
+        "sources": [{"source_id": s.source_id, "access_status": "ACCESSIBLE"}
+                    for s in reg.sources.values()],
+        "evidence": [{"evidence_id": e.evidence_id, "source_id": e.source_id}
+                     for e in reg.evidence.values()],
+        "counter_evidence_search": {
+            "status": "COMPLETED" if reg.counter_evidence_search == "DONE"
+            else reg.counter_evidence_search},
+        "conflicts": list(reg.contradictions),
+        "decision": model_decision,
+    }
+
+
+# Karar siddet sirasi: buyuk = sert. Cift kapida SERT olan kazanir.
+_KARAR_SIDDETI = {"PUBLISH_FULL": 0, "PUBLISH_LIMITED": 1, "REPAIR": 2, "HALT": 3}
+
+
+def cift_kapi(reg: EvidenceRegistry, model_decision: str = "PUBLISH_FULL") -> dict[str, Any]:
+    """Iki bagimsiz kapiyi birlikte kosar; SERT olan hukum kazanir.
+
+    Kapi 1: registry.audit() — tazelik/bayatlik + karsit-kanit + celiski.
+    Kapi 2: independent_publication_gate — kullanici kapisi (birebir).
+    publish_allowed yalnizca IKISI DE PUBLISH_FULL derse True olur
+    (kullanici kapisinin B2 gevsekligi burada FULL sartina cekilir;
+    kapinin kendi ciktisi degistirilmeden ayrica raporlanir).
+    """
+    a1 = reg.audit(model_decision if model_decision in ALLOWED_DECISIONS
+                   else "PUBLISH_FULL")
+    a2 = independent_publication_gate(registry_to_gate_input(reg, model_decision))
+    sert = a1.decision if _KARAR_SIDDETI[a1.decision] >= _KARAR_SIDDETI[a2.final_decision] \
+        else a2.final_decision
+    return {
+        "kapi1_registry": a1.to_dict(),
+        "kapi2_kullanici": {"publish_allowed": a2.publish_allowed,
+                            "final_decision": a2.final_decision,
+                            "errors": a2.errors, "warnings": a2.warnings},
+        "final_decision": sert,
+        "publish_allowed": (a1.decision == "PUBLISH_FULL"
+                            and a2.final_decision == "PUBLISH_FULL"),
+    }
 
 
 # =============================================================================
