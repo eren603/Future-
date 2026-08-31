@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# ruff: noqa: E741  (o/h/l/c OHLC alan adlari finans konvansiyonudur; l bilinçli)
 """
 KONSEY TEK DOSYA — kanit kapisi + canli yon/giris-cikis sinyali
 ===============================================================================
@@ -75,11 +76,10 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Sequence
-from urllib.error import HTTPError, URLError
+from typing import Any, Callable, Sequence
 from urllib.request import Request, urlopen
 
-SURUM = "1.1.0"
+SURUM = "1.2.0"
 
 # =============================================================================
 # 1) SABITLER — hepsi BEYAN EDILIR; gizli esik yoktur
@@ -257,8 +257,8 @@ class EvidenceRegistry:
               dependency_group: str = "G0", timeout: int = 20) -> Evidence:
         """Pasif edinim. ERISILEMEZSE HICBIR SEY KAYDEDILMEZ (istisna firlar)."""
         if location.startswith(("http://", "https://")):
-            req = Request(location, headers={"User-Agent": f"konsey-tek/{SURUM}"})
-            with urlopen(req, timeout=timeout) as resp:
+            req = Request(location, headers={"User-Agent": f"konsey-tek/{SURUM}"})  # noqa: S310
+            with urlopen(req, timeout=timeout) as resp:  # noqa: S310  # nosec B310 (startswith http/https dali)
                 raw = resp.read()
                 ctype = resp.headers.get("Content-Type", "")
             text = raw.decode("utf-8", errors="replace")
@@ -399,6 +399,8 @@ class OpenAICompatibleAdapter(AgentAdapter):
     provider = "openai-compatible"
 
     def __init__(self, base_url: str, api_key_env: str, model: str, timeout: int = 90):
+        if not base_url.startswith("https://"):
+            raise ValueError("base_url https:// olmali")
         self.base_url = base_url.rstrip("/")
         self.api_key = os.environ.get(api_key_env, "")
         self.model = model
@@ -416,12 +418,12 @@ class OpenAICompatibleAdapter(AgentAdapter):
         if schema:
             body["response_format"] = {"type": "json_schema",
                                        "json_schema": {"name": "konsey_result", "schema": schema}}
-        request = Request(f"{self.base_url}/chat/completions",
+        request = Request(f"{self.base_url}/chat/completions",  # noqa: S310
                           data=json.dumps(body).encode(),
                           headers={"Content-Type": "application/json",
                                    "Authorization": f"Bearer {self.api_key}"},
                           method="POST")
-        with urlopen(request, timeout=self.timeout) as response:
+        with urlopen(request, timeout=self.timeout) as response:  # noqa: S310  # nosec B310 (init'te https dogrulandi)
             raw = json.loads(response.read().decode())
         message = raw["choices"][0]["message"]["content"]
         structured = None
@@ -437,6 +439,8 @@ class GenericJSONAdapter(AgentAdapter):
     provider = "generic-json"
 
     def __init__(self, endpoint: str, api_key_env: str | None = None, timeout: int = 90):
+        if not endpoint.startswith("https://"):
+            raise ValueError("endpoint https:// olmali")
         self.endpoint = endpoint
         self.api_key = os.environ.get(api_key_env, "") if api_key_env else ""
         self.timeout = timeout
@@ -446,9 +450,9 @@ class GenericJSONAdapter(AgentAdapter):
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        request = Request(self.endpoint, data=json.dumps(payload).encode(),
+        request = Request(self.endpoint, data=json.dumps(payload).encode(),  # noqa: S310
                           headers=headers, method="POST")
-        with urlopen(request, timeout=self.timeout) as response:
+        with urlopen(request, timeout=self.timeout) as response:  # noqa: S310  # nosec B310 (init'te https dogrulandi)
             raw = json.loads(response.read().decode())
         structured = raw.get("structured") or raw.get("result") or raw.get("output")
         return AgentResponse(self.provider, raw, raw.get("text", ""),
@@ -467,7 +471,8 @@ class YerelOlcumAdapter(AgentAdapter):
         self._reg = registry.to_dict()
         return self
 
-    def complete(self, system: str, user: str, schema: dict | None = None) -> AgentResponse:
+    def complete(self, system: str, user: str,
+                 schema: dict | None = None) -> AgentResponse:  # noqa: ARG002 (AgentAdapter API imzasi)
         veri = self._reg if self._reg is not None else json.loads(user)
         structured = self.karar_fn(veri)
         return AgentResponse(self.provider, {"system": system, "kaynak": "yerel-olcum"},
@@ -523,10 +528,12 @@ BINANCE_MUM = "https://api.binance.com/api/v3/klines"
 
 
 def _http_json(url: str, params: dict, timeout: int = 20) -> Any:
+    if not url.startswith("https://"):
+        raise ValueError(f"yalniz https kabul edilir: {url[:40]}")
     q = "&".join(f"{k}={v}" for k, v in params.items() if v not in (None, ""))
-    req = Request(f"{url}?{q}" if q else url,
+    req = Request(f"{url}?{q}" if q else url,  # noqa: S310 (https dogrulandi)
                   headers={"User-Agent": f"konsey-tek/{SURUM}"})
-    with urlopen(req, timeout=timeout) as r:
+    with urlopen(req, timeout=timeout) as r:  # noqa: S310  # nosec B310 (https dogrulandi)
         return json.loads(r.read().decode())
 
 
@@ -619,6 +626,39 @@ def funding_oku(inst: str, limit: int = 100, timeout: int = 20) -> dict | None:
             "maliyet_muhafazakar": max(ort, 0.0), "son": ds[0]}
 
 
+def _gecerli_barlar(barlar: Sequence, ts_zorunlu: bool = False
+                    ) -> tuple[list, int]:
+    """Motor giris suzgeci: parse edilemeyen / geometrisi bozuk satirlari
+    ATAR ve SAYAR (H9 stres bulgusu: bozuk API satiri motoru cokertiyordu).
+    Gecerlilik: o/h/l/c sonlu sayi, l <= min(o,c) <= max(o,c) <= h,
+    ts_zorunlu ise zaman damgasi okunabilir. Atilan sayisi cagirana doner;
+    ust katman bunu raporlar — sessiz veri kaybi yok."""
+    temiz, atilan = [], 0
+    for b in barlar:
+        try:
+            if isinstance(b, (list, tuple)):
+                if len(b) < 5:
+                    atilan += 1; continue
+                o, h, l, c = (float(b[1]), float(b[2]), float(b[3]), float(b[4]))
+                if ts_zorunlu:
+                    int(b[0])
+            elif isinstance(b, dict):
+                o, h, l, c = (float(b["o"]), float(b["h"]),
+                              float(b["l"]), float(b["c"]))
+                if ts_zorunlu:
+                    int(b["t"])
+            else:
+                atilan += 1; continue
+        except (TypeError, ValueError, KeyError, IndexError):
+            atilan += 1; continue
+        if not all(math.isfinite(x) for x in (o, h, l, c)):
+            atilan += 1; continue
+        if not (l <= min(o, c) and max(o, c) <= h):
+            atilan += 1; continue
+        temiz.append(b)
+    return temiz, atilan
+
+
 def bar_ts(b: Any) -> int:
     return int(b[0] if isinstance(b, (list, tuple)) else b["t"])
 
@@ -630,6 +670,9 @@ def bar_ohlc(b: Any) -> tuple[float, float, float, float]:
 
 
 def tazelik(barlar: Sequence, bar_kodu: str) -> tuple[str, float]:
+    barlar, _ = _gecerli_barlar(barlar, ts_zorunlu=True)
+    if not barlar:
+        return "UNKNOWN", float("inf")
     yas_ms = time.time() * 1000 - bar_ts(barlar[-1])
     yas_dk = yas_ms / 60000.0
     ar = ARALIK_MS.get(bar_kodu, 900_000)
@@ -646,6 +689,7 @@ def tazelik(barlar: Sequence, bar_kodu: str) -> tuple[str, float]:
 # =============================================================================
 def wilder_atr(barlar: Sequence, periyot: int | None = None) -> float | None:
     n = int(periyot or E("ATR_PERIYOT"))
+    barlar, _ = _gecerli_barlar(barlar)
     if len(barlar) < 2:
         return None
     tr: list[float] = []
@@ -663,6 +707,7 @@ def wilder_atr(barlar: Sequence, periyot: int | None = None) -> float | None:
 
 def wilder_adx(barlar: Sequence, periyot: int | None = None) -> float | None:
     n = int(periyot or E("ADX_PERIYOT"))
+    barlar, _ = _gecerli_barlar(barlar)
     if len(barlar) < 2 * n + 2:
         return None
     tr, pdm, ndm = [], [], []
@@ -684,7 +729,7 @@ def wilder_adx(barlar: Sequence, periyot: int | None = None) -> float | None:
 
     str_, spdm, sndm = yumusat(tr), yumusat(pdm), yumusat(ndm)
     dx: list[float] = []
-    for t, p, m in zip(str_, spdm, sndm):
+    for t, p, m in zip(str_, spdm, sndm, strict=False):
         if t <= 0:
             continue
         pdi, ndi = 100 * p / t, 100 * m / t
@@ -702,6 +747,7 @@ def swingler(barlar: Sequence, sol: int | None = None,
              sag: int | None = None) -> list[tuple[int, float, str]]:
     """TEYITLI fraktal swing: sag tarafta `sag` bar kapanmis olmali."""
     L, Rr = int(sol or E("SWING_SOL")), int(sag or E("SWING_SAG"))
+    barlar, _ = _gecerli_barlar(barlar)
     out: list[tuple[int, float, str]] = []
     for i in range(L, len(barlar) - Rr):
         _, h, l, _ = bar_ohlc(barlar[i])
@@ -716,7 +762,16 @@ def swingler(barlar: Sequence, sol: int | None = None,
 def acik_fvgler(barlar: Sequence, mitigasyon: float | None = None) -> list[dict]:
     """3-bar FVG; sonraki barlarca `mitigasyon` orani tuketilmisse KAPALI."""
     mg = float(mitigasyon if mitigasyon is not None else E("FVG_MITIGASYON"))
+    barlar, _ = _gecerli_barlar(barlar)
     out: list[dict] = []
+    n_b = len(barlar)
+    # suffix ekstremleri (indeks k: k..son araliginin min low / max high'i)
+    son_min_low = [math.inf] * (n_b + 1)
+    son_max_high = [-math.inf] * (n_b + 1)
+    for k in range(n_b - 1, -1, -1):
+        _, hk, lk, _ = bar_ohlc(barlar[k])
+        son_min_low[k] = min(lk, son_min_low[k + 1])
+        son_max_high[k] = max(hk, son_max_high[k + 1])
     for i in range(2, len(barlar)):
         _, h0, l0, _ = bar_ohlc(barlar[i - 2])
         _, h2, l2, _ = bar_ohlc(barlar[i])
@@ -729,18 +784,16 @@ def acik_fvgler(barlar: Sequence, mitigasyon: float | None = None) -> list[dict]
         genislik = ust - alt
         if genislik <= 0:
             continue
-        kalan_alt, kalan_ust = alt, ust
-        for j in range(i + 1, len(barlar)):
-            _, hj, lj, _ = bar_ohlc(barlar[j])
-            if yon == "bull":
-                # bull FVG'ye fiyat YUKARIDAN girer: dolan kisim ustten asagi
-                # [lj, ust] -> kalan bolge [alt, lj]. (Onceki surumde dallar
-                # TERSTI: dokunulmamis bosluk kapaniyor, dolan acik kaliyordu.)
-                kalan_ust = min(kalan_ust, max(lj, kalan_alt))
-            else:
-                # bear FVG'ye fiyat ASAGIDAN girer: dolan kisim [alt, hj]
-                # -> kalan bolge [hj, ust].
-                kalan_alt = max(kalan_alt, min(hj, kalan_ust))
+        # O(n) mitigasyon: iteratif min/max zinciri cebirsel olarak
+        #   bull: kalan_ust = min(ust, max(alt, min_{j>i} low_j))
+        #   bear: kalan_alt = max(alt, min(ust, max_{j>i} high_j))
+        # esdegerdir (spec testi S2, 60 rastgele seride brute-force ile birebir).
+        if yon == "bull":
+            kalan_alt = alt
+            kalan_ust = min(ust, max(alt, son_min_low[i + 1]))
+        else:
+            kalan_ust = ust
+            kalan_alt = max(alt, min(ust, son_max_high[i + 1]))
         kalan = max(0.0, kalan_ust - kalan_alt)
         if kalan / genislik > (1.0 - mg):
             out.append({"alt": round(kalan_alt, 8), "ust": round(kalan_ust, 8),
@@ -763,6 +816,11 @@ def trend_oku(barlar: Sequence) -> dict:
             trend = "bull"
         elif dh and dl:
             trend = "bear"
+    barlar, atilan = _gecerli_barlar(barlar)
+    if not barlar:
+        return {"trend": "notr", "trend_kaynagi": "VERI YOK (bos seri)",
+                "adx": None, "rejim": "VERI YOK", "atr": None,
+                "swing_sayisi": 0, "acik_fvg": [], "son_kapanis": None}
     kaynak_trend = "fraktal HH/HL - LH/LL"
     if trend == "notr":
         # Guclu tek-yonlu seride fraktal swing OLUSMAZ (her bar oncekini asar);
@@ -784,7 +842,7 @@ def trend_oku(barlar: Sequence) -> dict:
         durum = "range"
     else:
         durum = "gecis"
-    return {"trend": trend, "trend_kaynagi": kaynak_trend,
+    return {"trend": trend, "trend_kaynagi": kaynak_trend, "atilan_bar": atilan,
             "adx": None if adx is None else round(adx, 2),
             "rejim": durum, "atr": wilder_atr(barlar),
             "swing_sayisi": len(sw), "acik_fvg": acik_fvgler(barlar),
@@ -810,6 +868,7 @@ def ani_hareket(barlar: Sequence, atr: float | None) -> dict:
     ESIKLER'de beyanlidir.
     """
     n = int(E("ANI_PENCERE"))
+    barlar, _ = _gecerli_barlar(barlar)
     if not atr or atr <= 0 or len(barlar) < n + 21:
         return {"tespit": False, "tur": None, "not": "VERI YETERSIZ (olcum yok)"}
     kap = [bar_ohlc(b)[3] for b in barlar[-(n + 1):]]
@@ -852,20 +911,24 @@ def ani_hareket(barlar: Sequence, atr: float | None) -> dict:
 # 6) D2 — 4H <-> 15M HIZALAMA: ZAMAN DAMGASIYLA (indeks orani VARSAYILMAZ)
 # =============================================================================
 def h4_hizala(m15: Sequence, h4: Sequence) -> list[int]:
-    """Her 15M bari icin, ONU KAPSAYAN (t4 <= t15) EN SON 4H barinin indeksi.
+    """Her 15M bari icin, ONU KAPSAYAN (t4 <= t15) EN GEC 4H barinin indeksi.
 
     Eski indeks-orani yontemi (i//16) veri eksikse karar barina AYLAR bayat
-    4H satiri bagliyordu. Burada eslesme zaman damgasindan gelir; kapsayan 4H
-    bar yoksa -1 dondurulur (uydurma eslesme YOK).
+    4H satiri bagliyordu. Eslesme zaman damgasindan gelir; kapsayan 4H bar
+    yoksa -1 (uydurma eslesme YOK). v1.2.0: onceki iki-isaretci surum SIRALI
+    seri varsayiyordu ve sirasiz API yanitinda en gec kapsayan bari
+    KACIRIYORDU (spec testi S4 yakaladi) -> bisect ile siralamadan bagimsiz.
+    Ayni zaman damgasi birden cok barda varsa EN BUYUK orijinal indeks doner.
     """
-    t4 = [bar_ts(b) for b in h4]
+    import bisect  # noqa: PLC0415
+    m15, _ = _gecerli_barlar(m15, ts_zorunlu=True)
+    h4, _ = _gecerli_barlar(h4, ts_zorunlu=True)
+    sirali = sorted(range(len(h4)), key=lambda i: (bar_ts(h4[i]), i))
+    tler = [bar_ts(h4[i]) for i in sirali]
     esl: list[int] = []
-    j = 0
     for b in m15:
-        t = bar_ts(b)
-        while j + 1 < len(t4) and t4[j + 1] <= t:
-            j += 1
-        esl.append(j if t4 and t4[j] <= t else -1)
+        k = bisect.bisect_right(tler, bar_ts(b)) - 1
+        esl.append(sirali[k] if k >= 0 else -1)
     return esl
 
 
@@ -920,6 +983,14 @@ def rr_denetim(yon: str, giris: float, stop: float, hedef: float,
 # 8) EMIR PLANI — seviyeler YALNIZ olculen yapidan; MARKET/LIMIT ayrimi
 # =============================================================================
 def yapi_ozeti(m15: Sequence, h4: Sequence) -> dict:
+    m15, at15 = _gecerli_barlar(m15)
+    h4, at4 = _gecerli_barlar(h4)
+    if not m15 or not h4:
+        return {"son_kapanis": None, "atr15": None, "atr4h": None,
+                "direnc15": [], "destek15": [], "direnc4h": [], "destek4h": [],
+                "fvg": [], "bar15": len(m15), "bar4h": len(h4),
+                "hizalama": {"esl_son": -1, "sapma_saat": None,
+                             "durum": "VERI YOK (bos seri)"}}
     son = bar_ohlc(m15[-1])[3]
     sw15, sw4 = swingler(m15), swingler(h4)
     return {
@@ -979,7 +1050,7 @@ def stop_sec(yapi: dict, yon: str, giris: float, profil: dict | None) -> tuple[f
     return s, "girisin otesindeki EN YAKIN teyitli swing"
 
 
-def hedef_sec(yapi: dict, yon: str, giris: float, risk: float,
+def hedef_sec(yapi: dict, yon: str, giris: float,
               profil: dict | None) -> tuple[float | None, str]:
     if profil:
         band = profil.get("hedef_usdt") or profil.get("hedef")
@@ -1003,6 +1074,9 @@ def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None
     if yon not in ("LONG", "SHORT"):
         return {"EMIR": "EMIR YOK", "yon": yon, "adaylar": [], "seviyeler": [],
                 "gerekce": "yonsuz kurulumda giris/stop tanimsiz (fail-closed)"}
+    if not m15 or not h4:
+        return {"EMIR": "EMIR YOK", "yon": yon, "adaylar": [], "seviyeler": [],
+                "red_nedenleri": [], "gerekce": "bar serisi BOS -> VERI YOK (fail-closed)"}
     yapi = yapi_ozeti(m15, h4)
     fiyat = fiyat if fiyat is not None else yapi["son_kapanis"]
     rmin = max(E("R_MIN"), float(r_min) if r_min else E("R_MIN"))
@@ -1019,7 +1093,7 @@ def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None
         if risk <= 0:
             redler.append(f"giris {round(giris,2)}: risk 0")
             continue
-        hedef, hger = hedef_sec(yapi, yon, giris, risk, profil)
+        hedef, hger = hedef_sec(yapi, yon, giris, profil)
         if hedef is None:
             redler.append(f"giris {round(giris,2)}: {hger}")
             continue
@@ -1044,10 +1118,10 @@ def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None
                           f"(R_rapor {rr['R_rapor']} -> R_gercekci {rr['R_gercekci']})")
             if (R or 0) < rmin:
                 continue
-        if R is None or R < rmin:
+        if R is None or rmin > R:
             redler.append(f"giris {round(giris,2)}: R {R} < r_min {rmin}"); continue
         s_atr = rr.get("stop_atr")
-        if s_atr is not None and not (E("STOP_ATR_ALT") <= s_atr <= E("STOP_ATR_UST")):
+        if s_atr is not None and not (E("STOP_ATR_ALT") <= s_atr <= E("STOP_ATR_UST")):  # noqa: SIM300 (aralik zinciri bilincli)
             redler.append(f"giris {round(giris,2)}: stop/ATR {s_atr} kurulum bandi "
                           f"[{E('STOP_ATR_ALT')}, {E('STOP_ATR_UST')}] disinda"); continue
         if market_yasak and tip == "MARKET":
@@ -1143,7 +1217,7 @@ def korelasyon(a: Sequence[float], b: Sequence[float]) -> float | None:
     vb = sum((x - mb) ** 2 for x in b)
     if va <= 0 or vb <= 0:
         return None
-    cov = sum((x - ma) * (y - mb) for x, y in zip(a, b))
+    cov = sum((x - ma) * (y - mb) for x, y in zip(a, b, strict=False))
     return cov / math.sqrt(va * vb)
 
 
@@ -1610,7 +1684,7 @@ def oz_test() -> list[tuple[str, str, str]]:
           tazelik(taze, "15m")[0] == "CURRENT" and tazelik(eski, "15m")[0] == "STALE",
           f"{tazelik(taze,'15m')[0]}/{tazelik(eski,'15m')[0]}")
 
-    ad = YerelOlcumAdapter(lambda d: {"claims": [], "decision": "PUBLISH_FULL",
+    ad = YerelOlcumAdapter(lambda _d: {"claims": [], "decision": "PUBLISH_FULL",
                                       "epistemic_verdict": "KNOWN", "limitations": []})
     rp = run_agent_and_gate(EvidenceRegistry(risk_level="HIGH"), ad.bagla(EvidenceRegistry()))
     kayit("T8  model karari kapiyi EZEMEZ",
@@ -1628,12 +1702,12 @@ def oz_test() -> list[tuple[str, str, str]]:
     kayit("T10 Wilder ATR pozitif ve sonlu", bool(atr and atr > 0 and math.isfinite(atr)),
           f"atr={atr:.4f}" if atr else "None")
     kayit("T11 ADX 0-100 araliginda",
-          (wilder_adx(b) is None) or (0 <= wilder_adx(b) <= 100), f"adx={wilder_adx(b)}")
+          (wilder_adx(b) is None) or 0 <= wilder_adx(b) <= 100, f"adx={wilder_adx(b)}")
 
     def _merdiven(yukari_mi: bool, adim: int = 12, n: int = 8) -> list[list]:
         """Acik HH/HL (ya da LH/LL) merdiveni: itki + geri cekilme."""
         out, t, taban = [], 1_700_000_000_000, 100.0
-        for k in range(n):
+        for _ in range(n):
             zirve = taban + adim
             for o, c in ((taban, zirve), (zirve, zirve - adim * 0.4)):
                 lo, hi = min(o, c), max(o, c)
@@ -1715,7 +1789,7 @@ def oz_test() -> list[tuple[str, str, str]]:
     cev = okx_satir_cevir(sahte_okx, "15m")
     kayit("T22 D7 notr taker dolgusu YOK (indeks 9 = None)",
           bool(cev) and all(r[9] is None for r in cev)
-          and all(float(r[5]) == float(h[5]) for r, h in zip(cev, reversed(sahte_okx))),
+          and all(float(r[5]) == float(h[5]) for r, h in zip(cev, reversed(sahte_okx), strict=False)),
           f"{len(cev)} satir, indeks9={[r[9] for r in cev]} (hacim 0 barda bile dolgu YOK)")
 
     # --- emir plani: seviyeler yalnizca olculen yapidan
@@ -1740,7 +1814,8 @@ def oz_test() -> list[tuple[str, str, str]]:
           f"skor={yb['skor']} agirlik={yb['agirlik_toplam']}")
 
     # --- uctan uca: TAZE veri -> PUBLISH_FULL (kapi acilabiliyor)
-    kok = Path("/tmp/konsey_tek_test"); kok.mkdir(exist_ok=True)
+    import tempfile  # noqa: PLC0415
+    kok = Path(tempfile.mkdtemp(prefix="konsey_tek_test_"))
     (kok / "m15.json").write_text(json.dumps(m15), encoding="utf-8")
     (kok / "h4.json").write_text(json.dumps(h4t), encoding="utf-8")
     rp = kos(["TESTSEMBOL"], str(kok / "m15.json"), str(kok / "h4.json"), sessiz=True)
@@ -1819,7 +1894,10 @@ def oz_test() -> list[tuple[str, str, str]]:
         return {"o": o, "h": h, "l": l, "c": c, "v": v}
 
     # --- T37/T38 (Q5): FVG mitigasyonu dogru tarafta
-    temel = [_b(99, 100, 98, 99.5), _b(100, 103, 99.5, 102.5), _b(103, 107, 105, 106)]
+    # NOT (v1.2.0): onceki temel veride bar2 open(103) < low(105) idi — fiziksel
+    # imkansiz bar; giris suzgeci hakli olarak atiyordu. Veri fiziksel-gecerli
+    # yapildi; FVG bolgesi ([100,105]) ve TUM beklenen hukumler DEGISMEDI.
+    temel = [_b(99, 100, 98, 99.5), _b(100, 103, 99.5, 102.5), _b(105.5, 107, 105, 106.5)]
     dokunulmamis = temel + [_b(106, 110, 106, 109), _b(109, 112, 108, 111)]
     fa = [f for f in acik_fvgler(dokunulmamis) if f["bar"] == 2]
     kayit("T37 Q5: dokunulmamis bull FVG ACIK kalir",
@@ -1858,8 +1936,6 @@ def oz_test() -> list[tuple[str, str, str]]:
     ayni_durum = (pl["EMIR"] == "EMIR YOK") == (ps["EMIR"] == "EMIR YOK")
     sim = True
     if pl["adaylar"] and ps["adaylar"]:
-        tepe2 = max(float(x[2]) for x in
-                    [[0, b["o"], b["h"], b["l"], b["c"]] for b in []] or [[0, 0, 0, 0, 0]])
         rl = pl["adaylar"][0]["R_gercekci"]; rs = ps["adaylar"][0]["R_gercekci"]
         sim = abs((rl or 0) - (rs or 0)) < 0.15
     kayit("T40 Q3: LONG/SHORT emir uretimi simetrik",
@@ -1988,7 +2064,11 @@ def _yaris_coz(barlar: Sequence, i: int, atr: float, e: float = 2.0,
 # 15) KULLANICI KAPISI — independent_publication_gate (BIREBIR)
 #     Tek zorunlu degisiklik: dataclass adi `AuditResult` bu dosyada zaten
 #     kullanildigi icin (bolum 2, registry.audit donusu) burada
-#     `BagimsizKapiSonucu` olarak tasindi — GOVDE SATIRLARI DEGISMEDI.
+#     `BagimsizKapiSonucu` olarak tasindi.
+#     v1.2.0 BEYANLI DUZELTME (spec testi S8b/S8c olctu): fuzz'da 2000 bozuk
+#     girdinin 486'sinda kapi COKUYORDU (None claims/evidence_ids/counter ->
+#     TypeError). Mantik DEGISMEDI; yalniz None-savunmasi eklendi ("or []" /
+#     "or {}"). Coken kapi karar veremez — cokme fail-closed bile degildir.
 #     Olculen yapisal notlar (dal dal sinandi, V1-V10):
 #       B1 REPAIR bu kapida HIC uretilmez (karar: FULL/HALT/LIMITED)
 #       B2 publish_allowed PUBLISH_LIMITED'da da True doner (FULL sarti degil)
@@ -2031,14 +2111,14 @@ def independent_publication_gate(result: dict[str, Any]) -> BagimsizKapiSonucu:
     errors: list[str] = []
     warnings: list[str] = []
 
-    claims = result.get("claims", [])
+    claims = result.get("claims") or []
     sources = {
         source.get("source_id"): source
-        for source in result.get("sources", [])
+        for source in (result.get("sources") or [])
     }
     evidence_records = {
         evidence.get("evidence_id"): evidence
-        for evidence in result.get("evidence", [])
+        for evidence in (result.get("evidence") or [])
     }
 
     critical_claims = [
@@ -2056,7 +2136,7 @@ def independent_publication_gate(result: dict[str, Any]) -> BagimsizKapiSonucu:
     for claim in claims:
         claim_id = claim.get("claim_id", "UNKNOWN_CLAIM")
         status = claim.get("status")
-        evidence_ids = claim.get("evidence_ids", [])
+        evidence_ids = claim.get("evidence_ids") or []
 
         if status not in KAPI_IDDIA_STATULERI:
             errors.append(
@@ -2095,7 +2175,7 @@ def independent_publication_gate(result: dict[str, Any]) -> BagimsizKapiSonucu:
     counter_evidence = result.get(
         "counter_evidence_search",
         {},
-    )
+    ) or {}
     counter_status = counter_evidence.get("status")
 
     if counter_status not in {"COMPLETED", "NOT_APPLICABLE"}:
@@ -2208,7 +2288,7 @@ def cift_kapi(reg: EvidenceRegistry, model_decision: str = "PUBLISH_FULL") -> di
 # =============================================================================
 # 14) CLI
 # =============================================================================
-def _cmd_oz_test(a) -> int:
+def _cmd_oz_test(_a) -> int:
     R = oz_test()
     for ad, d, det in R:
         print(f"[{d}] {ad}  {det}")
