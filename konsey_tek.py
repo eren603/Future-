@@ -1,66 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ruff: noqa: E741  (o/h/l/c OHLC alan adlari finans konvansiyonudur; l bilinçli)
-"""
-KONSEY TEK DOSYA — kanit kapisi + canli yon/giris-cikis sinyali
-===============================================================================
-Tek dosya, SIFIR harici bagimlilik (yalniz Python stdlib). Depodaki hicbir
-scripte ihtiyac duymaz; telefonda/Pydroid'de de calisir.
+"""KONSEY TEK DOSYA - kanit kapisi + yon/giris-cikis sinyali (stdlib-only)
 
+Kullanim:
   python3 konsey_tek.py sinyal --symbols BTCUSDT,ETHUSDT
-  python3 konsey_tek.py sinyal --m15 m15.json --h4 h4.json --symbol BTCUSDT
+  python3 konsey_tek.py sinyal --symbols BTCUSDT --m15 m15.json --h4 h4.json
+  python3 konsey_tek.py sinyal --symbols BTCUSDT,ETHUSDT --yerel-dizin ./veri
   python3 konsey_tek.py oz-test
-  python3 konsey_tek.py audit  --input task.json --output audit.json
-  python3 konsey_tek.py fetch  --input task.json --output t2.json --location <url|dosya> \
-                               --source-id S02 --evidence-id E02
-  python3 konsey_tek.py run    --input task.json --output r.json \
-                               --provider openai-compatible --model gpt-4o-mini
+  python3 konsey_tek.py init|fetch|audit|run ...
 
-Cikis kodu: 0 = yayin kapisi GECTI (PUBLISH_FULL) · 2 = gecmedi, yayin DURDU
+Cikis kodu: 0 = yayin kapisi gecti (PUBLISH_FULL) | 2 = gecmedi, yayin durdu
             1 = oz-testte FAIL var
 
--------------------------------------------------------------------------------
-TEMEL ILKE (KONSEY_Evidence_Engine.md)
--------------------------------------------------------------------------------
-Modelin kendi "VERIFIED" / "PUBLISH_FULL" beyani KANIT DEGILDIR. Nihai karari
-`EvidenceRegistry.audit()` verir. Oz-test T15 bunu kanitlar: ajan PUBLISH_FULL
-dese bile kapi REPAIR diyorsa yayin YAPILMAZ.
+EMIR TIPLEME KURALI (deterministik):
+  K1: ani_hareket tespit YOK ve |giris - fiyat| <= MARKET_BANDI * atr15
+      -> emir KESIN MARKET
+  K2: ani_hareket tespit VAR veya giris bant disinda
+      -> emir KESIN LIMIT (MARKET adaylari LIMIT'e cevrilir; kovalama kapali)
 
--------------------------------------------------------------------------------
-BU DOSYAYA GOMULU DENETIM DUZELTMELERI
-(onceki surumlerde OLCULEREK bulunan hatalar; her biri oz-testle korunuyor)
--------------------------------------------------------------------------------
-D1 BAR-ICI SIRA (eski P0-1) — Limitin doldugu barin KENDI fitili HEDEF
-   sayilamaz: dolum barinda YALNIZ stop kontrol edilir, hedef taramasi bir
-   SONRAKI bardan baslar. Eski davranis sifir-kenarli rassal yuruyuste kapiyi
-   ACIYORDU (4/4 tohum). -> `_yaris_coz`, oz-test T16.
-D2 4H<->15M HIZALAMA (eski P0-4) — Indeks orani (16:1) VARSAYILMAZ; eslesme
-   ZAMAN DAMGASIYLA yapilir. Eski indeks eslemesi karar barina 173 GUN bayat
-   4H satiri bagliyordu. -> `h4_hizala`, oz-test T17.
-D3 SAYFA HATA KODU (eski P0-2) — OKX govde hata kodu HER sayfada denetlenir;
-   ic sayfada yutulursa seri sessizce kirpilip look-ahead'e donuyordu. Ayrica
-   sayfa tavani + ilerleme korumasi var (sonsuz dongu yok). -> `_okx_sayfali`,
-   oz-test T18.
-D4 TEK BAHIS (eski P0-3) — |rho| >= 0.85 olculdugunde ayni yonlu ikinci sembol
-   BAGIMSIZ BAHIS SAYILMAZ; "KOPYA - ATLA" etiketi alir ve toplam risk tek
-   bahis gibi raporlanir. -> `tek_bahis_kapisi`, oz-test T19.
-D5 KAZANAN YOKKEN KAPI (eski P1-1) — kazan==0 iken b_win OLCULEMEZ; sabit bir
-   tasarim degerine DUSULMEZ, kapi KAPANIR (fail-closed). -> `stake_kapisi`,
-   oz-test T20.
-D6 KELLY PAYDASI (eski P1-2) — stake = edge/(a*b); kayip bacagi `a` 1.0R
-   VARSAYILMAZ, olculur. Eski `edge/b` formulu stake'i a kati sisiriyordu.
-   -> `stake_kapisi`, oz-test T21.
-D7 TAKER DOLGUSU (eski P1-4) — OKX'te taker-alis kolonu YOKTUR; notr dolgu
-   (hacim/2) YAZILMAZ, alan None birakilir ve kanal EKSIK sayilir. Eski dolgu
-   v=0 barda -1.0 (maksimum ayi) uretiyordu. -> `okx_mumlar`, oz-test T22.
-D8 FUNDING ISARETI (eski P1-5) — abs() ile isaret YOK EDILMEZ; isaretli deger
-   saklanir, maliyet tarafinda muhafazakar kullanilir. -> `funding_oku`.
-D9 CIKIS KODU (eski P0-2) — oz-test FAIL varsa cikis kodu 1'dir; "hepsi gecti"
-   goruntusu veren kosulsuz `return 0` YOKTUR. -> `_cmd_oz_test`.
-D10 SISIRILMIS R — stop/ATR gurultu bandindayken buyuyen R kabul edilmez;
-   `rr_denetim` ATR olcegiyle sisirilmis R'yi yakalar ve R_gercekci verir.
-
-⚠️ Yalniz karar-destek. Emir/imza/API-anahtar ucu YOKTUR; kod yalnizca public
+Yalniz karar-destek. Emir/imza/API-anahtar ucu yoktur; kod yalnizca public
 GET yapar. Canli/otomatik emir DAHIL DEGILDIR.
 """
 from __future__ import annotations
@@ -79,7 +38,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 from urllib.request import Request, urlopen
 
-SURUM = "1.2.0"
+SURUM = "1.3.0"
 
 # =============================================================================
 # 1) SABITLER — hepsi BEYAN EDILIR; gizli esik yoktur
@@ -1099,8 +1058,19 @@ def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None
             continue
         rr = rr_denetim(yon, giris, stop, hedef, atr_olcek)
         R = rr.get("R_gercekci") if rr.get("R_gercekci") is not None else rr.get("R_rapor")
-        tip = "MARKET" if abs(giris - fiyat) <= E("MARKET_BANDI") * atr15 else "LIMIT"
-        kayit = {"emir_tipi": tip, "yon": yon, "giris": round(giris, 6),
+        # EMIR TIPLEME KURALI (deterministik):
+        #   K1: ani-hareket YOK ve |giris-fiyat| <= MARKET_BANDI*atr15 -> MARKET
+        #   K2: ani-hareket VAR veya bant disi -> LIMIT (override; kovalama kapali)
+        bant_icinde = abs(giris - fiyat) <= E("MARKET_BANDI") * atr15
+        emir_notu = ""
+        if market_yasak:
+            tip = "LIMIT"
+            if bant_icinde:
+                emir_notu = "ANI-HAREKET tespiti -> MARKET adayi LIMIT'e cevrildi (K2)"
+        else:
+            tip = "MARKET" if bant_icinde else "LIMIT"
+        kayit = {"emir_tipi": tip, "emir_notu": emir_notu,
+                 "yon": yon, "giris": round(giris, 6),
                  "stop": round(stop, 6), "hedef": round(hedef, 6),
                  "R_rapor": rr.get("R_rapor"), "R_gercekci": rr.get("R_gercekci"),
                  "rr_denetim": rr.get("verdict"), "rr_not": rr.get("not"),
@@ -1124,9 +1094,6 @@ def emir_plani(m15: Sequence, h4: Sequence, yon: str, fiyat: float | None = None
         if s_atr is not None and not (E("STOP_ATR_ALT") <= s_atr <= E("STOP_ATR_UST")):  # noqa: SIM300 (aralik zinciri bilincli)
             redler.append(f"giris {round(giris,2)}: stop/ATR {s_atr} kurulum bandi "
                           f"[{E('STOP_ATR_ALT')}, {E('STOP_ATR_UST')}] disinda"); continue
-        if market_yasak and tip == "MARKET":
-            redler.append(f"giris {round(giris,2)}: ANI-HAREKET bayragi -> MARKET "
-                          "yasak, yalniz LIMIT (kovalama kapali)"); continue
         gecen.append(kayit)
         if len(gecen) >= azami:
             break
@@ -1496,6 +1463,8 @@ def bas(sonuclar: list[dict], audit: dict, publish: bool) -> str:
             if e["EMIR"] != "EMIR YOK":
                 A(f"EMIR {etk:<6}: {e['EMIR']}")
                 a = e["adaylar"][0]
+                if a.get("emir_notu"):
+                    A(f"   ! {a['emir_notu']}")
                 A(f"   giris  : {a['giris_gerekcesi']}")
                 A(f"   stop   : {a['stop_gerekcesi']}   (stop/ATR {a['stop_atr']})")
                 A(f"   hedef  : {a['hedef_gerekcesi']}")
@@ -1991,6 +1960,44 @@ def oz_test() -> list[tuple[str, str, str]]:
     kayit("T44 Q6: sert fitilli tepe -> V-DONUS RISKI bayragi",
           av["tespit"] and av["tur"] == "V-DONUS RISKI",
           f"tur={av.get('tur')} fitil={av.get('fitil_oran')}")
+
+    # --- EMIR TIPLEME KURALI (K1/K2) koruyuculari ---
+    # Vakum yasak: seviye ureten bir seri SECILMEK ZORUNDA; bulunamazsa FAIL.
+    kb = fiyat_kb = None
+    for tohum_k in range(1, 40):
+        aday_seri = _sentetik(240, 900_000, egim=6.0, tohum=tohum_k)
+        f_k = bar_ohlc(aday_seri[-1])[3]
+        dene = emir_plani(aday_seri, aday_seri, "LONG", f_k, market_yasak=False)
+        if len(dene["seviyeler"]) >= 3 and any(
+                a["emir_tipi"] == "MARKET" for a in dene["seviyeler"]):
+            kb, fiyat_kb, pn = aday_seri, f_k, dene
+            break
+    if kb is None:
+        kayit("T45 K2: ani-harekette MARKET adayi REDDEDILMEZ, LIMIT'e cevrilir",
+              False, "seviye ureten seri BULUNAMADI (vakum)")
+        kayit("T46 K1: ani-hareket yokken tip = bant kuralinin BIREBIR kendisi",
+              False, "seviye ureten seri BULUNAMADI (vakum)")
+        return R
+    py_ = emir_plani(kb, kb, "LONG", fiyat_kb, market_yasak=True)
+    ayni_seviye = ([a["giris"] for a in pn["seviyeler"]]
+                   == [a["giris"] for a in py_["seviyeler"]])
+    market_vardi = any(a["emir_tipi"] == "MARKET" for a in pn["seviyeler"])
+    kayit("T45 K2: ani-harekette MARKET adayi REDDEDILMEZ, LIMIT'e cevrilir",
+          market_vardi and ayni_seviye and len(py_["seviyeler"]) >= 3
+          and all(a["emir_tipi"] == "LIMIT" for a in py_["seviyeler"])
+          and all(a["emir_tipi"] == "LIMIT" for a in py_["adaylar"])
+          and not any("ANI-HAREKET" in r_ for r_ in py_["red_nedenleri"])
+          and any(a.get("emir_notu") for a in py_["seviyeler"]),
+          f"{len(py_['seviyeler'])} seviye (MARKET vardi: {market_vardi}) -> hepsi LIMIT, ayni girisler")
+    atr_kb = yapi_ozeti(kb, kb)["atr15"] or 0.0
+    bant = E("MARKET_BANDI") * atr_kb
+    dogru_k1 = all(
+        a["emir_tipi"] == ("MARKET" if a["mesafe"] <= bant else "LIMIT")
+        for a in pn["seviyeler"])
+    kayit("T46 K1: ani-hareket yokken tip = bant kuralinin BIREBIR kendisi",
+          dogru_k1 and market_vardi
+          and any(a["emir_tipi"] == "LIMIT" for a in pn["seviyeler"]),
+          f"bant={bant:.3f}, {len(pn['seviyeler'])} seviye (MARKET+LIMIT karisik) dogrulandi")
     return R
 
 
