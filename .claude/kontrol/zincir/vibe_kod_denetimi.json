@@ -1,0 +1,122 @@
+{
+  "gorev": "yukardaki bilgileri bir satranç ustasının 'karşıdan ne hamle gelirse ben hangi hamleyle onu yerim' disipliniyle incele: mimari doğru mu; kodda susturulan (hesaplanıp sonuca girmeyen) var mı; kod biaslı mı, sürekli aynı yöne mi bakıyor; yapay zekanın bilerek/bilmeyerek koda gömdüğü gizli düşünceler var mı",
+  "gorev_maddeleri": [
+    {"id": "M1", "metin": "mimari doğru mu — her katman iddia ettiğini yapıyor mu (causal/walk-forward/kanıt=ürün)"},
+    {"id": "M2", "metin": "susturulan var mı — hesaplanıp ASIL çıktıya girmeyen bileşenler"},
+    {"id": "M3", "metin": "kod biaslı mı — sürekli aynı yöne bakan yapısal el var mı"},
+    {"id": "M4", "metin": "gizli düşünceler/tiyatro — beyan ile fiili davranış ayrışması"}
+  ],
+  "dislanan_maddeler": [
+    {"id": "M5-Chrome", "gerekce": "Chrome:True bayrağı — tarayıcı gerekmedi: denetim kaynak kod + çalıştırılabilir Python testleriyle yapıldı; canlı Binance uçları bu ortamda engelli (fapi CONNECT 403 bilinen durum), görsel doğrulanacak web artefaktı yok"}
+  ],
+  "adimlar": [
+    {
+      "id": "Z1", "ad": "GÖREV ÇÖZÜMLEME", "ajan": "cozumleyici",
+      "bagimsiz": false, "girdi_id": [], "gordugu_adimlar": [],
+      "kapsanan_maddeler": ["M1", "M2", "M3", "M4"],
+      "artefaktlar": [{"tur": "girdi", "ref": "kullanıcı istemi (/bag-kurma argümanları)", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "istek 4 denetim maddesine ayrıldı, Chrome bayrağı gerekçeyle dışlandı", "sayilar": [], "kaynak": "kullanıcı istemi"}],
+      "kapi": "her madde bir adıma atandı ya da gerekçeyle dışlandı", "gecti": true
+    },
+    {
+      "id": "Z2", "ad": "KANIT TOPLAMA", "ajan": "kanitci",
+      "bagimsiz": false, "girdi_id": ["Z1"], "gordugu_adimlar": ["Z1"],
+      "kapsanan_maddeler": ["M1", "M2", "M3", "M4"],
+      "artefaktlar": [
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/vibe/binance_sinyal_motoru.py", "okundu": true, "sayilar": [2671]},
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/vibe/sinyal_sonuclari.md", "okundu": true, "sayilar": [62.46, 7.07, 1.01, 2.58]},
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/vibe/denetim_kanit_sonuc.json", "okundu": true, "sayilar": [16.5, 10.32, -2.01]}
+      ],
+      "iddialar": [
+        {"metin": "motor 2671 satır tam okundu; koşu raporundaki mühürlü edge BTC 7.07p / DOGE 1.01p, ETH placebo 2.58p, leak sıçraması 16.5p dosyadan alındı", "sayilar": [2671, 7.07, 1.01, 2.58, 16.5], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/vibe/sinyal_sonuclari.md"}
+      ],
+      "kapi": "iddia üreten her adımın okunmuş artefaktı var", "gecti": true
+    },
+    {
+      "id": "Z3a", "ad": "ÜRETİM — statik kod analizi (veri-akışı merceği)", "ajan": "uretici-statik",
+      "bagimsiz": true, "girdi_id": ["Z2"], "gordugu_adimlar": ["Z2"],
+      "kapsanan_maddeler": ["M2", "M4"],
+      "artefaktlar": [{"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt", "okundu": true, "sayilar": [1]}],
+      "iddialar": [
+        {"metin": "kabul_edge_min_puan kodda yalnız 1 yerde (tanım) geçiyor; hiçbir karar noktasında okunmuyor — kill-rule düzyazıda kalmış", "sayilar": [1], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"},
+        {"metin": "K5 agirlik_15m, K6 anomali, EKSİK-2 conviction, btc_aktarimli_guven: hesaplanıyor ama ASIL çıktının (K7+K8+backtest) karar zincirinde okunmuyor", "sayilar": [], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"}
+      ],
+      "kapi": "izole koşu — diğer bağımsız ajanın çıktısı GÖRÜLMEDİ", "gecti": true
+    },
+    {
+      "id": "Z3b", "ad": "ÜRETİM — dinamik testler (çalıştırılabilir kanıt merceği)", "ajan": "uretici-dinamik",
+      "bagimsiz": true, "girdi_id": ["Z2"], "gordugu_adimlar": ["Z2"],
+      "kapsanan_maddeler": ["M1", "M3"],
+      "artefaktlar": [
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt", "okundu": true, "sayilar": [14.55, 89.3, 2.12, 100]},
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/t1b_cikti.txt", "okundu": true, "sayilar": [0.9996, 400]}
+      ],
+      "iddialar": [
+        {"metin": "K5 HMM: aynı 400 geçmiş bar, farklı gelecek -> p_trend ortalama fark 0.9996, 400/400 barda >0.5 — causal değil", "sayilar": [0.9996, 400], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/t1b_cikti.txt"},
+        {"metin": "K0: savgol high/low'u eziyor; üçlü-bariyer etiketi ham vs yumuşatılmış uçlarla %14.55 barda farklı; barların %89.3'ünde ham uç yumuşatılmış bandın dışında", "sayilar": [14.55, 89.3], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"},
+        {"metin": "etiket-işlem geometri uyuşmazlığı: etiket ±1.0v, işlem SL 2.12v, TP 2.57-4.95v — p_up açılan işlemin kazanma olasılığı değil", "sayilar": [2.12, 2.57, 4.95], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"},
+        {"metin": "yön: yatay seride etiketlerin %100'ü YUKARI (timeout tie-break) ama çift-vuruş SHORT'a; kodda tek yön lehine sabit el yok", "sayilar": [100], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"}
+      ],
+      "kapi": "izole koşu — statik merceğin bulguları görülmeden testler yazıldı (kaynak: yalnız Z2 dosyaları)", "gecti": true
+    },
+    {
+      "id": "Z4", "ad": "ÇAPRAZ DOĞRULAMA (çürütme)", "ajan": "curutucu",
+      "bagimsiz": true, "girdi_id": ["Z3a", "Z3b"], "gordugu_adimlar": ["Z3a", "Z3b"],
+      "kapsanan_maddeler": ["M1", "M2", "M3", "M4"],
+      "artefaktlar": [
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt", "okundu": true, "sayilar": [0.0]},
+        {"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/test_t1b.py", "okundu": true, "sayilar": []}
+      ],
+      "iddialar": [
+        {"metin": "ilk K5 testi (ayrışık rejim) fark 0.0 verdi — iddia İLK KURGUDA ÇÜRÜDÜ; zayıf-ayrışmalı ikinci kurguda kesin doğrulandı; ikisi de raporda", "sayilar": [0.0], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"},
+        {"metin": "'kod sürekli aynı yöne bakıyor' hipotezi ÇÜRÜTÜLDÜ: SHORT ağırlığı (BTC 62/31) modelin p_up dağılımından; sabit yön eli bulunamadı; zıt yönlü iki küçük asimetri var", "sayilar": [], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"},
+        {"metin": "steelman: walk-forward purge+embargo, H1 aynı-split leak testi, zigzag causality, dürüst negatif bulgular (flip<1, BTC negatif beklenti) GERÇEKTEN sağlam — kod tümden çöp değil", "sayilar": [], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/vibe/binance_sinyal_motoru.py"}
+      ],
+      "kapi": "her iddiaya en az bir ÇÜRÜTME denemesi", "gecti": true
+    },
+    {
+      "id": "Z5", "ad": "SENTEZ", "ajan": "sentezci",
+      "bagimsiz": false, "girdi_id": ["Z4"], "gordugu_adimlar": ["Z4"],
+      "kapsanan_maddeler": ["M1", "M2", "M3", "M4"],
+      "artefaktlar": [{"tur": "dosya", "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt", "okundu": true, "sayilar": []}],
+      "iddialar": [{"metin": "bulgular severity sıralandı: P0 üç adet (ölü kill-rule, K5 leak, etiket-işlem uyuşmazlığı), P1 üç adet (K0 uç ezme, susturulmuş katmanlar, hash kilidinin niteliği), P2 iki adet (K6 leak sınırlı etki, yön asimetrileri nötr)", "sayilar": [], "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/audit/denetim_cikti.txt"}],
+      "kapi": "üretilen her sonuç ya sentezde ya gerekçeli dışlamada", "gecti": true
+    }
+  ],
+  "dogrulamalar": [
+    {"iddia": "K5 p_trend causal değil", "dogrulayan_ajan": "curutucu", "aile": "dinamik-test", "sonuc": "ONAY", "gerekce": "t1b: aynı geçmiş, farklı gelecek, fark ort 0.9996 (400/400 bar)"},
+    {"iddia": "kill-rule kodda yok", "dogrulayan_ajan": "curutucu", "aile": "statik-grep", "sonuc": "ONAY", "gerekce": "kabul_edge_min_puan yalnız tanımda; yayın koşulsuz; DOGE 1.01p < 3.0 iken tablo yayınlandı"},
+    {"iddia": "backtest yumuşatılmış uçlarla dokunuş ölçüyor", "dogrulayan_ajan": "curutucu", "aile": "dinamik-test", "sonuc": "ONAY", "gerekce": "etiket farkı %14.55; ham uç bandın dışında %89.3"},
+    {"iddia": "kod sürekli aynı yöne bakıyor", "dogrulayan_ajan": "curutucu", "aile": "dinamik-test+statik", "sonuc": "ÇÜRÜTÜLDÜ", "gerekce": "sabit yön eli yok; asimetriler zıt yönlü ve küçük; SHORT ağırlığı veri kaynaklı"},
+    {"iddia": "ilk K5 test kurgusu yeterli", "dogrulayan_ajan": "curutucu", "aile": "dinamik-test", "sonuc": "ÇÜRÜTÜLDÜ", "gerekce": "ayrışık rejimde posterior satüre — duyarsız kurgu; ikinci kurgu gerekti ve raporda açıkça söylendi"}
+  ],
+  "dislanan_ciktilar": [
+    {"id": "Z3b-T7-kismi", "gerekce": "'yön biası VAR' ham hükmü sentezде YUMUŞATILDI: iki zıt asimetri birbirini kısmen dengeler, net yapısal yön eli kanıtlanamadı — çürütme sonucu senteze 'nötr, veri kaynaklı' olarak girdi"}
+  ],
+  "kullanici_itirazi": {
+    "fikir_degisti": false, "yeni_kanit": [], "eski": "", "yeni": "", "adim": "Z5"
+  },
+  "teslim": {
+    "metin": "Vibe kod paketi: motor mekanik olarak çalışıyor ve bazı denetimleri gerçek; ama (1) kendi beyan ettiği kill-rule kodda bağlı değil — negatif beklentili semboller yayınlanıyor, (2) 'causal' denilen K7 özellik matrisindeki p_trend tam-örneklem HMM'den geliyor (ölçülmüş look-ahead), (3) model ±1v yarışını öğrenip ~2.1-5v'lik işlem açıyor — p_up işlem güveni değil, (4) 4 bileşen hesaplanıp susturuluyor, (5) hash kilidi tripwire, ön-kayıt kanıtı değil. Yön biası iddiası çürütüldü.",
+    "sayilar": [0.9996, 400, 14.55, 89.3, 2.12, 1, 7.07, 1.01, 2.58],
+    "suruculer": [
+      {"ad": "dinamik test: HMM look-ahead ölçümü", "kaynak_adim": "Z3b"},
+      {"ad": "statik veri-akışı: ölü config + susturulmuş katmanlar", "kaynak_adim": "Z3a"}
+    ],
+    "girdi_id": ["Z5"],
+    "gercek": [
+      "p_trend farkı ort 0.9996 (400/400 bar) — t1b_cikti.txt",
+      "etiket farkı %14.55, ham uç dışarıda %89.3 — denetim_cikti.txt",
+      "kabul_edge_min_puan kullanım sayısı 1 (yalnız tanım) — denetim_cikti.txt",
+      "işlem SL 2.12v vs etiket bariyeri 1.0v — denetim_cikti.txt"
+    ],
+    "varsayim": [
+      "sentetik serilerle ölçülen etki büyüklükleri gerçek veride birebir aynı olmayabilir (mekanizma aynı, büyüklük veri-bağımlı)",
+      "koşu raporundaki sayılar (62.46 vb.) yeniden koşulmadı — ağ engeli; paketteki dosyalar doğru kabul edildi"
+    ],
+    "yorum": [
+      "kod 'bilerek hile' değil 'beyan-uygulama ayrışması' deseni gösteriyor: dürüst negatif bulgular yayınlanmış ama kritik kapılar koda bağlanmamış",
+      "satranç karşılığı: rakip vezirini (yüksek isabet) öne sürüyor; kalenin (kill-rule) tahtada olmadığını görmek oyunu değiştiriyor"
+    ]
+  }
+}
