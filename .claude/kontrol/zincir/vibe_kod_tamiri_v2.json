@@ -1,0 +1,276 @@
+{
+  "gorev": "gorev-baslat: Vibe sinyal motorunun denetimde doğrulanmış 5 kusurunu tamir et, testlerle kanıtla, v2 dosyasını teslim et (kullanıcı 'evet' ile onayladı)",
+  "gorev_maddeleri": [
+    {
+      "id": "M1",
+      "metin": "K5 HMM causal yapılsın"
+    },
+    {
+      "id": "M2",
+      "metin": "etiket-işlem geometrisi hizalansın + ham uçlar korunsun"
+    },
+    {
+      "id": "M3",
+      "metin": "kill-rule yayın kapısına bağlansın + uyarı ölçümden üretilsin"
+    }
+  ],
+  "dislanan_maddeler": [
+    {
+      "id": "M4-susturulan",
+      "gerekce": "K6/conviction/agirlik_15m'in ASIL zincire bağlanması kullanıcının onayladığı 5 tamirin dışında — TAMIR_RAPORU.md 'Bilinen sınırlar'da açıkça beyan edildi"
+    }
+  ],
+  "adimlar": [
+    {
+      "id": "Z1",
+      "ad": "GÖREV ÇÖZÜMLEME",
+      "ajan": "cozumleyici",
+      "bagimsiz": false,
+      "girdi_id": [],
+      "gordugu_adimlar": [],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/plan.md",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "görev 3 maddeye ayrıldı, aynı-dosya çakışması sebebiyle sıralı yürütme beyan edildi",
+          "sayilar": [],
+          "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/plan.md"
+        }
+      ],
+      "kapi": "her madde atandı ya da gerekçeyle dışlandı",
+      "gecti": true
+    },
+    {
+      "id": "Z2",
+      "ad": "KANIT",
+      "ajan": "kanitci",
+      "bagimsiz": false,
+      "girdi_id": [
+        "Z1"
+      ],
+      "gordugu_adimlar": [
+        "Z1"
+      ],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/niyet.md",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "tasarım kararları (D1-D6) alternatifleriyle kayıt altına alındı",
+          "sayilar": [],
+          "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/niyet.md"
+        }
+      ],
+      "kapi": "iddia üreten her adımın okunmuş artefaktı var",
+      "gecti": true
+    },
+    {
+      "id": "Z3a",
+      "ad": "ÜRETİM — TDD uygulama",
+      "ajan": "uygulayici",
+      "bagimsiz": true,
+      "girdi_id": [
+        "Z2"
+      ],
+      "gordugu_adimlar": [
+        "Z2"
+      ],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/tam_paket_tur2.txt",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "tam paket iki ardışık turda TÜMÜ GEÇTİ; K5 farkı 0, geometri özdeş, kapı fail-closed",
+          "sayilar": [],
+          "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/tam_paket_tur2.txt"
+        }
+      ],
+      "kapi": "izole koşu",
+      "gecti": true
+    },
+    {
+      "id": "Z4",
+      "ad": "ÇAPRAZ DOĞRULAMA — 3 izole kod-denetci",
+      "ajan": "curutucu",
+      "bagimsiz": true,
+      "girdi_id": [
+        "Z3a"
+      ],
+      "gordugu_adimlar": [
+        "Z3a"
+      ],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/denetim_sicili.md",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "3 madde × 6 kapı PASS; denetçiler testleri kendileri yeniden koştu, BASE'de düştüğünü doğruladı; tolerans gevşetmesi bağımsız sınandı (maskeleme yok)",
+          "sayilar": [],
+          "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/denetim_sicili.md"
+        }
+      ],
+      "kapi": "her iddiaya en az bir çürütme denemesi",
+      "gecti": true
+    },
+    {
+      "id": "Z5",
+      "ad": "SENTEZ/TESLİM HAZIRLIĞI",
+      "ajan": "sentezci",
+      "bagimsiz": false,
+      "girdi_id": [
+        "Z4"
+      ],
+      "gordugu_adimlar": [
+        "Z4"
+      ],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/TAMIR_RAPORU.md",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "5 tamir + yeniden ön-kayıt beyanı + bilinen sınırlar tek raporda",
+          "sayilar": [],
+          "kaynak": "/tmp/claude-0/-home-user-Future-/37f46ea5-d1b9-5f3d-b187-fcc6632958a0/scratchpad/tamir/TAMIR_RAPORU.md"
+        }
+      ],
+      "kapi": "üretilen her sonuç ya sentezde ya gerekçeli dışlamada",
+      "gecti": true
+    }
+  ],
+  "dogrulamalar": [
+    {
+      "iddia": "K5 artık causal",
+      "dogrulayan_ajan": "kod-denetci-1",
+      "aile": "dinamik-test",
+      "sonuc": "ONAY",
+      "gerekce": "aynı geçmiş + farklı gelecek → fark 0.0; eski sürümde 260/260 bar farklı"
+    },
+    {
+      "iddia": "geometri özdeş + ham uçlar",
+      "dogrulayan_ajan": "kod-denetci-2",
+      "aile": "dinamik-test",
+      "sonuc": "ONAY",
+      "gerekce": "BASE'de +%107 ihlal, v2'de yuvarlamasız sapma 1.1e-15; denoised==ham"
+    },
+    {
+      "iddia": "kill-rule fail-closed bağlı",
+      "dogrulayan_ajan": "kod-denetci-3",
+      "aile": "dinamik-test",
+      "sonuc": "ONAY",
+      "gerekce": "edge None/VERİ YOK → KAPALI; sınır 3.0 → AÇIK; kapalı sembole işlem planı basılmıyor"
+    },
+    {
+      "iddia": "M2 testi 1e-6 toleransla formül kimliğini sınayabilir",
+      "dogrulayan_ajan": "uygulayici+kod-denetci-2",
+      "aile": "dinamik-test",
+      "sonuc": "ÇÜRÜTÜLDÜ",
+      "gerekce": "sinyal tablosu 4 ondalığa yuvarlanıyor → 1e-6 matematiksel olarak tutturulamaz (ölçülen sapma 1.14e-4, yuvarlamasız 1.1e-15); test 2e-3'e revize edildi ve denetçi-2 bunun kusur sınıfını MASKELEMEDİĞİNİ bağımsız ölçtü (conv ihlali toleransın ~107 katı)"
+    },
+    {
+      "iddia": "M3.g ilk uygulaması temiz",
+      "dogrulayan_ajan": "uygulayici",
+      "aile": "statik-grep",
+      "sonuc": "ÇÜRÜTÜLDÜ",
+      "gerekce": "açıklama yorumu kaldırılan yasak ifadeyi birebir içeriyordu; kök neden bulunup yorum yeniden ifade edildi (denetim_cikti değil — tam_paket_tur1.txt öncesi M3 koşusunda KALDI)"
+    },
+    {
+      "iddia": "Ajan-6 kaynak-imza dizeleri ve long/short_esik kilidi korunmuş",
+      "dogrulayan_ajan": "kod-denetci-3",
+      "aile": "statik-grep",
+      "sonuc": "ONAY",
+      "gerekce": "grep sayıları 2/2/2/3/2 + kilit satırı yerinde (denetçi-3 kendi grep'iyle)"
+    }
+  ],
+  "dislanan_ciktilar": [
+    {
+      "id": "test-tolerans-v1",
+      "gerekce": "1e-6 toleranslı ilk M2.c testi çürütüldü — 2e-3 revizyonuyla değiştirildi, gerekçe ve maskeleme analizi sicilde"
+    },
+    {
+      "id": "M3.g-yorum-v1",
+      "gerekce": "yasak dizeyi içeren açıklama yorumu çürütüldü — yeniden ifade edildi"
+    }
+  ],
+  "kullanici_itirazi": {
+    "fikir_degisti": false,
+    "yeni_kanit": [],
+    "eski": "",
+    "yeni": "",
+    "adim": "Z5"
+  },
+  "teslim": {
+    "metin": "binance_sinyal_motoru_v2.py teslim: 5 tamir uygulandı, 22/22 test iki ardışık turda geçti, 3 izole denetçi 6'şar kapıdan PASS verdi; v2 hash yeniden ön-kayıtlı ve taze gerçek-veri koşusu şart",
+    "sayilar": [
+      22
+    ],
+    "suruculer": [
+      {
+        "ad": "TDD + izole denetçi kapıları",
+        "kaynak_adim": "Z4"
+      }
+    ],
+    "girdi_id": [
+      "Z5"
+    ],
+    "gercek": [
+      "22 kontrol iki ardışık turda GEÇTİ — tam_paket_tur1/tur2.txt"
+    ],
+    "varsayim": [
+      "sentetik smoke gerçek veri davranışını birebir temsil etmez; v2 mühürlü metrikleri taze veriyle ölçülmeli"
+    ],
+    "yorum": [
+      "v2 config'i v1 sonuçları görüldükten sonra seçildi — yapısal gerekçeli ama yeniden değerlendirme şart"
+    ]
+  }
+}
