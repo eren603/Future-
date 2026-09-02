@@ -734,7 +734,7 @@
             3.17,
             1.25
           ],
-          "sure_saniye": 0.0014
+          "sure_saniye": 0.0013
         },
         "elenen": [],
         "uyarilar": [],
@@ -1124,7 +1124,7 @@
         "kayda değer sürücü değişimi yok"
       ],
       "danisman_donusleri": [
-        "gorsel-teyit: VERİ YOK → flat"
+        "danışman duruşları aynı"
       ]
     },
     "_anlik_goruntu": "/home/user/Future-/.claude/skills/piramit-sistem/state/kum_havuzu_eth/onceki_kosu.json",
@@ -1144,7 +1144,7 @@
           3.17,
           1.25
         ],
-        "sure_saniye": 0.0014
+        "sure_saniye": 0.0013
       },
       "elenen": [],
       "uyarilar": [],
@@ -1328,7 +1328,7 @@
       "kayda değer sürücü değişimi yok"
     ],
     "danisman_donusleri": [
-      "gorsel-teyit: VERİ YOK → flat"
+      "danışman duruşları aynı"
     ],
     "varsayimlar": [
       "anlamlı değişim eşikleri: skor 0.15, oransal %10, ADX 3.0 (konvansiyon)",
@@ -1653,7 +1653,7 @@
         {
           "kod": "EKSIK_AKTARIM",
           "durum": "TEMİZ",
-          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'turev-akis', 'grafik-calisma', 'gorsel-teyit', 'karar-motoru'}",
+          "kanit": "K3'ün 4 danışmanının tamamı sentezde: {'grafik-calisma', 'gorsel-teyit', 'karar-motoru', 'turev-akis'}",
           "oneri": ""
         },
         {
