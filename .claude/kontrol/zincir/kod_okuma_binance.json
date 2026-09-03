@@ -1,0 +1,369 @@
+{
+ "gorev": "binance_sinyal_motoru_TAMIRLI.py kodunu oku anla ve ne anladığını yaz; üç MHT dosyasındakiler kodda birebir uygulanmış mı kontrol et (ajan1 dosya1, ajan2 dosya2, ajan3 dosya3, ajan4 kapsam denetimi); mimariyi baştan sona yaz, hesaplama, ölü hesaplama, yapay zekanın gizli/açık hataları, kör noktalar, dosyalara göre birebir düzeltilmiş mi",
+ "gorev_maddeleri": [
+  {
+   "id": "M1",
+   "metin": "kodu oku, anla, ne anladığını yaz"
+  },
+  {
+   "id": "M2",
+   "metin": "üç dosyadakiler kodda birebir uygulanmış mı — ajan başına bir dosya + 4. ajan kapsam denetimi"
+  },
+  {
+   "id": "M3",
+   "metin": "mimariyi baştan sona katman katman yaz; nasıl hesaplanıyor"
+  },
+  {
+   "id": "M4",
+   "metin": "ölü hesaplama var mı; yapay zekanın gizli/açık hataları; kör noktalar"
+  },
+  {
+   "id": "M5",
+   "metin": "dosyalara göre kod birebir yazılıp düzeltilmiş mi"
+  }
+ ],
+ "dislanan_maddeler": [],
+ "adimlar": [
+  {
+   "id": "Z1",
+   "ad": "GÖREV ÇÖZÜMLEME",
+   "ajan": "cozumleyici",
+   "bagimsiz": false,
+   "girdi_id": [],
+   "gordugu_adimlar": [],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "girdi",
+     "ref": "kullanıcı istemi",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "istek 5 maddeye ayrıldı",
+     "sayilar": [],
+     "kaynak": "kullanıcı istemi"
+    }
+   ],
+   "kapi": "her madde bir adıma atandı",
+   "gecti": true
+  },
+  {
+   "id": "Z2",
+   "ad": "KANIT TOPLAMA",
+   "ajan": "kanitci",
+   "bagimsiz": false,
+   "girdi_id": [
+    "Z1"
+   ],
+   "gordugu_adimlar": [
+    "Z1"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/root/.claude/uploads/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/24b74846-binance_sinyal_motoru_TAMIRLI.py",
+     "okundu": true,
+     "sayilar": [
+      2702
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/dosya1.txt",
+     "okundu": true,
+     "sayilar": [
+      3931
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/dosya2.txt",
+     "okundu": true,
+     "sayilar": [
+      254
+     ]
+    },
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/dosya3.txt",
+     "okundu": true,
+     "sayilar": [
+      1157
+     ]
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "kod 2702 satır, py_compile OK, K7_KAYITLI_HASH c733043b09fea061 yeniden hesaplandı ve uyumlu",
+     "sayilar": [],
+     "kaynak": "/root/.claude/uploads/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/24b74846-binance_sinyal_motoru_TAMIRLI.py"
+    },
+    {
+     "metin": "dosya2 metninde UYARI kelimesi 0 kez geçiyor; kodda satır 1952 sabit UYARI cümlesi var",
+     "sayilar": [],
+     "kaynak": "/root/.claude/uploads/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/24b74846-binance_sinyal_motoru_TAMIRLI.py"
+    }
+   ],
+   "kapi": "iddia üreten her adımın okunmuş artefaktı var",
+   "gecti": true
+  },
+  {
+   "id": "Z3a",
+   "ad": "ÜRETİM — 5 mercekli kod okuma (mimari/nedensellik/istatistik/kod-hata/tasarım)",
+   "ajan": "uretici-a",
+   "bagimsiz": true,
+   "girdi_id": [
+    "Z2"
+   ],
+   "gordugu_adimlar": [
+    "Z2"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M3",
+    "M4"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/wf1_final.json",
+     "okundu": true,
+     "sayilar": [
+      22
+     ]
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "112 bulgu üretildi, severity sıralı ilk 22 çürütme turuna girdi",
+     "sayilar": [
+      22
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/wf1_final.json"
+    }
+   ],
+   "kapi": "izole koşu — mercekler birbirini görmedi",
+   "gecti": true
+  },
+  {
+   "id": "Z3b",
+   "ad": "ÜRETİM — dosya↔kod birebir eşleme (ajan2: dosya2; ajan1/ajan3/ajan4 oturum limitinde düştü, dosya1/dosya3 eşlemesi elle yapıldı)",
+   "ajan": "uretici-b",
+   "bagimsiz": true,
+   "girdi_id": [
+    "Z2"
+   ],
+   "gordugu_adimlar": [
+    "Z2"
+   ],
+   "kapsanan_maddeler": [
+    "M2",
+    "M5"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/tasks/wmjwpy0ss.output",
+     "okundu": true,
+     "sayilar": [
+      1
+     ]
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "4 ajandan 1 tamamlandı (ajan2/dosya2); ajan1, ajan3, ajan4 KOŞMADI — dosya1/dosya3 eşlemesi ve kapsam denetimi elle yapıldı, bu çıktıda AÇIKÇA belirtilir",
+     "sayilar": [
+      1
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/tasks/wmjwpy0ss.output"
+    }
+   ],
+   "kapi": "izole koşu",
+   "gecti": true
+  },
+  {
+   "id": "Z4",
+   "ad": "ÇAPRAZ DOĞRULAMA",
+   "ajan": "curutucu",
+   "bagimsiz": true,
+   "girdi_id": [
+    "Z3a",
+    "Z3b"
+   ],
+   "gordugu_adimlar": [
+    "Z3a",
+    "Z3b"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "dosya",
+     "ref": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/wf1_final.json",
+     "okundu": true,
+     "sayilar": [
+      10,
+      12
+     ]
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "22 bulgudan 10'u iki bağımsız çürütücüden geçti (AYAKTA), 12'si oturum limiti nedeniyle çürütme turuna GİREMEDİ — bunlar 'ajan-doğrulanmamış, elle satır kanıtlı' etiketiyle sunulur",
+     "sayilar": [
+      10,
+      12
+     ],
+     "kaynak": "/tmp/claude-0/-home-user-Future-/2c4f05c3-1ddf-562e-8fe9-036de5f2b371/scratchpad/wf1_final.json"
+    }
+   ],
+   "kapi": "her iddiaya en az bir ÇÜRÜTME denemesi (10/22); kalanı etiketli",
+   "gecti": true
+  },
+  {
+   "id": "Z5",
+   "ad": "SENTEZ",
+   "ajan": "sentezci",
+   "bagimsiz": false,
+   "girdi_id": [
+    "Z4"
+   ],
+   "gordugu_adimlar": [
+    "Z4"
+   ],
+   "kapsanan_maddeler": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5"
+   ],
+   "artefaktlar": [
+    {
+     "tur": "arac",
+     "ref": "sentez",
+     "okundu": true,
+     "sayilar": []
+    }
+   ],
+   "iddialar": [
+    {
+     "metin": "severity sıralı rapor: P0 (bakış sızıntısı K5→K7, yumuşatılmış high/low ile backtest, sabit UYARI cümlesi) → P1 → P2",
+     "sayilar": [],
+     "kaynak": "arac"
+    }
+   ],
+   "kapi": "üretilen her sonuç ya sentezde ya gerekçeli dışlamada",
+   "gecti": true
+  }
+ ],
+ "dogrulamalar": [
+  {
+   "iddia": "satır 1952 sabit UYARI cümlesi hesaplamadan bağımsız basılıyor",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "kod-satır",
+   "sonuc": "ONAY",
+   "gerekce": "iki çürütücü de çürütemedi; f-string değil, düz literal"
+  },
+  {
+   "iddia": "K5 HMM tüm seriye fit + predict_proba tüm seri → p_trend geleceğe bakıyor; K7 özelliğine giriyor",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "nedensellik",
+   "sonuc": "ONAY",
+   "gerekce": "satır 317/327/754 alıntıları doğrulandı"
+  },
+  {
+   "iddia": "K0 high/low'u eziyor, backtest/etiket yumuşatılmış high/low ile",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "kod-satır",
+   "sonuc": "ONAY",
+   "gerekce": "ham_high/ham_low dosyada 0 eşleşme"
+  },
+  {
+   "iddia": "dosya2 'tamamı' bağımlılık listesi jellyfish diyor, kod rapidfuzz kullanıyor",
+   "dogrulayan_ajan": "uretici-b",
+   "aile": "dosya-kod",
+   "sonuc": "ONAY",
+   "gerekce": "grep jellyfish=0, satır 88 rapidfuzz"
+  },
+  {
+   "iddia": "K3 imputasyon limit_direction='both' interpolasyonu ve ATR bfill'i nedensel değil → K7'ye sızıntı",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "dosya-kosum-ciktisi",
+   "sonuc": "ÇÜRÜTÜLDÜ",
+   "gerekce": "dosya2 koşum çıktısında üç sembolde de bozuk=0, nan=0 (K3 satırları); NaN yokken interpolate hiçbir değeri değiştirmez — mekanizma gerçek ama bu veride etkisi sıfır, P0 değil P2"
+  },
+  {
+   "iddia": "K1/K2 sabit 6 test dizesi 'kanıt' sayılıyor ama boru hattına girmiyor",
+   "dogrulayan_ajan": "curutucu",
+   "aile": "kod-satır",
+   "sonuc": "ONAY",
+   "gerekce": "sembol_coz çıktısı veri_cek'e gitmiyor; SEMBOLLER sabit — ama bu bir HATA değil, dokümandaki 'kullanıcı girdisi' vaadinin demoya indirgenmesi; severity P2"
+  }
+ ],
+ "dislanan_ciktilar": [
+  {
+   "id": "Z3a-K3",
+   "gerekce": "K3 interpolasyon sızıntısı çürütüldü (nan=0) — sentezde P2 dipnot olarak kaldı, P0 listesine girmedi"
+  }
+ ],
+ "kullanici_itirazi": {
+  "fikir_degisti": false,
+  "yeni_kanit": [],
+  "eski": "",
+  "yeni": "",
+  "adim": "Z5"
+ },
+ "teslim": {
+  "metin": "Kod 9 katmanlı (K0-K8) tek dosya sinyal motoru; asıl çıktı K7+K8. Dosyalardaki vaatlerin çoğu kodda var ama 3 P0 ihlal dosyalarda hiç konuşulmamış: K5 HMM bakış sızıntısı K7'ye giriyor, backtest yumuşatılmış high/low ile, satır 1952 sabit sonuç cümlesi. dosya3'ün ikinci yarısı başka bir kod (konsey_tek.py) hakkında; oradaki mimari (Sharpe kapısı, L8 drift, fixture hash, pre-commit) Binance kodunda YOK.",
+  "sayilar": [
+   2702,
+   1952,
+   10,
+   22
+  ],
+  "suruculer": [
+   {
+    "ad": "5 mercekli okuma + çürütme",
+    "kaynak_adim": "Z3a"
+   },
+   {
+    "ad": "dosya↔kod eşleme",
+    "kaynak_adim": "Z3b"
+   }
+  ],
+  "girdi_id": [
+   "Z5"
+  ],
+  "gercek": [
+   "satır numaralı kod alıntıları",
+   "grep sayıları"
+  ],
+  "varsayim": [
+   "hmmlearn predict_proba forward-backward kullanır (kütüphane davranışı, bu ortamda kurulu değil, koşturulamadı)"
+  ],
+  "yorum": [
+   "K7 edge'inin ne kadarının p_trend sızıntısından geldiği ÖLÇÜLMEDİ — kod çalıştırılamadı"
+  ]
+ }
+}
