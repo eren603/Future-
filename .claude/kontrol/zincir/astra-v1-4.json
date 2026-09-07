@@ -1,0 +1,361 @@
+{
+  "gorev": "gönderdiğim komut promptinundaki eksiklikleri celisenleri hataları makyajlanmalari süslemeleri bul ve tamir et ama bunu yaparken kesinlikle Astra modelin in ultra zeka ile çalışmasını zorlayacak kaçacak yer bırakmayacak şekilde ayarla bu yüzden gerekli araştırmaları yapıp dibine kadar öyle başla",
+  "gorev_maddeleri": [
+    {
+      "id": "M1",
+      "metin": "komut promptundaki eksiklikleri bul"
+    },
+    {
+      "id": "M2",
+      "metin": "çelişenleri bul"
+    },
+    {
+      "id": "M3",
+      "metin": "hataları bul"
+    },
+    {
+      "id": "M4",
+      "metin": "makyajlanmaları/süslemeleri bul"
+    },
+    {
+      "id": "M5",
+      "metin": "bulunanları tamir et"
+    },
+    {
+      "id": "M6",
+      "metin": "kaçacak yer bırakmayacak şekilde ayarla (kapıları mekanikleştir)"
+    },
+    {
+      "id": "M7",
+      "metin": "gerekli araştırmaları yap"
+    }
+  ],
+  "dislanan_maddeler": [],
+  "adimlar": [
+    {
+      "id": "Z1",
+      "ad": "GÖREV ÇÖZÜMLEME",
+      "ajan": "cozumleyici",
+      "bagimsiz": false,
+      "girdi_id": [],
+      "gordugu_adimlar": [],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5",
+        "M6",
+        "M7"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "girdi",
+          "ref": "kullanıcı istemi",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "istek yedi maddeye ayrıldı",
+          "sayilar": [],
+          "kaynak": "kullanıcı istemi"
+        }
+      ],
+      "kapi": "her madde bir adıma atandı",
+      "gecti": true
+    },
+    {
+      "id": "Z2",
+      "ad": "KANIT TOPLAMA",
+      "ajan": "kanitci",
+      "bagimsiz": false,
+      "girdi_id": [
+        "Z1"
+      ],
+      "gordugu_adimlar": [
+        "Z1"
+      ],
+      "kapsanan_maddeler": [
+        "M7"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/ARASTIRMA.md",
+          "okundu": true,
+          "sayilar": []
+        },
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/OLCUM_FAZ3.md",
+          "okundu": true,
+          "sayilar": [
+            451,
+            296
+          ]
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "iki kaynaklı asgari hüküm 451 bayt ölçüldü",
+          "sayilar": [
+            451
+          ],
+          "kaynak": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/OLCUM_FAZ3.md"
+        }
+      ],
+      "kapi": "iddia üreten adımın okunmuş artefaktı var",
+      "gecti": true
+    },
+    {
+      "id": "Z3a",
+      "ad": "ÜRETİM — belgeyi kendi okumam",
+      "ajan": "uretici-a",
+      "bagimsiz": true,
+      "girdi_id": [
+        "Z2"
+      ],
+      "gordugu_adimlar": [
+        "Z2"
+      ],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3",
+        "M4"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/BULGULAR_kendi_okuma.md",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "K-01..K-20 bulguları belgeden çıkarıldı",
+          "sayilar": [],
+          "kaynak": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/BULGULAR_kendi_okuma.md"
+        }
+      ],
+      "kapi": "izole okuma",
+      "gecti": true
+    },
+    {
+      "id": "Z3b",
+      "ad": "ÜRETİM — sekiz boyutlu paralel tarama",
+      "ajan": "uretici-b",
+      "bagimsiz": true,
+      "girdi_id": [
+        "Z2"
+      ],
+      "gordugu_adimlar": [
+        "Z2"
+      ],
+      "kapsanan_maddeler": [
+        "M1",
+        "M2",
+        "M3",
+        "M4"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/bulgular_ham_isakisi.json",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "sekiz boyutta ham bulgu üretildi",
+          "sayilar": [],
+          "kaynak": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/bulgular_ham_isakisi.json"
+        }
+      ],
+      "kapi": "izole koşu — Z3a çıktısı görülmedi",
+      "gecti": true
+    },
+    {
+      "id": "Z4",
+      "ad": "ÇAPRAZ DOĞRULAMA — bağımsız kod denetçileri",
+      "ajan": "curutucu",
+      "bagimsiz": true,
+      "girdi_id": [
+        "Z3a",
+        "Z3b"
+      ],
+      "gordugu_adimlar": [
+        "Z3a",
+        "Z3b"
+      ],
+      "kapsanan_maddeler": [
+        "M5",
+        "M6"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/denetim_sicili.md",
+          "okundu": true,
+          "sayilar": []
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "her madde bağımsız kod-denetçisine gönderildi; RESTART ve ESKALE kararları sicilde",
+          "sayilar": [],
+          "kaynak": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/denetim_sicili.md"
+        }
+      ],
+      "kapi": "her onarıma en az bir bağımsız çürütme denemesi",
+      "gecti": true
+    },
+    {
+      "id": "Z5",
+      "ad": "SENTEZ",
+      "ajan": "sentezci",
+      "bagimsiz": false,
+      "girdi_id": [
+        "Z4"
+      ],
+      "gordugu_adimlar": [
+        "Z4"
+      ],
+      "kapsanan_maddeler": [
+        "M5",
+        "M6"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/BULGU_DEGISIKLIK.md",
+          "okundu": true,
+          "sayilar": [
+            109
+          ]
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "109 ham bulgunun tamamı bir göreve ve commit'e bağlandı",
+          "sayilar": [
+            109
+          ],
+          "kaynak": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/BULGU_DEGISIKLIK.md"
+        }
+      ],
+      "kapi": "üretilen her bulgu ya sentezde ya gerekçeli dışlamada",
+      "gecti": true
+    },
+    {
+      "id": "Z6",
+      "ad": "TESLİM",
+      "ajan": "teslimci",
+      "bagimsiz": false,
+      "girdi_id": [
+        "Z5"
+      ],
+      "gordugu_adimlar": [
+        "Z5"
+      ],
+      "kapsanan_maddeler": [
+        "M5",
+        "M6"
+      ],
+      "artefaktlar": [
+        {
+          "tur": "dosya",
+          "ref": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/bundle_v1_4/verification/test_run.txt",
+          "okundu": true,
+          "sayilar": [
+            198
+          ]
+        }
+      ],
+      "iddialar": [
+        {
+          "metin": "paket testleri bu ortamda koşuldu",
+          "sayilar": [
+            198
+          ],
+          "kaynak": "/home/user/Future-/.claude/worktrees/astra-tamir-v1-4/astra/bundle_v1_4/verification/test_run.txt"
+        }
+      ],
+      "kapi": "gerçek/varsayım/yorum ayrımı yapıldı",
+      "gecti": true
+    }
+  ],
+  "dogrulamalar": [
+    {
+      "iddia": "K-01 belirsizlik cezası",
+      "dogrulayan_ajan": "kod-denetci#3",
+      "aile": "test-kosusu",
+      "sonuc": "ONAY",
+      "gerekce": "taban kodda beklenen kırmızı üretildi"
+    },
+    {
+      "iddia": "kod_hata-7 symlink",
+      "dogrulayan_ajan": "kod-denetci#5",
+      "aile": "izole-repro",
+      "sonuc": "ONAY",
+      "gerekce": "ara dizin symlink'i tabanda okundu, onarımdan sonra reddedildi"
+    },
+    {
+      "iddia": "eksiklik-1 VERIFIED öz-beyan",
+      "dogrulayan_ajan": "kod-denetci#12",
+      "aile": "izole-repro",
+      "sonuc": "ÇÜRÜTÜLDÜ",
+      "gerekce": "ilk onarım biçim eşleştiriyordu; uydurma hash geçti — onarım yenilendi"
+    },
+    {
+      "iddia": "K-16 belge sürüklenmesi",
+      "dogrulayan_ajan": "kod-denetci#17",
+      "aile": "mutasyon",
+      "sonuc": "ONAY",
+      "gerekce": "komut metni değiştirilip belge yeniden üretilmeyince test kırmızı"
+    }
+  ],
+  "dislanan_ciktilar": [
+    {
+      "id": "Z4",
+      "gerekce": "hasım çürütme iş akışı oturum limitiyle kesildi; kısmi hükümler BULGU_DEGISIKLIK.md'de kayıtlı, tamamlanmış sayılmıyor"
+    }
+  ],
+  "kullanici_itirazi": {
+    "fikir_degisti": false,
+    "yeni_kanit": [],
+    "eski": "",
+    "yeni": "",
+    "adim": "Z5"
+  },
+  "teslim": {
+    "metin": "ASTRA v1.3 komut metni ve paketi onarıldı; her onarım bir bulgu kimliğine ve bir commit'e bağlı, kapılar mekanikleştirildi, sınırlar açıkça yazıldı.",
+    "sayilar": [
+      198
+    ],
+    "suruculer": [
+      {
+        "ad": "bağımsız kod denetçilerinin RESTART/ESKALE kararları",
+        "kaynak_adim": "Z4"
+      }
+    ],
+    "girdi_id": [
+      "Z6"
+    ],
+    "gercek": [
+      "198 test bu ortamda koşuldu",
+      "451 bayt asgari hüküm ölçüldü"
+    ],
+    "varsayim": [
+      "sağlayıcının taşıma şemasını kabul edeceği DOĞRULANMADI",
+      "store=false makbuzun sonradan getirilemeyeceği"
+    ],
+    "yorum": [
+      "kural envanterinin ek tabanlı çıkarımı silinmeyi yakalar, anlamı denetlemez"
+    ]
+  }
+}
