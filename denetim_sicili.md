@@ -46,3 +46,16 @@ BEYAN (Madde 5 GİZLİ_GÜNDEM — bulgu KABUL EDİLDİ, kusur gerçektir ve TEK
   ÖNCESİ bileşenleri de denetleyecek biçimde kesinleştirildi.
 Madde 5 | Deneme 3/3 | Ajan kod-denetci#11 | Kapı: 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT PASS; TÜNEL N/A — tasarım deneme 2'de kayıtlı, bu commit tamlık düzeltmesi; ÇARPIŞMA N/A) | Kanıt: git diff-tree 559644f → yalnız 2 dosya, sicil ayrı commit'te (2f74c6e, ebeveyn); git archive 559644f izole koşusu → 149 test OK; revert-repro (559644f^ host + HEAD test) → beklenen KIRMIZI (Rejected not raised); kendi symlink repro'ları: link_dir/../real_dir/x ve a/link/../../b/file → ikisi de SOURCE_SYMLINK_REJECTED; göreli yol → aşırı sıkılık yok | Karar: PASS | Arşiv: -
   GÖZLEM (Task 11'e taşınır, kapı düşürmedi): kaynak `path` alanının MUTLAK olması gerektiği hiçbir yerde belgelenmiş değil; göreli yol `Path.cwd()`/`os.path.abspath` üzerinden koşu dizinine bağımlı hale geliyor. README ve komut metninde açıkça yazılacak.
+Madde 9 | Deneme 1/3 | Ajan kod-denetci#12 | Kapı: ATLAMA FAIL (execute() çıktısında task_status yok — plan satır 683) + TİYATRO FAIL (sha256 kanıt kimliği yalnız BİÇİM doğruluyor; denetçi uydurma hash ile VERIFIED/COMPLETE üretti) + TÜNEL FAIL (REQUIREMENT_DEPENDENCY beyan edildi ama alternatifsiz ve red yolları testsiz); GİZLİ_GÜNDEM/SAHTE_KANIT PASS; ÇARPIŞMA N/A | Kanıt: git worktree 2864d4b → 157 test OK (beyanla birebir); taban 0ac89da + HEAD testleri → 46 error + 1 fail; probe_sha256.py → task_status=COMPLETE (uydurma kanıtla); wildcard claim_ids kaçış yolu DEĞİL (uncertain kart dahil edilince FAIL_CLOSED — denetçinin ek ölçümü) | Karar: RESTART | Arşiv: -
+Madde 10 | Deneme 1/3 | Ajan kod-denetci#13 | Kapı: ATLAMA/kapsam-daraltma FAIL (v1.3'te olup v1.4'te karşılığı olmayan 10+ normatif kural; benim doğrulamam yalnız BÜYÜK-HARF sabit adı ve sayı tarıyordu, nesir kuralları kaçırıyordu); GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT/TÜNEL PASS; ÇARPIŞMA N/A | Kanıt: denetçinin kendi grep taraması 10/10 NOT FOUND; taban metinle test 29 FAIL + 1 ERROR; HEAD 166 test OK; test_capacity_numbers mutasyon denemesiyle gerçekten türetiyor | Karar: RESTART | Arşiv: -
+
+BEYAN (Madde 9 ve 10 — her iki bulgu kümesi de KABUL EDİLDİ, kusurlar gerçektir):
+  Madde 9'un TİYATRO bulgusu bu turun en ağır kusurudur: "VERIFIED artık öz-beyan
+  değildir" cümlesi sha256 dalı için YANLIŞTI — 64 hex karakter yazabilen herkes
+  kapıdan geçiyordu. Onarım (commit 5db3c1e/…): sha256 kimliği bu koşuda GERÇEKTEN
+  üretilmiş bir digest'e eşleşmek zorunda; biçim eşleştiren regex kaldırıldı.
+  Madde 10'un bulgusu benim doğrulama YÖNTEMİMİN kusurunu gösterdi: token taraması
+  kural kaybını yakalayamaz. Onarım iki parçalı: (1) düşen kurallar geri alındı,
+  (2) tekrarı engelleyen mekanik kapı eklendi (test_rules_carried_over_from_v1_3_are_present,
+  28 kural parçası). Boyut bütçesi kural silmenin gerekçesi olamayacağı için
+  30000 → 55213'e (v1.3 metninin boyutu) çekildi ve bu testin docstring'inde yazıldı.
