@@ -100,3 +100,31 @@ ESKALE KAYDI (Madde 10 — üç deneme de FAIL; sözleşme gereği kullanıcıya
   KULLANICIYA BİLDİRİM: bu madde üç denemede geçemedi; dördüncü tur yöntem değişikliğiyle
   yapıldı ve bağımsız denetime yeniden gönderiliyor. Kalan bilinen sınır, testin
   docstring'inde yazılı: araç SİLİNMEYİ yakalar, ANLAMI denetlemez.
+
+## Madde 14 — Task 14A/14B/14C (planın bağlamadığı 41 bulgu)
+- Deneme 1/3 | Ajan kod-denetci#22 | Kapı 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT PASS; TÜNEL/ÇARPIŞMA N/A)
+- Kanıt: izole `git archive 3c9d75a` kopyasında 198 OK + 9 OK; taban `1b0e589` üzerine
+  bindirilen yeni testler gerçek kırmızı (edge-gate testleri FAIL/ERROR, effort-binding
+  TypeError, math-seal ve contradiction-log testleri kırmızı); `os.killpg` spy ile hem
+  reaped-atlama hem timeout-hâlâ-öldürme doğrulandı; 14C'nin 23 bulgu kimliği kod ve
+  `git log -S` ile tek tek izlendi.
+- **Karar: PASS**
+- Denetçinin kapı DIŞI gözlemleri (gizlenmiyor, düzeltme borcu olarak kayda geçti):
+  1. `requested_effort` kapısı yalnız `__init__`'te denetleniyor; `host._reviewer`
+     private alanı elle değiştirilirse yeniden doğrulama tetiklenmiyor. Üretim kodunda
+     bunu yapan yol YOK, ama "değişmez sözleşme" iddiası Python düzeyinde zorlanmıyor.
+  2. `http_timeout=max(5.0, timeout-5.0)`: `timeout ≤ 5` ile kurulan bir EXTERNAL_MODEL
+     inceleyicisinde `http_timeout ≥ timeout` olur ve "HTTP çağrısı host'un öldürmesinden
+     önce bitmeli" değişmezi tam da düşük-timeout durumunda bozulur. Hiçbir iddia bunun
+     tersini söylemiyor; test edilmemiş sınır durumu olarak açık kalemdir.
+  3. 14C'nin izlenebilirliği 14A/14B kadar açık kimlik etiketlemesi taşımıyor.
+
+## Madde 10 — v1.3 → v1.4 kural kapsamı (5. tur, ESKALE sonrası)
+- Commit `693eae1`. 4. turun ESKALE gerekçesi kabul edildi ve kök neden bu turda
+  bulundu: testten çıkarılan sınıflandırıcı yok olmamıştı, `KAPSAM_MUAFIYET.md`'ye
+  şablon gerekçe olarak taşınmıştı (118 kalem, üç kalıp).
+- Yapılan: her muafiyet bir SINIF taşıyor ve test o sınıfı cümlenin kendisinden yeniden
+  türetiyor; ölçümdeki iki gerçek kusur (Türkçe gövde eşleşmesi, I/İ katlaması)
+  giderildi; kapsanmayan 118 → 11; 16 kural v1.4 metnine yeniden yazıldı.
+- Doğrulama: bundle 198 OK, depo 9 OK, roundtrip 198 OK.
+- Denetime GÖNDERİLDİ (5. tur). Hüküm gelmeden bu madde GEÇTİ sayılmaz.
