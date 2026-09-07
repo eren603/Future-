@@ -18,8 +18,12 @@
       "status": "VERIFIED",
       "evidence": [
         "verification/test_run.txt",
-        "tests/test_astra.py::test_blocked_reply_requires_attempts",
-        "tests/test_host_integration.py::test_review_request_carries_fresh_nonce"
+        "tests/test_astra.py::test_blocked_without_attempts_is_invalid",
+        "tests/test_astra.py::test_ready_with_attempts_is_invalid",
+        "tests/test_astra.py::test_placeholder_owner_fails",
+        "tests/test_astra.py::test_second_finalize_is_locked",
+        "tests/test_host_integration.py::test_review_request_carries_fresh_nonce",
+        "tests/test_host_integration.py::test_replayed_reviewer_digest_rejects"
       ]
     },
     {
@@ -61,5 +65,5 @@
   "live_model_dependency": "OPENAI_API_KEY bu ortamda yok ve developers.openai.com egress engelli; canlı sağlayıcı çağrısı YAPILMADI",
   "repair_status": "IMPLEMENTED_AND_LOCAL_TESTED",
   "final_status": "LOCAL_CHECKS_PASSED",
-  "note": "task_status alanı bu dosyadan KALDIRILDI: durum host tarafından gereksinim defterinden türetilir; dosyaya elle yazılan durum türetilmemiş bir beyandır."
+  "note": "task_status alanı bu dosyadan KALDIRILDI: durum host tarafından gereksinim defterinden türetilir; dosyaya elle yazılan durum türetilmemiş bir beyandır. Bu dosyadaki her `evidence` kaydı tests/test_repair_contract.py tarafından diskte çözümlenir; çözülemeyen referans testi düşürür (Madde 11 denetçisi uydurma bir test adı bulmuştu)."
 }
