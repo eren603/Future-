@@ -32,4 +32,5 @@ class Controller(BaseController):
                                     source_vault=SourceVault(specs), comparisons=[],
                                     comparison_exemption="Structural regression fixture; no comparison requested.",
                                     reviewer=fixture_reviewer())
+            self._source_contents = self._host._vault.contents()
         return super().run(task)

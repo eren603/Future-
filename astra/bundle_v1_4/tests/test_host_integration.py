@@ -40,7 +40,8 @@ class HostIntegrationTests(unittest.TestCase):
             reviewer=fixture_reviewer(mode, .15 if mode == "timeout" else 2) if reviewer else None)
         workers = {wid: dict(role=role, argv=[sys.executable, worker])
                    for wid, role in zip(("a", "b", "c"), ("model", "counterexample", "evidence"))}
-        self.controller = Controller(workers, ["comparison"], ["s0", "s1"], host=host, max_restarts=0)
+        self.controller = Controller(workers, ["comparison"], ["s0", "s1"], host=host,
+                                     source_contents=self.vault.contents(), max_restarts=0)
         self.assertEqual(self.controller.run(TASK).status, "PHASE_VALIDATED")
         self.decision = dict(action="Use the observed comparison only.", owner="test_operator",
             guard_metric="Evidence supports the task", kill_rule="Stop if evidence changes",
@@ -233,6 +234,15 @@ class HostIntegrationTests(unittest.TestCase):
         self.build(mode="reject")
         self.decision["action"] = "A will always outperform B in every task."
         self.assert_closed("SEMANTIC_CLAIM_UNSUPPORTED")
+
+    def test_envelope_carries_source_snapshots(self):
+        # celiski-8: the evidence worker was told to inspect sources it never received.
+        self.build()
+        env = self.controller.envelope("a", TASK, "p")
+        self.assertEqual(set(env["source_snapshots"]), {"s0", "s1"})
+        self.assertIn("median completion latency", env["source_snapshots"]["s0"])
+        d = env.pop("digest")
+        self.assertEqual(d, digest(env))
 
     def test_tool_source_requires_binding_record(self):
         # eksiklik-6: a hand-written file labelled TOOL was accepted as tool output.

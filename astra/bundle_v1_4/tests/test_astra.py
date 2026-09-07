@@ -173,6 +173,13 @@ class RuntimeTests(unittest.TestCase):
         p = c.run("Review.")
         self.assertEqual(p.status, "FAIL_CLOSED")
         self.assertEqual(p.attempts, 2)
+    def test_oversized_envelope_is_rejected_before_dispatch(self):
+        # K-07: snapshots ride inside the envelope, so the wire limit applies before any worker runs.
+        from astra_reference import Controller as RawController
+        big = {"s1": "x" * (WIRE_LIMIT - 100)}
+        c = RawController(workers(("sourced", "ready", "ready")), ["scope1"], ["s1"], source_contents=big)
+        with self.assertRaisesRegex(Rejected, "ENVELOPE_SIZE"):
+            c.run("Review.")
     def test_blocked_without_attempts_is_invalid(self):
         # K-03 / kacis_yolu-1: a BLOCKED reply must carry evidence of at least two attempts.
         c = controller(("blocked_no_attempts", "ready", "ready"))

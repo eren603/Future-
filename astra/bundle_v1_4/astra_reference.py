@@ -50,7 +50,7 @@ ROLE_POLICY = {
     "scope": "Identify scope boundaries, assumptions and unknowns from your own inputs.",
     "model": "Propose a candidate solution with explicit evidence and limitations.",
     "counterexample": "Independently find counterexamples to the task's assumptions; you have not seen a peer candidate.",
-    "evidence": "Check authorized source contents, provenance, relevance and time validity.",
+    "evidence": "Check the source snapshots inside this envelope for provenance, relevance and time validity; if a listed source has no snapshot, return BLOCKED with SOURCE_CONTENT_UNAVAILABLE in block_reason.",
     "domain": "Check domain-specific constraints within the declared task scope.",
 }
 
@@ -385,7 +385,8 @@ class Phase:
 class Controller:
     """A single local test run. It cannot produce APPROVED or REAL_ISOLATION."""
     def __init__(self, workers, scope_ids, source_ids=(), *, policy=DEFAULT_POLICY,
-                 timeout=5.0, max_restarts=2, mode="LOCAL_TEST", host=None):
+                 timeout=5.0, max_restarts=2, mode="LOCAL_TEST", host=None,
+                 source_contents=None):
         if mode != "LOCAL_TEST":
             raise Rejected("ISOLATION_UNAVAILABLE")
         if os.name != "posix":
@@ -424,6 +425,13 @@ class Controller:
         self.run_id, self._phase, self._events = uuid.uuid4().hex, None, ()
         self._host, self._task_digest = host, None
         self._finalized = False
+        # Snapshots travel inside the envelope so an evidence worker can actually read them.
+        if source_contents is not None:
+            source_contents = bounded_json(canonical(source_contents))
+            if type(source_contents) is not dict or not set(source_contents).issubset(self.source_ids) \
+                    or any(type(v) is not str for v in source_contents.values()):
+                raise Rejected("SOURCE_CONFIG")
+        self._source_contents = source_contents or {}
 
     @property
     def events(self):
@@ -440,6 +448,8 @@ class Controller:
         envelope = {"protocol": VERSION, "run_id": self.run_id, "phase_id": phase_id,
                     "worker_id": wid, "role": role, "nonce": secrets.token_hex(24),
                     "task": task, "scope_ids": list(self.scope_ids), "source_ids": list(self.source_ids),
+                    "source_snapshots": {sid: self._source_contents[sid] for sid in self.source_ids
+                                         if sid in self._source_contents},
                     "instructions": rules, "policy_digest": digest(rules), "reply_schema": REPLY_SCHEMA}
         envelope["digest"] = digest(envelope)  # Digest excludes only itself.
         return envelope
@@ -493,6 +503,8 @@ class Controller:
             replies, errors, blocked = [], [], False
             for wid in sorted(self.workers):
                 envelope = self.envelope(wid, task, phase_id)
+                if len(canonical(envelope)) > WIRE_LIMIT:
+                    raise Rejected("ENVELOPE_SIZE")  # split the task (CAPACITY) instead of truncating
                 try:
                     raw = invoke(self.workers[wid]["argv"], canonical(envelope), self.timeout)
                     sealed = self.check_reply(raw, envelope)

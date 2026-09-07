@@ -24,6 +24,7 @@ def execute(config):
                        comparison_exemption=config["comparison_exemption"], reviewer=reviewer)
     controller = Controller(config["workers"], config["scope_ids"],
                             [s["source_id"] for s in vault.sources()], host=host,
+                            source_contents=vault.contents(),
                             timeout=config["worker_timeout"], max_restarts=config["max_restarts"])
     phase = controller.run(config["task"])
     result = controller.finalize(canonical(config["decision"]))
