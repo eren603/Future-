@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "created_at": "2026-09-07T20:48:04.827972+00:00",
+  "created_at": "2026-09-07T21:48:31.490353+00:00",
   "files": [
     {
       "path": "CHANGELOG.md",
@@ -14,8 +14,8 @@
     },
     {
       "path": "astra_command.md",
-      "sha256": "a9a1f88a2a8801adbb6a3adf97f50f7e08a73f94d9a9a662aae1dc6c7c55066a",
-      "size_bytes": 75999
+      "sha256": "fb608340958bbf783b4a2454d516b04215e3a720aeea469832a9a0256cb290cb",
+      "size_bytes": 80340
     },
     {
       "path": "astra_compare.py",
@@ -124,8 +124,8 @@
     },
     {
       "path": "tests/test_command_text.py",
-      "sha256": "9280fd93bb5c74eded4a16c294a886d98c8d816d491ef24802a2d0df760eb43b",
-      "size_bytes": 11061
+      "sha256": "9cf5d95c08ce853da09dbbd460c7b73568334daec193f90827ffe66b2723c736",
+      "size_bytes": 12620
     },
     {
       "path": "tests/test_comparison.py",
@@ -179,12 +179,12 @@
     },
     {
       "path": "verification/cli_runs/method_mismatch/config.json",
-      "sha256": "7debfd26d6d28b92970624ae2c5c03f1882e13ab7d71b69a8434185046d85959",
+      "sha256": "c8d8ad18ec089f723ca7026c42a5bf44dffb5c324f3d44786a42eafb8169e450",
       "size_bytes": 2935
     },
     {
       "path": "verification/cli_runs/method_mismatch/result.json",
-      "sha256": "8ecfcc308dbcdf5fa3b070d91d9b8eaa4fcf8083227419d7905484aed7597ef8",
+      "sha256": "92a40c7db6cbbdab8e068762eb493c7c2cb66a50168e8746cb5312ddcfa41600",
       "size_bytes": 2336
     },
     {
@@ -199,12 +199,12 @@
     },
     {
       "path": "verification/cli_runs/reviewer_missing/config.json",
-      "sha256": "b6a85d97cdfcc83d25c6e920cec35c002cef51cdbf28200c95c53b584000f3ac",
+      "sha256": "c1081a4d908d4c2f65eb7d6925e61efd0da8617297b6c609dcc1b9149b807fa7",
       "size_bytes": 2696
     },
     {
       "path": "verification/cli_runs/reviewer_missing/result.json",
-      "sha256": "053f84c789ad9d67e01344063b46578c3965b0489558c9dab06bc0f1b85e5003",
+      "sha256": "1dd6e484d48e093855c5af27a99ba598e1fffd0ca56a6ce67bc64272e1fa569c",
       "size_bytes": 2722
     },
     {
@@ -219,12 +219,12 @@
     },
     {
       "path": "verification/cli_runs/semantic_rejection/config.json",
-      "sha256": "9ec5be1434a5fa4c7f62bbc1e37dbd52dfcd54fd0513632897dad60cd78257f3",
+      "sha256": "380be542173d10c9a275f18ff1b95beae25ae620a7d99a66baee84a6762a9181",
       "size_bytes": 2967
     },
     {
       "path": "verification/cli_runs/semantic_rejection/result.json",
-      "sha256": "9ce2ba9ed306689806cb9419ab71e9f1f312b6745d62e5e8696f3dd9526a1d8f",
+      "sha256": "5f290c9b520bd05a3f84218a6965e7ce6fd4c229a9c97c0a01923b083ff440b8",
       "size_bytes": 3088
     },
     {
@@ -239,12 +239,12 @@
     },
     {
       "path": "verification/cli_runs/valid/config.json",
-      "sha256": "3529250afac463768e4ccc49786791517c58edbdafdcff984f5543e297696eee",
+      "sha256": "e8702dfdfa52e6e2ba4a6cf44b1178ce8f0912a38af8031f209e165991141344",
       "size_bytes": 2951
     },
     {
       "path": "verification/cli_runs/valid/result.json",
-      "sha256": "302398c958dabd333a53b9b32a85dd4d6fc8845e5058726bc1434d8b9abed025",
+      "sha256": "e784020a07ec5523000b769d5f91d985b83c7bfa2220c3a1990a76622dcf581a",
       "size_bytes": 13606
     },
     {
@@ -259,7 +259,7 @@
     },
     {
       "path": "verification/cli_summary.json",
-      "sha256": "6b2caa3943d1da0d33425198390fc4987121829e9dde6927e465ee63550fe5f0",
+      "sha256": "0c06cde5ad40952ef7fc8a29f09ef7dd86eba73f21281d58c27ade6539481832",
       "size_bytes": 891
     },
     {
@@ -269,13 +269,13 @@
     },
     {
       "path": "verification/test_result.json",
-      "sha256": "1cad08626d8f13a065c14d941bd367ecd5c3adac6bd63d22efe64371c09e1588",
+      "sha256": "82d0559e765dc2998f37637bdf85c07fdbd5845f2acedd87dfbc307899288628",
       "size_bytes": 323
     },
     {
       "path": "verification/test_run.txt",
-      "sha256": "57b6981aad5fd81b7143f9c1841bc0c36b5ca193d6e653be46fd3f6cdd2930cd",
-      "size_bytes": 27841
+      "sha256": "de1e50e1794185bc5e5f9ea6b7ddb83095275f71d3f5902b607c0c6fe1184021",
+      "size_bytes": 28021
     }
   ]
 }

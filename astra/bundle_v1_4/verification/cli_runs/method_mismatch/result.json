@@ -15,43 +15,43 @@
   "events": [
     {
       "detail": {
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4",
-        "reply_digest": "sha256:3809a6bb097e6f3c00b2e0bb8f1ac88db9affee0f3d9322a2c4120768cc10b3b",
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
+        "reply_digest": "sha256:8a11c4ece1f9052fe4626ef1ee7673070b3d9f6b7e5ab22cd832e37a610c37c6",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4",
-        "reply_digest": "sha256:a682e14b1ff7885fdd182999df7cc1c9711eb36ca42461a73b2b58c657016d80",
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
+        "reply_digest": "sha256:e31fab2cae2decb660a4212f6ec72a29108971ba27ec7a783abeefc08279320b",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:2cc02faf9c82c049ba52c312d36eff957ab65a0fbf2c5b69cb6fd28d2cd5c530",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:8cbdfa34010c3424da803aa411eafa7b64a3d55295801b94d87cf26b6a26e482",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4",
-        "reply_digest": "sha256:651c49d58ad05479ebb2425bc086ae736f69e18be928418adac00c2ddafeca3d",
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
+        "reply_digest": "sha256:23bb3159c2405dca58003e1adad959f15da1662cf99eb4b23f44ced549caa8b6",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:219f4c036400317c6c8f34836690f481817bef7787b0d4f7049d58da4b15b687",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:a3d00af072c8f6984c1c64135aa3499187909e7c5c5595b54f502844b5c32e5f",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4"
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:164be76cf212a45db56a14fd102827291556ab81940005c95d20fc1a787ea886",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:fb7a108158734a19c8e056cc031bbd1edd079d71f36fd0cf49859011571e8aa3",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
@@ -59,16 +59,16 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:137b82862a6805707cbf4fa92e9c252a021652a8971e1904903ff39408a8e461",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:0433f40476f0d3023e8aad1f3b0c04c50ab9e5ee1fa44db71fa97fcc7f0a73bd",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
         "reason": "NOT_COMPARABLE"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:ea272980818df6e5b27228f0bd39c4cbc657ba575509cbc268351af261b1c5f3",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:3cfe6bfc029c1079283035ffddaf65a8cd50eb67e2240271861be93933b99c6c",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     }
   ],
   "production_approval": false

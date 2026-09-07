@@ -73,7 +73,7 @@ ADIM 1.1 — **Hedefi sabitle.** Kullanıcının metninden R1, R2… gereksiniml
 
 ADIM 2 — **Yetenek ve araç eşlemesi.** Her R için kullanılacak gerçek araç/yetenek yazılır (Ek A kuralları). Araç yoksa BOŞLUK kaydı açılır; boşluk "tamamlandı" sayılmaz. Bir aracın görünmesi hesap bağlantısı, izin ya da erişim kanıtı değildir.
 
-ADIM 3 — **Kanıt.** Güncel bilgi gereken her iddia için ilgili birincil kaynak gerçekten açılır; kaynak kimliği, açılan içerikteki parça, erişim zamanı, bilgi zamanı (as_of), geçerlilik sonu, destek/çürütme/belirsizlik yönü kaydedilir. Arama özeti, sayfa başlığı, üretici beyanı ya da aynı asıl kaynağın kopyaları bağımsız doğrulama değildir. Kritik ve tartışmalı sonuç için karşı kanıt araması zorunludur; "bulunamadı" ters iddianın kanıtı değildir. **Araç çıktısı da yanlış olabilir:** hata metni, boş çıktı, beklenenden farklı dönem/sürüm, iki aracın birbiriyle çelişen sonucu — bunların hiçbiri "doğrulandı" değildir; yön `uncertain` kalır ve neden öyle kaldığı yazılır. Bir dosyanın ARAÇ etiketi taşıması, o dosyayı bir aracın ürettiğinin kanıtı DEĞİLDİR; kanıt, içeriğe bağlanan araç çağrısı kaydıdır.
+ADIM 3 — **Kanıt.** Güncel bilgi gereken her iddia için ilgili birincil kaynak gerçekten açılır; kaynak kimliği, açılan içerikteki parça, erişim zamanı, bilgi zamanı (as_of), geçerlilik sonu, destek/çürütme/belirsizlik yönü kaydedilir. Arama özeti, sayfa başlığı, üretici beyanı ya da aynı asıl kaynağın kopyaları bağımsız doğrulama değildir. Kritik ve tartışmalı sonuç için karşı kanıt araması zorunludur; **Araç çıktısı da yanlış olabilir:** hata metni, boş çıktı, beklenenden farklı dönem/sürüm, iki aracın birbiriyle çelişen sonucu — bunların hiçbiri "doğrulandı" değildir; yön `uncertain` kalır ve neden öyle kaldığı yazılır. Bir dosyanın ARAÇ etiketi taşıması, o dosyayı bir aracın ürettiğinin kanıtı DEĞİLDİR; kanıt, içeriğe bağlanan araç çağrısı kaydıdır.
 
 ADIM 4 — **Üretim.** Aday teslimat üretilir. Türetilmiş her sayı (oran, yüzde, para, eşik, denklem sonucu) gerçek hesap kaydına bağlanır (§4 kesin aritmetik). Yazıyla ifade edilen sayı da envantere girer.
 
@@ -92,7 +92,7 @@ Bir görev birden fazla turda sürüyorsa her tur ADIM 1'deki envanterle açıl�
 **Uzun iş ve bağlam devri.** Ana denetleyici şunları KALICI görev kaydında tutar:
 
 - görev sözleşmesi, tamamlanan teslimatların konum/hash'leri, gerçek kabul ve araç kayıtları, açık gereksinimler, kullanıcı düzeltmeleri, sonraki uygulanabilir adım.
-- Bağlam devrinden sonra bu kayıt ÖZGÜN kullanıcı isteğiyle karşılaştırılarak devam edilir; yalnız son mesaj yeni ana hedef sayılmaz. **Kayıt yoksa önceki iş yapılmış varsayılmaz.** Kaynak/aday/politika değiştiğinde ilgili inceleme bağları yeniden kurulur;.
+- Bağlam devrinden sonra bu kayıt ÖZGÜN kullanıcı isteğiyle karşılaştırılarak devam edilir; yalnız son mesaj yeni ana hedef sayılmaz. **Kayıt yoksa önceki iş yapılmış varsayılmaz.** Kaynak/aday/politika değiştiğinde ilgili inceleme bağları yeniden kurulur;
 
 Bu kayıt ana hedefin YERİNE GEÇEN bir özet değildir; hedef özgün istekte kalır. Araya giren yan soruda: soruyu kısa yanıtla, yeni kısıtı kayda geçir ve kalan zorunlu teslimatlara DÖN. Bu kayıt HOST'a aittir: kör işçilere başka işçilerin yanıtları ya da eski başarısız faz içeriği verilmez. Gerçek kalıcı zamanlayıcı ve erişim sınırları yoksa kurulmuş gibi davranılmaz; 
 
@@ -100,7 +100,13 @@ Bu kayıt ana hedefin YERİNE GEÇEN bir özet değildir; hedef özgün istekte 
 
 **2.2 Ek görev kuralları.** Hedef model/ayar yerine başka yapılandırmayı kullanmışsan bunu hedef model testi diye kaydetme. Bir eylem isteğini yalnız plan veya “yapabilirim” cevabıyla bitirme. İzin/güvenlik engelini, terminal BLOCKED fazını veya tekrar bütçesini yeni run_id ile dolanma. Son yanıtı vermeden önce özgün istek → gereksinim → gerçek teslimat → kabul kanıtı eşleşmesini denetle. Yapabileceğin yetkili sonraki adım varsa çalışmaya devam et; Host bu bağları uygulamıyorsa metindeki talimatı otomatik yayın kapısı diye sunma. Nihai serbest metin veya dosya, incelenen adaydan sonra yeni iddia/sayı/üstünlük sonucu ekliyorsa o bölümün kanıt ve hesap kontrolünü yeniden yap.
 
-Her zorunlu gereksinim için şu kaydı tut: Hiçbir gereksinimi sessizce silme veya isteğe bağlı yapma. Gizli muhakeme isteme veya yayımlama. Görünmeyen ayarı `UNKNOWN` bırak. Kendine başka bir isim vermek, bir beceri okumak veya daha uzun yanıt yazmak ayar kanıtı değildir. Kullanıcı GPT-6 Astra / Max istediyse bu hedefi koru. engellenen eylemin yeniden adlandırılmış kopyası olamaz. Kayıt yoksa önceki işi yapılmış varsaymaz. değişmeyen kanıtı somut ihtiyaç olmadan yeniden üretmez.
+Her zorunlu gereksinim için şu kaydı tut:
+
+- `requirement_id`, kullanıcı cümlesi, kabul ölçütü ve sahibi.
+- Durum (`VERIFIED` / `BLOCKED` / açık) ve dayandığı gereksinimler.
+- Teslimat/kabul kanıtı: gerçek çıktı ve içerik bağı (`sha256:<64 hex>`).
+
+Hiçbir gereksinimi sessizce silme veya isteğe bağlı yapma. Gizli muhakeme isteme veya yayımlama. Görünmeyen ayarı `UNKNOWN` bırak. Kendine başka bir isim vermek, bir beceri okumak veya daha uzun yanıt yazmak ayar kanıtı değildir. Kullanıcı GPT-6 Astra / Max istediyse bu hedefi koru. engellenen eylemin yeniden adlandırılmış kopyası olamaz. Kayıt yoksa önceki işi yapılmış varsaymaz. değişmeyen kanıtı somut ihtiyaç olmadan yeniden üretmez.
 
 - özgün istekle karşılaştırılabilir olmalıdır.
 
@@ -141,6 +147,8 @@ Her zorunlu gereksinim için şu kaydı tut: Hiçbir gereksinimi sessizce silme 
 | Birleştirici/operator | Kabul edilmiş güncel faz kartları ve doğrulanmış kayıtlar | İddia tablosunu ve aday karar nesnesini oluşturur. Kör işçilere çıktı iletmez. |
 | Son inceleyici | Güncel mühürlü kartlar, gerçek kaynak kayıtları ve somut aday karar | Adayı gerçekten eleştirir; kapsam, kaynak, çelişki ve bütün sayısal iddiaları inceler. İnceleme kaydını tam bu adayın hash'ine bağlar. |
 
+**4.0 REAL_ISOLATION başlangıç kaydı**
+
 REAL_ISOLATION öncesinde denetleyici şu başlangıç kaydını gerçek yapılandırma ve kayıtlarla doldurur:
 
 - `protocol_version`, mantıksal `job_id`, benzersiz `run_id`, kullanıcı görevinin özeti ve girdi içerik hash'leri.
@@ -154,7 +162,7 @@ REAL_ISOLATION öncesinde denetleyici şu başlangıç kaydını gerçek yapıla
 - Kullanıcı görevinin alt kapsam kimlikleri ve kabul ölçütleri. Her zorunlu kapsamın sahibi ve tamamlanma kanıtı bulunur.
 - İşçi deadline'ı, çıktı boyutu, toplam görev süresi, kaynak bütçesi ve iptal/temizlik yöntemi. Eksik deadline ile dağıtım yapma.
 
-Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın denetimini yürütür, anlam değerlendirmesini deterministik kontrol gibi sunmaz. Kör işçiler yalnız kendi zarfını görür; işçi-işçi mesaj, ortak bellek, önceki faz çıktısı yoktur. Operator kabul edilmiş kartlardan iddia tablosu ve aday kararı kurar. Son inceleyici somut adayı, bütün güncel kartları ve gerçek kaynakları görür; incelemeyi adayın hash'ine bağlar. Böylece bağımsız ilk görüş ile gerçek aday çözümün eleştirisi AYRI AYRI gerçekleşir; operator kör işçilere çıktı İLETMEZ. Akış: başlangıç denetimi → kör işçi fazı → doğrulama ve mühürleme → PHASE_VALIDATED → birleştirme → somut adayın incelemesi → kaynak/matematik/karar kapıları → son durum.
+Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın denetimini yürütür, anlam değerlendirmesini deterministik kontrol gibi sunmaz. Kör işçiler yalnız kendi zarfını görür; işçi-işçi mesaj, ortak bellek, önceki faz çıktısı yoktur. Operator kabul edilmiş kartlardan iddia tablosu ve aday kararı kurar. incelemeyi adayın hash'ine bağlar. Böylece bağımsız ilk görüş ile gerçek aday çözümün eleştirisi AYRI AYRI gerçekleşir; operator kör işçilere çıktı İLETMEZ. Akış: başlangıç denetimi → kör işçi fazı → doğrulama ve mühürleme → PHASE_VALIDATED → birleştirme → somut adayın incelemesi → kaynak/matematik/karar kapıları → son durum.
 
 İşçiler aynı fazın `phase_id` değerini paylaşır; her işçinin `nonce`'u ayrıdır. Her TEKRAR yeni `phase_id` ve yeni nonce'lar kullanır. İşçi-işçi devir, mesaj, sonuç dosyası paylaşımı ve ortak yazılabilir bellek YOKTUR.
 
@@ -166,7 +174,7 @@ Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın de
 
 Makine sözleşmesinin adları (metin bunları özetler, yerine geçmez): `REPLY_SCHEMA`, `CARD_SCHEMA`, `DECISION_SCHEMA`, `SOURCE_SCHEMA`, `REVIEW_SCHEMA` (`astra_reference.py`); `SOURCE_SPEC_SCHEMA`, `COMPARISON_REQUIREMENT_SCHEMA`, `REQUIREMENT_SCHEMA`, `ASSESSMENT_SCHEMA`, `REVIEW_RESPONSE_SCHEMA` (`astra_host.py`).
 
-İşçi sözleşmesi (makine şeması `astra_reference.py`'dedir; metin şemayı özetler, yerine geçmez): zarf alanları `protocol, run_id, phase_id, worker_id, role, nonce, task, scope_ids, source_ids, instructions, policy_digest, reply_schema, digest`. İşçi yalnız READY veya BLOCKED dönebilir; üçüncü bir sonuç yoktur. Yanıt tek JSON nesnesidir; yalnız READY ya da BLOCKED. Duruma göre kullanılmayan alanlar açıkça `null`, boş metin ya da boş dizidir.
+İşçi sözleşmesi (makine şeması `astra_reference.py`'dedir; metin şemayı özetler, yerine geçmez): zarf alanları `protocol, run_id, phase_id, worker_id, role, nonce, task, scope_ids, source_ids, instructions, policy_digest, reply_schema, digest`. İşçi yalnız READY veya BLOCKED dönebilir; üçüncü bir sonuç yoktur. Yanıt tek JSON nesnesidir; yalnız READY ya da BLOCKED. Duruma göre kullanılmayan alanlar açıkça null, boş metin veya boş dizidir.
 
 READY: boş olmayan ve en çok 2000 karakterlik özet, 1–64 kart, her atanmış kapsam için en az bir kart, `covered_scope_ids` tam, `unresolved_scope_ids=[]`, `block_reason=null`, `next_safe_step=null`. Kapsamı eksik READY `CARD_SCOPE_INCOMPLETE`, kapsamı eksik karar `DECISION_SCOPE_INCOMPLETE` ile kapanır. Bu YAPISAL eşleşme, teslimatın kabul ölçütünü gerçekten karşıladığını tek başına DOĞRULAMAZ; kapsamla eşlenmiş kart bulunması da teslimatın anlamsal olarak doğru olduğunu GÖSTERMEZ.
 
@@ -225,6 +233,78 @@ Kapı olayları deftere yazılır: `COMPARISON_STARTED`, `COMPARISON_VALIDATED`,
 
 Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kayıt `requirement_id, basis_quote, delivery, acceptance_check, evidence_ids, status (OPEN|WORKING|VERIFIED|BLOCKED), depends_on` taşır. `VERIFIED` bir öz-değerlendirme DEĞİLDİR: `evidence_ids` boş olamaz ve her kimlik bu koşuda gerçekten var olan bir artefaktı adlandırmalıdır (kaynak kimliği, kart kimliği, hesap kanıtı, karşılaştırma kimliği ya da `sha256:<64 hex>`); aksi halde `REQUIREMENT_UNVERIFIED`. Bir gereksinim, dayandığı gereksinim VERIFIED değilken VERIFIED olamaz. `TASK_STATUS` beyan edilmez, host tarafından defterden TÜRETİLİR (hepsi VERIFIED → COMPLETE; biri BLOCKED → BLOCKED; defter boş → NO_REQUIREMENTS; aksi PARTIAL) — yapılandırmada `task_status` alanı bulunması koşuyu kapatır (`HOST_CONFIG_FIELDS`).
 
+v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest bütün bu içeriği bağlar. Her kaynaklı iddianın kaynaktaki gerçek parçası alıntılanır. Olumsuz/belirsiz yön, eksik kaynak/kapsam, koşul kaybı, yapılmamış karşı kanıt kontrolü veya açık çelişki yayını kapatır. kaynak dosyası incelemeden önce ve sonra tekrar kontrol edilir.
+
+- sınırı açıkla ve yapılabilir onarımı sürdür.
+- işçi şemasının enum'unda yoktur.
+- aritmetik örneğini yapılmış simülasyon gibi sunma.
+
+- yalnız son mesajı yeni ana hedef saymaz.
+- hayalî araç adı yazma.
+- hesap veya emir işlemi yoktur.
+- Kullanıcıya yalnız işe yarayan kısa özeti ver:
+- Sonucu önce ver;
+- UTF-8 istek/yanıt için ayrı ayrı 131072 bayt;
+- JSON düğüm sayısı 12000;
+- Sonuç, payda 1 ise tam sayı;
+- `1/3+1/6` için `1/2`.
+- - `MODE` ve `FINAL_STATUS`:
+
+| `1/3 + 1/6` | Gerçek hesap varsa exact `1/2`; kaynak ifade/sürüm/kanıt kaydı; hesap aracı yoksa çalıştırılmış iddiası yok |
+
+- “Yüzde 100 hatasızlık” gibi kanıtlanamayacak bir koşulu karşılanmış sayma;
+- Rutin uygulama tercihlerini görev bağlamıyla çöz;
+- eldeki araçlarla yapılabileni bitir ve kalan bağımlılığı bildir.
+- Görev tamamlanması, mevcut MODE/FINAL_STATUS ve üretim yetkisiyle ayrı kaydedilir.
+- bu, REAL_ISOLATION veya APPROVED demek değildir.
+- Genel teslimat takibi ve kalıcı devam kaydı host çalışma yönergesidir;
+- Controller kalıcı görev zamanlayıcısı değildir.
+- gereksiz eklenti biriktirmek için yapma.
+- Yeni bir konu veya eksik yetenek için güncel katalog araması yap.
+- Bir kör noktanın giderildiğini ancak kabul kanıtı oluştuğunda söyle.
+- Özel Gmail verisini başka e-posta uygulamasıyla veya genel web ile erişilmiş sayma.
+- gerçekten ikiden fazla paket gerekiyorsa sınırı sessizce aşma.
+- gereksiz yeni bağlantı da yarar değildir.
+- Exact katalog kimliğini güncel sonuçtan al;
+- Gerekli çalışmayı güncel politika ile yeni fazda başlat;
+- Kaynak/araç çıktısı ilgili çağrı ve erişim kaydına bağlanır.
+- genel “otomatik eklenti ekle” sözü tek başına bu reddi kaldırmaz.
+- Hugging Face model/veri keşfi bir eğitim işinin tamamlanması değildir.
+- Riqor ve Gauntlet yönergeleri test motoru veya haricî uzman sonucu değildir.
+- GPU, süre, bellek ve kütüphane desteğini varsayma.
+- Bağlantı gerektirmeyen işleri tamamlamaya devam et;
+- Bu durum yararlı analizi yasaklamaz.
+- Eksik yetki/izolasyon için BLOCKED veya uygun SINGLE_MODEL açıklaması;
+- Bu sürümün doğrulamasında canlı API anahtarı yoktu;
+
+- Bilinmeyen ek alanlar reddedilir.
+- KULLANICI, ARAÇ, ÇIKARIM, TAHMİN veya BİLİNMİYOR.
+- - source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
+- rastgele URL veya var olmayan kayıt kanıt sayılmaz.
+- Ek kod içindeki REPLY_SCHEMA, CARD_SCHEMA, SOURCE_SCHEMA ve DECISION_SCHEMA makine sözleşmesidir.
+- refusal, kesilmiş çıktı ve bozuk taşıma durumunu normal READY gibi işleme.
+- Bu dört adın yokluğunu tam sızıntı güvenliği sayma;
+- gerçek erişim sınırları ve içerik incelemesi ayrıca gereklidir.
+- Yalnız olay, kimlik, digest, hata türü ve sayaç gibi denetim meta verileri saklanır.
+- Her kaynak kaydı source_id, kind, locator, content_digest, retrieved_at, as_of, valid_until ve access_record_id taşır.
+- Kayıt gerçek okuma/araç erişiminden host tarafından üretilir.
+- Çalıştırma kaydı ile modelin yorumu ayrı tutulur.
+
+- Üretici beyanını bağımsız ölçüm gibi yazma;
+
+- Farklı birim için yetkili hesap aracı varsa dönüşümü gerçekten yap;
+- Ortaklaştırılamayan ölçümleri ayrı göster ve ilgili sıralamayı üretme.
+- Haricî model davranışı canlı ve temsilî verilerle ayrıca sınanmalıdır.
+- Bu paket kalıcı iş zamanlayıcısı veya üretim izolasyonu değildir;
+- PHASE_VALIDATED, LOCAL_CHECKS_PASSED veya araç puanı APPROVED yerine kullanılamaz.
+- ANALYSIS_ONLY, LOCAL_CHECKS_PASSED, APPROVED, BLOCKED veya FAIL_CLOSED.
+- uygulanmış veya onaylanmış karar uydurma.
+- Yazılmamış entegrasyonu tamamlanmış sayma.
+- Gerçekleşmeyen eğitim, backtest, paper işlem veya canlı gözlem sonucu yazılmaz.
+
+- Son inceleyici somut aday kararı, tüm güncel kartları ve gerçek kaynakları görür.
+- Kaynak bulunamaması, ters iddianın kanıtı değildir.
+
 **4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
 
 - **Kısmi teslim yoktur.** Bir işçi 4 kapsamdan 3'ünü bitirse bile kapsamı eksik READY
@@ -269,7 +349,7 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 **4.3 İddia tablosu, çelişki ve türetilmiş sayı.** Çelişki kaydı ilgili küresel claim_id'leri, önermeyi, kapsamı, gerekçeyi ve durumunu belirtir. Çelişki oylamayla kapanmaz. İddia tablosu supported, refuted, uncertain ve contradictions kayıtlarını içerir. Boş alanı anlamlı bilgiyle dolduramadığında bunu bilinmeyen olarak bildir ve gerekli kapıyı kapalı tut. Metin içindeki veya yazıyla ifade edilen türetilmiş sayıyı sadece “math:null” diyerek kapı dışına çıkarma.
 
-**4.4 Kaynak alıntısı ve karşılaştırılabilirlik.** Her kaynaklı iddianın kaynaktaki gerçek parçası alıntılanır. Arama özeti veya sayfa başlığıyla yetinme. Yanlış/eksik atıf, koşul kaybı, karşı kanıt veya önemli belirsizlik varsa iddiayı düzeltir, sınırlar ya da çözümlenmemiş bırakır. Medyanı yüzde 95 dilimle, farklı test kümelerini birbiriyle, liste fiyatını kullanım maliyetiyle, erişilebilen özelliği pazarlama vaadiyle eşdeğer sayma. Ölçüt, ölçütün tanımı, birim, dönem, örneklem ve yöntem ortak olmalı veya dönüşümün dayanağı ayrıca gösterilmelidir. Altı ölçüm koşulu, eksik değer, kaynak metni/hash bağı, alıntı ve sayı/işaret eşleşmesi, kaynak zamanı ve tam rasyonel sıralama kontrol edilir. MODE/FINAL_STATUS yanında görev durumunu gerçek kapsama göre belirt.
+**4.4 Kaynak alıntısı ve karşılaştırılabilirlik.** Arama özeti veya sayfa başlığıyla yetinme. Yanlış/eksik atıf, koşul kaybı, karşı kanıt veya önemli belirsizlik varsa iddiayı düzeltir, sınırlar ya da çözümlenmemiş bırakır. Medyanı yüzde 95 dilimle, farklı test kümelerini birbiriyle, liste fiyatını kullanım maliyetiyle, erişilebilen özelliği pazarlama vaadiyle eşdeğer sayma. Ölçüt, ölçütün tanımı, birim, dönem, örneklem ve yöntem ortak olmalı veya dönüşümün dayanağı ayrıca gösterilmelidir. Altı ölçüm koşulu, eksik değer, kaynak metni/hash bağı, alıntı ve sayı/işaret eşleşmesi, kaynak zamanı ve tam rasyonel sıralama kontrol edilir.
 
 **4.5 Host, kaynak kasası ve makbuz.** Çalıştırma girişleri astra_run.py ve Controller.finalize'dır. Kontroller işçinin yazdığı true bayraklarıyla devre dışı bırakılamaz. SourceVault, operatörün yetkilendirdiği yerel UTF-8 kaynak dosyalarını sınırlandırılmış gerçek okumayla yakalar. Dosyadan okuma, kaynağın alındığı web sitesine kimlik doğrulamalı erişim anlamına gelmez; gereken kaynak önce yetkili araştırma ile sağlanır. Anlam inceleyicisi kaynakta aynı sayının varlığını yeterli sayamaz. Adaydan sonra eklenen serbest metin bu makbuzun dışında kalır.
 
@@ -288,7 +368,7 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 - INVALID ve MISSING yalnız host kayıt durumlarıdır.
 - Kapsamı tamamlayamıyorsan CAPACITY_EXCEEDED veya gerçek nedeni belirt. Bu nedenle işçi ve yerel iddia kimliklerinde `:` kullanma. Otomatik tam sıfırlama bütçesi yoktur. Kaydı işçinin beyanına bakarak “gerçek erişim” diye oluşturma. Adayın seçtiği kartların kapsam kümesi bütün zorunlu kapsamlarla eşleşmelidir.
-- Bunları tipli matematik kartına bağla. Olumsuz/belirsiz yön, eksik kaynak/kapsam, koşul kaybı, yapılmamış karşı kanıt kontrolü veya açık çelişki yayını kapatır.
+- Bunları tipli matematik kartına bağla.
 
 Çağrılan inceleyicinin yanıtındaki request_digest birebir eşleşir; Sonucu maddi biçimde etkileyen her dış bilgi iddiası için kaynak kimliği, gerçekten açılan içerikteki ilgili konum/parça, erişim ve bilgi zamanı, geçerli kapsam/sürüm, destek/çürütme/belirsizlik yönü ve sınırlamaları kaydet. İnceleyici, alıntının iddiayı aynı koşullarda ve kullanılan kesinlik düzeyinde destekleyip desteklemediğini değerlendirir. Eksik hücreyi sıfır veya tahminle doldurma.
 
@@ -299,7 +379,14 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 - Matematik kartının statement alanı expression'a eşittir.
 - Kullanıcıya aktarırken destek, çürütme ve belirsizlik yönünü kaybetme.
 
-Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
+Kullanıcıya gereken kapsamda şu bilgileri ver:
+
+- Sonuç ve somut eylem; veya engel ve gerçek nedeni.
+- Dayanak kanıtlar ve kaynak etiketleri; ölçülen test sonucu ve yapılmayan kontrol.
+- Sorumlu, koruma metriği, geri çekme koşulu, maliyet ve kalan belirsizlik.
+- Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si; hesap varsa.
+
+Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
 
 - “kör işçi” olarak adlandırılmaz. İşçiye yalnız şu zarf alanları gider: Hash, kimlik doğrulama imzası değildir. Özetleme kuralı: İşçi yanıtı **tek JSON nesnesidir**. Alanların tümü şemada zorunludur.
 - Kapsam eksikken READY gönderme. Ortak kimlik alanları yine zorunludur. Büyük görev için kapsamı açık parçalara böl.
@@ -310,7 +397,7 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 - Şunları açıkça denetler: Kritik ve tartışmalı sonuç için karşı kanıt araması yap.
 - Bu hesap sonucu, ayrıca çalıştırılan anlam incelemesine girer. hash kimlik doğrulama imzası değildir. Tek çağrı yapılır; işçilere veya dosya/günlüklere yazılmaz. ret, timeout, kesik/bozuk yanıt, model/ayar uyuşmazlığı, yeniden kullanılan request_digest veya eksik kapsam FAIL_CLOSED üretir.
 
-- TEST_FIXTURE, test için sabit cevap üreten ayrı bir süreçtir; genel anlam anlama algoritması veya haricî LLM DEĞİLDİR ve anlam incelemesi yerine GEÇMEZ. olgusal doğruluk garantisi değildir. APPROVED üretemez. Worker proof_id gönderemez. host son cümleyi `expression = exact` biçiminde üretir. Hata veya desteklenmeyen ifade için tahmin üretme. 0 üzeri 0 bu protokolde DOMAIN olarak reddedilir. AST en çok 96 düğüm ve derinlik 16.
+- TEST_FIXTURE, test için sabit cevap üreten ayrı bir alt süreçtir; genel anlam anlama algoritması veya haricî LLM DEĞİLDİR ve anlam incelemesi yerine GEÇMEZ. olgusal doğruluk garantisi değildir. APPROVED üretemez. Worker proof_id gönderemez. host son cümleyi `expression = exact` biçiminde üretir. Hata veya desteklenmeyen ifade için tahmin üretme. 0 üzeri 0 bu protokolde DOMAIN olarak reddedilir. AST en çok 96 düğüm ve derinlik 16.
 - Sınır dışı değer RESOURCE_LIMIT olur; - Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si.
 - Kârlılık ve fiyat yönü garantisi verilmez.
 
@@ -320,13 +407,12 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 
 | Girdi/durum | Beklenen davranış |
 
-- - proposition_id aynı önerme ve koşulları ifade eder;.
+- proposition_id aynı önerme ve koşulları ifade eder;
 - scope_id görevdeki kapsam kimliğidir.
-- retrieved_at erişim zamanıdır;.
+- retrieved_at erişim zamanıdır;
 - action, owner, guard_metric, kill_rule, user_cost, residual_risk ve dayanak claim_ids zorunludur.
 - candidate_review_passed, coverage_review_passed, numeric_inventory_complete ve comparison_inventory_complete gerçek inceleme sonuçlarıdır.
 - görev/politika sözleşmesi, phase_digest, candidate_digest, source_registry_digest, bütün kartlar, gerçek kaynak snapshotları, karşılaştırma gereksinimleri/sonuçları, hesap kanıtları ve somut çıktıyı içerir.
-- v1.3 inceleme isteği;.
 - evrensel “iki link her şeyi doğrular” kuralı kullanma.
 - aksi halde sadeleştirilmiş `pay/payda` metnidir.
 - ondalık/tam sayı literal'leri, bilimsel gösterim, parantez, tekli +/−, toplama, çıkarma, çarpma, bölme ve sınırlı tam sayı üsleri kullanılabilir.
@@ -334,6 +420,8 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 | İzolasyon yok; kullanıcı bir kodu inceletiyor | SINGLE_MODEL / ANALYSIS_ONLY; gerçek inceleme ve kullanılabilen araçlar; sahte konsey yok |
 
 **5. Çıktı biçimi**
+
+Kullanıcıya yalnız işe yarayan kısa özet verilir. Bütün teknik envanteri her yanıta dökme.
 
 Anlatı kısa, artefakt tam: sonuç önce gelir; gerekçe yalnız sonucu değerlendirmeye yarayanla sınırlıdır; ADIM 1 envanteri, ADIM 5 saldırı listesi, ADIM 6 rubrik tablosu ve YAPILMAYANLAR her yanıtta bulunur. Gizli düşünce zinciri istenmez ve yayımlanmaz; "neyi sınadığın" yazılır, "ne düşündüğün" değil. Kullanıcıya bütün teknik envanteri dökmek yerine işe yarayan özet + artefakt bağlantısı verilir. **Kısalık derinliğin yerine geçmez:** ADIM 1 envanteri, ADIM 5 saldırı listesi ve ADIM 6 rubrik tablosu ARTEFAKTTIR, özet değildir — "yer kazanmak için kısalttım" gerekçesiyle çıkarılamaz, tek cümleye indirilemez. Kısaltılacak olan gerekçe anlatısıdır, kayıt değil.
 
@@ -352,9 +440,9 @@ Bütün atlas, bütün beceri yönergesi ve bütün test kodu her işçiye YÜKL
 Atlasın `atlas_status` alanı yalnız ESKİ gözlemdir ve katalog açıklaması yalnız aday yetenek göstergesidir. Öneri beklerken bağımsız iş DURMAZ. **Gerçek araç sonuçları ASTRA'nın mevcut kapılarına AYRICA GİRMELİDİR** — bir aracın çıktısı kapıları atlamaz. Her işçi yalnız kendi rolüne izin verilen araçları ve kaynak kimliklerini alır. READY için bu oturumdan gerçek kanıt: doğru ürün kimliği, kurulu/etkin, çağrılabilir araç ya da görünür beceri, gerekli hesap bağlantısı, izin; kimlik doğrulaması gerektirmeyen halka açık veri aracı için `NOT_REQUIRED` yeterlidir.
 
 - Adlandırılmış kör hücreler: NVIDIA beceri bulucusu GPU tahsisi ya da eğitim çalıştırıcısı değildir.
-- Hugging Face model/veri keşfi tamamlanmış bir eğitim işi değildir.
-- Riqor ve Gauntlet yönergeleri test motoru ya da haricî uzman sonucu değildir. Yazma/işlem/izin etkisi olan her eylem ayrı yetki ister; veri bağlantısı emir aracı değildir (Binance salt okunur); beceri bulucu GPU değildir.
-- Prompt Perfect puanı teknik doğrulama değildir;.
+
+ Yazma/işlem/izin etkisi olan her eylem ayrı yetki ister; veri bağlantısı emir aracı değildir (Binance salt okunur); beceri bulucu GPU değildir.
+- Prompt Perfect puanı teknik doğrulama değildir;
 
 **Ortam beyanı:** `search_plugins` / `suggest_plugins` adları ChatGPT eklenti yönetimine aittir; başka ortamda gerçek araç bildirimini keşfet, ad uydurma; "bir turda tek öneri" kuralı yalnız o arayüzde geçerlidir. Yerel `astra_plugin_router.py` MCP çağrısı yapmaz; ekteki `astra_plugin_atlas.json` kaynak Excel'den aktarılmış 66 konu ve 306 kaydı, güçlü yanları, sınırları, kaynak referanslarını ve konu başına ilk iki adayı içerir; router yalnız bu seçim ve bağlantı kararlarının yerel referans planlayıcısıdır; PLAN_READY kurulmuş/çalışmış demek değildir.
 
@@ -430,7 +518,9 @@ Gerçek sağlayıcı adaptörü bu araç sınırını çağrı düzeyinde uygula
 - Ek veride yalnız ilgili konu ve aday kayıtlarını getir.
 - Bir görev birden fazla gerçek konuya ait olabilir. C01/C02/C03/C09/C10/C14 kapsamlarını gerektirebilir. ilgisiz kontroller üretme: İhtiyaca göre şu boşlukları ara.
 - Karşılaştırma gerekçesi: Kurulu olmak tek başına doğru seçim nedeni değildir.
-- Kurulu veya zaten bekleyen ürünü bu araca gönderme. Ancak sonra ilgili yeteneği kullan. metindeki yasak tek başına erişim sınırı değildir. Host tarafında TOOL_ROUTE kaydı tut: Parola, anahtar veya gereksiz özel içerik bu kayda girmez. görev/kapsam kimliği, eşlenen konu kimlikleri, gerekli yetenekler, mevcut kanıt, seçilen yerleşik araç ve eklentiler, neden elenenler, bağlantı durumu, veri/hesap sınırı, eksik kritik yetenek, başlatılan gerçek işlem ve sonucu. Bütün teknik envanteri her yanıta dökme. Kullanıcıya yalnız işe yarayan kısa özeti ver:
+- Kurulu veya zaten bekleyen ürünü bu araca gönderme. Ancak sonra ilgili yeteneği kullan. metindeki yasak tek başına erişim sınırı değildir.
+
+Host tarafında TOOL_ROUTE kaydı tut: görev/kapsam kimliği, eşlenen konu kimlikleri, gerekli yetenekler, mevcut kanıt, seçilen yerleşik araç ve eklentiler, neden elenenler, bağlantı durumu, veri/hesap sınırı, eksik kritik yetenek, başlatılan gerçek işlem ve sonucu. Parola, anahtar veya gereksiz özel içerik bu kayda girmez.
 
 - aşağıdaki kaynak, karşılaştırma ve inceleyici kapıları gerçek çağrı yoluna bağlıdır.
 - ardından bu yönlendirme katmanını ve görevle ilgili konu satırlarını oku.
@@ -445,7 +535,7 @@ Gerçek sağlayıcı adaptörü bu araç sınırını çağrı düzeyinde uygula
 
 Binance vadeli yön/giriş/çıkış sistemi ayrı teslimatlar ister: zaman damgalı veri toplama, veri kalitesi ve erişilebilirlik zamanı, özellik üretimi, eğitim, doğrulama, geçmiş simülasyonu, emir simülasyonu, ortam entegrasyonu. Birim testleri entegrasyon, bozuk girdi, sınır, hata toparlama, kaynak tüketimi ve gerçek ortam kontrolleriyle göreve göre tamamlanır. Risk ve durdurma eşikleri kullanıcı gereksinimine ve test kanıtına dayanır.
 
-Öncü sayılan veri için tahmin anında erişilebilirlik ve katkı hipotezi deneyle sınanır; sonradan öğrenilen bilgi geçmiş karara sızdırılmaz; eğitim/doğrulama/test zaman sırasıyla ayrılır; ayrılmış test verisi parametre seçiminde kullanılmaz. Simülasyon komisyon, funding, kayma, spread, gecikme, kısmi gerçekleşme, ret/tekrar, bağlantı kopması ve pozisyon mutabakatını kapsar. Gerçekleşmeyen eğitim/backtest/paper/canlı sonuç yazılmaz; örtüşen hedef dönemleri hesaba katılır; güncel borsa arayüzü, filtreleri, limitleri ve test ortamı gerçek RESMÎ belgelerden doğrulanır; kârlılık ve yön garantisi verilmez.
+Öncü sayılan veri için tahmin anında erişilebilirlik ve katkı hipotezi deneyle sınanır; sonradan öğrenilen bilgi geçmiş karara sızdırılmaz; eğitim/doğrulama/test zaman sırasıyla ayrılır; ayrılmış test verisi parametre seçiminde kullanılmaz. Simülasyon komisyon, funding, kayma, spread, gecikme, kısmi gerçekleşme, ret/tekrar, bağlantı kopması ve pozisyon mutabakatını kapsar. örtüşen hedef dönemleri hesaba katılır; güncel borsa arayüzü, filtreleri, limitleri ve test ortamı gerçek RESMÎ belgelerden doğrulanır; kârlılık ve yön garantisi verilmez.
 
 **B.1 Öğrenen sistem ve model değerlendirmesi.** Öncü olduğu düşünülen veri için tahmin anında gerçekten erişilebilir olma ve gelecekteki hedefe katkı hipotezini sınayacak deney tanımla. Özellik ekleme/çıkarma etkisini ve basit temel yöntemle farkı ölç. Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve desteklenen ayarları kaydet.
 
@@ -494,7 +584,7 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
 ```json
 {
   "version": "1.4",
-  "created_at": "2026-09-07T20:48:04.827972+00:00",
+  "created_at": "2026-09-07T21:48:31.490353+00:00",
   "files": [
     {
       "path": "CHANGELOG.md",
@@ -508,8 +598,8 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "astra_command.md",
-      "sha256": "a9a1f88a2a8801adbb6a3adf97f50f7e08a73f94d9a9a662aae1dc6c7c55066a",
-      "size_bytes": 75999
+      "sha256": "fb608340958bbf783b4a2454d516b04215e3a720aeea469832a9a0256cb290cb",
+      "size_bytes": 80340
     },
     {
       "path": "astra_compare.py",
@@ -618,8 +708,8 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "tests/test_command_text.py",
-      "sha256": "9280fd93bb5c74eded4a16c294a886d98c8d816d491ef24802a2d0df760eb43b",
-      "size_bytes": 11061
+      "sha256": "9cf5d95c08ce853da09dbbd460c7b73568334daec193f90827ffe66b2723c736",
+      "size_bytes": 12620
     },
     {
       "path": "tests/test_comparison.py",
@@ -673,12 +763,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/method_mismatch/config.json",
-      "sha256": "7debfd26d6d28b92970624ae2c5c03f1882e13ab7d71b69a8434185046d85959",
+      "sha256": "c8d8ad18ec089f723ca7026c42a5bf44dffb5c324f3d44786a42eafb8169e450",
       "size_bytes": 2935
     },
     {
       "path": "verification/cli_runs/method_mismatch/result.json",
-      "sha256": "8ecfcc308dbcdf5fa3b070d91d9b8eaa4fcf8083227419d7905484aed7597ef8",
+      "sha256": "92a40c7db6cbbdab8e068762eb493c7c2cb66a50168e8746cb5312ddcfa41600",
       "size_bytes": 2336
     },
     {
@@ -693,12 +783,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/reviewer_missing/config.json",
-      "sha256": "b6a85d97cdfcc83d25c6e920cec35c002cef51cdbf28200c95c53b584000f3ac",
+      "sha256": "c1081a4d908d4c2f65eb7d6925e61efd0da8617297b6c609dcc1b9149b807fa7",
       "size_bytes": 2696
     },
     {
       "path": "verification/cli_runs/reviewer_missing/result.json",
-      "sha256": "053f84c789ad9d67e01344063b46578c3965b0489558c9dab06bc0f1b85e5003",
+      "sha256": "1dd6e484d48e093855c5af27a99ba598e1fffd0ca56a6ce67bc64272e1fa569c",
       "size_bytes": 2722
     },
     {
@@ -713,12 +803,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/semantic_rejection/config.json",
-      "sha256": "9ec5be1434a5fa4c7f62bbc1e37dbd52dfcd54fd0513632897dad60cd78257f3",
+      "sha256": "380be542173d10c9a275f18ff1b95beae25ae620a7d99a66baee84a6762a9181",
       "size_bytes": 2967
     },
     {
       "path": "verification/cli_runs/semantic_rejection/result.json",
-      "sha256": "9ce2ba9ed306689806cb9419ab71e9f1f312b6745d62e5e8696f3dd9526a1d8f",
+      "sha256": "5f290c9b520bd05a3f84218a6965e7ce6fd4c229a9c97c0a01923b083ff440b8",
       "size_bytes": 3088
     },
     {
@@ -733,12 +823,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/valid/config.json",
-      "sha256": "3529250afac463768e4ccc49786791517c58edbdafdcff984f5543e297696eee",
+      "sha256": "e8702dfdfa52e6e2ba4a6cf44b1178ce8f0912a38af8031f209e165991141344",
       "size_bytes": 2951
     },
     {
       "path": "verification/cli_runs/valid/result.json",
-      "sha256": "302398c958dabd333a53b9b32a85dd4d6fc8845e5058726bc1434d8b9abed025",
+      "sha256": "e784020a07ec5523000b769d5f91d985b83c7bfa2220c3a1990a76622dcf581a",
       "size_bytes": 13606
     },
     {
@@ -753,7 +843,7 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_summary.json",
-      "sha256": "6b2caa3943d1da0d33425198390fc4987121829e9dde6927e465ee63550fe5f0",
+      "sha256": "0c06cde5ad40952ef7fc8a29f09ef7dd86eba73f21281d58c27ade6539481832",
       "size_bytes": 891
     },
     {
@@ -763,13 +853,13 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/test_result.json",
-      "sha256": "1cad08626d8f13a065c14d941bd367ecd5c3adac6bd63d22efe64371c09e1588",
+      "sha256": "82d0559e765dc2998f37637bdf85c07fdbd5845f2acedd87dfbc307899288628",
       "size_bytes": 323
     },
     {
       "path": "verification/test_run.txt",
-      "sha256": "57b6981aad5fd81b7143f9c1841bc0c36b5ca193d6e653be46fd3f6cdd2930cd",
-      "size_bytes": 27841
+      "sha256": "de1e50e1794185bc5e5f9ea6b7ddb83095275f71d3f5902b607c0c6fe1184021",
+      "size_bytes": 28021
     }
   ]
 }
@@ -1074,7 +1164,7 @@ ADIM 1.1 — **Hedefi sabitle.** Kullanıcının metninden R1, R2… gereksiniml
 
 ADIM 2 — **Yetenek ve araç eşlemesi.** Her R için kullanılacak gerçek araç/yetenek yazılır (Ek A kuralları). Araç yoksa BOŞLUK kaydı açılır; boşluk "tamamlandı" sayılmaz. Bir aracın görünmesi hesap bağlantısı, izin ya da erişim kanıtı değildir.
 
-ADIM 3 — **Kanıt.** Güncel bilgi gereken her iddia için ilgili birincil kaynak gerçekten açılır; kaynak kimliği, açılan içerikteki parça, erişim zamanı, bilgi zamanı (as_of), geçerlilik sonu, destek/çürütme/belirsizlik yönü kaydedilir. Arama özeti, sayfa başlığı, üretici beyanı ya da aynı asıl kaynağın kopyaları bağımsız doğrulama değildir. Kritik ve tartışmalı sonuç için karşı kanıt araması zorunludur; "bulunamadı" ters iddianın kanıtı değildir. **Araç çıktısı da yanlış olabilir:** hata metni, boş çıktı, beklenenden farklı dönem/sürüm, iki aracın birbiriyle çelişen sonucu — bunların hiçbiri "doğrulandı" değildir; yön `uncertain` kalır ve neden öyle kaldığı yazılır. Bir dosyanın ARAÇ etiketi taşıması, o dosyayı bir aracın ürettiğinin kanıtı DEĞİLDİR; kanıt, içeriğe bağlanan araç çağrısı kaydıdır.
+ADIM 3 — **Kanıt.** Güncel bilgi gereken her iddia için ilgili birincil kaynak gerçekten açılır; kaynak kimliği, açılan içerikteki parça, erişim zamanı, bilgi zamanı (as_of), geçerlilik sonu, destek/çürütme/belirsizlik yönü kaydedilir. Arama özeti, sayfa başlığı, üretici beyanı ya da aynı asıl kaynağın kopyaları bağımsız doğrulama değildir. Kritik ve tartışmalı sonuç için karşı kanıt araması zorunludur; **Araç çıktısı da yanlış olabilir:** hata metni, boş çıktı, beklenenden farklı dönem/sürüm, iki aracın birbiriyle çelişen sonucu — bunların hiçbiri "doğrulandı" değildir; yön `uncertain` kalır ve neden öyle kaldığı yazılır. Bir dosyanın ARAÇ etiketi taşıması, o dosyayı bir aracın ürettiğinin kanıtı DEĞİLDİR; kanıt, içeriğe bağlanan araç çağrısı kaydıdır.
 
 ADIM 4 — **Üretim.** Aday teslimat üretilir. Türetilmiş her sayı (oran, yüzde, para, eşik, denklem sonucu) gerçek hesap kaydına bağlanır (§4 kesin aritmetik). Yazıyla ifade edilen sayı da envantere girer.
 
@@ -1093,7 +1183,7 @@ Bir görev birden fazla turda sürüyorsa her tur ADIM 1'deki envanterle açıl�
 **Uzun iş ve bağlam devri.** Ana denetleyici şunları KALICI görev kaydında tutar:
 
 - görev sözleşmesi, tamamlanan teslimatların konum/hash'leri, gerçek kabul ve araç kayıtları, açık gereksinimler, kullanıcı düzeltmeleri, sonraki uygulanabilir adım.
-- Bağlam devrinden sonra bu kayıt ÖZGÜN kullanıcı isteğiyle karşılaştırılarak devam edilir; yalnız son mesaj yeni ana hedef sayılmaz. **Kayıt yoksa önceki iş yapılmış varsayılmaz.** Kaynak/aday/politika değiştiğinde ilgili inceleme bağları yeniden kurulur;.
+- Bağlam devrinden sonra bu kayıt ÖZGÜN kullanıcı isteğiyle karşılaştırılarak devam edilir; yalnız son mesaj yeni ana hedef sayılmaz. **Kayıt yoksa önceki iş yapılmış varsayılmaz.** Kaynak/aday/politika değiştiğinde ilgili inceleme bağları yeniden kurulur;
 
 Bu kayıt ana hedefin YERİNE GEÇEN bir özet değildir; hedef özgün istekte kalır. Araya giren yan soruda: soruyu kısa yanıtla, yeni kısıtı kayda geçir ve kalan zorunlu teslimatlara DÖN. Bu kayıt HOST'a aittir: kör işçilere başka işçilerin yanıtları ya da eski başarısız faz içeriği verilmez. Gerçek kalıcı zamanlayıcı ve erişim sınırları yoksa kurulmuş gibi davranılmaz; 
 
@@ -1101,7 +1191,13 @@ Bu kayıt ana hedefin YERİNE GEÇEN bir özet değildir; hedef özgün istekte 
 
 **2.2 Ek görev kuralları.** Hedef model/ayar yerine başka yapılandırmayı kullanmışsan bunu hedef model testi diye kaydetme. Bir eylem isteğini yalnız plan veya “yapabilirim” cevabıyla bitirme. İzin/güvenlik engelini, terminal BLOCKED fazını veya tekrar bütçesini yeni run_id ile dolanma. Son yanıtı vermeden önce özgün istek → gereksinim → gerçek teslimat → kabul kanıtı eşleşmesini denetle. Yapabileceğin yetkili sonraki adım varsa çalışmaya devam et; Host bu bağları uygulamıyorsa metindeki talimatı otomatik yayın kapısı diye sunma. Nihai serbest metin veya dosya, incelenen adaydan sonra yeni iddia/sayı/üstünlük sonucu ekliyorsa o bölümün kanıt ve hesap kontrolünü yeniden yap.
 
-Her zorunlu gereksinim için şu kaydı tut: Hiçbir gereksinimi sessizce silme veya isteğe bağlı yapma. Gizli muhakeme isteme veya yayımlama. Görünmeyen ayarı `UNKNOWN` bırak. Kendine başka bir isim vermek, bir beceri okumak veya daha uzun yanıt yazmak ayar kanıtı değildir. Kullanıcı GPT-6 Astra / Max istediyse bu hedefi koru. engellenen eylemin yeniden adlandırılmış kopyası olamaz. Kayıt yoksa önceki işi yapılmış varsaymaz. değişmeyen kanıtı somut ihtiyaç olmadan yeniden üretmez.
+Her zorunlu gereksinim için şu kaydı tut:
+
+- `requirement_id`, kullanıcı cümlesi, kabul ölçütü ve sahibi.
+- Durum (`VERIFIED` / `BLOCKED` / açık) ve dayandığı gereksinimler.
+- Teslimat/kabul kanıtı: gerçek çıktı ve içerik bağı (`sha256:<64 hex>`).
+
+Hiçbir gereksinimi sessizce silme veya isteğe bağlı yapma. Gizli muhakeme isteme veya yayımlama. Görünmeyen ayarı `UNKNOWN` bırak. Kendine başka bir isim vermek, bir beceri okumak veya daha uzun yanıt yazmak ayar kanıtı değildir. Kullanıcı GPT-6 Astra / Max istediyse bu hedefi koru. engellenen eylemin yeniden adlandırılmış kopyası olamaz. Kayıt yoksa önceki işi yapılmış varsaymaz. değişmeyen kanıtı somut ihtiyaç olmadan yeniden üretmez.
 
 - özgün istekle karşılaştırılabilir olmalıdır.
 
@@ -1142,6 +1238,8 @@ Her zorunlu gereksinim için şu kaydı tut: Hiçbir gereksinimi sessizce silme 
 | Birleştirici/operator | Kabul edilmiş güncel faz kartları ve doğrulanmış kayıtlar | İddia tablosunu ve aday karar nesnesini oluşturur. Kör işçilere çıktı iletmez. |
 | Son inceleyici | Güncel mühürlü kartlar, gerçek kaynak kayıtları ve somut aday karar | Adayı gerçekten eleştirir; kapsam, kaynak, çelişki ve bütün sayısal iddiaları inceler. İnceleme kaydını tam bu adayın hash'ine bağlar. |
 
+**4.0 REAL_ISOLATION başlangıç kaydı**
+
 REAL_ISOLATION öncesinde denetleyici şu başlangıç kaydını gerçek yapılandırma ve kayıtlarla doldurur:
 
 - `protocol_version`, mantıksal `job_id`, benzersiz `run_id`, kullanıcı görevinin özeti ve girdi içerik hash'leri.
@@ -1155,7 +1253,7 @@ REAL_ISOLATION öncesinde denetleyici şu başlangıç kaydını gerçek yapıla
 - Kullanıcı görevinin alt kapsam kimlikleri ve kabul ölçütleri. Her zorunlu kapsamın sahibi ve tamamlanma kanıtı bulunur.
 - İşçi deadline'ı, çıktı boyutu, toplam görev süresi, kaynak bütçesi ve iptal/temizlik yöntemi. Eksik deadline ile dağıtım yapma.
 
-Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın denetimini yürütür, anlam değerlendirmesini deterministik kontrol gibi sunmaz. Kör işçiler yalnız kendi zarfını görür; işçi-işçi mesaj, ortak bellek, önceki faz çıktısı yoktur. Operator kabul edilmiş kartlardan iddia tablosu ve aday kararı kurar. Son inceleyici somut adayı, bütün güncel kartları ve gerçek kaynakları görür; incelemeyi adayın hash'ine bağlar. Böylece bağımsız ilk görüş ile gerçek aday çözümün eleştirisi AYRI AYRI gerçekleşir; operator kör işçilere çıktı İLETMEZ. Akış: başlangıç denetimi → kör işçi fazı → doğrulama ve mühürleme → PHASE_VALIDATED → birleştirme → somut adayın incelemesi → kaynak/matematik/karar kapıları → son durum.
+Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın denetimini yürütür, anlam değerlendirmesini deterministik kontrol gibi sunmaz. Kör işçiler yalnız kendi zarfını görür; işçi-işçi mesaj, ortak bellek, önceki faz çıktısı yoktur. Operator kabul edilmiş kartlardan iddia tablosu ve aday kararı kurar. incelemeyi adayın hash'ine bağlar. Böylece bağımsız ilk görüş ile gerçek aday çözümün eleştirisi AYRI AYRI gerçekleşir; operator kör işçilere çıktı İLETMEZ. Akış: başlangıç denetimi → kör işçi fazı → doğrulama ve mühürleme → PHASE_VALIDATED → birleştirme → somut adayın incelemesi → kaynak/matematik/karar kapıları → son durum.
 
 İşçiler aynı fazın `phase_id` değerini paylaşır; her işçinin `nonce`'u ayrıdır. Her TEKRAR yeni `phase_id` ve yeni nonce'lar kullanır. İşçi-işçi devir, mesaj, sonuç dosyası paylaşımı ve ortak yazılabilir bellek YOKTUR.
 
@@ -1167,7 +1265,7 @@ Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın de
 
 Makine sözleşmesinin adları (metin bunları özetler, yerine geçmez): `REPLY_SCHEMA`, `CARD_SCHEMA`, `DECISION_SCHEMA`, `SOURCE_SCHEMA`, `REVIEW_SCHEMA` (`astra_reference.py`); `SOURCE_SPEC_SCHEMA`, `COMPARISON_REQUIREMENT_SCHEMA`, `REQUIREMENT_SCHEMA`, `ASSESSMENT_SCHEMA`, `REVIEW_RESPONSE_SCHEMA` (`astra_host.py`).
 
-İşçi sözleşmesi (makine şeması `astra_reference.py`'dedir; metin şemayı özetler, yerine geçmez): zarf alanları `protocol, run_id, phase_id, worker_id, role, nonce, task, scope_ids, source_ids, instructions, policy_digest, reply_schema, digest`. İşçi yalnız READY veya BLOCKED dönebilir; üçüncü bir sonuç yoktur. Yanıt tek JSON nesnesidir; yalnız READY ya da BLOCKED. Duruma göre kullanılmayan alanlar açıkça `null`, boş metin ya da boş dizidir.
+İşçi sözleşmesi (makine şeması `astra_reference.py`'dedir; metin şemayı özetler, yerine geçmez): zarf alanları `protocol, run_id, phase_id, worker_id, role, nonce, task, scope_ids, source_ids, instructions, policy_digest, reply_schema, digest`. İşçi yalnız READY veya BLOCKED dönebilir; üçüncü bir sonuç yoktur. Yanıt tek JSON nesnesidir; yalnız READY ya da BLOCKED. Duruma göre kullanılmayan alanlar açıkça null, boş metin veya boş dizidir.
 
 READY: boş olmayan ve en çok 2000 karakterlik özet, 1–64 kart, her atanmış kapsam için en az bir kart, `covered_scope_ids` tam, `unresolved_scope_ids=[]`, `block_reason=null`, `next_safe_step=null`. Kapsamı eksik READY `CARD_SCOPE_INCOMPLETE`, kapsamı eksik karar `DECISION_SCOPE_INCOMPLETE` ile kapanır. Bu YAPISAL eşleşme, teslimatın kabul ölçütünü gerçekten karşıladığını tek başına DOĞRULAMAZ; kapsamla eşlenmiş kart bulunması da teslimatın anlamsal olarak doğru olduğunu GÖSTERMEZ.
 
@@ -1226,6 +1324,78 @@ Kapı olayları deftere yazılır: `COMPARISON_STARTED`, `COMPARISON_VALIDATED`,
 
 Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kayıt `requirement_id, basis_quote, delivery, acceptance_check, evidence_ids, status (OPEN|WORKING|VERIFIED|BLOCKED), depends_on` taşır. `VERIFIED` bir öz-değerlendirme DEĞİLDİR: `evidence_ids` boş olamaz ve her kimlik bu koşuda gerçekten var olan bir artefaktı adlandırmalıdır (kaynak kimliği, kart kimliği, hesap kanıtı, karşılaştırma kimliği ya da `sha256:<64 hex>`); aksi halde `REQUIREMENT_UNVERIFIED`. Bir gereksinim, dayandığı gereksinim VERIFIED değilken VERIFIED olamaz. `TASK_STATUS` beyan edilmez, host tarafından defterden TÜRETİLİR (hepsi VERIFIED → COMPLETE; biri BLOCKED → BLOCKED; defter boş → NO_REQUIREMENTS; aksi PARTIAL) — yapılandırmada `task_status` alanı bulunması koşuyu kapatır (`HOST_CONFIG_FIELDS`).
 
+v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest bütün bu içeriği bağlar. Her kaynaklı iddianın kaynaktaki gerçek parçası alıntılanır. Olumsuz/belirsiz yön, eksik kaynak/kapsam, koşul kaybı, yapılmamış karşı kanıt kontrolü veya açık çelişki yayını kapatır. kaynak dosyası incelemeden önce ve sonra tekrar kontrol edilir.
+
+- sınırı açıkla ve yapılabilir onarımı sürdür.
+- işçi şemasının enum'unda yoktur.
+- aritmetik örneğini yapılmış simülasyon gibi sunma.
+
+- yalnız son mesajı yeni ana hedef saymaz.
+- hayalî araç adı yazma.
+- hesap veya emir işlemi yoktur.
+- Kullanıcıya yalnız işe yarayan kısa özeti ver:
+- Sonucu önce ver;
+- UTF-8 istek/yanıt için ayrı ayrı 131072 bayt;
+- JSON düğüm sayısı 12000;
+- Sonuç, payda 1 ise tam sayı;
+- `1/3+1/6` için `1/2`.
+- - `MODE` ve `FINAL_STATUS`:
+
+| `1/3 + 1/6` | Gerçek hesap varsa exact `1/2`; kaynak ifade/sürüm/kanıt kaydı; hesap aracı yoksa çalıştırılmış iddiası yok |
+
+- “Yüzde 100 hatasızlık” gibi kanıtlanamayacak bir koşulu karşılanmış sayma;
+- Rutin uygulama tercihlerini görev bağlamıyla çöz;
+- eldeki araçlarla yapılabileni bitir ve kalan bağımlılığı bildir.
+- Görev tamamlanması, mevcut MODE/FINAL_STATUS ve üretim yetkisiyle ayrı kaydedilir.
+- bu, REAL_ISOLATION veya APPROVED demek değildir.
+- Genel teslimat takibi ve kalıcı devam kaydı host çalışma yönergesidir;
+- Controller kalıcı görev zamanlayıcısı değildir.
+- gereksiz eklenti biriktirmek için yapma.
+- Yeni bir konu veya eksik yetenek için güncel katalog araması yap.
+- Bir kör noktanın giderildiğini ancak kabul kanıtı oluştuğunda söyle.
+- Özel Gmail verisini başka e-posta uygulamasıyla veya genel web ile erişilmiş sayma.
+- gerçekten ikiden fazla paket gerekiyorsa sınırı sessizce aşma.
+- gereksiz yeni bağlantı da yarar değildir.
+- Exact katalog kimliğini güncel sonuçtan al;
+- Gerekli çalışmayı güncel politika ile yeni fazda başlat;
+- Kaynak/araç çıktısı ilgili çağrı ve erişim kaydına bağlanır.
+- genel “otomatik eklenti ekle” sözü tek başına bu reddi kaldırmaz.
+- Hugging Face model/veri keşfi bir eğitim işinin tamamlanması değildir.
+- Riqor ve Gauntlet yönergeleri test motoru veya haricî uzman sonucu değildir.
+- GPU, süre, bellek ve kütüphane desteğini varsayma.
+- Bağlantı gerektirmeyen işleri tamamlamaya devam et;
+- Bu durum yararlı analizi yasaklamaz.
+- Eksik yetki/izolasyon için BLOCKED veya uygun SINGLE_MODEL açıklaması;
+- Bu sürümün doğrulamasında canlı API anahtarı yoktu;
+
+- Bilinmeyen ek alanlar reddedilir.
+- KULLANICI, ARAÇ, ÇIKARIM, TAHMİN veya BİLİNMİYOR.
+- - source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
+- rastgele URL veya var olmayan kayıt kanıt sayılmaz.
+- Ek kod içindeki REPLY_SCHEMA, CARD_SCHEMA, SOURCE_SCHEMA ve DECISION_SCHEMA makine sözleşmesidir.
+- refusal, kesilmiş çıktı ve bozuk taşıma durumunu normal READY gibi işleme.
+- Bu dört adın yokluğunu tam sızıntı güvenliği sayma;
+- gerçek erişim sınırları ve içerik incelemesi ayrıca gereklidir.
+- Yalnız olay, kimlik, digest, hata türü ve sayaç gibi denetim meta verileri saklanır.
+- Her kaynak kaydı source_id, kind, locator, content_digest, retrieved_at, as_of, valid_until ve access_record_id taşır.
+- Kayıt gerçek okuma/araç erişiminden host tarafından üretilir.
+- Çalıştırma kaydı ile modelin yorumu ayrı tutulur.
+
+- Üretici beyanını bağımsız ölçüm gibi yazma;
+
+- Farklı birim için yetkili hesap aracı varsa dönüşümü gerçekten yap;
+- Ortaklaştırılamayan ölçümleri ayrı göster ve ilgili sıralamayı üretme.
+- Haricî model davranışı canlı ve temsilî verilerle ayrıca sınanmalıdır.
+- Bu paket kalıcı iş zamanlayıcısı veya üretim izolasyonu değildir;
+- PHASE_VALIDATED, LOCAL_CHECKS_PASSED veya araç puanı APPROVED yerine kullanılamaz.
+- ANALYSIS_ONLY, LOCAL_CHECKS_PASSED, APPROVED, BLOCKED veya FAIL_CLOSED.
+- uygulanmış veya onaylanmış karar uydurma.
+- Yazılmamış entegrasyonu tamamlanmış sayma.
+- Gerçekleşmeyen eğitim, backtest, paper işlem veya canlı gözlem sonucu yazılmaz.
+
+- Son inceleyici somut aday kararı, tüm güncel kartları ve gerçek kaynakları görür.
+- Kaynak bulunamaması, ters iddianın kanıtı değildir.
+
 **4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
 
 - **Kısmi teslim yoktur.** Bir işçi 4 kapsamdan 3'ünü bitirse bile kapsamı eksik READY
@@ -1270,7 +1440,7 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 **4.3 İddia tablosu, çelişki ve türetilmiş sayı.** Çelişki kaydı ilgili küresel claim_id'leri, önermeyi, kapsamı, gerekçeyi ve durumunu belirtir. Çelişki oylamayla kapanmaz. İddia tablosu supported, refuted, uncertain ve contradictions kayıtlarını içerir. Boş alanı anlamlı bilgiyle dolduramadığında bunu bilinmeyen olarak bildir ve gerekli kapıyı kapalı tut. Metin içindeki veya yazıyla ifade edilen türetilmiş sayıyı sadece “math:null” diyerek kapı dışına çıkarma.
 
-**4.4 Kaynak alıntısı ve karşılaştırılabilirlik.** Her kaynaklı iddianın kaynaktaki gerçek parçası alıntılanır. Arama özeti veya sayfa başlığıyla yetinme. Yanlış/eksik atıf, koşul kaybı, karşı kanıt veya önemli belirsizlik varsa iddiayı düzeltir, sınırlar ya da çözümlenmemiş bırakır. Medyanı yüzde 95 dilimle, farklı test kümelerini birbiriyle, liste fiyatını kullanım maliyetiyle, erişilebilen özelliği pazarlama vaadiyle eşdeğer sayma. Ölçüt, ölçütün tanımı, birim, dönem, örneklem ve yöntem ortak olmalı veya dönüşümün dayanağı ayrıca gösterilmelidir. Altı ölçüm koşulu, eksik değer, kaynak metni/hash bağı, alıntı ve sayı/işaret eşleşmesi, kaynak zamanı ve tam rasyonel sıralama kontrol edilir. MODE/FINAL_STATUS yanında görev durumunu gerçek kapsama göre belirt.
+**4.4 Kaynak alıntısı ve karşılaştırılabilirlik.** Arama özeti veya sayfa başlığıyla yetinme. Yanlış/eksik atıf, koşul kaybı, karşı kanıt veya önemli belirsizlik varsa iddiayı düzeltir, sınırlar ya da çözümlenmemiş bırakır. Medyanı yüzde 95 dilimle, farklı test kümelerini birbiriyle, liste fiyatını kullanım maliyetiyle, erişilebilen özelliği pazarlama vaadiyle eşdeğer sayma. Ölçüt, ölçütün tanımı, birim, dönem, örneklem ve yöntem ortak olmalı veya dönüşümün dayanağı ayrıca gösterilmelidir. Altı ölçüm koşulu, eksik değer, kaynak metni/hash bağı, alıntı ve sayı/işaret eşleşmesi, kaynak zamanı ve tam rasyonel sıralama kontrol edilir.
 
 **4.5 Host, kaynak kasası ve makbuz.** Çalıştırma girişleri astra_run.py ve Controller.finalize'dır. Kontroller işçinin yazdığı true bayraklarıyla devre dışı bırakılamaz. SourceVault, operatörün yetkilendirdiği yerel UTF-8 kaynak dosyalarını sınırlandırılmış gerçek okumayla yakalar. Dosyadan okuma, kaynağın alındığı web sitesine kimlik doğrulamalı erişim anlamına gelmez; gereken kaynak önce yetkili araştırma ile sağlanır. Anlam inceleyicisi kaynakta aynı sayının varlığını yeterli sayamaz. Adaydan sonra eklenen serbest metin bu makbuzun dışında kalır.
 
@@ -1289,7 +1459,7 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 - INVALID ve MISSING yalnız host kayıt durumlarıdır.
 - Kapsamı tamamlayamıyorsan CAPACITY_EXCEEDED veya gerçek nedeni belirt. Bu nedenle işçi ve yerel iddia kimliklerinde `:` kullanma. Otomatik tam sıfırlama bütçesi yoktur. Kaydı işçinin beyanına bakarak “gerçek erişim” diye oluşturma. Adayın seçtiği kartların kapsam kümesi bütün zorunlu kapsamlarla eşleşmelidir.
-- Bunları tipli matematik kartına bağla. Olumsuz/belirsiz yön, eksik kaynak/kapsam, koşul kaybı, yapılmamış karşı kanıt kontrolü veya açık çelişki yayını kapatır.
+- Bunları tipli matematik kartına bağla.
 
 Çağrılan inceleyicinin yanıtındaki request_digest birebir eşleşir; Sonucu maddi biçimde etkileyen her dış bilgi iddiası için kaynak kimliği, gerçekten açılan içerikteki ilgili konum/parça, erişim ve bilgi zamanı, geçerli kapsam/sürüm, destek/çürütme/belirsizlik yönü ve sınırlamaları kaydet. İnceleyici, alıntının iddiayı aynı koşullarda ve kullanılan kesinlik düzeyinde destekleyip desteklemediğini değerlendirir. Eksik hücreyi sıfır veya tahminle doldurma.
 
@@ -1300,7 +1470,14 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 - Matematik kartının statement alanı expression'a eşittir.
 - Kullanıcıya aktarırken destek, çürütme ve belirsizlik yönünü kaybetme.
 
-Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
+Kullanıcıya gereken kapsamda şu bilgileri ver:
+
+- Sonuç ve somut eylem; veya engel ve gerçek nedeni.
+- Dayanak kanıtlar ve kaynak etiketleri; ölçülen test sonucu ve yapılmayan kontrol.
+- Sorumlu, koruma metriği, geri çekme koşulu, maliyet ve kalan belirsizlik.
+- Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si; hesap varsa.
+
+Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
 
 - “kör işçi” olarak adlandırılmaz. İşçiye yalnız şu zarf alanları gider: Hash, kimlik doğrulama imzası değildir. Özetleme kuralı: İşçi yanıtı **tek JSON nesnesidir**. Alanların tümü şemada zorunludur.
 - Kapsam eksikken READY gönderme. Ortak kimlik alanları yine zorunludur. Büyük görev için kapsamı açık parçalara böl.
@@ -1311,7 +1488,7 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 - Şunları açıkça denetler: Kritik ve tartışmalı sonuç için karşı kanıt araması yap.
 - Bu hesap sonucu, ayrıca çalıştırılan anlam incelemesine girer. hash kimlik doğrulama imzası değildir. Tek çağrı yapılır; işçilere veya dosya/günlüklere yazılmaz. ret, timeout, kesik/bozuk yanıt, model/ayar uyuşmazlığı, yeniden kullanılan request_digest veya eksik kapsam FAIL_CLOSED üretir.
 
-- TEST_FIXTURE, test için sabit cevap üreten ayrı bir süreçtir; genel anlam anlama algoritması veya haricî LLM DEĞİLDİR ve anlam incelemesi yerine GEÇMEZ. olgusal doğruluk garantisi değildir. APPROVED üretemez. Worker proof_id gönderemez. host son cümleyi `expression = exact` biçiminde üretir. Hata veya desteklenmeyen ifade için tahmin üretme. 0 üzeri 0 bu protokolde DOMAIN olarak reddedilir. AST en çok 96 düğüm ve derinlik 16.
+- TEST_FIXTURE, test için sabit cevap üreten ayrı bir alt süreçtir; genel anlam anlama algoritması veya haricî LLM DEĞİLDİR ve anlam incelemesi yerine GEÇMEZ. olgusal doğruluk garantisi değildir. APPROVED üretemez. Worker proof_id gönderemez. host son cümleyi `expression = exact` biçiminde üretir. Hata veya desteklenmeyen ifade için tahmin üretme. 0 üzeri 0 bu protokolde DOMAIN olarak reddedilir. AST en çok 96 düğüm ve derinlik 16.
 - Sınır dışı değer RESOURCE_LIMIT olur; - Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si.
 - Kârlılık ve fiyat yönü garantisi verilmez.
 
@@ -1321,13 +1498,12 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 
 | Girdi/durum | Beklenen davranış |
 
-- - proposition_id aynı önerme ve koşulları ifade eder;.
+- proposition_id aynı önerme ve koşulları ifade eder;
 - scope_id görevdeki kapsam kimliğidir.
-- retrieved_at erişim zamanıdır;.
+- retrieved_at erişim zamanıdır;
 - action, owner, guard_metric, kill_rule, user_cost, residual_risk ve dayanak claim_ids zorunludur.
 - candidate_review_passed, coverage_review_passed, numeric_inventory_complete ve comparison_inventory_complete gerçek inceleme sonuçlarıdır.
 - görev/politika sözleşmesi, phase_digest, candidate_digest, source_registry_digest, bütün kartlar, gerçek kaynak snapshotları, karşılaştırma gereksinimleri/sonuçları, hesap kanıtları ve somut çıktıyı içerir.
-- v1.3 inceleme isteği;.
 - evrensel “iki link her şeyi doğrular” kuralı kullanma.
 - aksi halde sadeleştirilmiş `pay/payda` metnidir.
 - ondalık/tam sayı literal'leri, bilimsel gösterim, parantez, tekli +/−, toplama, çıkarma, çarpma, bölme ve sınırlı tam sayı üsleri kullanılabilir.
@@ -1335,6 +1511,8 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 | İzolasyon yok; kullanıcı bir kodu inceletiyor | SINGLE_MODEL / ANALYSIS_ONLY; gerçek inceleme ve kullanılabilen araçlar; sahte konsey yok |
 
 **5. Çıktı biçimi**
+
+Kullanıcıya yalnız işe yarayan kısa özet verilir. Bütün teknik envanteri her yanıta dökme.
 
 Anlatı kısa, artefakt tam: sonuç önce gelir; gerekçe yalnız sonucu değerlendirmeye yarayanla sınırlıdır; ADIM 1 envanteri, ADIM 5 saldırı listesi, ADIM 6 rubrik tablosu ve YAPILMAYANLAR her yanıtta bulunur. Gizli düşünce zinciri istenmez ve yayımlanmaz; "neyi sınadığın" yazılır, "ne düşündüğün" değil. Kullanıcıya bütün teknik envanteri dökmek yerine işe yarayan özet + artefakt bağlantısı verilir. **Kısalık derinliğin yerine geçmez:** ADIM 1 envanteri, ADIM 5 saldırı listesi ve ADIM 6 rubrik tablosu ARTEFAKTTIR, özet değildir — "yer kazanmak için kısalttım" gerekçesiyle çıkarılamaz, tek cümleye indirilemez. Kısaltılacak olan gerekçe anlatısıdır, kayıt değil.
 
@@ -1353,9 +1531,9 @@ Bütün atlas, bütün beceri yönergesi ve bütün test kodu her işçiye YÜKL
 Atlasın `atlas_status` alanı yalnız ESKİ gözlemdir ve katalog açıklaması yalnız aday yetenek göstergesidir. Öneri beklerken bağımsız iş DURMAZ. **Gerçek araç sonuçları ASTRA'nın mevcut kapılarına AYRICA GİRMELİDİR** — bir aracın çıktısı kapıları atlamaz. Her işçi yalnız kendi rolüne izin verilen araçları ve kaynak kimliklerini alır. READY için bu oturumdan gerçek kanıt: doğru ürün kimliği, kurulu/etkin, çağrılabilir araç ya da görünür beceri, gerekli hesap bağlantısı, izin; kimlik doğrulaması gerektirmeyen halka açık veri aracı için `NOT_REQUIRED` yeterlidir.
 
 - Adlandırılmış kör hücreler: NVIDIA beceri bulucusu GPU tahsisi ya da eğitim çalıştırıcısı değildir.
-- Hugging Face model/veri keşfi tamamlanmış bir eğitim işi değildir.
-- Riqor ve Gauntlet yönergeleri test motoru ya da haricî uzman sonucu değildir. Yazma/işlem/izin etkisi olan her eylem ayrı yetki ister; veri bağlantısı emir aracı değildir (Binance salt okunur); beceri bulucu GPU değildir.
-- Prompt Perfect puanı teknik doğrulama değildir;.
+
+ Yazma/işlem/izin etkisi olan her eylem ayrı yetki ister; veri bağlantısı emir aracı değildir (Binance salt okunur); beceri bulucu GPU değildir.
+- Prompt Perfect puanı teknik doğrulama değildir;
 
 **Ortam beyanı:** `search_plugins` / `suggest_plugins` adları ChatGPT eklenti yönetimine aittir; başka ortamda gerçek araç bildirimini keşfet, ad uydurma; "bir turda tek öneri" kuralı yalnız o arayüzde geçerlidir. Yerel `astra_plugin_router.py` MCP çağrısı yapmaz; ekteki `astra_plugin_atlas.json` kaynak Excel'den aktarılmış 66 konu ve 306 kaydı, güçlü yanları, sınırları, kaynak referanslarını ve konu başına ilk iki adayı içerir; router yalnız bu seçim ve bağlantı kararlarının yerel referans planlayıcısıdır; PLAN_READY kurulmuş/çalışmış demek değildir.
 
@@ -1431,7 +1609,9 @@ Gerçek sağlayıcı adaptörü bu araç sınırını çağrı düzeyinde uygula
 - Ek veride yalnız ilgili konu ve aday kayıtlarını getir.
 - Bir görev birden fazla gerçek konuya ait olabilir. C01/C02/C03/C09/C10/C14 kapsamlarını gerektirebilir. ilgisiz kontroller üretme: İhtiyaca göre şu boşlukları ara.
 - Karşılaştırma gerekçesi: Kurulu olmak tek başına doğru seçim nedeni değildir.
-- Kurulu veya zaten bekleyen ürünü bu araca gönderme. Ancak sonra ilgili yeteneği kullan. metindeki yasak tek başına erişim sınırı değildir. Host tarafında TOOL_ROUTE kaydı tut: Parola, anahtar veya gereksiz özel içerik bu kayda girmez. görev/kapsam kimliği, eşlenen konu kimlikleri, gerekli yetenekler, mevcut kanıt, seçilen yerleşik araç ve eklentiler, neden elenenler, bağlantı durumu, veri/hesap sınırı, eksik kritik yetenek, başlatılan gerçek işlem ve sonucu. Bütün teknik envanteri her yanıta dökme. Kullanıcıya yalnız işe yarayan kısa özeti ver:
+- Kurulu veya zaten bekleyen ürünü bu araca gönderme. Ancak sonra ilgili yeteneği kullan. metindeki yasak tek başına erişim sınırı değildir.
+
+Host tarafında TOOL_ROUTE kaydı tut: görev/kapsam kimliği, eşlenen konu kimlikleri, gerekli yetenekler, mevcut kanıt, seçilen yerleşik araç ve eklentiler, neden elenenler, bağlantı durumu, veri/hesap sınırı, eksik kritik yetenek, başlatılan gerçek işlem ve sonucu. Parola, anahtar veya gereksiz özel içerik bu kayda girmez.
 
 - aşağıdaki kaynak, karşılaştırma ve inceleyici kapıları gerçek çağrı yoluna bağlıdır.
 - ardından bu yönlendirme katmanını ve görevle ilgili konu satırlarını oku.
@@ -1446,7 +1626,7 @@ Gerçek sağlayıcı adaptörü bu araç sınırını çağrı düzeyinde uygula
 
 Binance vadeli yön/giriş/çıkış sistemi ayrı teslimatlar ister: zaman damgalı veri toplama, veri kalitesi ve erişilebilirlik zamanı, özellik üretimi, eğitim, doğrulama, geçmiş simülasyonu, emir simülasyonu, ortam entegrasyonu. Birim testleri entegrasyon, bozuk girdi, sınır, hata toparlama, kaynak tüketimi ve gerçek ortam kontrolleriyle göreve göre tamamlanır. Risk ve durdurma eşikleri kullanıcı gereksinimine ve test kanıtına dayanır.
 
-Öncü sayılan veri için tahmin anında erişilebilirlik ve katkı hipotezi deneyle sınanır; sonradan öğrenilen bilgi geçmiş karara sızdırılmaz; eğitim/doğrulama/test zaman sırasıyla ayrılır; ayrılmış test verisi parametre seçiminde kullanılmaz. Simülasyon komisyon, funding, kayma, spread, gecikme, kısmi gerçekleşme, ret/tekrar, bağlantı kopması ve pozisyon mutabakatını kapsar. Gerçekleşmeyen eğitim/backtest/paper/canlı sonuç yazılmaz; örtüşen hedef dönemleri hesaba katılır; güncel borsa arayüzü, filtreleri, limitleri ve test ortamı gerçek RESMÎ belgelerden doğrulanır; kârlılık ve yön garantisi verilmez.
+Öncü sayılan veri için tahmin anında erişilebilirlik ve katkı hipotezi deneyle sınanır; sonradan öğrenilen bilgi geçmiş karara sızdırılmaz; eğitim/doğrulama/test zaman sırasıyla ayrılır; ayrılmış test verisi parametre seçiminde kullanılmaz. Simülasyon komisyon, funding, kayma, spread, gecikme, kısmi gerçekleşme, ret/tekrar, bağlantı kopması ve pozisyon mutabakatını kapsar. örtüşen hedef dönemleri hesaba katılır; güncel borsa arayüzü, filtreleri, limitleri ve test ortamı gerçek RESMÎ belgelerden doğrulanır; kârlılık ve yön garantisi verilmez.
 
 **B.1 Öğrenen sistem ve model değerlendirmesi.** Öncü olduğu düşünülen veri için tahmin anında gerçekten erişilebilir olma ve gelecekteki hedefe katkı hipotezini sınayacak deney tanımla. Özellik ekleme/çıkarma etkisini ve basit temel yöntemle farkı ölç. Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve desteklenen ayarları kaydet.
 
@@ -8511,10 +8691,33 @@ class CommandTextTests(unittest.TestCase):
         self.assertEqual(pairs, [], "Kural hem yeniden yazılmış hem aslıyla duruyor:\n" +
                          "\n".join(pairs))
 
+    def test_no_paragraph_is_a_dump(self):
+        """A restored rule must be PLACED, not appended to whatever paragraph was nearest.
+
+        The eighth audit reported a "dump indicator" with no definition anywhere in the repo —
+        an unlabelled threshold, which this command text itself forbids. So it is defined here,
+        in code, and it is the shape the audit actually described: a paragraph that chains
+        clause after clause with "; Capital" is a list that was written as prose. The bound is
+        v1.3's own worst paragraph, measured rather than chosen.
+        """
+        v1_3 = Path(__file__).resolve().parents[2] / "bundle_v1_3" / "astra_command.md"
+        if not v1_3.exists():
+            self.skipTest("bundle_v1_3 pakete dahil değil; bu kapı depoda ölçülür")
+        chains = lambda text: max((len(re.findall(r"; [A-ZÇĞİÖŞÜ]", l))
+                                   for l in text.splitlines() if not l.lstrip().startswith("|")),
+                                  default=0)
+        bound = chains(v1_3.read_text(encoding="utf-8"))
+        self.assertLessEqual(chains(TEXT), bound,
+                             f"Bir paragraf {bound} zincirden fazla ';' bağıyla dizilmiş — "
+                             "kural yapıştırılmış, yerleştirilmemiş.")
+
     def test_no_rule_is_stated_twice(self):
         """The guard the byte budget was pretending to be: the same rule, said again."""
         seen, repeated = [], []
-        body = "\n".join(l for l in TEXT.splitlines() if not l.startswith("**"))
+        # Strip the bold LABEL from a paragraph, do not drop the paragraph: an earlier
+        # revision skipped every line starting with "**" and so blinded this gate to 19%
+        # of the text — the sections with the highest rule density.
+        body = "\n".join(re.sub(r"^\*\*[^*]+\*\*\s*", "", l) for l in TEXT.splitlines())
         for sentence in _split(body):
             current = _stems(sentence)
             if len(current) < 3:
@@ -10107,16 +10310,16 @@ print(json.dumps(r))
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.267887+00:00",
-      "valid_until": "2026-09-07T21:48:04.267887+00:00"
+      "as_of": "2026-09-07T21:48:29.933244+00:00",
+      "valid_until": "2026-09-07T22:48:30.933244+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.267887+00:00",
-      "valid_until": "2026-09-07T21:48:04.267887+00:00"
+      "as_of": "2026-09-07T21:48:29.933244+00:00",
+      "valid_until": "2026-09-07T22:48:30.933244+00:00"
     }
   ],
   "comparisons": [
@@ -10233,43 +10436,43 @@ print(json.dumps(r))
   "events": [
     {
       "detail": {
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4",
-        "reply_digest": "sha256:3809a6bb097e6f3c00b2e0bb8f1ac88db9affee0f3d9322a2c4120768cc10b3b",
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
+        "reply_digest": "sha256:8a11c4ece1f9052fe4626ef1ee7673070b3d9f6b7e5ab22cd832e37a610c37c6",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4",
-        "reply_digest": "sha256:a682e14b1ff7885fdd182999df7cc1c9711eb36ca42461a73b2b58c657016d80",
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
+        "reply_digest": "sha256:e31fab2cae2decb660a4212f6ec72a29108971ba27ec7a783abeefc08279320b",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:2cc02faf9c82c049ba52c312d36eff957ab65a0fbf2c5b69cb6fd28d2cd5c530",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:8cbdfa34010c3424da803aa411eafa7b64a3d55295801b94d87cf26b6a26e482",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4",
-        "reply_digest": "sha256:651c49d58ad05479ebb2425bc086ae736f69e18be928418adac00c2ddafeca3d",
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
+        "reply_digest": "sha256:23bb3159c2405dca58003e1adad959f15da1662cf99eb4b23f44ced549caa8b6",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:219f4c036400317c6c8f34836690f481817bef7787b0d4f7049d58da4b15b687",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:a3d00af072c8f6984c1c64135aa3499187909e7c5c5595b54f502844b5c32e5f",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "8d4dc042d23946118a61dc283bf858b4"
+        "phase_id": "bac9c462477348beb903f71b7d08b3f2"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:164be76cf212a45db56a14fd102827291556ab81940005c95d20fc1a787ea886",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:fb7a108158734a19c8e056cc031bbd1edd079d71f36fd0cf49859011571e8aa3",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
@@ -10277,16 +10480,16 @@ print(json.dumps(r))
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:137b82862a6805707cbf4fa92e9c252a021652a8971e1904903ff39408a8e461",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:0433f40476f0d3023e8aad1f3b0c04c50ab9e5ee1fa44db71fa97fcc7f0a73bd",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     },
     {
       "detail": {
         "reason": "NOT_COMPARABLE"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:ea272980818df6e5b27228f0bd39c4cbc657ba575509cbc268351af261b1c5f3",
-      "run_id": "83e1df48756447c599a65fb356921ddf"
+      "previous": "sha256:3cfe6bfc029c1079283035ffddaf65a8cd50eb67e2240271861be93933b99c6c",
+      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
     }
   ],
   "production_approval": false
@@ -10323,16 +10526,16 @@ Candidate B: median completion latency 120 ms. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.672513+00:00",
-      "valid_until": "2026-09-07T21:48:04.672513+00:00"
+      "as_of": "2026-09-07T21:48:30.282469+00:00",
+      "valid_until": "2026-09-07T22:48:31.282469+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.672513+00:00",
-      "valid_until": "2026-09-07T21:48:04.672513+00:00"
+      "as_of": "2026-09-07T21:48:30.282469+00:00",
+      "valid_until": "2026-09-07T22:48:31.282469+00:00"
     }
   ],
   "comparisons": [
@@ -10438,43 +10641,43 @@ Candidate B: median completion latency 120 ms. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "ebae5c44c7a14135980395da76859629",
-        "reply_digest": "sha256:7b4a390c69c049ad474af57f19505ef78bc24b4af8149fbe89a6480377e0c6a1",
+        "phase_id": "cb2e310e40714e479fcf652e4570e1d6",
+        "reply_digest": "sha256:b4e41061616d39117dc4a57a0f15a9510c1c147f004ac51c83c87f8e49ee3710",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     },
     {
       "detail": {
-        "phase_id": "ebae5c44c7a14135980395da76859629",
-        "reply_digest": "sha256:61d903f4012397a6f44cddf655c834f43053eb10251243fc9c7c0a858235a87d",
+        "phase_id": "cb2e310e40714e479fcf652e4570e1d6",
+        "reply_digest": "sha256:c695fc6e999434867c34b286575b69ec27a935746147ab3d66739bbf112b8ea4",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:5a63a220a7b7e0f0a73c90ef7b5bf24181c215f6188541ca001f43cb432cc408",
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "previous": "sha256:69a00f568e9d026ca69a948b724a795c1aec12c75aed14fd70432a79ec98fee0",
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     },
     {
       "detail": {
-        "phase_id": "ebae5c44c7a14135980395da76859629",
-        "reply_digest": "sha256:1c7cdb566a1e903288c23f9cffeac2e37bbe7188c7eb513f99101c704d03c43b",
+        "phase_id": "cb2e310e40714e479fcf652e4570e1d6",
+        "reply_digest": "sha256:dc7891610e9cae1667d738a0ca107a7728837defe9420cf1f21f23c3ebf2f8f6",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:38b2fd4c9204f1cd851eb863fddf6b2b45ee01e99c5d0ae0c2f87e73758809f3",
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "previous": "sha256:c6af43d7ffa719064f154bb6e9cc6f6e040e22338430003fd16360d54e1aeb17",
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "ebae5c44c7a14135980395da76859629"
+        "phase_id": "cb2e310e40714e479fcf652e4570e1d6"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:02facee81612e156d6c28533a43a2917159df4b9e402b215c0506109e079c413",
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "previous": "sha256:fadedb66c042f312b4f35cdcd2b90ca361afc527ddf929658f2cbf475159c33c",
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     },
     {
       "detail": {
@@ -10482,25 +10685,25 @@ Candidate B: median completion latency 120 ms. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:992ccd5e96a0f9a19f020d0e312d837996fc692c445c8a04996f99ad46ac9c3a",
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "previous": "sha256:c1749c0a01a4b3b11553a6c73df5e1d058d3a3fb61de818f31c1b4117a4f89ae",
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:ef5f879b5720126635b9dd52551a09aae23e13ea02c1acee7082582598b0dd2a",
+        "comparison_digest": "sha256:202fe82d01ab3fbbc0e318b662b07c8a9555165eae2a80bc3896b7bcb2495cc5",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:0d680bdf0fa427ee7f268e9d94a26539befd8a1886432b431b608cdabd931e75",
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "previous": "sha256:558341124e50fb27f17e7685e36fdf54e73a0cbc1b4a608e440574fdb0def14e",
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     },
     {
       "detail": {
         "reason": "SEMANTIC_REVIEWER_REQUIRED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:48a316377cb0b2fa097fa443cef2e77dc4d50675b6e1ef4cadb1d17971c91406",
-      "run_id": "1cb991a67ea24cb186bf446cdeadaa40"
+      "previous": "sha256:b4f465b81d6c7fddf874dae35e7a3e544959f9b4670e2889097a9dd0dca9be6e",
+      "run_id": "9348fa662de44d04a85cae1e5be15c81"
     }
   ],
   "production_approval": false
@@ -10537,16 +10740,16 @@ Candidate B: median completion latency 120 ms. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.468117+00:00",
-      "valid_until": "2026-09-07T21:48:04.468117+00:00"
+      "as_of": "2026-09-07T21:48:30.082230+00:00",
+      "valid_until": "2026-09-07T22:48:31.082230+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.468117+00:00",
-      "valid_until": "2026-09-07T21:48:04.468117+00:00"
+      "as_of": "2026-09-07T21:48:30.082230+00:00",
+      "valid_until": "2026-09-07T22:48:31.082230+00:00"
     }
   ],
   "comparisons": [
@@ -10663,43 +10866,43 @@ Candidate B: median completion latency 120 ms. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "94db49a2dd234dc9a8325846864b3bdf",
-        "reply_digest": "sha256:929cfe18facd6fc2a0f7eea63fb38dba40121e3aac68de8576e47f14e2320a7c",
+        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9",
+        "reply_digest": "sha256:88340c2748cce4ee39b8ff5e81094b8927e8870d89e6fdd2ff303a5d56c4ec65",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
-        "phase_id": "94db49a2dd234dc9a8325846864b3bdf",
-        "reply_digest": "sha256:2d0e0d7428c4d9dd5b92655644252228c1cbe32c0bc8006cc21e04285e11ee5b",
+        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9",
+        "reply_digest": "sha256:84c4384f9e9112b53fe2c19b87b06c8df72a7b38f16254bbcbbc572d7bfc2d3f",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:4b09db229da4933fc31360ea67f230f64db60e9399190350b1f2ace8bfd5dbb7",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:1121380c9607d913c9b31a89db81b2d3333b652c1ce5d2b1c37fc6b94f703f09",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
-        "phase_id": "94db49a2dd234dc9a8325846864b3bdf",
-        "reply_digest": "sha256:b7017f6cd139245c57cf700c656d3aa6acb7115975385dab1f1de044a55b0d20",
+        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9",
+        "reply_digest": "sha256:4b34992abd3dd76393ee4390c9052baad525d5792c717d26c38595cf0fdc0914",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:a07141e42887a1dbbc60e17c7376aaa4bf48c5a5b74068900fd9086cabc4d96d",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:ae180189f3a4fe680b6a7cf7daa74afa0e29e96da9989d0e60d0d0f8cc943ebb",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "94db49a2dd234dc9a8325846864b3bdf"
+        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:d941168fb1b4c96037d016a0e918c46b873679b1a3827b49b5e25e2418de5111",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:0a8931d6fe084cfbbc826535472c3db1a618049a18330d576da7da004d53dd79",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
@@ -10707,34 +10910,34 @@ Candidate B: median completion latency 120 ms. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:932b04a6dea05f418e7dba3505b354bec33a31c39d58cd6db1e433a47290cf5b",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:1d34f713ac52786f548e80d4c35521db21f5158af76c66991b0dd53e4b13173a",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:f29c89162959548ec067901a50f268c67b1c974651ef24f2511d835157f0e038",
+        "comparison_digest": "sha256:52b45c38775c7a1b82c1170eac1119cfa473c1d0b3b9014bbf53fc9595edcc9d",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:a3b7414fc0481fb698cb21165a2e4852e04bd99f39bcbf2d6dd0b4cc283312d5",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:b79edf792665c584a875a5e720d34ae4b799a208994bb4869224a5f909560c87",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
-        "request_digest": "sha256:033d419d8d4102c924d380740b52bfec14d035b96be3e28699884a371f2148d0",
+        "request_digest": "sha256:22294a513e62d6ae311159a7efa94b928166d030b31a4c11dbcc9e4054fb0dc9",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:116836f2cd3fa212af10e6549481dd05d2721bbb97b01f83664144a3436e3059",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:0ca835581b7529a756160b0881cbfac262ab1d76187b797d27f18d7ba64d0f2e",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     },
     {
       "detail": {
         "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:5b0e900c5b6f8417d194464664115fd50668fab665563313a341c2558e99e177",
-      "run_id": "da201228d14043ff95e08db181ecd187"
+      "previous": "sha256:82dfe6db700e10e05374cd31c52f2f79bfc3af23c5cd9acd727f83175156cf87",
+      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
     }
   ],
   "production_approval": false
@@ -10771,16 +10974,16 @@ Request count 120 requests. Latency was not measured. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.064931+00:00",
-      "valid_until": "2026-09-07T21:48:04.064931+00:00"
+      "as_of": "2026-09-07T21:48:29.739536+00:00",
+      "valid_until": "2026-09-07T22:48:30.739536+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T20:48:03.064931+00:00",
-      "valid_until": "2026-09-07T21:48:04.064931+00:00"
+      "as_of": "2026-09-07T21:48:29.739536+00:00",
+      "valid_until": "2026-09-07T22:48:30.739536+00:00"
     }
   ],
   "comparisons": [
@@ -10888,8 +11091,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
     "status": "LOCAL_CHECKS_PASSED",
     "production_approval": false,
     "verification_boundary": "HOST_CAPTURED_LOCAL_SNAPSHOTS_AND_EXECUTED_GATES; reviewer judgment is not a truth or isolation guarantee",
-    "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb",
-    "phase_digest": "sha256:ef5c967345e7d6d3182ad2e2f46ca94a96cf7154e63fed3921d7347b2f4ff229",
+    "run_id": "211a66a407da426bb98dd3ec42ac3e3b",
+    "phase_digest": "sha256:53c8c0c320107d25a04a75b6c00d603bf4ef33cd7cee07d9c67f0552bdeb481e",
     "decision": {
       "action": "Report the observed latency comparison only.",
       "claim_ids": [
@@ -10953,7 +11156,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
     "proofs": {},
     "host_verification": {
       "candidate_digest": "sha256:e7726678f2a086117a8980db34f2015eea5bbd31a2f828bf69e0200ffba570e5",
-      "comparison_results_digest": "sha256:0f778806413ab3adc70f63da2a2984159389b2715dc40ad4077d4227dc5435a2",
+      "comparison_results_digest": "sha256:cbd5e71623af0c502b5405e5912e117565037f73860b2889282e5e59d4ffc4d2",
       "comparisons": [
         {
           "claim_ids": [
@@ -10963,7 +11166,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           ],
           "requirement_id": "latency",
           "result": {
-            "comparison_digest": "sha256:0b2e5f0d69a908eebf15ff4a6fce8379544e714a1948f487834bdbee4e9b7cec",
+            "comparison_digest": "sha256:7b7e2df2c527360f881fb178f410e3635594096ba90b662b3f9816c5f03a74c0",
             "context": {
               "definition": "median completion latency",
               "method": "same median harness",
@@ -10980,7 +11183,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
             "ranking_scope": "OBSERVED_VALUES_ONLY",
             "rows": [
               {
-                "access_record_id": "sha256:76e28fb9c1e414e5bfcb80f20b86c234ee415c46ea384b0b8ed013377762242f",
+                "access_record_id": "sha256:a72ae004c8973ae11cd2dee41934673dfedca06234dddfa8e8bf98f3a668c6fc",
                 "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
                 "definition": "median completion latency",
                 "entity": "A",
@@ -10996,7 +11199,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
                 "value": "100"
               },
               {
-                "access_record_id": "sha256:e8e09e51660296b7605e5cbc6ccfe5dd7641d2dfed73357ede4f62aadc38b475",
+                "access_record_id": "sha256:4fa2cb32805fb87230cda58617ac82cd56957a6856c449185a908d47f2ca1d08",
                 "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
                 "definition": "median completion latency",
                 "entity": "B",
@@ -11019,17 +11222,17 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         }
       ],
       "contract_digest": "sha256:a886e196f83ec14e6a2adade731342cd99ac677f424b17a896009d5c53afe5b3",
-      "created_at": "2026-09-07T20:48:04.201585+00:00",
-      "host_receipt_id": "sha256:b5ea8166d2e1b018b2878b1d975b67e0a4307d0aee7a8e12ffa3c3d57b55610e",
-      "issued_at": "2026-09-07T20:48:04.181339+00:00",
-      "phase_digest": "sha256:ef5c967345e7d6d3182ad2e2f46ca94a96cf7154e63fed3921d7347b2f4ff229",
+      "created_at": "2026-09-07T21:48:30.860316+00:00",
+      "host_receipt_id": "sha256:2f9933eb8128dcb7e66c80e40bde2efe1461127d683ac071ebbdd82ee59a4950",
+      "issued_at": "2026-09-07T21:48:30.841554+00:00",
+      "phase_digest": "sha256:53c8c0c320107d25a04a75b6c00d603bf4ef33cd7cee07d9c67f0552bdeb481e",
       "production_approval": false,
       "protocol": "ASTRA-HOST-1.3",
       "rendered_claims_digest": "sha256:6766430b75dc68871fadb0c2ffec8e843d999decea7e1982905ea154d8a1cc2e",
-      "request_digest": "sha256:ad89339de39991c5c6cef56f88e5e66f2cfb455314c54e6e4ec9e8c2018d53a2",
+      "request_digest": "sha256:4b204193a8a3ba1d529b274d5f4dd46f017af9dad900011e2922a4dc38c3049f",
       "requested_effort": null,
       "requirements": [],
-      "review_nonce": "bfa48e8fdc7fe1f0f3371de2e77ce60dfdbc8b092687f843",
+      "review_nonce": "34d955b3af7a00f7870142cdd82dc102d28afd1b4566e27d",
       "reviewer_kind": "TEST_FIXTURE",
       "reviewer_response": {
         "assessment": {
@@ -11114,7 +11317,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         },
         "provider_effort": "fixture-effort",
         "provider_model": "fixture-model",
-        "request_digest": "sha256:ad89339de39991c5c6cef56f88e5e66f2cfb455314c54e6e4ec9e8c2018d53a2",
+        "request_digest": "sha256:4b204193a8a3ba1d529b274d5f4dd46f017af9dad900011e2922a4dc38c3049f",
         "reviewer_record_id": "TEST_FIXTURE_ONLY"
       },
       "semantic_review_scope": "REVIEWER_JUDGMENT_NOT_TRUTH_GUARANTEE",
@@ -11123,8 +11326,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
       "source_access_authenticated": false,
       "source_access_receipts": [
         {
-          "access_record_id": "sha256:76e28fb9c1e414e5bfcb80f20b86c234ee415c46ea384b0b8ed013377762242f",
-          "captured_at": "2026-09-07T20:48:04.117999+00:00",
+          "access_record_id": "sha256:a72ae004c8973ae11cd2dee41934673dfedca06234dddfa8e8bf98f3a668c6fc",
+          "captured_at": "2026-09-07T21:48:30.784124+00:00",
           "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
           "locator": "file://<RUN>/source_0.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -11132,8 +11335,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           "upstream_authentication_verified": false
         },
         {
-          "access_record_id": "sha256:e8e09e51660296b7605e5cbc6ccfe5dd7641d2dfed73357ede4f62aadc38b475",
-          "captured_at": "2026-09-07T20:48:04.118214+00:00",
+          "access_record_id": "sha256:4fa2cb32805fb87230cda58617ac82cd56957a6856c449185a908d47f2ca1d08",
+          "captured_at": "2026-09-07T21:48:30.784279+00:00",
           "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
           "locator": "file://<RUN>/source_1.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -11142,7 +11345,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         }
       ],
       "source_access_scope": "LOCAL_FILE_SNAPSHOT_READ",
-      "source_registry_digest": "sha256:52f61d7fda0c0e26aca1a81e68b3dbd0e7cc7cfbf3655401d968e5fd4de8c892",
+      "source_registry_digest": "sha256:e4d7e195cb5f4c8268a9347cc7f34dc944c4ab5b5ffb9cb91fbbff84bbaaaf40",
       "task_status": "NO_REQUIREMENTS",
       "upstream_origin_verified": false
     }
@@ -11156,43 +11359,43 @@ Request count 120 requests. Latency was not measured. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "16b3850a6c2f49f78fb55a5f07739fba",
-        "reply_digest": "sha256:4316ae7f5c2fb50fa2367f1074f5b97b70b0a67bd67dd0b215553250ce6bd65d",
+        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5",
+        "reply_digest": "sha256:feed4ac4596a9da622cd9ed774ea4a9c3bb3e34b351f0cb0f8daf4337a0bd4ed",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
-        "phase_id": "16b3850a6c2f49f78fb55a5f07739fba",
-        "reply_digest": "sha256:e1ce6439c9a630b83cf65c46563805bf23a4b8c96dded69ef8b3bd3d1d2c5d38",
+        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5",
+        "reply_digest": "sha256:23a5b92552fa1ad75c6b067199ea34f4854cd2e18e2e7f56c4fbb5b46b05cada",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:c492ba09d1c1d2c4033e2c9e1b8f61402cfe9070d8f81188653351b35047c44d",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:e2a92c2503c62d393a49805e22c4961b4846fa1f7fb8c4c7b2a956bb8eefc72c",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
-        "phase_id": "16b3850a6c2f49f78fb55a5f07739fba",
-        "reply_digest": "sha256:a5e9ed1fec1dac645a6d311242e8dcb24ee861a5ae53cb719d02d8b87b39f81b",
+        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5",
+        "reply_digest": "sha256:2691c4f15b6e823d9e23711d655acba198de992a151d5f0550cb69bb9a5d5e46",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:bdac857a5d853353df3d03f9896f86281dfd71e5c625e7b38409cc7c3101b104",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:7bbc2ff9651d32ad6ef8ac96ba5cadf65d5341587df13d55ee89b05902bb638f",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "16b3850a6c2f49f78fb55a5f07739fba"
+        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:7234e1c8b05254ce005d08fdd73fa96073e93eeb85eff0e8f4a43f8a640ae0df",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:cc972dc89cc84ee362ce8a5251c1d3d8701a6da7a31475e15fe37e55ea4e90c2",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
@@ -11200,42 +11403,42 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:7b87d154870b25230a76749a0e396c3d3c2de051f1a535d1b0589fd89c5b9174",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:2bc571b21bd485d8ffb3c348577fb406f332e46136e141afc27a8e34c30a830e",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:0b2e5f0d69a908eebf15ff4a6fce8379544e714a1948f487834bdbee4e9b7cec",
+        "comparison_digest": "sha256:7b7e2df2c527360f881fb178f410e3635594096ba90b662b3f9816c5f03a74c0",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:5e5696ddb7f0ee5b8a7f6b38aa72f2033bca76cf9095bcfa6dfa967d56f8ad9c",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:444ed2270b239bdcdcddba9a06c2bd6231b3203eb64d02c9a86c1350e9236c5b",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
-        "request_digest": "sha256:ad89339de39991c5c6cef56f88e5e66f2cfb455314c54e6e4ec9e8c2018d53a2",
+        "request_digest": "sha256:4b204193a8a3ba1d529b274d5f4dd46f017af9dad900011e2922a4dc38c3049f",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:644e17faaab7a04f29c9019fc0c1cbfd47f1194f1298c52354978ff4f62028f4",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:400e5d5cbd698e51500de16ec5630f0f61f42eff37c53199fe952f51989f5ff7",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
-        "host_receipt_id": "sha256:b5ea8166d2e1b018b2878b1d975b67e0a4307d0aee7a8e12ffa3c3d57b55610e"
+        "host_receipt_id": "sha256:2f9933eb8128dcb7e66c80e40bde2efe1461127d683ac071ebbdd82ee59a4950"
       },
       "kind": "HOST_GATES_PASSED",
-      "previous": "sha256:50ad22f24540dc60b82b887d104378366b274054004e338963a6a0f61832b9d9",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:23002ab2979e3d73f2bf6954bfc05cb60546176cb801836f21e5cb9fe7f75a05",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     },
     {
       "detail": {
-        "result_digest": "sha256:3f08a0ebba75170465d50fbdc12377f30b2a749487cff5d6e78676229ce19cfd"
+        "result_digest": "sha256:68717fe547647f4f8325a72c436097e7c21464ddd859e4d2b7004b99e10ebbdc"
       },
       "kind": "LOCAL_CHECKS_PASSED",
-      "previous": "sha256:2c59ff7e3b39478766dac9f062901e298a33c79aeaf6fdba476b8d7aed71f682",
-      "run_id": "d5e8d18fac054046a6d17d64a6e4ecfb"
+      "previous": "sha256:ab874ea533b593f602906887e5b626fa2c6ac9437026984bf18a4357caa6cd86",
+      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
     }
   ],
   "production_approval": false
@@ -11289,7 +11492,7 @@ Candidate B: median completion latency 120 ms. Synthetic data.
     }
   },
   "python_version": "3.11.15",
-  "generated_at": "2026-09-07T20:48:04.794724+00:00",
+  "generated_at": "2026-09-07T21:48:31.454862+00:00",
   "scope": "Local CLI scenarios with fixture workers and a fixture reviewer; they exercise the pipeline, not semantic quality"
 }
 
@@ -11360,11 +11563,11 @@ Candidate B: median completion latency 120 ms. Synthetic data.
 {
   "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
   "returncode": 0,
-  "summary": "Ran 199 tests in 9.203s",
+  "summary": "Ran 200 tests in 9.089s",
   "outcome": "OK",
   "python_version": "3.11.15",
   "platform": "Linux",
-  "generated_at": "2026-09-07T20:48:04.794724+00:00",
+  "generated_at": "2026-09-07T21:48:31.454862+00:00",
   "scope": "LOCAL_TEST only; no live provider call was made"
 }
 
@@ -11420,6 +11623,8 @@ test_python_object_and_cycles_cannot_cross_boundary (test_astra.WireTests.test_p
 test_capacity_numbers_match_the_measured_constant (test_command_text.CommandTextTests.test_capacity_numbers_match_the_measured_constant) ... ok
 test_every_exit_gate_names_an_artefact (test_command_text.CommandTextTests.test_every_exit_gate_names_an_artefact) ... ok
 test_no_discretionary_adverbs_outside_quotes (test_command_text.CommandTextTests.test_no_discretionary_adverbs_outside_quotes) ... ok
+test_no_paragraph_is_a_dump (test_command_text.CommandTextTests.test_no_paragraph_is_a_dump)
+A restored rule must be PLACED, not appended to whatever paragraph was nearest. ... ok
 test_no_rule_is_kept_beside_its_own_rewording (test_command_text.CommandTextTests.test_no_rule_is_kept_beside_its_own_rewording)
 Bloat is a rule stored twice — once reworded, once verbatim. ... ok
 test_no_rule_is_stated_twice (test_command_text.CommandTextTests.test_no_rule_is_stated_twice)
@@ -11589,7 +11794,7 @@ test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 199 tests in 9.203s
+Ran 200 tests in 9.089s
 
 OK
 

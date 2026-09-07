@@ -195,10 +195,33 @@ class CommandTextTests(unittest.TestCase):
         self.assertEqual(pairs, [], "Kural hem yeniden yazılmış hem aslıyla duruyor:\n" +
                          "\n".join(pairs))
 
+    def test_no_paragraph_is_a_dump(self):
+        """A restored rule must be PLACED, not appended to whatever paragraph was nearest.
+
+        The eighth audit reported a "dump indicator" with no definition anywhere in the repo —
+        an unlabelled threshold, which this command text itself forbids. So it is defined here,
+        in code, and it is the shape the audit actually described: a paragraph that chains
+        clause after clause with "; Capital" is a list that was written as prose. The bound is
+        v1.3's own worst paragraph, measured rather than chosen.
+        """
+        v1_3 = Path(__file__).resolve().parents[2] / "bundle_v1_3" / "astra_command.md"
+        if not v1_3.exists():
+            self.skipTest("bundle_v1_3 pakete dahil değil; bu kapı depoda ölçülür")
+        chains = lambda text: max((len(re.findall(r"; [A-ZÇĞİÖŞÜ]", l))
+                                   for l in text.splitlines() if not l.lstrip().startswith("|")),
+                                  default=0)
+        bound = chains(v1_3.read_text(encoding="utf-8"))
+        self.assertLessEqual(chains(TEXT), bound,
+                             f"Bir paragraf {bound} zincirden fazla ';' bağıyla dizilmiş — "
+                             "kural yapıştırılmış, yerleştirilmemiş.")
+
     def test_no_rule_is_stated_twice(self):
         """The guard the byte budget was pretending to be: the same rule, said again."""
         seen, repeated = [], []
-        body = "\n".join(l for l in TEXT.splitlines() if not l.startswith("**"))
+        # Strip the bold LABEL from a paragraph, do not drop the paragraph: an earlier
+        # revision skipped every line starting with "**" and so blinded this gate to 19%
+        # of the text — the sections with the highest rule density.
+        body = "\n".join(re.sub(r"^\*\*[^*]+\*\*\s*", "", l) for l in TEXT.splitlines())
         for sentence in _split(body):
             current = _stems(sentence)
             if len(current) < 3:

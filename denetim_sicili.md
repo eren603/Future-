@@ -228,3 +228,45 @@ ESKALE KAYDI (Madde 10 — üç deneme de FAIL; sözleşme gereği kullanıcıya
   en uzun paragraf 897, bayt 75999.
 - Doğrulama: bundle 199 OK, depo 10 OK, roundtrip 199 OK.
 - Denetime GÖNDERİLDİ (8. tur). Hüküm gelmeden bu madde GEÇTİ sayılmaz.
+
+## Madde 10 — 9. tur (8. tur FAIL'inin ardından)
+- 8. tur hükmü: **FAIL**, kapı 4/6 (TİYATRO + SAHTE_KANIT). Bulgular doğrulandı:
+  1. **P0 — kendi eklediğim mekanizma yine kırıldı:** `ONARILDI` sınıfının
+     "sertleştirilmiş" hâli de istismar edildi — assertion'sız sahte bir test dosyası
+     üçüncü koşulu taklit etti ve gerçek bir izolasyon kuralı silinip muaf tutuldu.
+  2. `**` ile başlayan satırları tekrar taramasından ÇIKARMAK metnin %18.9'unu kör
+     etmişti; o kör alanda duran gerçek bir mükerrer vardı.
+  3. `NORMATIVE` yorumundaki iki örnek (`sunma`, `sayma`) kendi regex'iyle
+     eşleşmiyordu; buna karşılık fiilimsi adları (`inceleme`, `sözleşme`) kural sanıp
+     anlamsız parçaları metne yapıştırmıştı.
+  4. "öksüz liste başlığı 0" ölçümü satır-sonu ":" sayıyordu; kusur satır-içiydi ve
+     iki tanesi duruyordu.
+  5. "yığın göstergesi" deposunda tanımı olmayan bir metrikti (etiketsiz gizli eşik).
+  6. Yapıştırma artıkları: `;.`, `- -`, öksüz `- v1.3 inceleme isteği;`.
+- 9. turda yapılan:
+  * `ONARILDI` KALDIRILDI. Belgeyle doğrulanan muafiyet, belgeyi yazan tarafından
+    üretilebilir; sertleştirmek çözüm değildi. Yerine ölçüm düzeltildi: az-gövdeli
+    cümleler artık cümlenin kendi sözcükleri TEK bir v1.4 satırında SIRAYLA aranarak
+    ölçülüyor (yeniden yazım silinme sanılmıyor, silinen bulunmuyor).
+  * İki yeni sınıf, ikisi de yalnız DEPO İÇİ ölçümle doğrulanıyor: `YASAK_IFADE`
+    (ifade paketin kendi testindeki yasak listesinde ve v1.4'te yok — sahte kayıt
+    eklemek o ifadeyi metnin tamamında yasaklar, yani sahtecilik kendi amacını bozar)
+    ve `V13_TEKRAR` (v1.3 aynı kuralı iki kez yazmış, ikizi kapsanmış).
+  * `MIN_STEMS` 5 → 4 ve sıfır-gövdeli cümleler envantere alındı: "- Sonuç ve somut
+    eylem;" gibi satırlar silinse ölçüm fark etmiyordu.
+  * Kapsam ile tekrar kapısı UZLAŞTIRILDI (`STRONG = 0.85`): iki kapı birbiriyle
+    çelişip üç kuralı salındırıyordu.
+  * Tekrar kapısı artık başlık satırını atlamıyor, yalnız kalın etiketi kırpıyor;
+    açığa çıkan 12 gerçek mükerrer temizlendi.
+  * `NORMATIVE` hüküm kipini CÜMLE SONUNDA arıyor (fiilimsi adları artık yakalamıyor);
+    yorumdaki örnekler regex'le uyumlu.
+  * Öksüz üç iki-nokta bloğu (`şu kaydı tut:`, `şu bilgileri ver:`, `TOOL_ROUTE kaydı
+    tut:`) v1.3'teki kendi listelerine geri bağlandı; yapıştırma artıkları temizlendi.
+  * "Yığın göstergesi" artık tanımsız bir rapor sayısı değil, TEST: bir paragrafın
+    ";"+büyük harf zinciri v1.3'ün kendi en kötü paragrafını aşamaz.
+  * REAL_ISOLATION başlangıç kaydı kendi bölümüne (`4.0`) alındı.
+- Kalan ölçülmüş sınır (gizlenmiyor): iki-nokta ile biten bir GİRİŞ cümlesinin tek
+  başına silinmesi, altındaki liste dururken ayırt edilemiyor (65 taşınan satırın
+  1'i). Listenin kendi silinmesi yakalanıyor. Bu sınır testin docstring'inde yazılı.
+- Ölçüm: kapsanmayan 69 (hepsi sınıflı), mutasyon 64/65 + 1 yapısal gerekçeli.
+- Doğrulama: bundle 200 OK, depo 10 OK, roundtrip 200 OK.

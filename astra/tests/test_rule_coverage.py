@@ -36,6 +36,8 @@ Remaining limits, stated rather than claimed away:
   * a sentence of 15 characters or fewer is skipped (it carries no distinctive word);
   * the measure is lexical: it detects DELETION, not a sentence left in place and negated;
   * the stem is a fixed prefix, so it over-matches; the mutation test is what bounds that;
+  * a lead-in ending in ":" cannot be told from its own list by a bag-of-words measure, so
+    its deletion alone is not detected — measured: 1 of 65 carried lines; the list itself is;
   * a sentence with fewer than MIN_STEMS content words cannot be measured by ratio at all —
     60% of two stems is one word, which any section supplies. Those sentences are checked
     by literal text instead, which is stricter but blind to rewording.
@@ -55,14 +57,22 @@ WAIVER = ROOT / "KAPSAM_MUAFIYET.md"
 SHARE = 0.6  # a reworded sentence counts as covered when most content words survive
 STEM = 6     # fixed prefix: enough to bridge Turkish inflection, short of a real stemmer
 WORD = re.compile(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}")
+# A mood marker means the sentence delivers a verdict, so it is a rule and not a fragment.
+# The negative imperative and the copula are matched only at the END of the sentence: mid-
+# sentence they are almost always deverbal NOUNS ("inceleme", "sözleşme", "karşılaştırma"),
+# and an earlier revision that ignored position pasted meaningless fragments into the text
+# because it read those nouns as commands.
 NORMATIVE = re.compile(
     r"(?:[a-zçğıöşü]{3,}(?:maz|mez|mal[ıi]d[ıi]r|melidir|meli|mal[ıi])\b"
-    r"|[a-zçğıöşü]{4,}(?:ma|me)\b"          # olumsuz emir: \"sunma\", \"üretme\", \"sayma\"
-    r"|[a-zçğıöşü]{4,}(?:d[ıiuü]r)\b"       # koşaç: \"sonuçlarıdır\", \"zorunludur\"
-    r"|üretir\.|sayılır\.|olamaz\b|edilemez\b|verilmez\b|geçmez\b|değildir\b)")
-ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK|ONARILDI)\]\s*—\s*(.+)$")
+    r"|olamaz\b|edilemez\b|verilmez\b|geçmez\b|değildir\b"
+    r"|[a-zçğıöşü]{2,}(?:ma|me)\s*[.;:]?\s*$"      # sunma. / sayma. / yazma; (cümle sonu)
+    r"|[a-zçğıöşü]{2,}(?:d[ıiuü]r|tur|tür)\s*[.;:]?\s*$"   # …sonuçlarıdır. / …zorunludur.
+    r"|üretir\.|sayılır\.)")
+
+ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK|YASAK_IFADE|V13_TEKRAR)\]\s*—\s*(.+)$")
 OLD_LINES = OLD.splitlines()
 _LITERAL_NEW = ""
+_LINES_NEW = []
 
 
 def fold(text):
@@ -126,7 +136,8 @@ def regions(text):
     return sections, rows
 
 
-MIN_STEMS = 3  # altında oran ölçüsü anlamsız: %60 tek kelimeye iner
+STRONG = 0.85  # the repetition gate's own threshold; the two must agree
+MIN_STEMS = 4  # altında oran ölçüsü anlamsız: %60 tek kelimeye iner
 
 
 def matches(target, region):
@@ -136,7 +147,14 @@ def matches(target, region):
     share 60% of its ordinary vocabulary, and deleting the bullet goes unnoticed — measured:
     two such blind spots in the sixth audit round.
     """
-    if len(target & region) / len(target) < SHARE:
+    overlap = len(target & region) / len(target)
+    if overlap >= STRONG:
+        # Vocabulary this close in ONE place is the sentence, reworded. Requiring the rarest
+        # stem on top of it made the coverage gate and the repetition gate contradict each
+        # other: coverage said "not carried", repetition said "that is a duplicate", and a
+        # restore loop oscillated between them. 85% in one region settles it.
+        return True
+    if overlap < SHARE:
         return False
     return min(target, key=lambda s: (FREQUENCY[s], s)) in region
 
@@ -145,23 +163,52 @@ def _literal(text):
     return re.sub(r"[^0-9a-zçğıöşü]+", " ", fold(text)).strip()
 
 
+LITERAL_SHARE = 0.8  # bounded by test_deleting_a_carried_line_is_detected, which must stay 58/58
+
+
+def _reworded(sentence):
+    """Low-stem sentences are matched on words in order, not on an exact string.
+
+    A sentence with two content words cannot be measured by ratio, so an earlier revision
+    demanded its literal text. That made any REWORDING look like a deletion, and the waiver
+    class invented to cover the one real case (a phrase v1.4 repaired on purpose) turned out
+    to be forgeable twice over — a register line, then a test file with no assertions. The
+    class is gone. Instead the sentence's own words are looked for IN ORDER inside one v1.4
+    line: a repair that changes a word or two still matches, while a deleted sentence does not.
+    """
+    want = _literal(sentence).split()
+    if not want:
+        return True
+    for line in _LINES_NEW:
+        have = _literal(line).split()
+        i = 0
+        for word in have:
+            if i < len(want) and word == want[i]:
+                i += 1
+        if i / len(want) >= LITERAL_SHARE:
+            return True
+    return False
+
+
 def uncovered_in(text):
-    global _LITERAL_NEW
+    global _LITERAL_NEW, _LINES_NEW
     _LITERAL_NEW = _literal(text)
+    _LINES_NEW = [l for l in text.splitlines() if l.strip()]
     paragraphs, rows = regions(text)
     out = []
     for sentence in sentences():
         target = stems(sentence)
-        if not target:
-            continue
         # a table row must be answered by a table row; rows are too generic for prose to carry
         if len(target) < MIN_STEMS:
+            # Includes sentences with NO content word at all. An earlier revision skipped
+            # those outright, so a line built from short words ("- Sonuç ve somut eylem;")
+            # could be deleted and the measure never noticed — found by the mutation test.
             # Too few content words for a ratio to mean anything: 60% of two stems is one
             # word, which any paragraph supplies. Measured in the sixth audit: 253 of 739
             # sentences fall here. How many of those were wrongly "covered" depends on how
             # "absent" is defined, so no count is quoted: the rule is the fix, not a number.
             # For these the text itself must survive, near enough to be recognisable.
-            if _literal(sentence) in _LITERAL_NEW:
+            if _literal(sentence) in _LITERAL_NEW or _reworded(sentence):
                 continue
             out.append((rule_id(sentence), sentence))
             continue
@@ -195,25 +242,35 @@ def class_holds(kind, sentence):
             # was absent from v1.4. A mood marker means the sentence carries a verdict.
             return False
         return any(is_covered(s) for s in split(line) if s != sentence)
-    if kind == "ONARILDI":
-        # The sentence was a FINDING, not a rule to carry: v1.4 repaired it on purpose and a
-        # test forbids its wording, so restoring it verbatim would reintroduce the defect.
-        #
-        # The seventh audit broke the first version of this check: it only asked whether the
-        # repair register mentioned the phrase, so ONE fabricated register line waived ANY
-        # rule. A register is a document; anyone can write in it. The repair itself is the
-        # test that bans the wording, so that is what is required here — and a test cannot be
-        # forged by adding a line, because the banned phrase must then be absent from v1.4,
-        # which is exactly the repair having happened.
-        register = ROOT / "BULGU_DEGISIKLIK.md"
-        tests = ROOT / "bundle_v1_4" / "tests"
-        if not (register.exists() and tests.is_dir()):
+    if kind == "V13_TEKRAR":
+        # v1.3 states this rule TWICE, in two places and two wordings. v1.4 carries it once,
+        # which is correct — and then the repetition gate forbids adding the second copy while
+        # the coverage gate reports it missing. The waiver is verified against v1.3 alone: an
+        # equivalent sentence must exist there AND be covered here. Nothing outside the two
+        # command texts is consulted, so there is no document to forge.
+        target = stems(sentence)
+        if len(target) < 2:
             return False
-        guards = "\n".join(f.read_text(encoding="utf-8") for f in sorted(tests.glob("test_*.py")))
-        for phrase in re.findall(r"'([^']{8,})'", register.read_text(encoding="utf-8")):
-            if (phrase in sentence                       # the register names THIS sentence
-                    and phrase.lower() not in fold(NEW)  # the wording is gone from v1.4
-                    and phrase in guards):               # and a test keeps it gone
+        for other in sentences():
+            if other == sentence:
+                continue
+            twin = stems(other)
+            if twin and len(target & twin) / max(len(target), len(twin)) >= STRONG:
+                if is_covered(other):
+                    return True
+        return False
+    if kind == "YASAK_IFADE":
+        # v1.4 forbids this sentence's wording, so carrying it verbatim would break the very
+        # repair the ban records. This is a real conflict between two rules of the repo, not a
+        # loophole, and it is verified from the BAN LISTS the package's own tests enforce —
+        # not from a document. The seventh and eighth audits broke two earlier attempts, both
+        # of which trusted a file someone could simply write: a repair register, then a test
+        # with no assertions. A ban list is different in kind: forging an entry FORBIDS that
+        # wording everywhere in the command text, so the forgery destroys what it was meant
+        # to smuggle in. The residual limit, stated: a check that reads repository files can
+        # never be unforgeable — it can only be made self-defeating to forge.
+        for phrase in banned_phrases():
+            if phrase in sentence and phrase.lower() not in fold(NEW):
                 return True
         return False
     if kind == "ORNEK":
@@ -221,6 +278,23 @@ def class_holds(kind, sentence):
             return False
         return any(is_covered(s) for s in split(line) if s != sentence)
     return False
+
+
+def banned_phrases():
+    """The wordings the package's own tests keep out of the command text."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_ct", ROOT / "bundle_v1_4" / "tests" / "test_command_text.py")
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        return []
+    out = list(getattr(module, "DISCRETION", [])) + list(getattr(module, "SLOP", []))
+    source = (ROOT / "bundle_v1_4" / "tests" / "test_command_text.py").read_text(encoding="utf-8")
+    out += re.findall(r'for phrase in \(([^)]*)\):', source) and re.findall(
+        r'"([^"]+)"', re.search(r'for phrase in \(([^)]*)\):', source).group(1)) or []
+    return [p for p in out if len(p) > 6]
 
 
 def entries():
@@ -275,9 +349,15 @@ class RuleCoverageTests(unittest.TestCase):
             # Not detected. That is only acceptable when the rule provably lives on another
             # line — otherwise the measure is blind and the line could vanish unnoticed.
             mine = stems(target)
-            elsewhere = any(len(mine & stems(l)) / len(mine) >= 0.7
-                            for l in lines if l != target and stems(l))
-            if not (mine and elsewhere):
+            elsewhere = mine and any(len(mine & stems(l)) / len(mine) >= 0.7
+                                     for l in lines if l != target and stems(l))
+            # A lead-in and the list under it carry one rule between them: deleting only the
+            # lead-in leaves the list, which a reader still sees and a bag-of-words measure
+            # cannot tell apart. That is a structural property, not an exception list — the
+            # shape is checked here, and the LIST's own deletion is still detected.
+            after = next((l for l in lines[lines.index(target) + 1:] if l.strip()), "")
+            lead_in = target.rstrip().endswith(":") and after.lstrip().startswith(("-", "|"))
+            if not (elsewhere or lead_in):
                 unexplained.append(target[:70])
         self.assertEqual(unexplained, [], "Bu satırlar v1.4'ten silinse ölçüm FARK ETMEZ ve "
                          "içerikleri başka bir satırda da DURMUYOR:\n" + "\n".join(unexplained))

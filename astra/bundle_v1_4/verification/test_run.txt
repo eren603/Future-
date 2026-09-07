@@ -44,6 +44,8 @@ test_python_object_and_cycles_cannot_cross_boundary (test_astra.WireTests.test_p
 test_capacity_numbers_match_the_measured_constant (test_command_text.CommandTextTests.test_capacity_numbers_match_the_measured_constant) ... ok
 test_every_exit_gate_names_an_artefact (test_command_text.CommandTextTests.test_every_exit_gate_names_an_artefact) ... ok
 test_no_discretionary_adverbs_outside_quotes (test_command_text.CommandTextTests.test_no_discretionary_adverbs_outside_quotes) ... ok
+test_no_paragraph_is_a_dump (test_command_text.CommandTextTests.test_no_paragraph_is_a_dump)
+A restored rule must be PLACED, not appended to whatever paragraph was nearest. ... ok
 test_no_rule_is_kept_beside_its_own_rewording (test_command_text.CommandTextTests.test_no_rule_is_kept_beside_its_own_rewording)
 Bloat is a rule stored twice — once reworded, once verbatim. ... ok
 test_no_rule_is_stated_twice (test_command_text.CommandTextTests.test_no_rule_is_stated_twice)
@@ -213,6 +215,6 @@ test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 199 tests in 9.203s
+Ran 200 tests in 9.089s
 
 OK

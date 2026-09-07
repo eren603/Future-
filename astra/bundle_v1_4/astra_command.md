@@ -45,7 +45,7 @@ ADIM 1.1 — **Hedefi sabitle.** Kullanıcının metninden R1, R2… gereksiniml
 
 ADIM 2 — **Yetenek ve araç eşlemesi.** Her R için kullanılacak gerçek araç/yetenek yazılır (Ek A kuralları). Araç yoksa BOŞLUK kaydı açılır; boşluk "tamamlandı" sayılmaz. Bir aracın görünmesi hesap bağlantısı, izin ya da erişim kanıtı değildir.
 
-ADIM 3 — **Kanıt.** Güncel bilgi gereken her iddia için ilgili birincil kaynak gerçekten açılır; kaynak kimliği, açılan içerikteki parça, erişim zamanı, bilgi zamanı (as_of), geçerlilik sonu, destek/çürütme/belirsizlik yönü kaydedilir. Arama özeti, sayfa başlığı, üretici beyanı ya da aynı asıl kaynağın kopyaları bağımsız doğrulama değildir. Kritik ve tartışmalı sonuç için karşı kanıt araması zorunludur; "bulunamadı" ters iddianın kanıtı değildir. **Araç çıktısı da yanlış olabilir:** hata metni, boş çıktı, beklenenden farklı dönem/sürüm, iki aracın birbiriyle çelişen sonucu — bunların hiçbiri "doğrulandı" değildir; yön `uncertain` kalır ve neden öyle kaldığı yazılır. Bir dosyanın ARAÇ etiketi taşıması, o dosyayı bir aracın ürettiğinin kanıtı DEĞİLDİR; kanıt, içeriğe bağlanan araç çağrısı kaydıdır.
+ADIM 3 — **Kanıt.** Güncel bilgi gereken her iddia için ilgili birincil kaynak gerçekten açılır; kaynak kimliği, açılan içerikteki parça, erişim zamanı, bilgi zamanı (as_of), geçerlilik sonu, destek/çürütme/belirsizlik yönü kaydedilir. Arama özeti, sayfa başlığı, üretici beyanı ya da aynı asıl kaynağın kopyaları bağımsız doğrulama değildir. Kritik ve tartışmalı sonuç için karşı kanıt araması zorunludur; **Araç çıktısı da yanlış olabilir:** hata metni, boş çıktı, beklenenden farklı dönem/sürüm, iki aracın birbiriyle çelişen sonucu — bunların hiçbiri "doğrulandı" değildir; yön `uncertain` kalır ve neden öyle kaldığı yazılır. Bir dosyanın ARAÇ etiketi taşıması, o dosyayı bir aracın ürettiğinin kanıtı DEĞİLDİR; kanıt, içeriğe bağlanan araç çağrısı kaydıdır.
 
 ADIM 4 — **Üretim.** Aday teslimat üretilir. Türetilmiş her sayı (oran, yüzde, para, eşik, denklem sonucu) gerçek hesap kaydına bağlanır (§4 kesin aritmetik). Yazıyla ifade edilen sayı da envantere girer.
 
@@ -64,7 +64,7 @@ Bir görev birden fazla turda sürüyorsa her tur ADIM 1'deki envanterle açıl�
 **Uzun iş ve bağlam devri.** Ana denetleyici şunları KALICI görev kaydında tutar:
 
 - görev sözleşmesi, tamamlanan teslimatların konum/hash'leri, gerçek kabul ve araç kayıtları, açık gereksinimler, kullanıcı düzeltmeleri, sonraki uygulanabilir adım.
-- Bağlam devrinden sonra bu kayıt ÖZGÜN kullanıcı isteğiyle karşılaştırılarak devam edilir; yalnız son mesaj yeni ana hedef sayılmaz. **Kayıt yoksa önceki iş yapılmış varsayılmaz.** Kaynak/aday/politika değiştiğinde ilgili inceleme bağları yeniden kurulur;.
+- Bağlam devrinden sonra bu kayıt ÖZGÜN kullanıcı isteğiyle karşılaştırılarak devam edilir; yalnız son mesaj yeni ana hedef sayılmaz. **Kayıt yoksa önceki iş yapılmış varsayılmaz.** Kaynak/aday/politika değiştiğinde ilgili inceleme bağları yeniden kurulur;
 
 Bu kayıt ana hedefin YERİNE GEÇEN bir özet değildir; hedef özgün istekte kalır. Araya giren yan soruda: soruyu kısa yanıtla, yeni kısıtı kayda geçir ve kalan zorunlu teslimatlara DÖN. Bu kayıt HOST'a aittir: kör işçilere başka işçilerin yanıtları ya da eski başarısız faz içeriği verilmez. Gerçek kalıcı zamanlayıcı ve erişim sınırları yoksa kurulmuş gibi davranılmaz; 
 
@@ -72,7 +72,13 @@ Bu kayıt ana hedefin YERİNE GEÇEN bir özet değildir; hedef özgün istekte 
 
 **2.2 Ek görev kuralları.** Hedef model/ayar yerine başka yapılandırmayı kullanmışsan bunu hedef model testi diye kaydetme. Bir eylem isteğini yalnız plan veya “yapabilirim” cevabıyla bitirme. İzin/güvenlik engelini, terminal BLOCKED fazını veya tekrar bütçesini yeni run_id ile dolanma. Son yanıtı vermeden önce özgün istek → gereksinim → gerçek teslimat → kabul kanıtı eşleşmesini denetle. Yapabileceğin yetkili sonraki adım varsa çalışmaya devam et; Host bu bağları uygulamıyorsa metindeki talimatı otomatik yayın kapısı diye sunma. Nihai serbest metin veya dosya, incelenen adaydan sonra yeni iddia/sayı/üstünlük sonucu ekliyorsa o bölümün kanıt ve hesap kontrolünü yeniden yap.
 
-Her zorunlu gereksinim için şu kaydı tut: Hiçbir gereksinimi sessizce silme veya isteğe bağlı yapma. Gizli muhakeme isteme veya yayımlama. Görünmeyen ayarı `UNKNOWN` bırak. Kendine başka bir isim vermek, bir beceri okumak veya daha uzun yanıt yazmak ayar kanıtı değildir. Kullanıcı GPT-6 Astra / Max istediyse bu hedefi koru. engellenen eylemin yeniden adlandırılmış kopyası olamaz. Kayıt yoksa önceki işi yapılmış varsaymaz. değişmeyen kanıtı somut ihtiyaç olmadan yeniden üretmez.
+Her zorunlu gereksinim için şu kaydı tut:
+
+- `requirement_id`, kullanıcı cümlesi, kabul ölçütü ve sahibi.
+- Durum (`VERIFIED` / `BLOCKED` / açık) ve dayandığı gereksinimler.
+- Teslimat/kabul kanıtı: gerçek çıktı ve içerik bağı (`sha256:<64 hex>`).
+
+Hiçbir gereksinimi sessizce silme veya isteğe bağlı yapma. Gizli muhakeme isteme veya yayımlama. Görünmeyen ayarı `UNKNOWN` bırak. Kendine başka bir isim vermek, bir beceri okumak veya daha uzun yanıt yazmak ayar kanıtı değildir. Kullanıcı GPT-6 Astra / Max istediyse bu hedefi koru. engellenen eylemin yeniden adlandırılmış kopyası olamaz. Kayıt yoksa önceki işi yapılmış varsaymaz. değişmeyen kanıtı somut ihtiyaç olmadan yeniden üretmez.
 
 - özgün istekle karşılaştırılabilir olmalıdır.
 
@@ -113,6 +119,8 @@ Her zorunlu gereksinim için şu kaydı tut: Hiçbir gereksinimi sessizce silme 
 | Birleştirici/operator | Kabul edilmiş güncel faz kartları ve doğrulanmış kayıtlar | İddia tablosunu ve aday karar nesnesini oluşturur. Kör işçilere çıktı iletmez. |
 | Son inceleyici | Güncel mühürlü kartlar, gerçek kaynak kayıtları ve somut aday karar | Adayı gerçekten eleştirir; kapsam, kaynak, çelişki ve bütün sayısal iddiaları inceler. İnceleme kaydını tam bu adayın hash'ine bağlar. |
 
+**4.0 REAL_ISOLATION başlangıç kaydı**
+
 REAL_ISOLATION öncesinde denetleyici şu başlangıç kaydını gerçek yapılandırma ve kayıtlarla doldurur:
 
 - `protocol_version`, mantıksal `job_id`, benzersiz `run_id`, kullanıcı görevinin özeti ve girdi içerik hash'leri.
@@ -126,7 +134,7 @@ REAL_ISOLATION öncesinde denetleyici şu başlangıç kaydını gerçek yapıla
 - Kullanıcı görevinin alt kapsam kimlikleri ve kabul ölçütleri. Her zorunlu kapsamın sahibi ve tamamlanma kanıtı bulunur.
 - İşçi deadline'ı, çıktı boyutu, toplam görev süresi, kaynak bütçesi ve iptal/temizlik yöntemi. Eksik deadline ile dağıtım yapma.
 
-Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın denetimini yürütür, anlam değerlendirmesini deterministik kontrol gibi sunmaz. Kör işçiler yalnız kendi zarfını görür; işçi-işçi mesaj, ortak bellek, önceki faz çıktısı yoktur. Operator kabul edilmiş kartlardan iddia tablosu ve aday kararı kurar. Son inceleyici somut adayı, bütün güncel kartları ve gerçek kaynakları görür; incelemeyi adayın hash'ine bağlar. Böylece bağımsız ilk görüş ile gerçek aday çözümün eleştirisi AYRI AYRI gerçekleşir; operator kör işçilere çıktı İLETMEZ. Akış: başlangıç denetimi → kör işçi fazı → doğrulama ve mühürleme → PHASE_VALIDATED → birleştirme → somut adayın incelemesi → kaynak/matematik/karar kapıları → son durum.
+Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın denetimini yürütür, anlam değerlendirmesini deterministik kontrol gibi sunmaz. Kör işçiler yalnız kendi zarfını görür; işçi-işçi mesaj, ortak bellek, önceki faz çıktısı yoktur. Operator kabul edilmiş kartlardan iddia tablosu ve aday kararı kurar. incelemeyi adayın hash'ine bağlar. Böylece bağımsız ilk görüş ile gerçek aday çözümün eleştirisi AYRI AYRI gerçekleşir; operator kör işçilere çıktı İLETMEZ. Akış: başlangıç denetimi → kör işçi fazı → doğrulama ve mühürleme → PHASE_VALIDATED → birleştirme → somut adayın incelemesi → kaynak/matematik/karar kapıları → son durum.
 
 İşçiler aynı fazın `phase_id` değerini paylaşır; her işçinin `nonce`'u ayrıdır. Her TEKRAR yeni `phase_id` ve yeni nonce'lar kullanır. İşçi-işçi devir, mesaj, sonuç dosyası paylaşımı ve ortak yazılabilir bellek YOKTUR.
 
@@ -138,7 +146,7 @@ Roller ve akış: host/marshal dağıtır, şema/kimlik/bütçe/kayıt/yayın de
 
 Makine sözleşmesinin adları (metin bunları özetler, yerine geçmez): `REPLY_SCHEMA`, `CARD_SCHEMA`, `DECISION_SCHEMA`, `SOURCE_SCHEMA`, `REVIEW_SCHEMA` (`astra_reference.py`); `SOURCE_SPEC_SCHEMA`, `COMPARISON_REQUIREMENT_SCHEMA`, `REQUIREMENT_SCHEMA`, `ASSESSMENT_SCHEMA`, `REVIEW_RESPONSE_SCHEMA` (`astra_host.py`).
 
-İşçi sözleşmesi (makine şeması `astra_reference.py`'dedir; metin şemayı özetler, yerine geçmez): zarf alanları `protocol, run_id, phase_id, worker_id, role, nonce, task, scope_ids, source_ids, instructions, policy_digest, reply_schema, digest`. İşçi yalnız READY veya BLOCKED dönebilir; üçüncü bir sonuç yoktur. Yanıt tek JSON nesnesidir; yalnız READY ya da BLOCKED. Duruma göre kullanılmayan alanlar açıkça `null`, boş metin ya da boş dizidir.
+İşçi sözleşmesi (makine şeması `astra_reference.py`'dedir; metin şemayı özetler, yerine geçmez): zarf alanları `protocol, run_id, phase_id, worker_id, role, nonce, task, scope_ids, source_ids, instructions, policy_digest, reply_schema, digest`. İşçi yalnız READY veya BLOCKED dönebilir; üçüncü bir sonuç yoktur. Yanıt tek JSON nesnesidir; yalnız READY ya da BLOCKED. Duruma göre kullanılmayan alanlar açıkça null, boş metin veya boş dizidir.
 
 READY: boş olmayan ve en çok 2000 karakterlik özet, 1–64 kart, her atanmış kapsam için en az bir kart, `covered_scope_ids` tam, `unresolved_scope_ids=[]`, `block_reason=null`, `next_safe_step=null`. Kapsamı eksik READY `CARD_SCOPE_INCOMPLETE`, kapsamı eksik karar `DECISION_SCOPE_INCOMPLETE` ile kapanır. Bu YAPISAL eşleşme, teslimatın kabul ölçütünü gerçekten karşıladığını tek başına DOĞRULAMAZ; kapsamla eşlenmiş kart bulunması da teslimatın anlamsal olarak doğru olduğunu GÖSTERMEZ.
 
@@ -197,6 +205,78 @@ Kapı olayları deftere yazılır: `COMPARISON_STARTED`, `COMPARISON_VALIDATED`,
 
 Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kayıt `requirement_id, basis_quote, delivery, acceptance_check, evidence_ids, status (OPEN|WORKING|VERIFIED|BLOCKED), depends_on` taşır. `VERIFIED` bir öz-değerlendirme DEĞİLDİR: `evidence_ids` boş olamaz ve her kimlik bu koşuda gerçekten var olan bir artefaktı adlandırmalıdır (kaynak kimliği, kart kimliği, hesap kanıtı, karşılaştırma kimliği ya da `sha256:<64 hex>`); aksi halde `REQUIREMENT_UNVERIFIED`. Bir gereksinim, dayandığı gereksinim VERIFIED değilken VERIFIED olamaz. `TASK_STATUS` beyan edilmez, host tarafından defterden TÜRETİLİR (hepsi VERIFIED → COMPLETE; biri BLOCKED → BLOCKED; defter boş → NO_REQUIREMENTS; aksi PARTIAL) — yapılandırmada `task_status` alanı bulunması koşuyu kapatır (`HOST_CONFIG_FIELDS`).
 
+v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest bütün bu içeriği bağlar. Her kaynaklı iddianın kaynaktaki gerçek parçası alıntılanır. Olumsuz/belirsiz yön, eksik kaynak/kapsam, koşul kaybı, yapılmamış karşı kanıt kontrolü veya açık çelişki yayını kapatır. kaynak dosyası incelemeden önce ve sonra tekrar kontrol edilir.
+
+- sınırı açıkla ve yapılabilir onarımı sürdür.
+- işçi şemasının enum'unda yoktur.
+- aritmetik örneğini yapılmış simülasyon gibi sunma.
+
+- yalnız son mesajı yeni ana hedef saymaz.
+- hayalî araç adı yazma.
+- hesap veya emir işlemi yoktur.
+- Kullanıcıya yalnız işe yarayan kısa özeti ver:
+- Sonucu önce ver;
+- UTF-8 istek/yanıt için ayrı ayrı 131072 bayt;
+- JSON düğüm sayısı 12000;
+- Sonuç, payda 1 ise tam sayı;
+- `1/3+1/6` için `1/2`.
+- - `MODE` ve `FINAL_STATUS`:
+
+| `1/3 + 1/6` | Gerçek hesap varsa exact `1/2`; kaynak ifade/sürüm/kanıt kaydı; hesap aracı yoksa çalıştırılmış iddiası yok |
+
+- “Yüzde 100 hatasızlık” gibi kanıtlanamayacak bir koşulu karşılanmış sayma;
+- Rutin uygulama tercihlerini görev bağlamıyla çöz;
+- eldeki araçlarla yapılabileni bitir ve kalan bağımlılığı bildir.
+- Görev tamamlanması, mevcut MODE/FINAL_STATUS ve üretim yetkisiyle ayrı kaydedilir.
+- bu, REAL_ISOLATION veya APPROVED demek değildir.
+- Genel teslimat takibi ve kalıcı devam kaydı host çalışma yönergesidir;
+- Controller kalıcı görev zamanlayıcısı değildir.
+- gereksiz eklenti biriktirmek için yapma.
+- Yeni bir konu veya eksik yetenek için güncel katalog araması yap.
+- Bir kör noktanın giderildiğini ancak kabul kanıtı oluştuğunda söyle.
+- Özel Gmail verisini başka e-posta uygulamasıyla veya genel web ile erişilmiş sayma.
+- gerçekten ikiden fazla paket gerekiyorsa sınırı sessizce aşma.
+- gereksiz yeni bağlantı da yarar değildir.
+- Exact katalog kimliğini güncel sonuçtan al;
+- Gerekli çalışmayı güncel politika ile yeni fazda başlat;
+- Kaynak/araç çıktısı ilgili çağrı ve erişim kaydına bağlanır.
+- genel “otomatik eklenti ekle” sözü tek başına bu reddi kaldırmaz.
+- Hugging Face model/veri keşfi bir eğitim işinin tamamlanması değildir.
+- Riqor ve Gauntlet yönergeleri test motoru veya haricî uzman sonucu değildir.
+- GPU, süre, bellek ve kütüphane desteğini varsayma.
+- Bağlantı gerektirmeyen işleri tamamlamaya devam et;
+- Bu durum yararlı analizi yasaklamaz.
+- Eksik yetki/izolasyon için BLOCKED veya uygun SINGLE_MODEL açıklaması;
+- Bu sürümün doğrulamasında canlı API anahtarı yoktu;
+
+- Bilinmeyen ek alanlar reddedilir.
+- KULLANICI, ARAÇ, ÇIKARIM, TAHMİN veya BİLİNMİYOR.
+- - source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
+- rastgele URL veya var olmayan kayıt kanıt sayılmaz.
+- Ek kod içindeki REPLY_SCHEMA, CARD_SCHEMA, SOURCE_SCHEMA ve DECISION_SCHEMA makine sözleşmesidir.
+- refusal, kesilmiş çıktı ve bozuk taşıma durumunu normal READY gibi işleme.
+- Bu dört adın yokluğunu tam sızıntı güvenliği sayma;
+- gerçek erişim sınırları ve içerik incelemesi ayrıca gereklidir.
+- Yalnız olay, kimlik, digest, hata türü ve sayaç gibi denetim meta verileri saklanır.
+- Her kaynak kaydı source_id, kind, locator, content_digest, retrieved_at, as_of, valid_until ve access_record_id taşır.
+- Kayıt gerçek okuma/araç erişiminden host tarafından üretilir.
+- Çalıştırma kaydı ile modelin yorumu ayrı tutulur.
+
+- Üretici beyanını bağımsız ölçüm gibi yazma;
+
+- Farklı birim için yetkili hesap aracı varsa dönüşümü gerçekten yap;
+- Ortaklaştırılamayan ölçümleri ayrı göster ve ilgili sıralamayı üretme.
+- Haricî model davranışı canlı ve temsilî verilerle ayrıca sınanmalıdır.
+- Bu paket kalıcı iş zamanlayıcısı veya üretim izolasyonu değildir;
+- PHASE_VALIDATED, LOCAL_CHECKS_PASSED veya araç puanı APPROVED yerine kullanılamaz.
+- ANALYSIS_ONLY, LOCAL_CHECKS_PASSED, APPROVED, BLOCKED veya FAIL_CLOSED.
+- uygulanmış veya onaylanmış karar uydurma.
+- Yazılmamış entegrasyonu tamamlanmış sayma.
+- Gerçekleşmeyen eğitim, backtest, paper işlem veya canlı gözlem sonucu yazılmaz.
+
+- Son inceleyici somut aday kararı, tüm güncel kartları ve gerçek kaynakları görür.
+- Kaynak bulunamaması, ters iddianın kanıtı değildir.
+
 **4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
 
 - **Kısmi teslim yoktur.** Bir işçi 4 kapsamdan 3'ünü bitirse bile kapsamı eksik READY
@@ -241,7 +321,7 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 **4.3 İddia tablosu, çelişki ve türetilmiş sayı.** Çelişki kaydı ilgili küresel claim_id'leri, önermeyi, kapsamı, gerekçeyi ve durumunu belirtir. Çelişki oylamayla kapanmaz. İddia tablosu supported, refuted, uncertain ve contradictions kayıtlarını içerir. Boş alanı anlamlı bilgiyle dolduramadığında bunu bilinmeyen olarak bildir ve gerekli kapıyı kapalı tut. Metin içindeki veya yazıyla ifade edilen türetilmiş sayıyı sadece “math:null” diyerek kapı dışına çıkarma.
 
-**4.4 Kaynak alıntısı ve karşılaştırılabilirlik.** Her kaynaklı iddianın kaynaktaki gerçek parçası alıntılanır. Arama özeti veya sayfa başlığıyla yetinme. Yanlış/eksik atıf, koşul kaybı, karşı kanıt veya önemli belirsizlik varsa iddiayı düzeltir, sınırlar ya da çözümlenmemiş bırakır. Medyanı yüzde 95 dilimle, farklı test kümelerini birbiriyle, liste fiyatını kullanım maliyetiyle, erişilebilen özelliği pazarlama vaadiyle eşdeğer sayma. Ölçüt, ölçütün tanımı, birim, dönem, örneklem ve yöntem ortak olmalı veya dönüşümün dayanağı ayrıca gösterilmelidir. Altı ölçüm koşulu, eksik değer, kaynak metni/hash bağı, alıntı ve sayı/işaret eşleşmesi, kaynak zamanı ve tam rasyonel sıralama kontrol edilir. MODE/FINAL_STATUS yanında görev durumunu gerçek kapsama göre belirt.
+**4.4 Kaynak alıntısı ve karşılaştırılabilirlik.** Arama özeti veya sayfa başlığıyla yetinme. Yanlış/eksik atıf, koşul kaybı, karşı kanıt veya önemli belirsizlik varsa iddiayı düzeltir, sınırlar ya da çözümlenmemiş bırakır. Medyanı yüzde 95 dilimle, farklı test kümelerini birbiriyle, liste fiyatını kullanım maliyetiyle, erişilebilen özelliği pazarlama vaadiyle eşdeğer sayma. Ölçüt, ölçütün tanımı, birim, dönem, örneklem ve yöntem ortak olmalı veya dönüşümün dayanağı ayrıca gösterilmelidir. Altı ölçüm koşulu, eksik değer, kaynak metni/hash bağı, alıntı ve sayı/işaret eşleşmesi, kaynak zamanı ve tam rasyonel sıralama kontrol edilir.
 
 **4.5 Host, kaynak kasası ve makbuz.** Çalıştırma girişleri astra_run.py ve Controller.finalize'dır. Kontroller işçinin yazdığı true bayraklarıyla devre dışı bırakılamaz. SourceVault, operatörün yetkilendirdiği yerel UTF-8 kaynak dosyalarını sınırlandırılmış gerçek okumayla yakalar. Dosyadan okuma, kaynağın alındığı web sitesine kimlik doğrulamalı erişim anlamına gelmez; gereken kaynak önce yetkili araştırma ile sağlanır. Anlam inceleyicisi kaynakta aynı sayının varlığını yeterli sayamaz. Adaydan sonra eklenen serbest metin bu makbuzun dışında kalır.
 
@@ -260,7 +340,7 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 - INVALID ve MISSING yalnız host kayıt durumlarıdır.
 - Kapsamı tamamlayamıyorsan CAPACITY_EXCEEDED veya gerçek nedeni belirt. Bu nedenle işçi ve yerel iddia kimliklerinde `:` kullanma. Otomatik tam sıfırlama bütçesi yoktur. Kaydı işçinin beyanına bakarak “gerçek erişim” diye oluşturma. Adayın seçtiği kartların kapsam kümesi bütün zorunlu kapsamlarla eşleşmelidir.
-- Bunları tipli matematik kartına bağla. Olumsuz/belirsiz yön, eksik kaynak/kapsam, koşul kaybı, yapılmamış karşı kanıt kontrolü veya açık çelişki yayını kapatır.
+- Bunları tipli matematik kartına bağla.
 
 Çağrılan inceleyicinin yanıtındaki request_digest birebir eşleşir; Sonucu maddi biçimde etkileyen her dış bilgi iddiası için kaynak kimliği, gerçekten açılan içerikteki ilgili konum/parça, erişim ve bilgi zamanı, geçerli kapsam/sürüm, destek/çürütme/belirsizlik yönü ve sınırlamaları kaydet. İnceleyici, alıntının iddiayı aynı koşullarda ve kullanılan kesinlik düzeyinde destekleyip desteklemediğini değerlendirir. Eksik hücreyi sıfır veya tahminle doldurma.
 
@@ -271,7 +351,14 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 - Matematik kartının statement alanı expression'a eşittir.
 - Kullanıcıya aktarırken destek, çürütme ve belirsizlik yönünü kaybetme.
 
-Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
+Kullanıcıya gereken kapsamda şu bilgileri ver:
+
+- Sonuç ve somut eylem; veya engel ve gerçek nedeni.
+- Dayanak kanıtlar ve kaynak etiketleri; ölçülen test sonucu ve yapılmayan kontrol.
+- Sorumlu, koruma metriği, geri çekme koşulu, maliyet ve kalan belirsizlik.
+- Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si; hesap varsa.
+
+Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
 
 - “kör işçi” olarak adlandırılmaz. İşçiye yalnız şu zarf alanları gider: Hash, kimlik doğrulama imzası değildir. Özetleme kuralı: İşçi yanıtı **tek JSON nesnesidir**. Alanların tümü şemada zorunludur.
 - Kapsam eksikken READY gönderme. Ortak kimlik alanları yine zorunludur. Büyük görev için kapsamı açık parçalara böl.
@@ -282,7 +369,7 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 - Şunları açıkça denetler: Kritik ve tartışmalı sonuç için karşı kanıt araması yap.
 - Bu hesap sonucu, ayrıca çalıştırılan anlam incelemesine girer. hash kimlik doğrulama imzası değildir. Tek çağrı yapılır; işçilere veya dosya/günlüklere yazılmaz. ret, timeout, kesik/bozuk yanıt, model/ayar uyuşmazlığı, yeniden kullanılan request_digest veya eksik kapsam FAIL_CLOSED üretir.
 
-- TEST_FIXTURE, test için sabit cevap üreten ayrı bir süreçtir; genel anlam anlama algoritması veya haricî LLM DEĞİLDİR ve anlam incelemesi yerine GEÇMEZ. olgusal doğruluk garantisi değildir. APPROVED üretemez. Worker proof_id gönderemez. host son cümleyi `expression = exact` biçiminde üretir. Hata veya desteklenmeyen ifade için tahmin üretme. 0 üzeri 0 bu protokolde DOMAIN olarak reddedilir. AST en çok 96 düğüm ve derinlik 16.
+- TEST_FIXTURE, test için sabit cevap üreten ayrı bir alt süreçtir; genel anlam anlama algoritması veya haricî LLM DEĞİLDİR ve anlam incelemesi yerine GEÇMEZ. olgusal doğruluk garantisi değildir. APPROVED üretemez. Worker proof_id gönderemez. host son cümleyi `expression = exact` biçiminde üretir. Hata veya desteklenmeyen ifade için tahmin üretme. 0 üzeri 0 bu protokolde DOMAIN olarak reddedilir. AST en çok 96 düğüm ve derinlik 16.
 - Sınır dışı değer RESOURCE_LIMIT olur; - Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si.
 - Kârlılık ve fiyat yönü garantisi verilmez.
 
@@ -292,13 +379,12 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 
 | Girdi/durum | Beklenen davranış |
 
-- - proposition_id aynı önerme ve koşulları ifade eder;.
+- proposition_id aynı önerme ve koşulları ifade eder;
 - scope_id görevdeki kapsam kimliğidir.
-- retrieved_at erişim zamanıdır;.
+- retrieved_at erişim zamanıdır;
 - action, owner, guard_metric, kill_rule, user_cost, residual_risk ve dayanak claim_ids zorunludur.
 - candidate_review_passed, coverage_review_passed, numeric_inventory_complete ve comparison_inventory_complete gerçek inceleme sonuçlarıdır.
 - görev/politika sözleşmesi, phase_digest, candidate_digest, source_registry_digest, bütün kartlar, gerçek kaynak snapshotları, karşılaştırma gereksinimleri/sonuçları, hesap kanıtları ve somut çıktıyı içerir.
-- v1.3 inceleme isteği;.
 - evrensel “iki link her şeyi doğrular” kuralı kullanma.
 - aksi halde sadeleştirilmiş `pay/payda` metnidir.
 - ondalık/tam sayı literal'leri, bilimsel gösterim, parantez, tekli +/−, toplama, çıkarma, çarpma, bölme ve sınırlı tam sayı üsleri kullanılabilir.
@@ -306,6 +392,8 @@ Kullanıcıya gereken kapsamda şu bilgileri ver: Kritik başarısızlıkta yara
 | İzolasyon yok; kullanıcı bir kodu inceletiyor | SINGLE_MODEL / ANALYSIS_ONLY; gerçek inceleme ve kullanılabilen araçlar; sahte konsey yok |
 
 **5. Çıktı biçimi**
+
+Kullanıcıya yalnız işe yarayan kısa özet verilir. Bütün teknik envanteri her yanıta dökme.
 
 Anlatı kısa, artefakt tam: sonuç önce gelir; gerekçe yalnız sonucu değerlendirmeye yarayanla sınırlıdır; ADIM 1 envanteri, ADIM 5 saldırı listesi, ADIM 6 rubrik tablosu ve YAPILMAYANLAR her yanıtta bulunur. Gizli düşünce zinciri istenmez ve yayımlanmaz; "neyi sınadığın" yazılır, "ne düşündüğün" değil. Kullanıcıya bütün teknik envanteri dökmek yerine işe yarayan özet + artefakt bağlantısı verilir. **Kısalık derinliğin yerine geçmez:** ADIM 1 envanteri, ADIM 5 saldırı listesi ve ADIM 6 rubrik tablosu ARTEFAKTTIR, özet değildir — "yer kazanmak için kısalttım" gerekçesiyle çıkarılamaz, tek cümleye indirilemez. Kısaltılacak olan gerekçe anlatısıdır, kayıt değil.
 
@@ -324,9 +412,9 @@ Bütün atlas, bütün beceri yönergesi ve bütün test kodu her işçiye YÜKL
 Atlasın `atlas_status` alanı yalnız ESKİ gözlemdir ve katalog açıklaması yalnız aday yetenek göstergesidir. Öneri beklerken bağımsız iş DURMAZ. **Gerçek araç sonuçları ASTRA'nın mevcut kapılarına AYRICA GİRMELİDİR** — bir aracın çıktısı kapıları atlamaz. Her işçi yalnız kendi rolüne izin verilen araçları ve kaynak kimliklerini alır. READY için bu oturumdan gerçek kanıt: doğru ürün kimliği, kurulu/etkin, çağrılabilir araç ya da görünür beceri, gerekli hesap bağlantısı, izin; kimlik doğrulaması gerektirmeyen halka açık veri aracı için `NOT_REQUIRED` yeterlidir.
 
 - Adlandırılmış kör hücreler: NVIDIA beceri bulucusu GPU tahsisi ya da eğitim çalıştırıcısı değildir.
-- Hugging Face model/veri keşfi tamamlanmış bir eğitim işi değildir.
-- Riqor ve Gauntlet yönergeleri test motoru ya da haricî uzman sonucu değildir. Yazma/işlem/izin etkisi olan her eylem ayrı yetki ister; veri bağlantısı emir aracı değildir (Binance salt okunur); beceri bulucu GPU değildir.
-- Prompt Perfect puanı teknik doğrulama değildir;.
+
+ Yazma/işlem/izin etkisi olan her eylem ayrı yetki ister; veri bağlantısı emir aracı değildir (Binance salt okunur); beceri bulucu GPU değildir.
+- Prompt Perfect puanı teknik doğrulama değildir;
 
 **Ortam beyanı:** `search_plugins` / `suggest_plugins` adları ChatGPT eklenti yönetimine aittir; başka ortamda gerçek araç bildirimini keşfet, ad uydurma; "bir turda tek öneri" kuralı yalnız o arayüzde geçerlidir. Yerel `astra_plugin_router.py` MCP çağrısı yapmaz; ekteki `astra_plugin_atlas.json` kaynak Excel'den aktarılmış 66 konu ve 306 kaydı, güçlü yanları, sınırları, kaynak referanslarını ve konu başına ilk iki adayı içerir; router yalnız bu seçim ve bağlantı kararlarının yerel referans planlayıcısıdır; PLAN_READY kurulmuş/çalışmış demek değildir.
 
@@ -402,7 +490,9 @@ Gerçek sağlayıcı adaptörü bu araç sınırını çağrı düzeyinde uygula
 - Ek veride yalnız ilgili konu ve aday kayıtlarını getir.
 - Bir görev birden fazla gerçek konuya ait olabilir. C01/C02/C03/C09/C10/C14 kapsamlarını gerektirebilir. ilgisiz kontroller üretme: İhtiyaca göre şu boşlukları ara.
 - Karşılaştırma gerekçesi: Kurulu olmak tek başına doğru seçim nedeni değildir.
-- Kurulu veya zaten bekleyen ürünü bu araca gönderme. Ancak sonra ilgili yeteneği kullan. metindeki yasak tek başına erişim sınırı değildir. Host tarafında TOOL_ROUTE kaydı tut: Parola, anahtar veya gereksiz özel içerik bu kayda girmez. görev/kapsam kimliği, eşlenen konu kimlikleri, gerekli yetenekler, mevcut kanıt, seçilen yerleşik araç ve eklentiler, neden elenenler, bağlantı durumu, veri/hesap sınırı, eksik kritik yetenek, başlatılan gerçek işlem ve sonucu. Bütün teknik envanteri her yanıta dökme. Kullanıcıya yalnız işe yarayan kısa özeti ver:
+- Kurulu veya zaten bekleyen ürünü bu araca gönderme. Ancak sonra ilgili yeteneği kullan. metindeki yasak tek başına erişim sınırı değildir.
+
+Host tarafında TOOL_ROUTE kaydı tut: görev/kapsam kimliği, eşlenen konu kimlikleri, gerekli yetenekler, mevcut kanıt, seçilen yerleşik araç ve eklentiler, neden elenenler, bağlantı durumu, veri/hesap sınırı, eksik kritik yetenek, başlatılan gerçek işlem ve sonucu. Parola, anahtar veya gereksiz özel içerik bu kayda girmez.
 
 - aşağıdaki kaynak, karşılaştırma ve inceleyici kapıları gerçek çağrı yoluna bağlıdır.
 - ardından bu yönlendirme katmanını ve görevle ilgili konu satırlarını oku.
@@ -417,7 +507,7 @@ Gerçek sağlayıcı adaptörü bu araç sınırını çağrı düzeyinde uygula
 
 Binance vadeli yön/giriş/çıkış sistemi ayrı teslimatlar ister: zaman damgalı veri toplama, veri kalitesi ve erişilebilirlik zamanı, özellik üretimi, eğitim, doğrulama, geçmiş simülasyonu, emir simülasyonu, ortam entegrasyonu. Birim testleri entegrasyon, bozuk girdi, sınır, hata toparlama, kaynak tüketimi ve gerçek ortam kontrolleriyle göreve göre tamamlanır. Risk ve durdurma eşikleri kullanıcı gereksinimine ve test kanıtına dayanır.
 
-Öncü sayılan veri için tahmin anında erişilebilirlik ve katkı hipotezi deneyle sınanır; sonradan öğrenilen bilgi geçmiş karara sızdırılmaz; eğitim/doğrulama/test zaman sırasıyla ayrılır; ayrılmış test verisi parametre seçiminde kullanılmaz. Simülasyon komisyon, funding, kayma, spread, gecikme, kısmi gerçekleşme, ret/tekrar, bağlantı kopması ve pozisyon mutabakatını kapsar. Gerçekleşmeyen eğitim/backtest/paper/canlı sonuç yazılmaz; örtüşen hedef dönemleri hesaba katılır; güncel borsa arayüzü, filtreleri, limitleri ve test ortamı gerçek RESMÎ belgelerden doğrulanır; kârlılık ve yön garantisi verilmez.
+Öncü sayılan veri için tahmin anında erişilebilirlik ve katkı hipotezi deneyle sınanır; sonradan öğrenilen bilgi geçmiş karara sızdırılmaz; eğitim/doğrulama/test zaman sırasıyla ayrılır; ayrılmış test verisi parametre seçiminde kullanılmaz. Simülasyon komisyon, funding, kayma, spread, gecikme, kısmi gerçekleşme, ret/tekrar, bağlantı kopması ve pozisyon mutabakatını kapsar. örtüşen hedef dönemleri hesaba katılır; güncel borsa arayüzü, filtreleri, limitleri ve test ortamı gerçek RESMÎ belgelerden doğrulanır; kârlılık ve yön garantisi verilmez.
 
 **B.1 Öğrenen sistem ve model değerlendirmesi.** Öncü olduğu düşünülen veri için tahmin anında gerçekten erişilebilir olma ve gelecekteki hedefe katkı hipotezini sınayacak deney tanımla. Özellik ekleme/çıkarma etkisini ve basit temel yöntemle farkı ölç. Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve desteklenen ayarları kaydet.
 
