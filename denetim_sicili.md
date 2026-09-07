@@ -24,3 +24,23 @@ BEYAN (Madde 6 GİZLİ_GÜNDEM bulgusuna cevap — bulgu KABUL EDİLDİ, kusur g
   output_digest bağlanıyor; args_digest/exit_status doğrulanmıyor. Bu planın kapsam
   sınırıdır, beyanla çelişmez — ama "araç çağrısına bağlanır" ifadesi bunu ima
   ettiğinden v1.4 belgesinde AÇIKÇA sınırlandırılacaktır.
+Madde 6 | Deneme 2/3 | Ajan kod-denetci#9 | Kapı: 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT/TÜNEL PASS; ÇARPIŞMA N/A) | Kanıt: git show --stat 932d5fc → yalnız denetim_sicili.md; git diff 3381a2e 932d5fc → salt ekleme (geçmiş değişmemiş); 23adac6 sicile dokunmuyor; kendi koşusu 148 test OK; mini-repro: uydurma args_digest/exit_status KABUL, yanlış output_digest RED (SOURCE_TOOL_BINDING) | Karar: PASS | Arşiv: -
+  DÜZELTME (denetçinin haklı itirazı): görev metnimde "932d5fc sonrası commit'ler (3c5e3bd, 23adac6)" yazmıştım; 3c5e3bd aslında 932d5fc'nin EBEVEYNİ, yani onarımdan ÖNCE. Denetçi bunu git ile doğrulayıp düzeltti. Öncül hatalıydı, hüküm etkilenmedi.
+Madde 5 | Deneme 2/3 | Ajan kod-denetci#8 | Kapı: GİZLİ_GÜNDEM FAIL; ATLAMA/TİYATRO/SAHTE_KANIT/TÜNEL PASS; ÇARPIŞMA N/A | Kanıt: git show --stat 3c5e3bd → 6 dosya, 3'ü kapsam dışı (astra/OLCUM_FAZ3.md Task 8 bölümü — o commit'te kod HENÜZ YOK; astra/probes/probe_replay.py Task 6 uyum düzeltmesi; denetim_sicili.md Madde 4/7 kayıtları), hiçbiri commit mesajında beyan edilmemiş; izole repro b1288d8 → symlink NOT REJECTED (TİYATRO bulgusu bağımsız doğrulandı), HEAD → SOURCE_SYMLINK_REJECTED (zincir symlink dahil), meşru yol kabul; kendi koşusu 148 test OK | Karar: RESTART | Arşiv: -
+
+BEYAN (Madde 5 GİZLİ_GÜNDEM — bulgu KABUL EDİLDİ, kusur gerçektir ve TEKRARDIR):
+  3c5e3bd commit'i yine `git add -A` ile üç kapsam dışı dosyayı taşıdı. Bu, Madde 6'da
+  kaydedilen ve "bundan sonra denetim_sicili.md kendi commit'inde işlenir" kuralıyla
+  kapatıldığı sanılan ihlalin AYNI SINIFTAN tekrarıdır — kural yalnız sicil dosyasını
+  kapsıyordu, asıl sorun `git add -A` alışkanlığıydı. Genişletilmiş kural: her commit
+  yalnız o görevin Files listesindeki yolları içerir; `git add -A` yerine dosya adıyla
+  ekleme yapılır; bir yan düzeltme (ör. probe uyumu) gerekiyorsa KENDİ commit'inde ve
+  kendi gerekçesiyle işlenir.
+
+  Denetçinin ikinci gözlemi de KABUL EDİLDİ (kod yorumu tam doğru değil):
+  `os.path.abspath` sözlüksel `..` sadeleştirmesi bir symlink bileşenini denetimden
+  ÖNCE dizgeden silebiliyor (`link_dir/../real_dir/x` → `/real_dir/x`), yani "tüm
+  parents bileşenleri denetleniyor" ifadesi olduğu gibi doğru değildi. Denetçi bunun
+  istismar edilemez olduğunu gösterdi (açılan yol da sadeleşmiş dizgedir, symlink
+  TAKİP EDİLMİYOR), ama yorumun yanlışlığı makyajdır. Deneme 3/3'te kapı, sadeleştirme
+  ÖNCESİ bileşenleri de denetleyecek biçimde kesinleştirildi.
