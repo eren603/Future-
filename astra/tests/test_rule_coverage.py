@@ -31,9 +31,16 @@ OLD = (ROOT / "bundle_v1_3" / "astra_command.md").read_text(encoding="utf-8")
 NEW = (ROOT / "bundle_v1_4" / "astra_command.md").read_text(encoding="utf-8").lower()
 WAIVER = ROOT / "KAPSAM_MUAFIYET.md"
 
+# Turkish marks a rule by SUFFIX, so the marker set is built from suffixes rather than
+# from a hand-listed vocabulary: the third audit showed that a word list silently drops
+# whole classes ("göstermez", "doğrulamaz", "kaydetme", "bitirme", "koru" were all missed
+# and therefore never even entered the inventory).
 NORMATIVE = re.compile(
-    r"(yasak|zorunlu|sayılmaz|sayma\b|deme\b|üretme\b|kullanma\b|yazma\b|verme\b"
-    r"|edilmez|ilmez|ılmaz|olamaz|olmaz|gerekir|değildir|yapılmaz|verilmez|geçemez)", re.I)
+    r"(\b\w+m[ae]z\b"        # negative aorist: göstermez, doğrulamaz, sayılmaz, olamaz
+    r"|\b\w+[mM][ae]\b"      # negative imperative: sayma, deme, kaydetme, bitirme
+    r"|değildir|değil\b|yasak|zorunlu|gerekir|şart\b|olamaz|geçemez"
+    r"|\bkoru\b|\bsakla\b|sayılmaz)", re.I)
+SHARE = 0.6  # a reworded rule counts as covered when most of its content words survive
 WORD = re.compile(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}")
 FREQUENCY = collections.Counter(w.lower() for w in WORD.findall(OLD))
 
@@ -55,8 +62,11 @@ def uncovered():
         if not words:
             continue
         distinctive = min(words, key=lambda w: (FREQUENCY[w], w))
-        if distinctive not in NEW:
-            yield rule_id(sentence), sentence
+        if distinctive in NEW:
+            continue
+        if sum(1 for w in words if w in NEW) / len(words) >= SHARE:
+            continue  # reworded: the distinctive word changed but the sentence survived
+        yield rule_id(sentence), sentence
 
 
 class RuleCoverageTests(unittest.TestCase):

@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "created_at": "2026-09-07T18:36:29.796610+00:00",
+  "created_at": "2026-09-07T18:51:50.664716+00:00",
   "files": [
     {
       "path": "CHANGELOG.md",
@@ -14,8 +14,8 @@
     },
     {
       "path": "astra_command.md",
-      "sha256": "9f4c98881bfb035154e9fe56ed210c8b39bbdd28cadcea941e3aa90a49f31a29",
-      "size_bytes": 41788
+      "sha256": "55448634f010e415311ce84fd66942fa53e420515ed967bba6d560f96eea6181",
+      "size_bytes": 46519
     },
     {
       "path": "astra_compare.py",
@@ -174,12 +174,12 @@
     },
     {
       "path": "verification/cli_runs/method_mismatch/config.json",
-      "sha256": "ac6af190ac111af1a14d0930d088a08c2eb4136086536c7a4e4f7d1c3d57b586",
+      "sha256": "a36d3aa715faaf808dad8e157446f239a829cb5a802ef67688f7d98effa1849e",
       "size_bytes": 2935
     },
     {
       "path": "verification/cli_runs/method_mismatch/result.json",
-      "sha256": "c85807b5385ed099d67bc63b0343b00196d3f22b03b70ed791e74da1a8f90d28",
+      "sha256": "58892f30fb3ef61a0de1a031541233e0a203e62b4c66b50cb08315384bc1b202",
       "size_bytes": 2336
     },
     {
@@ -194,12 +194,12 @@
     },
     {
       "path": "verification/cli_runs/reviewer_missing/config.json",
-      "sha256": "c091fc8bceb467962ecad45dc4ebd71e29803ce8ceb67692d8794f47417f4357",
+      "sha256": "84ed534bd5b8889b5c833101b858605909851b03fae84d3378191b17fe28ebec",
       "size_bytes": 2696
     },
     {
       "path": "verification/cli_runs/reviewer_missing/result.json",
-      "sha256": "8d2d92792245e5451f2ffec0640d5d316e5882e4133f3226ef274910d6c547e5",
+      "sha256": "f3b610273ffca5c9b7e6dc66eeb9fa91b844bf30432b41f897fe0d4293c97300",
       "size_bytes": 2722
     },
     {
@@ -214,12 +214,12 @@
     },
     {
       "path": "verification/cli_runs/semantic_rejection/config.json",
-      "sha256": "0f7da9901ed9778d15f1dd3c45d0c9dbdeae6a1c7bd7c0e752a33a556d4c24c3",
+      "sha256": "c720d797d1745691f952981600a0052cf19a3746398600ab9b414f1412c5fa59",
       "size_bytes": 2967
     },
     {
       "path": "verification/cli_runs/semantic_rejection/result.json",
-      "sha256": "3c1e0151a0907f294533852a1171f55d499c3067c5e0e7e2e8b53793c3043274",
+      "sha256": "c1dd3eb747d17a0cf4dac48fabc9294245c64a98ea6dcf8282d5f394eb44de2e",
       "size_bytes": 3088
     },
     {
@@ -234,12 +234,12 @@
     },
     {
       "path": "verification/cli_runs/valid/config.json",
-      "sha256": "c7794091b3153e6910940df7d989767451fac01b17cf6fef7147dca3c47e527a",
+      "sha256": "7fcfba40f4aa8e93396e2455d610ce44f227b5e1046482ebe199c4550e4dc6b3",
       "size_bytes": 2951
     },
     {
       "path": "verification/cli_runs/valid/result.json",
-      "sha256": "693997aaa593259d963becb114623db805381c540dddcf4627493743f0de3407",
+      "sha256": "4848b7fd8ebf16f6e36464b368f50c4ed28031df4002f5ac2e7b2a249d9e3ce9",
       "size_bytes": 13574
     },
     {
@@ -254,7 +254,7 @@
     },
     {
       "path": "verification/cli_summary.json",
-      "sha256": "a2fca96bb7e3413fc99e19482912f07c6f9230240a7e32ba3770f8b4ffdf81b1",
+      "sha256": "5d26895093883b98d50c53baf3812c4edc0b3ba5675c5ca841bcc31a25a6e9c8",
       "size_bytes": 891
     },
     {
@@ -264,12 +264,12 @@
     },
     {
       "path": "verification/test_result.json",
-      "sha256": "9deff4dcd93f0a894cf459c8302c32bebcc18ae79209cb74a1633c7f8447a9c0",
+      "sha256": "e071ee0faefa225d4fe0f1d14aab4845277254c4e811607f2ad9a3f33f42a40f",
       "size_bytes": 323
     },
     {
       "path": "verification/test_run.txt",
-      "sha256": "ff83da37d963a636580d15b1dfd84d93cc8cc59c6155fd8248e88cc09a571381",
+      "sha256": "7ab958e394c70f491e0a0e60457c8bf9fc8695c4e356a79753b12d0d3555b22e",
       "size_bytes": 24935
     }
   ]
