@@ -219,6 +219,19 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(finish(c, values)["status"], "FAIL_CLOSED")
         values = inputs(c); values[1]["reviewed_claim_ids"] = ["a:c1"]
         self.assertEqual(finish(c, values)["reason"], "REVIEW_COVERAGE")
+    def test_placeholder_owner_fails(self):
+        # K-06: 'owner must be a real responsible party' was enforced for two words only.
+        c = controller(); c.run("Review.")
+        for owner in ["n/a", "TBD", "-", "?", "x"]:
+            with self.subTest(owner=owner):
+                values = inputs(c); values[0]["owner"] = owner
+                values[1]["candidate_digest"] = digest(values[0])
+                self.assertEqual(finish(c, values)["reason"], "OWNER_REQUIRED")
+    def test_second_finalize_is_locked(self):
+        # celiski-1: a second finalize on the same phase must not silently succeed again.
+        c = controller(); c.run("Review.")
+        self.assertEqual(finish(c)["status"], "LOCAL_CHECKS_PASSED")
+        self.assertEqual(finish(c)["reason"], "FINALIZE_ALREADY_DONE")
     def test_blank_action_and_unknown_owner_fail(self):
         c = controller(); c.run("Review.")
         for field, value in [("action", "   "), ("owner", "unknown")]:
@@ -234,8 +247,11 @@ class PublicationTests(unittest.TestCase):
         now = datetime.now(timezone.utc)
         source = c._host.sources()[0]
         self.assertEqual(finish(c, inputs(c, [source]))["status"], "LOCAL_CHECKS_PASSED")
+        # v1.4: finalize locks after success, so the stale case needs its own run.
+        c2 = controller(("sourced", "ready", "ready"), source_ids=["s1"]); c2.run("Review.")
+        source = c2._host.sources()[0]
         source["valid_until"] = (now - timedelta(seconds=1)).isoformat()
-        self.assertEqual(finish(c, inputs(c, [source]))["reason"], "SOURCE_STALE_OR_TIME")
+        self.assertEqual(finish(c2, inputs(c2, [source]))["reason"], "SOURCE_STALE_OR_TIME")
 
 
 if __name__ == "__main__":

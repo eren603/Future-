@@ -167,6 +167,8 @@ DECISION_SCHEMA = obj({
     "action": string(), "owner": ID, "guard_metric": string(), "kill_rule": string(),
     "user_cost": string(), "residual_risk": string(), "claim_ids": array(ID, 320, 1),
 })
+# Owner strings that name nobody; a real responsible party needs at least two letters.
+PLACEHOLDER_OWNERS = {"unknown", "bilinmiyor", "n/a", "na", "tbd", "-", "?", "none", "null", ""}
 
 
 def validate(value, schema):
@@ -414,6 +416,7 @@ class Controller:
         self.policy, self.timeout, self.max_restarts = policy, timeout, max_restarts
         self.run_id, self._phase, self._events = uuid.uuid4().hex, None, ()
         self._host, self._task_digest = host, None
+        self._finalized = False
 
     @property
     def events(self):
@@ -511,6 +514,9 @@ class Controller:
         if phase is None or phase.status != "PHASE_VALIDATED":
             return {"status": "BLOCKED" if phase and phase.status == "BLOCKED" else "FAIL_CLOSED",
                     "reason": "PHASE_NOT_VALIDATED"}
+        if self._finalized:
+            self.log("FINALIZATION_REJECTED", {"reason": "FINALIZE_ALREADY_DONE"})
+            return {"status": "FAIL_CLOSED", "reason": "FINALIZE_ALREADY_DONE"}
         try:
             from astra_host import TrustedHost
             if type(self._host) is not TrustedHost:
@@ -541,7 +547,8 @@ class Controller:
                 raise Rejected("REVIEW_COVERAGE")
             if {cards[cid]["scope_id"] for cid in decision["claim_ids"]} != set(self.scope_ids):
                 raise Rejected("DECISION_SCOPE_INCOMPLETE")
-            if decision["owner"].strip().lower() in {"unknown", "bilinmiyor"}:
+            owner = decision["owner"].strip().lower()
+            if owner in PLACEHOLDER_OWNERS or sum(ch.isalpha() for ch in owner) < 2:
                 raise Rejected("OWNER_REQUIRED")
             source_map, now = {s["source_id"]: s for s in sources}, datetime.now(timezone.utc)
             if not set(source_map).issubset(self.source_ids):
@@ -587,6 +594,7 @@ class Controller:
                       "run_id": phase.run_id, "phase_digest": phase.phase_digest,
                       "decision": decision, "claims": selected, "proofs": proofs,
                       "host_verification": host_verification}
+            self._finalized = True
             self.log("LOCAL_CHECKS_PASSED", {"result_digest": digest(result)})
             return result
         except Rejected as e:

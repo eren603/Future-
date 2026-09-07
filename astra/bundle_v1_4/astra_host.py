@@ -7,6 +7,7 @@ The package remains LOCAL_TEST; fixture reviews never attest semantic truth.
 from __future__ import annotations
 import os
 import math
+import secrets
 import stat
 import sys
 from dataclasses import dataclass
@@ -240,6 +241,7 @@ class TrustedHost:
                             credential_env=list(reviewer.credential_env)))
         self._contract = canonical(contract)
         self._vault, self._reviewer = source_vault, reviewer
+        self._consumed = set()  # request digests already answered; a replayed answer is rejected
 
     def sources(self):
         return self._vault.sources()
@@ -274,6 +276,7 @@ class TrustedHost:
         if self._reviewer is None:
             raise Rejected("SEMANTIC_REVIEWER_REQUIRED")
         request = dict(protocol="ASTRA-HOST-1.3", instructions=SEMANTIC_POLICY,
+                       review_nonce=secrets.token_hex(24), issued_at=stamp(),
                        task=contract["task"], scope_ids=contract["scope_ids"],
                        contract_digest=digest(contract), run_id=controller.run_id,
                        phase_digest=controller._phase.phase_digest, candidate=decision,
@@ -288,6 +291,9 @@ class TrustedHost:
         controller.log("SEMANTIC_REVIEW_STARTED", {"request_digest": request["request_digest"],
                        "reviewer_kind": self._reviewer.kind})
         response = self._reviewer.execute(request)
+        if response["request_digest"] in self._consumed:
+            raise Rejected("SEMANTIC_REVIEW_REPLAY")
+        self._consumed.add(response["request_digest"])
         assessment = response["assessment"]
         flags = ("candidate_review_passed", "coverage_review_passed",
                  "numeric_inventory_complete", "comparison_inventory_complete")
@@ -324,6 +330,7 @@ class TrustedHost:
             raise Rejected("SEMANTIC_COMPARISON_UNSUPPORTED")
         self._vault.assert_current()
         receipt = dict(protocol="ASTRA-HOST-1.3", request_digest=request["request_digest"],
+                       review_nonce=request["review_nonce"], issued_at=request["issued_at"],
                        contract_digest=request["contract_digest"],
                        phase_digest=request["phase_digest"], candidate_digest=digest(decision),
                        rendered_claims_digest=digest(rendered_claims),

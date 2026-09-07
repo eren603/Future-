@@ -138,6 +138,20 @@ class HostIntegrationTests(unittest.TestCase):
         self.build(mode="modify_source")
         self.assert_closed("SOURCE_CONTENT_DIGEST_MISMATCH")
 
+    def test_review_request_carries_fresh_nonce(self):
+        """celiski-1: each review request is unique, so a cached response cannot be replayed."""
+        self.build()
+        receipt = self.finish()["host_verification"]
+        self.assertRegex(receipt["review_nonce"], r"^[0-9a-f]{48}$")
+        self.assertIn("issued_at", receipt)
+
+    def test_two_hosts_never_issue_the_same_request_digest(self):
+        self.build()
+        first = self.finish()["host_verification"]["request_digest"]
+        self.build()
+        second = self.finish()["host_verification"]["request_digest"]
+        self.assertNotEqual(first, second)
+
     def test_replayed_reviewer_digest_rejects(self):
         self.build(mode="replay")
         self.assert_closed("SEMANTIC_REVIEW_BINDING")

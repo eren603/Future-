@@ -49,3 +49,13 @@ kapatıyor (astra_host.py `verify`: tüm kartlar için verdict zorunlu + `verdic
   '2**-1'→1/2, '1e-400' sıfır değil, '10**20**1' → 10^20 (sağdan birleşme; Python semantiği).
 - validate(None, nullable+enum) → SCHEMA_ENUM (None enum'da olmadığı için nullable enum imkânsız);
   validate('', min=0) geçer; bounded_json iç içe FORBIDDEN anahtarı yakalar, değer olarak geçirir.
+
+`python3 astra/probes/probe_replay.py` (bundle_v1_4, Task 4 ÖNCESİ):
+```
+first: LOCAL_CHECKS_PASSED | second: LOCAL_CHECKS_PASSED None
+request_digest equal: True
+```
+→ celiski-1 orkestratör tarafından bağımsız doğrulandı: aynı faz+aday için ikinci finalize
+aynı request_digest ile geçiyor; nonce/kilit yok.
+
+`python3 astra/probes/probe_replay.py` (Task 4 SONRASI): `first: LOCAL_CHECKS_PASSED | second: FAIL_CLOSED FINALIZE_ALREADY_DONE`, `request_digest equal: False` (nonce).
