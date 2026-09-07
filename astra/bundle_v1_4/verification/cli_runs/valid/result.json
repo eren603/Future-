@@ -6,8 +6,8 @@
     "status": "LOCAL_CHECKS_PASSED",
     "production_approval": false,
     "verification_boundary": "HOST_CAPTURED_LOCAL_SNAPSHOTS_AND_EXECUTED_GATES; reviewer judgment is not a truth or isolation guarantee",
-    "run_id": "c15397adfca4466d91f2663a258c4135",
-    "phase_digest": "sha256:efcdd96a22babd56f2f35f389c14669d3508ec56497e35c2c7a432aa48e0cede",
+    "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e",
+    "phase_digest": "sha256:f126e523bfb349cc5e0b8914c5372b8f36d6f6fc6c1b7eeba3377b1610a12373",
     "decision": {
       "action": "Report the observed latency comparison only.",
       "claim_ids": [
@@ -25,7 +25,7 @@
       {
         "claim_id": "a:c1",
         "statement": "A has lower observed median completion latency than B in the specified test.",
-        "label": "ARAÇ",
+        "label": "KULLANICI",
         "exact": null,
         "scope_id": "comparison",
         "proposition_id": "latency",
@@ -40,7 +40,7 @@
       {
         "claim_id": "b:c1",
         "statement": "A has lower observed median completion latency than B in the specified test.",
-        "label": "ARAÇ",
+        "label": "KULLANICI",
         "exact": null,
         "scope_id": "comparison",
         "proposition_id": "latency",
@@ -55,7 +55,7 @@
       {
         "claim_id": "c:c1",
         "statement": "A has lower observed median completion latency than B in the specified test.",
-        "label": "ARAÇ",
+        "label": "KULLANICI",
         "exact": null,
         "scope_id": "comparison",
         "proposition_id": "latency",
@@ -71,7 +71,7 @@
     "proofs": {},
     "host_verification": {
       "candidate_digest": "sha256:e7726678f2a086117a8980db34f2015eea5bbd31a2f828bf69e0200ffba570e5",
-      "comparison_results_digest": "sha256:ff870e335ef12787f7a4a6c3975cd3e446ca51836e5ae9bf7830c14cd202df6d",
+      "comparison_results_digest": "sha256:c1d5019efdb562d70ad71ce911a285b7059f51eb4bd55abab4aae3f99e34c4e1",
       "comparisons": [
         {
           "claim_ids": [
@@ -81,7 +81,7 @@
           ],
           "requirement_id": "latency",
           "result": {
-            "comparison_digest": "sha256:e88e9e02249695b1d9836ec7e870a667ef1abeeaad931405291bbb619fb67ca7",
+            "comparison_digest": "sha256:174d459309627b7d33a5d24332e28860254161b27274bf217b211e5b8a8a179d",
             "context": {
               "definition": "median completion latency",
               "method": "same median harness",
@@ -98,7 +98,7 @@
             "ranking_scope": "OBSERVED_VALUES_ONLY",
             "rows": [
               {
-                "access_record_id": "sha256:ce9a7d9f85d72e63e0e78d1bd7b882df3376a02f833f3586796284db9097479a",
+                "access_record_id": "sha256:22a8b189ce5df2dfa4dbc27fc1375c96be78b07d03b323d67f2da33ef8662643",
                 "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
                 "definition": "median completion latency",
                 "entity": "A",
@@ -109,12 +109,12 @@
                 "population": "same synthetic queries",
                 "quote": "Candidate A: median completion latency 100 ms. Synthetic data.",
                 "source_id": "s0",
-                "source_kind": "TOOL",
+                "source_kind": "USER",
                 "unit": "ms",
                 "value": "100"
               },
               {
-                "access_record_id": "sha256:557f51df323293f66dd94ea2168227f3170f8fe94c7f2608d900dd486c6f8be4",
+                "access_record_id": "sha256:b08b86a6e7699b99c2c017dc65d05f3bc61973cc906c3b3d10f84a6358ad3b35",
                 "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
                 "definition": "median completion latency",
                 "entity": "B",
@@ -125,7 +125,7 @@
                 "population": "same synthetic queries",
                 "quote": "Candidate B: median completion latency 120 ms. Synthetic data.",
                 "source_id": "s1",
-                "source_kind": "TOOL",
+                "source_kind": "USER",
                 "unit": "ms",
                 "value": "120"
               }
@@ -136,14 +136,17 @@
           }
         }
       ],
-      "contract_digest": "sha256:cd57e53c33d69e0359cfa79a2ca824f8e02f5a18d3b213e1dfdcc2d5ced37e8a",
-      "created_at": "2026-09-06T12:36:17.307706+00:00",
-      "host_receipt_id": "sha256:9f6615c0e85fe82bbe21186636293c05419774bb5e0f38323fa5b487a582ef36",
-      "phase_digest": "sha256:efcdd96a22babd56f2f35f389c14669d3508ec56497e35c2c7a432aa48e0cede",
+      "contract_digest": "sha256:5f7bc024313ed037b06b0fcbeab3287176fa364bc3a022a49bf161f995253929",
+      "created_at": "2026-09-07T18:09:24.423513+00:00",
+      "host_receipt_id": "sha256:d97bfe382002d691438d44fcb7c288df61a1b754f2b1d6e5283d65142b2f3ec5",
+      "issued_at": "2026-09-07T18:09:24.404976+00:00",
+      "phase_digest": "sha256:f126e523bfb349cc5e0b8914c5372b8f36d6f6fc6c1b7eeba3377b1610a12373",
       "production_approval": false,
       "protocol": "ASTRA-HOST-1.3",
-      "rendered_claims_digest": "sha256:b5873c1fc70ec4e4a1a9abdcfb10b4e0d179518202d874ac76f73ac00c624c3b",
-      "request_digest": "sha256:be5e3651ebd3b1bee1375311bc62dbf608d19953b1b88351965c32f620f5abd3",
+      "rendered_claims_digest": "sha256:6766430b75dc68871fadb0c2ffec8e843d999decea7e1982905ea154d8a1cc2e",
+      "request_digest": "sha256:6adbd68fb54d0527cb1ac7bd272850615525bfbd3256d5d1aa1e4f9baa94cde8",
+      "requirements": [],
+      "review_nonce": "7bee5ff4b8e9f0a114d1d8d247fbb2012b8fbcb5836402fa",
       "reviewer_kind": "TEST_FIXTURE",
       "reviewer_response": {
         "assessment": {
@@ -228,7 +231,7 @@
         },
         "provider_effort": "fixture-effort",
         "provider_model": "fixture-model",
-        "request_digest": "sha256:be5e3651ebd3b1bee1375311bc62dbf608d19953b1b88351965c32f620f5abd3",
+        "request_digest": "sha256:6adbd68fb54d0527cb1ac7bd272850615525bfbd3256d5d1aa1e4f9baa94cde8",
         "reviewer_record_id": "TEST_FIXTURE_ONLY"
       },
       "semantic_review_scope": "REVIEWER_JUDGMENT_NOT_TRUTH_GUARANTEE",
@@ -237,69 +240,75 @@
       "source_access_authenticated": false,
       "source_access_receipts": [
         {
-          "access_record_id": "sha256:ce9a7d9f85d72e63e0e78d1bd7b882df3376a02f833f3586796284db9097479a",
-          "captured_at": "2026-09-06T12:36:17.194747+00:00",
+          "access_record_id": "sha256:22a8b189ce5df2dfa4dbc27fc1375c96be78b07d03b323d67f2da33ef8662643",
+          "captured_at": "2026-09-07T18:09:24.336278+00:00",
           "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
-          "locator": "file:///workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/verification/cli_runs/valid/source_0.txt",
+          "locator": "file://<RUN>/source_0.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
           "source_id": "s0",
           "upstream_authentication_verified": false
         },
         {
-          "access_record_id": "sha256:557f51df323293f66dd94ea2168227f3170f8fe94c7f2608d900dd486c6f8be4",
-          "captured_at": "2026-09-06T12:36:17.194883+00:00",
+          "access_record_id": "sha256:b08b86a6e7699b99c2c017dc65d05f3bc61973cc906c3b3d10f84a6358ad3b35",
+          "captured_at": "2026-09-07T18:09:24.336514+00:00",
           "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
-          "locator": "file:///workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/verification/cli_runs/valid/source_1.txt",
+          "locator": "file://<RUN>/source_1.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
           "source_id": "s1",
           "upstream_authentication_verified": false
         }
       ],
       "source_access_scope": "LOCAL_FILE_SNAPSHOT_READ",
-      "source_registry_digest": "sha256:580d71a6c924df87995bf46e929ccaf3783ecf4d29f4b1c8f242b46bf76a44c3",
+      "source_registry_digest": "sha256:e3a852d22c0349382fa897a9eb29bc11df6bfb0cf6d8be3c46ef0bd0c6cb8a7b",
+      "task_status": "NO_REQUIREMENTS",
       "upstream_origin_verified": false
     }
   },
+  "claim_ids": [
+    "a:c1",
+    "b:c1",
+    "c:c1"
+  ],
   "events": [
     {
       "detail": {
-        "phase_id": "ad2278ae871a4f6f8e32c86fe835ca88",
-        "reply_digest": "sha256:db66b74c3d893e0418da11109b44bf088528fd79a7e5d09666006ee07760c39c",
+        "phase_id": "cae63297b7234dbdabfa891bf5e9982e",
+        "reply_digest": "sha256:4a1b0e8ee941f7743f9c61095c2cb9e2b847b7c105d4770e8afe5b3c7799b51a",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
-        "phase_id": "ad2278ae871a4f6f8e32c86fe835ca88",
-        "reply_digest": "sha256:48302b162c8561c1c150a6e61cb7299e23137011b059edd02053c4592d19f4cb",
+        "phase_id": "cae63297b7234dbdabfa891bf5e9982e",
+        "reply_digest": "sha256:9716ad9661fd215aca3b7c212c1ed93e98a3c9e432c21e607de0f3e2124503be",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:3199400944ceda2aae967e6a4ecf3661431b90d182945580c51c90363cee5a3a",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:30d240addafae02f8cbb2c50dbf423d6d9fd0e3aa22f4bb092cd66f975c44ac6",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
-        "phase_id": "ad2278ae871a4f6f8e32c86fe835ca88",
-        "reply_digest": "sha256:105b71393a87c37885cf2b1312a097fa98ff8d8bdfc09de7c01df93b3a812eef",
+        "phase_id": "cae63297b7234dbdabfa891bf5e9982e",
+        "reply_digest": "sha256:0ac367a42790662a6887afb0844d83592e16e39b7747ae069a60bdacad4a36c2",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:88cc2c8bc3a4afd663a55e79d9a19cbae30983d040138b45329297b7d0d38276",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:807c5bf38d78272e868c7c61817a78b273caa0898717414206f16f400ae8da1f",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "ad2278ae871a4f6f8e32c86fe835ca88"
+        "phase_id": "cae63297b7234dbdabfa891bf5e9982e"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:3aa85645d6d4b840b1c803ab590184b391bde531c6b540da2bab90caf91c8925",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:1fd556082572d2ef3950a18587408bcf7e4c9f446602ba4df546c677b6a8f7c7",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
@@ -307,42 +316,42 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:4430b32decb581efbc52fa43d3674d492daaa51420a0ac8339a6ef23243c6fd2",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:5cd7372c0e14cefd28c1837cd5d19bf338b1106e7f3ce6aedb12ce5cc6ec2245",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:e88e9e02249695b1d9836ec7e870a667ef1abeeaad931405291bbb619fb67ca7",
+        "comparison_digest": "sha256:174d459309627b7d33a5d24332e28860254161b27274bf217b211e5b8a8a179d",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:09a11a36a92f4e7be9b71bf236e3e9f0ddf611d26cb6fa19252893a0c18be827",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:cadd02ce1d46ba96ee92089e958203dee238f589baaf9fc8919ff9dad293a047",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
-        "request_digest": "sha256:be5e3651ebd3b1bee1375311bc62dbf608d19953b1b88351965c32f620f5abd3",
+        "request_digest": "sha256:6adbd68fb54d0527cb1ac7bd272850615525bfbd3256d5d1aa1e4f9baa94cde8",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:08637377ab6d754b47d0622d78d580efabedf73fc2f469ba3f5aed4ebae03335",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:1a421ba37dfeecd228c8fdd45f10f23f568285b83602bd8a43054fb5909b54b4",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
-        "host_receipt_id": "sha256:9f6615c0e85fe82bbe21186636293c05419774bb5e0f38323fa5b487a582ef36"
+        "host_receipt_id": "sha256:d97bfe382002d691438d44fcb7c288df61a1b754f2b1d6e5283d65142b2f3ec5"
       },
       "kind": "HOST_GATES_PASSED",
-      "previous": "sha256:1df84af491cb697c123328bfe848a6c769cf88bc47c1ee7729166b9b21a162f4",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:8c3d1fe870c4584452c6183894ae26b3bb9b6e9176a3ef2c992080daadb24c48",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     },
     {
       "detail": {
-        "result_digest": "sha256:b85d0d346d54fcfe3cf24278e101b77840c9ca59a8ce8ef93f6f6cc16021136d"
+        "result_digest": "sha256:8642b5f90040dfce47edbc3f05b35165c8641c48464844e6c51abe94c5d692cf"
       },
       "kind": "LOCAL_CHECKS_PASSED",
-      "previous": "sha256:abccef61e212cb2ff0d4fe90f592535f7b3b97cc51ebe279adbf3b28cadb8eb6",
-      "run_id": "c15397adfca4466d91f2663a258c4135"
+      "previous": "sha256:47a97a358fb68b48f65b0456a3c5afae921460cbdbf3dabb795c148eeb1946c1",
+      "run_id": "e1a3f1fcebbc47c789f3210e94a22a9e"
     }
   ],
   "production_approval": false

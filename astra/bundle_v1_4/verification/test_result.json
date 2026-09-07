@@ -1,15 +1,10 @@
 {
-  "tests_run": 113,
-  "failures": 0,
-  "errors": 0,
-  "skipped": 0,
-  "successful": true,
-  "elapsed_seconds": 10.202292221998505,
-  "python_version": "3.12.13",
-  "finished_at": "2026-09-06T12:36:27.310091+00:00",
-  "mode": "LOCAL_TEST",
-  "model_eval": "NOT_RUN",
-  "live_openai_call": false,
-  "production_approval": false,
-  "scope": "Migrated original structural tests, new mandatory host gates and HTTP response fixtures"
+  "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
+  "returncode": 0,
+  "summary": "Ran 166 tests in 7.381s",
+  "outcome": "OK",
+  "python_version": "3.11.15",
+  "platform": "Linux",
+  "generated_at": "2026-09-07T18:09:25.057942+00:00",
+  "scope": "LOCAL_TEST only; no live provider call was made"
 }

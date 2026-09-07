@@ -1,29 +1,50 @@
 {
-  "review_date": "2026-09-06",
+  "review_date": "2026-09-07",
   "claims": [
     {
       "claim": "Responses API accepts text.format JSON schema",
-      "verdict": "SUPPORTED",
+      "verdict": "PREVIOUSLY_SUPPORTED_NOT_REVERIFIED",
       "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
-      "location": "text: { format: { type: json_schema, strict, schema } } examples"
+      "location": "text: { format: { type: json_schema, strict, schema } } examples",
+      "reverification": "2026-09-07: developers.openai.com EGRESS_BLOCKED"
     },
     {
       "claim": "Responses request supports reasoning.effort and response reports the requested effort",
-      "verdict": "SUPPORTED",
+      "verdict": "PREVIOUSLY_SUPPORTED_NOT_REVERIFIED",
       "url": "https://developers.openai.com/api/docs/guides/reasoning",
-      "location": "Reasoning effort and configuration update response semantics"
+      "location": "Reasoning effort and configuration update response semantics",
+      "reverification": "2026-09-07: developers.openai.com EGRESS_BLOCKED"
     },
     {
       "claim": "gpt-6-astra supports max effort",
-      "verdict": "SUPPORTED",
+      "verdict": "PREVIOUSLY_SUPPORTED_NOT_REVERIFIED",
       "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
-      "location": "Model introduction and supported effort list; checked in previous audit this session"
+      "location": "Model introduction and supported effort list",
+      "reverification": "2026-09-07: developers.openai.com EGRESS_BLOCKED"
+    }
+  ],
+  "secondary_sources_2026_09_07": [
+    {
+      "source": "openai-python to_strict_json_schema (raw GitHub)",
+      "class": "DOKUMAN",
+      "finding": "strict mode requires additionalProperties:false and all properties required; length keywords are neither stripped nor rejected client-side, which does not prove server acceptance"
+    },
+    {
+      "source": "openai-agents-python strict_schema.py (raw GitHub)",
+      "class": "DOKUMAN",
+      "finding": "same client-side normalisation; no statement about server acceptance of minLength/maxLength/minItems/maxItems"
+    },
+    {
+      "source": "community search summaries",
+      "class": "IKINCIL",
+      "finding": "contradictory: one says length keywords are now supported, another says strict may reject them per route/model. Treated as VERI YOK, not as support."
     }
   ],
   "limits": [
-    "Documentation was inspected; it does not prove a live provider call occurred.",
-    "HTTP response fixtures tested the adapter contract only.",
-    "Page publication/as_of times unknown; no future freshness guarantee."
+    "No live provider call was made; nothing here proves the adapter works against the real API.",
+    "HTTP response fixtures test the adapter contract only.",
+    "The three primary URLs could not be re-opened in this environment; their verdicts are carried over from a previous audit and are NOT re-verified.",
+    "Because server acceptance of length keywords is unknown, the wire schema drops them (transport_schema); full validation stays local."
   ],
   "model_eval": "NOT_RUN",
   "semantic_model_accuracy": "NOT_MEASURED"

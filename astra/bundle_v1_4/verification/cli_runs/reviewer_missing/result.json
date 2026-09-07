@@ -6,46 +6,51 @@
     "status": "FAIL_CLOSED",
     "reason": "SEMANTIC_REVIEWER_REQUIRED"
   },
+  "claim_ids": [
+    "a:c1",
+    "b:c1",
+    "c:c1"
+  ],
   "events": [
     {
       "detail": {
-        "phase_id": "f29f0d4272b14af4812d2bdcca801827",
-        "reply_digest": "sha256:c9c03a10ace2568e226f85f045f74c4218a4144e9d52169bd8e797b3c28f7e26",
+        "phase_id": "0a359b9588e944ffad018d78c4367664",
+        "reply_digest": "sha256:8b0c07c9759361101b3848a761bb61ac0b5fb4b058a55a26b347665f8c435f49",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     },
     {
       "detail": {
-        "phase_id": "f29f0d4272b14af4812d2bdcca801827",
-        "reply_digest": "sha256:60f53b099f6574f7adc5288d0c28a6f820eae25725ad36810f3e9ff35807cf3e",
+        "phase_id": "0a359b9588e944ffad018d78c4367664",
+        "reply_digest": "sha256:bbe91da368f7c1194f5a87455e43511a993e7060bff1abba693e5a8bf667c387",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:84a45c168b57ea94feba032c52c9c10db9b61b9acce8aebc82955923f10cbd11",
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "previous": "sha256:3163ff874c872695baa0c911b9e9bf8398b75ef543af63cd1c9be4555b34465c",
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     },
     {
       "detail": {
-        "phase_id": "f29f0d4272b14af4812d2bdcca801827",
-        "reply_digest": "sha256:0824ac1ca574e53e176d86e1184000ff937e0c52e05fe96a59d582a8976d91e1",
+        "phase_id": "0a359b9588e944ffad018d78c4367664",
+        "reply_digest": "sha256:3c2160de51692cf48b62eca7cf15296a28d314656da2ada9f4a664c16e75ecf1",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:15314c9be32f92e51c215f6e9e7da8bef2cdb4f99398499182bdb410a6b1e985",
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "previous": "sha256:9213bd21ab281e4ce292d80b6fa83718c6213f331c85506cf51f08fbfa2a2dda",
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "f29f0d4272b14af4812d2bdcca801827"
+        "phase_id": "0a359b9588e944ffad018d78c4367664"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:da4e8fcbd169e72eefafb126109a4d0916635545695ed77c3594376e708a526e",
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "previous": "sha256:eca79ba52e0bc7a5de45dab5f456aab2b614477558d63d3897f37674824f4cfd",
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     },
     {
       "detail": {
@@ -53,25 +58,25 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:65c7bdbffb39b488a88cfa48390f8f7f36c63ae71ff2dff66b880f1d06da42e2",
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "previous": "sha256:3d708290cd147f57cf75e13f9bd282d65c1ed909118175eef46a5009452bac7c",
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:ebd2978c097d1deedfeb78e61e18b1d966c5de807a2d1741d6d16dfe2140bf21",
+        "comparison_digest": "sha256:6500f660b243757d782ae8f9c4145fc608a869504fc7a29c25c801f23703bc08",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:29b75d4eeacb56be11e1831ea2c24a1caf6581711607cf9475a70a70f093092b",
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "previous": "sha256:ae614ffaf11a4dc6cabb9b60b8e20d1f4586bec25108838915b21e654a93a237",
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     },
     {
       "detail": {
         "reason": "SEMANTIC_REVIEWER_REQUIRED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:188695fe48e089b050a0779b2f340c5242c88c0878c389a288ed1c84060e8ed6",
-      "run_id": "4cc0691371e64e929340d61f20bdcf68"
+      "previous": "sha256:5bbbac10967622e9ad37e12f7652391b8ca18f0c2e4cbf0f8dc56775833fb01e",
+      "run_id": "8f13570d70ad4d069bc303ee20a0559c"
     }
   ],
   "production_approval": false

@@ -1,44 +1,65 @@
 {
-  "version": "1.3",
-  "original_request": "Nihai tamir eddigin halini ver",
+  "version": "1.4",
+  "original_request": "Komut promptundaki eksik, çelişki, hata, makyaj ve süslemeleri bul ve tamir et; kaçacak yer bırakma.",
   "requirements": [
     {
       "id": "R1",
-      "delivery": "Comparison gate mandatory in Controller.finalize, bound to frozen task/claims/sources/results",
+      "delivery": "Belirsizlik cezası kaldırıldı: kritik olmayan ve karara girmeyen uncertain kart yayını kapatmaz; karara giren ya da kritik olan kapatır",
       "status": "VERIFIED",
       "evidence": [
         "verification/test_run.txt",
-        "verification/cli_summary.json"
+        "tests/test_host_integration.py::test_noncritical_uncertain_card_outside_decision_is_published",
+        "tests/test_host_integration.py::test_uncertain_card_selected_by_decision_closes_gate"
       ]
     },
     {
       "id": "R2",
-      "delivery": "Actual semantic reviewer invocation mandatory; missing/forged/negative/stale evidence blocks",
+      "delivery": "Ucuz kaçış yolları kapatıldı: BLOCKED en az iki deneme kanıtı ister, owner yer tutucusu reddedilir, finalize bir kez çalışır, inceleme yanıtı tekrar kullanılamaz",
       "status": "VERIFIED",
       "evidence": [
         "verification/test_run.txt",
-        "verification/cli_runs/valid/result.json",
-        "verification/cli_runs/semantic_rejection/result.json",
-        "verification/cli_runs/reviewer_missing/result.json"
+        "tests/test_astra.py::test_blocked_reply_requires_attempts",
+        "tests/test_host_integration.py::test_review_request_carries_fresh_nonce"
       ]
     },
     {
       "id": "R3",
-      "delivery": "Self-contained updated command and executable package with real test evidence",
+      "delivery": "Kaynak bağları sahteleştirilemez: TOOL kaydı içerik özetine bağlanır, yol boyunca symlink reddedilir, zarf kaynak içeriğini taşır",
       "status": "VERIFIED",
       "evidence": [
-        "astra_command.md",
-        "README.md",
-        "BUNDLE_MANIFEST.json"
+        "verification/test_run.txt",
+        "tests/test_host_integration.py::test_tool_source_digest_must_match_record",
+        "tests/test_host_integration.py::test_symlinked_parent_directory_is_rejected",
+        "tests/test_host_integration.py::test_envelope_carries_source_snapshots"
+      ]
+    },
+    {
+      "id": "R4",
+      "delivery": "Sağlayıcı sınırları ölçülmüş kapılara bağlandı: taşıma şeması, HTTP sınıfı, model anlık görüntüsü, inceleme bütçesi ön kapısı",
+      "status": "VERIFIED",
+      "evidence": [
+        "verification/test_run.txt",
+        "tests/test_openai_reviewer.py::test_transport_schema_has_no_length_constraints",
+        "tests/test_host_integration.py::test_min_verdict_bytes_is_a_measurement",
+        "tests/test_host_integration.py::test_review_budget_precheck_stops_before_call"
+      ]
+    },
+    {
+      "id": "R5",
+      "delivery": "Durum beyan edilmez, türetilir: gereksinim defteri artefakt kimliği ister, TASK_STATUS host tarafından hesaplanır",
+      "status": "VERIFIED",
+      "evidence": [
+        "verification/test_run.txt",
+        "tests/test_host_integration.py::test_verified_requirement_needs_real_evidence",
+        "tests/test_host_integration.py::test_task_status_is_derived_not_declared",
+        "tests/test_run_cli.py::test_declared_task_status_in_config_is_rejected"
       ]
     }
   ],
   "production_approval": false,
   "model_eval": "NOT_RUN",
-  "updated_at": "2026-09-06T12:44:44.824302+00:00",
-  "task_status": "COMPLETE",
+  "live_model_dependency": "OPENAI_API_KEY bu ortamda yok ve developers.openai.com egress engelli; canlı sağlayıcı çağrısı YAPILMADI",
   "repair_status": "IMPLEMENTED_AND_LOCAL_TESTED",
   "final_status": "LOCAL_CHECKS_PASSED",
-  "live_model_dependency": "OPENAI_API_KEY not available in this environment",
-  "tests_run": 113
+  "note": "task_status alanı bu dosyadan KALDIRILDI: durum host tarafından gereksinim defterinden türetilir; dosyaya elle yazılan durum türetilmemiş bir beyandır."
 }

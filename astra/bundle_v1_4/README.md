@@ -1,14 +1,24 @@
-ASTRA v1.3 — nihai yerel tamir paketi
+ASTRA v1.4 — yerel tamir paketi
 
-Karşılaştırma ve inceleyici kapıları artık `Controller.finalize` yoluna bağlıdır.
-Host veya inceleyici olmadan onay verilmez. v1.2'den taşınan yapısal testler yeni
-zorunlu host arayüzüne uyarlandı. Yeni testler gerçek kaynak okumasını, alt süreç
-çağrısını, karşılaştırma çağrısını ve olumsuz sonuçların yayını durdurmasını sınar.
+v1.3'ün kapıları korunuyor; bu sürüm o kapılardaki eksik, çelişki, hata ve
+makyajı kapatıyor. Değişikliklerin tamamı bulgu kimliğine bağlıdır (`CHANGELOG.md`,
+`BULGU_DEGISIKLIK.md`). Host veya inceleyici olmadan onay verilmez.
 
-Doğrulama: Python 3.12.13 ile 113 test geçti; hata, başarısızlık ve atlama yok.
-Yerel CLI üzerinden dört ayrı senaryo da beklenen sonucu verdi. Sonuçlar
-`verification/` dizinindedir. Canlı OpenAI çağrısı yapılmadı; API anahtarı mevcut
-değildi. `TEST_FIXTURE` inceleyicilerinin kabul yanıtları anlamsal model başarısı
+Doğrulama
+
+`verification/` dizinindeki dosyalar ELLE yazılmaz; `scripts/regenerate_verification.py`
+testleri ve dört yerel CLI senaryosunu GERÇEKTEN koşturup üretir ve koşulan Python
+sürümünü kendisi yazar. Sayı ve sürüm bu yüzden bu belgede tekrarlanmaz —
+`verification/test_result.json` ve `verification/cli_summary.json` okunur.
+
+```bash
+python3 scripts/regenerate_verification.py
+```
+
+Bu senaryolar YEREL CLI senaryolarıdır (fixture işçi ve fixture inceleyici):
+boru hattını sınarlar, ANLAMI sınamazlar. Canlı OpenAI çağrısı yapılmadı; API
+anahtarı yok ve sağlayıcı belgeleri bu ortamda erişilemez durumda.
+`TEST_FIXTURE` inceleyicilerinin kabul yanıtları anlamsal model başarısı
 sayılmaz. Ayrı süreçler üretim izolasyonu sağlamaz; bütün paket LOCAL_TEST'tir.
 
 Python 3.11+ ve POSIX ortamında, bu dizinden:
@@ -27,15 +37,22 @@ işçi yanıtları ve inceleyici kararları sentetiktir. Saklanmış eski demo c
 yerel yol ve süre koşulları içerir; yeni çalıştırma için `demo_local.py` ile
 yeniden üret. Hazır kanıt dosyalarını yeni bir kaynak erişimi gibi kullanma.
 
-Gerçek uygulama bağlantısı
+Uygulama bağlantısı
 
 Uygulama sahibi `SourceVault` kaynaklarını, görev kapsamlarını, zorunlu
-karşılaştırmaları ve inceleyiciyi çalıştırmadan önce yapılandırır. `comparisons`
-boşsa anlamlı `comparison_exemption` zorunludur; inceleyici bu gerekçeyi gerçek
-görevle karşılaştırır. Hiçbir işçi bu ayarı değiştiremez.
+karşılaştırmaları, gereksinim defterini ve inceleyiciyi çalıştırmadan önce
+yapılandırır. `comparisons` boşsa anlamlı `comparison_exemption` zorunludur.
+`requirements` isteğe bağlıdır; verildiğinde `VERIFIED` olan her gereksinim bu
+koşuda var olan artefaktları adlandırmak zorundadır. `task_status` yapılandırmaya
+YAZILAMAZ — host onu defterden türetir. Hiçbir işçi bu ayarı değiştiremez.
 
-`demo_valid/config.json`, tam alanları gösteren çalışır bir örnektir. Gerçek
-kullanımda kaynaklar ve işçi komutları uygulamaya ait olmalıdır. `workers` ve
+Kaynak `path` alanı MUTLAK yol olmalıdır: göreli yol koşu dizinine (`os.getcwd()`)
+bağlanır ve aynı yapılandırma başka bir dizinden koşulduğunda başka bir dosyayı
+gösterir. Kaynak yolları sembolik bağ içeremez (hiçbir bileşeninde); `kind="TOOL"` kaynak,
+içeriğe bağlanan bir araç çağrısı kaydı ister. Bu kayıt `output_digest` ↔ içerik
+bağını kanıtlar; `args_digest` ve `exit_status` KAYDEDİLİR ama doğrulanmaz.
+
+`demo_valid/config.json`, tam alanları gösteren çalışır bir örnektir. `workers` ve
 `reviewer.argv` çalıştırılabilir komut tanımlar; bu config güvenilir operatör
 yapılandırmasıdır, modelden gelen görev verisi değildir.
 
@@ -50,17 +67,23 @@ reviewer = ReviewerEndpoint(
     argv=(sys.executable, str(Path("astra_openai_reviewer.py").resolve())),
     kind="EXTERNAL_MODEL", model="gpt-6-astra", effort="max",
     timeout=60.0, credential_env=("OPENAI_API_KEY",),
+    network=(("proxy", None), ("ca_bundle", None)),
 )
 ```
 
 API anahtarını host ortamına güvenli biçimde sağla; config, günlük veya işçi
-zarfına yazma. Anahtar yalnız inceleyici alt sürecine aktarılır. Bağlantı tek
+zarfına yazma. Anahtar yalnız inceleyici alt sürecine aktarılır ve yalnız paketin
+kendi adaptörü onu alabilir. Proxy ve CA paketi yalnız `network` alanından gelir;
+ortamın `HTTPS_PROXY` değişkeni OKUNMAZ. Bağlantı tek
 `https://api.openai.com/v1/responses` isteği yapar; araç çağrısı ve otomatik tekrar
-yoktur. `store=false`, yapılandırılmış assessment şeması, model/effort ve cevap
-kimliği kullanılır. Ret, kesilme, model/effort uyuşmazlığı ve erişim hatası sonucu
-durdurur. Canlı model çağrısı sağlayıcı kullanım maliyeti doğurur.
+yoktur. `store=false`, uzunluk anahtarları ayıklanmış taşıma şeması, model/effort ve
+cevap kimliği kullanılır. Sağlayıcının tam şemayı kabul edip etmeyeceği
+BİLİNMİYOR; bu yüzden doğrulama host tarafında yapılır. Ret, kesilme, model/effort
+uyuşmazlığı ve erişim hatası sonucu durdurur; HTTP hatası yalnız sınıfıyla
+raporlanır, sağlayıcı gövdesi okunmaz. Canlı model çağrısı sağlayıcı kullanım
+maliyeti doğurur.
 
-Config hazır olduğunda gerçek giriş:
+Config hazır olduğunda giriş:
 
 ```bash
 python3 astra_run.py config.json --output result.json
@@ -68,9 +91,10 @@ python3 astra_run.py config.json --output result.json
 
 Program `result.json` içine sonucu, host makbuzunu ve olay sırasını yazar. Kayıt
 `COMPARISON_STARTED`, `COMPARISON_VALIDATED`, `SEMANTIC_REVIEW_STARTED` ve
-`HOST_GATES_PASSED` olaylarını içerir. Başarısız kapıda `FINALIZATION_REJECTED`
-vardır. Eski `finalize(decision, review, sources)` çağrısı kullanılabilir; dışarıdan
-verilen review yalnız ek ret koşulu olabilir. Gerçek host çağrısının yerine geçmez.
+`HOST_GATES_PASSED` olaylarını içerir; başarısız kapıda `FINALIZATION_REJECTED`
+vardır. `decision.claim_ids` yerine `["*"]` yazılabilir: kart kimlikleri işçi
+kapsamlıdır ve faz koşmadan bilinemez, host bunları faz sonrası genişletir.
+`--output` yazılamıyorsa program traceback vermez, FAIL_CLOSED sonucu basar.
 
 Kaynak ve anlam sınırı
 
@@ -78,37 +102,43 @@ SourceVault, UTF-8 yerel dosyaları sınırlandırılmış okumayla yakalar; dos
 hash'ini incelemeden önce ve sonra kontrol eder. `as_of` ve `valid_until` gerçek
 görev bilgisiyle operatör tarafından belirlenir; bilinmeyen tarih uydurulmaz.
 Bu erişim, dosyanın alındığı internet sitesini veya üçüncü taraf beyanını
-kimlik doğrulamalı biçimde kanıtlamaz. Bu yüzden `source_access_authenticated`
-ve `upstream_origin_verified` false kalır.
+kimlik doğrulamalı biçimde kanıtlamaz; `source_access_authenticated` ve
+`upstream_origin_verified` false kalır.
 
-Karşılaştırma fonksiyonu sayı/alıntı/ölçüm koşullarını denetler. Anlam desteği için
-ayrıca çalıştırılan inceleyici bütün kaynak parçalarını, kartları, sayısal kanıtları,
-karşılaştırma sonuçlarını ve somut çıktıyı görür. Kaynaklarda bulunmayan karşı
-kanıt için yapılmış web araması iddia edemez; gereken kanıt eksikse incelemeyi
-reddetmelidir. Bir LLM inceleyicisinin yanılma ihtimali sürer. Canlı model davranışı
-ve insan değerlendirmesiyle uyumu ayrıca ölçülmelidir.
+Karşılaştırma fonksiyonu sayı/alıntı/ölçüm koşullarını denetler; alıntılar NFKC
+ile normalleştirilir, böylece Unicode eksi/tire işaretleri sayı denetimini
+atlatamaz. Anlam desteği için ayrıca çalıştırılan inceleyici bütün kaynak
+parçalarını, kartları, sayısal kanıtları, karşılaştırma sonuçlarını ve somut
+çıktıyı görür — ama ARAMA ARACI YOKTUR: kaynaklarda bulunmayan karşı kanıt için
+web araması iddia edemez ve eksik kanıtta `uncertain` döner. Bir LLM
+inceleyicisinin yanılma ihtimali sürer; canlı model davranışı ve insan
+değerlendirmesiyle uyumu ayrıca ölçülmelidir.
 
 `semantic_support_verified`, EXTERNAL_MODEL adaptörünün gerçekten çağrılması ve
 bağlı incelemesinin kabul edilmesi anlamındadır; nesnel doğruluğun garantisi
 değildir. TEST_FIXTURE için false kalır. Fixture programı EXTERNAL_MODEL diye
-etiketlenerek kullanılamaz; bu tür yalnız paketin sabit OpenAI adaptörünü kabul eder.
+etiketlenerek kullanılamaz ve API anahtarı alamaz.
 
 Kalıcı iş zamanlayıcısı, gerçek kör LLM işçileri, web kaynağının köken doğrulaması,
-üretim izolasyonu ve canlı Astra Max değerlendirmesi ayrı kapsamdır. Bu paket
-bunları kurulmuş gibi göstermez. Kullanıcı teslimatı ve üretim onayı ayrı tutulur.
+üretim izolasyonu ve canlı model değerlendirmesi ayrı kapsamdır. Bu paket bunları
+kurulmuş gibi göstermez. Kullanıcı teslimatı ve üretim onayı ayrı tutulur.
 
 İçerik
 
-- `astra_command.md`: tam güncel çalışma komutu.
+- `astra_command.md`: tam güncel çalışma komutu (`tests/test_command_text.py` ile sınanır).
 - `astra_reference.py`: zorunlu host çağrısı içeren denetleyici ve kesin aritmetik.
-- `astra_host.py`: kaynak yakalama, donmuş sözleşme, karşılaştırma ve inceleyici kapıları.
-- `astra_openai_reviewer.py`: gerçek Responses API taşıma adaptörü.
-- `astra_run.py`: gerçek CLI çalıştırıcı.
+- `astra_host.py`: kaynak yakalama, donmuş sözleşme, gereksinim defteri,
+  karşılaştırma ve inceleyici kapıları.
+- `astra_openai_reviewer.py`: Responses API taşıma adaptörü (canlı çağrı ile sınanmadı).
+- `astra_run.py`: CLI çalıştırıcı.
 - `demo_local.py`: açıkça sentetik, yeniden üretilebilir çalışma örnekleri.
-- `tests/`: 113 test ve test amacıyla kullanılan işçi/inceleyici dosyaları.
-- `verification/`: bu sürümün gerçek yerel çalıştırma kanıtları.
-- `history/v1_2/`: önceki belgeden gelen tarihsel kayıtlar; v1.3 sonucu değildir.
+- `scripts/regenerate_verification.py`: `verification/` dizinini gerçek koşudan üretir.
+- `tests/`: paketin testleri ve test amacıyla kullanılan işçi/inceleyici dosyaları.
+- `verification/`: bu ortamda yapılan yerel koşunun kanıtları.
+- `history/v1_2/`: önceki belgeden gelen tarihsel kayıtlar; bu sürümün sonucu değildir.
 
-Resmî arayüz dayanakları: [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs),
+Resmî arayüz dayanakları (bu oturumda YENİDEN DOĞRULANAMADI — egress engelli;
+bkz. `verification/source_review_notes.json`):
+[Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs),
 [reasoning arayüzü](https://developers.openai.com/api/docs/guides/reasoning),
 [Astra model ayarları](https://developers.openai.com/api/docs/models/gpt-6-astra).

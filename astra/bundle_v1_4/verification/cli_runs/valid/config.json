@@ -6,17 +6,19 @@
   "sources": [
     {
       "source_id": "s0",
-      "path": "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/verification/cli_runs/valid/source_0.txt",
-      "kind": "TOOL",
-      "as_of": "2026-09-06T12:36:16.112160+00:00",
-      "valid_until": "2026-09-06T13:36:17.112160+00:00"
+      "path": "<RUN>/source_0.txt",
+      "kind": "USER",
+      "tool_call_record": null,
+      "as_of": "2026-09-07T18:09:23.281768+00:00",
+      "valid_until": "2026-09-07T19:09:24.281768+00:00"
     },
     {
       "source_id": "s1",
-      "path": "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/verification/cli_runs/valid/source_1.txt",
-      "kind": "TOOL",
-      "as_of": "2026-09-06T12:36:16.112160+00:00",
-      "valid_until": "2026-09-06T13:36:17.112160+00:00"
+      "path": "<RUN>/source_1.txt",
+      "kind": "USER",
+      "tool_call_record": null,
+      "as_of": "2026-09-07T18:09:23.281768+00:00",
+      "valid_until": "2026-09-07T19:09:24.281768+00:00"
     }
   ],
   "comparisons": [
@@ -62,29 +64,29 @@
     "a": {
       "role": "model",
       "argv": [
-        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
-        "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/research_worker_fixture.py"
+        "/usr/local/bin/python3",
+        "<BUNDLE>/tests/research_worker_fixture.py"
       ]
     },
     "b": {
       "role": "counterexample",
       "argv": [
-        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
-        "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/research_worker_fixture.py"
+        "/usr/local/bin/python3",
+        "<BUNDLE>/tests/research_worker_fixture.py"
       ]
     },
     "c": {
       "role": "evidence",
       "argv": [
-        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
-        "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/research_worker_fixture.py"
+        "/usr/local/bin/python3",
+        "<BUNDLE>/tests/research_worker_fixture.py"
       ]
     }
   },
   "reviewer": {
     "argv": [
-      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
-      "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/semantic_reviewer_fixture.py",
+      "/usr/local/bin/python3",
+      "<BUNDLE>/tests/semantic_reviewer_fixture.py",
       "pass"
     ],
     "kind": "TEST_FIXTURE",
