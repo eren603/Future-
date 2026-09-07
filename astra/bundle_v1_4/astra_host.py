@@ -430,13 +430,15 @@ class TrustedHost:
         # A sha256 id must MATCH a digest produced here; matching the shape is not evidence.
         known = (set(controller.source_ids) | set(cards) | set(proofs)
                  | {c["requirement_id"] for c in contract["comparisons"]})
+        # Only artefacts this run PRODUCED count. The candidate decision is written by
+        # the operator, so its digest would let a requirement cite itself as its own
+        # evidence; digests derived from it are excluded for the same reason.
         known_digests = ({s["content_digest"] for s in sources}
                          | {s["access_record_id"] for s in sources}
                          | {digest(card) for card in cards.values()}
                          | {digest(proof) for proof in proofs.values()}
                          | {r["result"]["comparison_digest"] for r in results}
-                         | {controller._phase.phase_digest, digest(decision),
-                            digest(rendered_claims), digest(sources)})
+                         | {controller._phase.phase_digest, digest(sources)})
         for requirement in contract["requirements"]:
             if requirement["status"] != "VERIFIED":
                 continue

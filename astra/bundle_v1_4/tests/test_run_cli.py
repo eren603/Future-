@@ -54,7 +54,14 @@ class RunCliTests(unittest.TestCase):
         self.assertEqual(result["task_status"], "COMPLETE", done.stdout + done.stderr)
         self.assertEqual(result["result"]["host_verification"]["task_status"], "COMPLETE")
 
-    def test_task_status_is_reported_even_when_a_gate_closes(self):
+    def test_closed_gate_reports_no_derived_status(self):
+        """A closed run has no verified ledger, so it reports NOT_DERIVED, not a status.
+
+        The first version of this test asserted "BLOCKED" — it read the status straight
+        out of the operator's own config, so a run that FAILED could still announce
+        COMPLETE. The audit reproduced exactly that; the rule now is that only a host
+        receipt yields a status.
+        """
         self.config["requirements"] = [dict(
             requirement_id="R1", basis_quote="live model", delivery="none",
             acceptance_check="receipt", evidence_ids=[], status="BLOCKED", depends_on=[])]
@@ -62,7 +69,32 @@ class RunCliTests(unittest.TestCase):
         done, printed = self.run_cli()
         result = json.loads((self.folder / "cli_result.json").read_text(encoding="utf-8"))
         self.assertEqual(printed["final_status"], "FAIL_CLOSED")
-        self.assertEqual(result["task_status"], "BLOCKED")
+        self.assertEqual(result["task_status"], "NOT_DERIVED")
+
+    def test_failed_run_cannot_announce_complete(self):
+        # The audit's own probe: fabricated evidence closes the gate, and the run must
+        # not carry the operator's "VERIFIED" through to the top-level report.
+        self.config["requirements"] = [dict(
+            requirement_id="R1", basis_quote="compare", delivery="comparison",
+            acceptance_check="leaders", evidence_ids=["sha256:" + "b" * 64],
+            status="VERIFIED", depends_on=[])]
+        done, printed = self.run_cli()
+        result = json.loads((self.folder / "cli_result.json").read_text(encoding="utf-8"))
+        self.assertEqual(printed["final_status"], "FAIL_CLOSED")
+        self.assertEqual(result["result"]["reason"], "REQUIREMENT_UNVERIFIED")
+        self.assertEqual(result["task_status"], "NOT_DERIVED")
+
+    def test_decision_digest_is_not_its_own_evidence(self):
+        # The candidate is operator-written; citing its digest would be circular.
+        from astra_reference import canonical, digest
+        self.config["requirements"] = [dict(
+            requirement_id="R1", basis_quote="compare", delivery="comparison",
+            acceptance_check="leaders", evidence_ids=[digest(self.config["decision"])],
+            status="VERIFIED", depends_on=[])]
+        done, printed = self.run_cli()
+        result = json.loads((self.folder / "cli_result.json").read_text(encoding="utf-8"))
+        self.assertEqual(printed["final_status"], "FAIL_CLOSED", done.stdout + done.stderr)
+        self.assertEqual(result["result"]["reason"], "REQUIREMENT_UNVERIFIED")
 
     def test_regenerated_summary_matches_expected_statuses(self):
         # Task 11: verification/cli_summary.json bir koşunun ÇIKTISIDIR, elle yazılmaz.
