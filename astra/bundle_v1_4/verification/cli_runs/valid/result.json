@@ -6,8 +6,8 @@
     "status": "LOCAL_CHECKS_PASSED",
     "production_approval": false,
     "verification_boundary": "HOST_CAPTURED_LOCAL_SNAPSHOTS_AND_EXECUTED_GATES; reviewer judgment is not a truth or isolation guarantee",
-    "run_id": "ea69bd7c67b84d109bd782e5019bb2df",
-    "phase_digest": "sha256:122463bc586abd4ac59c69521708bbfc33c90eaf371d53a80e661ac3aa9f9515",
+    "run_id": "de7c1b085e5e4c0e88886a67a665fc23",
+    "phase_digest": "sha256:24a5c2a68a0f1055bbb643ac849efb965cb471d2f02673032fba50fca0ce8940",
     "decision": {
       "action": "Report the observed latency comparison only.",
       "claim_ids": [
@@ -71,7 +71,7 @@
     "proofs": {},
     "host_verification": {
       "candidate_digest": "sha256:e7726678f2a086117a8980db34f2015eea5bbd31a2f828bf69e0200ffba570e5",
-      "comparison_results_digest": "sha256:303dd19781f4d2cb5173b3c35db8b8d510096081e5457e874e81fe7dd8959647",
+      "comparison_results_digest": "sha256:ee01a45c31083e8498a0cf81fde8c10c20aa707e38afbe19f23f76cd1801593d",
       "comparisons": [
         {
           "claim_ids": [
@@ -81,7 +81,7 @@
           ],
           "requirement_id": "latency",
           "result": {
-            "comparison_digest": "sha256:6f1c48ad32058027a1cb7c399d5b14be96280d8f35d22d7d43301d37290d2253",
+            "comparison_digest": "sha256:79962922399f4720d84ed5d2af08f9fffc7cc77b99917f57a776a1a37ed83884",
             "context": {
               "definition": "median completion latency",
               "method": "same median harness",
@@ -98,7 +98,7 @@
             "ranking_scope": "OBSERVED_VALUES_ONLY",
             "rows": [
               {
-                "access_record_id": "sha256:544a76038edbcb6b5db845eb9db7c4938f51ce88ecfbff3ce1f415516bfc1fe5",
+                "access_record_id": "sha256:6ab539668b6aef20541a308f3f7a06b9039e5398782ad532b0d0b841c1077733",
                 "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
                 "definition": "median completion latency",
                 "entity": "A",
@@ -114,7 +114,7 @@
                 "value": "100"
               },
               {
-                "access_record_id": "sha256:c3a7b996ba4eabf43c5d5b86a07e8bb33c2996c4ffd6480ae3ff806f27e3ba81",
+                "access_record_id": "sha256:d8c9b54db4197552f471fe71144c12d9ed14748c218ac7673d92d3db7a206b38",
                 "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
                 "definition": "median completion latency",
                 "entity": "B",
@@ -137,16 +137,16 @@
         }
       ],
       "contract_digest": "sha256:5f7bc024313ed037b06b0fcbeab3287176fa364bc3a022a49bf161f995253929",
-      "created_at": "2026-09-07T18:17:53.766021+00:00",
-      "host_receipt_id": "sha256:adf675e80ce20752d8a41437c5a209ea307001f4be7edfd721343076152b65f5",
-      "issued_at": "2026-09-07T18:17:53.744566+00:00",
-      "phase_digest": "sha256:122463bc586abd4ac59c69521708bbfc33c90eaf371d53a80e661ac3aa9f9515",
+      "created_at": "2026-09-07T18:35:28.002516+00:00",
+      "host_receipt_id": "sha256:f50af42bf31328f6cf67cfa953b6f9a616747fcb26d504d72190e6674eb35bdb",
+      "issued_at": "2026-09-07T18:35:27.981162+00:00",
+      "phase_digest": "sha256:24a5c2a68a0f1055bbb643ac849efb965cb471d2f02673032fba50fca0ce8940",
       "production_approval": false,
       "protocol": "ASTRA-HOST-1.3",
       "rendered_claims_digest": "sha256:6766430b75dc68871fadb0c2ffec8e843d999decea7e1982905ea154d8a1cc2e",
-      "request_digest": "sha256:156c40cee2670510cd2dab20bf38698293781118b89bb4567e75de3956eced43",
+      "request_digest": "sha256:ceef0e8be6fc0680b045b108c1c2a08b67db90369bbfa9fdb0a1824f70e05c27",
       "requirements": [],
-      "review_nonce": "b85bd35adb7401f7d609d7d472ab7cba6c3044f295a70130",
+      "review_nonce": "f7a6e3510faf70208a2696a9073445eafbbc1fdcfbef7b62",
       "reviewer_kind": "TEST_FIXTURE",
       "reviewer_response": {
         "assessment": {
@@ -231,7 +231,7 @@
         },
         "provider_effort": "fixture-effort",
         "provider_model": "fixture-model",
-        "request_digest": "sha256:156c40cee2670510cd2dab20bf38698293781118b89bb4567e75de3956eced43",
+        "request_digest": "sha256:ceef0e8be6fc0680b045b108c1c2a08b67db90369bbfa9fdb0a1824f70e05c27",
         "reviewer_record_id": "TEST_FIXTURE_ONLY"
       },
       "semantic_review_scope": "REVIEWER_JUDGMENT_NOT_TRUTH_GUARANTEE",
@@ -240,8 +240,8 @@
       "source_access_authenticated": false,
       "source_access_receipts": [
         {
-          "access_record_id": "sha256:544a76038edbcb6b5db845eb9db7c4938f51ce88ecfbff3ce1f415516bfc1fe5",
-          "captured_at": "2026-09-07T18:17:53.680125+00:00",
+          "access_record_id": "sha256:6ab539668b6aef20541a308f3f7a06b9039e5398782ad532b0d0b841c1077733",
+          "captured_at": "2026-09-07T18:35:27.918633+00:00",
           "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
           "locator": "file://<RUN>/source_0.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -249,8 +249,8 @@
           "upstream_authentication_verified": false
         },
         {
-          "access_record_id": "sha256:c3a7b996ba4eabf43c5d5b86a07e8bb33c2996c4ffd6480ae3ff806f27e3ba81",
-          "captured_at": "2026-09-07T18:17:53.680311+00:00",
+          "access_record_id": "sha256:d8c9b54db4197552f471fe71144c12d9ed14748c218ac7673d92d3db7a206b38",
+          "captured_at": "2026-09-07T18:35:27.918817+00:00",
           "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
           "locator": "file://<RUN>/source_1.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -259,7 +259,7 @@
         }
       ],
       "source_access_scope": "LOCAL_FILE_SNAPSHOT_READ",
-      "source_registry_digest": "sha256:ea4e7ed61cc892b8a1b9bea873c99434d91afa28ccab1715d2a0662dba9dab01",
+      "source_registry_digest": "sha256:27ecd1d5ad05903858c2c8f5d24679f3f9ce5640418581dfea6f75ccad98517c",
       "task_status": "NO_REQUIREMENTS",
       "upstream_origin_verified": false
     }
@@ -273,43 +273,43 @@
   "events": [
     {
       "detail": {
-        "phase_id": "70d0fa15a5eb453fae98c02ffbf6d317",
-        "reply_digest": "sha256:dd53ee64c9a8bb2597dd7e59f0f3df3940c6f6d2922dcb7b8d52c749321637d9",
+        "phase_id": "f059ccb816eb46f28e417f4db8d03da1",
+        "reply_digest": "sha256:f4c458b4fa47c3a9786d5704b91c72481ae9c50a2c0f31e1af0e78a96de23ddd",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
-        "phase_id": "70d0fa15a5eb453fae98c02ffbf6d317",
-        "reply_digest": "sha256:671fec8060d811e1f66bf4e596a6d2e6dcd950503166484363872ac3312b79ed",
+        "phase_id": "f059ccb816eb46f28e417f4db8d03da1",
+        "reply_digest": "sha256:60dbccaa2144c942b6bb53c0678bcbab9ee40f18653c0cd1d543132f949c19d1",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:8f9ebe59a69379028426414705ae04ca423e106d21b35c8b80a1298aab311d6b",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:6070bac68e41ffaeb04f6e26378206272dd4015b2875761f03bbb9407822117d",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
-        "phase_id": "70d0fa15a5eb453fae98c02ffbf6d317",
-        "reply_digest": "sha256:c26677ea8c593452229066b6f126f91b5ccb2afdddda523ceb3785f8ee081bff",
+        "phase_id": "f059ccb816eb46f28e417f4db8d03da1",
+        "reply_digest": "sha256:84142a33cc1a87e15f8a3d4b23693cf6839a413d68fdfc4277269bc990dee5e3",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:9b8c336b8c62ed4b7049b1bfd4801ca24186d6f757db04aff0ad82d00eb93417",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:9c5b05b9f26f9b77eb3f78e8b8e6f29b1293ed3ee62275bc96ec68e595be0dd5",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "70d0fa15a5eb453fae98c02ffbf6d317"
+        "phase_id": "f059ccb816eb46f28e417f4db8d03da1"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:0a101f540065f2603eedc1226d9a645d058b56263711507fd18c67794b7fb6c4",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:b432cdcf9b16f67e79488cbabfd3462c12a5ac3bb77a51e30be5d693d29d300d",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
@@ -317,42 +317,42 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:66fdc4f777cc21fd7e5542bbbae0ca583ddc8423eaf752e2dc077e664c3fbcad",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:b2a7d1cdf64faef246cf94f0f62064a30eea1b8cfbeaa6989bd1cbcf6943cb13",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:6f1c48ad32058027a1cb7c399d5b14be96280d8f35d22d7d43301d37290d2253",
+        "comparison_digest": "sha256:79962922399f4720d84ed5d2af08f9fffc7cc77b99917f57a776a1a37ed83884",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:3ddb6633c51c60d435e5af231640477107f37f008ee357f2b62c07409d4df838",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:359be73cb7d03c0cbf2169f435078b4a35613be107610fe7f30940802934e48e",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
-        "request_digest": "sha256:156c40cee2670510cd2dab20bf38698293781118b89bb4567e75de3956eced43",
+        "request_digest": "sha256:ceef0e8be6fc0680b045b108c1c2a08b67db90369bbfa9fdb0a1824f70e05c27",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:7897b26575014da44b202c579e630b05ab65bf2126364288543abe13eed22d09",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:9291b3f07a39faa487d2d641da69fa0f22c29b9a968cc596d5fcc733448fb675",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
-        "host_receipt_id": "sha256:adf675e80ce20752d8a41437c5a209ea307001f4be7edfd721343076152b65f5"
+        "host_receipt_id": "sha256:f50af42bf31328f6cf67cfa953b6f9a616747fcb26d504d72190e6674eb35bdb"
       },
       "kind": "HOST_GATES_PASSED",
-      "previous": "sha256:e0944aad77f6db2d3ab9aa3e93e3c28398478acdc134e98189959312cbdf55ed",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:ce12d1b7939350693fe4ea74861535d36094fd02be78dff0f03b858e48fb3785",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     },
     {
       "detail": {
-        "result_digest": "sha256:b4aa4a6a7c59437af4f9a3c1c11ef45c86ad530677a7c4b1e13348e7a89607de"
+        "result_digest": "sha256:d7d223e2f5d8e3f084b85b796ff8fc74bfc7df086ea5549a0b25578f472e3aa2"
       },
       "kind": "LOCAL_CHECKS_PASSED",
-      "previous": "sha256:50a0c14cb78ac5a9bd6c57377a64df076fd4f7dbd09230054832c0596e05e8cf",
-      "run_id": "ea69bd7c67b84d109bd782e5019bb2df"
+      "previous": "sha256:69d903b6a5afdac39a65445bcb3fec383994f34bedd152b6c3909cad36e3b8c9",
+      "run_id": "de7c1b085e5e4c0e88886a67a665fc23"
     }
   ],
   "production_approval": false

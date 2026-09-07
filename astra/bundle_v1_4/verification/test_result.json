@@ -1,10 +1,10 @@
 {
   "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
   "returncode": 0,
-  "summary": "Ran 174 tests in 8.729s",
+  "summary": "Ran 179 tests in 9.228s",
   "outcome": "OK",
   "python_version": "3.11.15",
   "platform": "Linux",
-  "generated_at": "2026-09-07T18:17:54.370969+00:00",
+  "generated_at": "2026-09-07T18:35:28.550960+00:00",
   "scope": "LOCAL_TEST only; no live provider call was made"
 }

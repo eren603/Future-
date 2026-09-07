@@ -176,14 +176,20 @@ test_skill_finder_is_not_gpu_training (test_plugin_router.PluginRouterTests.test
 test_snapshot_installed_flag_does_not_make_ready (test_plugin_router.PluginRouterTests.test_snapshot_installed_flag_does_not_make_ready) ... ok
 test_three_disjoint_providers_do_not_become_a_false_pair (test_plugin_router.PluginRouterTests.test_three_disjoint_providers_do_not_become_a_false_pair) ... ok
 test_unlisted_topic_uses_open_capability_discovery (test_plugin_router.PluginRouterTests.test_unlisted_topic_uses_open_capability_discovery) ... ok
+test_contract_declares_no_derived_status (test_repair_contract.RepairContractTests.test_contract_declares_no_derived_status) ... ok
+test_every_evidence_reference_resolves (test_repair_contract.RepairContractTests.test_every_evidence_reference_resolves) ... ok
+test_no_verified_requirement_is_evidence_free (test_repair_contract.RepairContractTests.test_no_verified_requirement_is_evidence_free) ... ok
+test_closed_gate_reports_no_derived_status (test_run_cli.RunCliTests.test_closed_gate_reports_no_derived_status)
+A closed run has no verified ledger, so it reports NOT_DERIVED, not a status. ... ok
+test_decision_digest_is_not_its_own_evidence (test_run_cli.RunCliTests.test_decision_digest_is_not_its_own_evidence) ... ok
 test_declared_task_status_in_config_is_rejected (test_run_cli.RunCliTests.test_declared_task_status_in_config_is_rejected) ... ok
+test_failed_run_cannot_announce_complete (test_run_cli.RunCliTests.test_failed_run_cannot_announce_complete) ... ok
 test_output_to_directory_path_is_fail_closed_not_traceback (test_run_cli.RunCliTests.test_output_to_directory_path_is_fail_closed_not_traceback) ... ok
 test_regenerated_summary_matches_expected_statuses (test_run_cli.RunCliTests.test_regenerated_summary_matches_expected_statuses) ... ok
 test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.RunCliTests.test_task_status_is_reported_at_top_level_and_matches_the_receipt) ... ok
-test_task_status_is_reported_even_when_a_gate_closes (test_run_cli.RunCliTests.test_task_status_is_reported_even_when_a_gate_closes) ... ok
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 174 tests in 8.729s
+Ran 179 tests in 9.228s
 
 OK

@@ -11,47 +11,47 @@
     "b:c1",
     "c:c1"
   ],
-  "task_status": "NO_REQUIREMENTS",
+  "task_status": "NOT_DERIVED",
   "events": [
     {
       "detail": {
-        "phase_id": "883d1b3cb14a4e8b962fd5e793f80b2b",
-        "reply_digest": "sha256:4f07d8957642d5d4557357a757815d093e030084951fc126d54f2f4aa90b2bab",
+        "phase_id": "701a5acd48724695901c99f3cb43bb96",
+        "reply_digest": "sha256:aa792bfa768836f9cebb4f610b39fe2dcb313498aa5d69923683ad46fa8c4cbc",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     },
     {
       "detail": {
-        "phase_id": "883d1b3cb14a4e8b962fd5e793f80b2b",
-        "reply_digest": "sha256:f5bc5b2873d8c735ecc51d95447ea20405039f15040c83cf3a975cf41856363b",
+        "phase_id": "701a5acd48724695901c99f3cb43bb96",
+        "reply_digest": "sha256:65c9bd1fffdd9fb7734dd9237fc5cad72862d7ac6a996618764c328e32fe1150",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:561a875551e4583517134d9f9c44b4c39bfefc44a151546b852fec9680b7274f",
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "previous": "sha256:de9095613475fae7fcdab4b1b3f55d0a60669df98da5d709678a90422dac7ac2",
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     },
     {
       "detail": {
-        "phase_id": "883d1b3cb14a4e8b962fd5e793f80b2b",
-        "reply_digest": "sha256:3d226659fd0a89aed02a821e4fc82cc6c9a68aac16d247d6a17d052e4b3b01d0",
+        "phase_id": "701a5acd48724695901c99f3cb43bb96",
+        "reply_digest": "sha256:d0aabb3c3cf817c26459f5498111b4b7f52f967c4b6b3e1b4e9f1bb96f3729fe",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:82c90956d9baed4566ea1a6162f770fc66eae16266c6fe3f02d23eac9f3701c0",
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "previous": "sha256:1051085bb69f73f429929d3193ae70bf33ef90f08377ea654771abdd32c30ecb",
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "883d1b3cb14a4e8b962fd5e793f80b2b"
+        "phase_id": "701a5acd48724695901c99f3cb43bb96"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:a327ec9558c6c62c41754d40875eed27b6e8b1175a55cdc1585b961a185c2c94",
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "previous": "sha256:694e7fc29163f46c6c4ebb7ec0001e18d00aa3928d3641f5d2487e8857eb9060",
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     },
     {
       "detail": {
@@ -59,25 +59,25 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:023f76c6f91cdfefcba8712c2c6b46fed3cf6dd219b2af73cc87a4702a7968e9",
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "previous": "sha256:6ab8414133aa3f60928d2b643866ca1ae3d3f6e10d7c566f33d8788f4df9ac31",
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:c6c3e9a18230d70af3d54f77a47fa7e4118a2c4e1f3723f590f47594cffbd2cd",
+        "comparison_digest": "sha256:40ed69b24aa0c0d214febeefcf19fa38cbd742a908d37f85426cfe996899132b",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:5a111b4f787f9f17af0ae2d2e47a653bc43c63df37211030e1d2221b492a5fbc",
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "previous": "sha256:8f51fa138edb1598e16a98505a52394a086e3c87ad559af1de6cc9a1c689634a",
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     },
     {
       "detail": {
         "reason": "SEMANTIC_REVIEWER_REQUIRED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:d6d4f97d05fc656e1cd927a7697604064f75902671b7615cfaee965dfba4e2f9",
-      "run_id": "936204a7a9b94f6698c10efc0e61e059"
+      "previous": "sha256:215f5b6613b7d77ec7fd542538d91d8b352878314676d05e82d58a2b9254c794",
+      "run_id": "fe50e798d741409d831cb25b7e7fe8d8"
     }
   ],
   "production_approval": false
