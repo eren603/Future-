@@ -134,6 +134,40 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 Nihai yayın kapısı: mod ve izinler doğrulanmış; PHASE_VALIDATED; bütün kapsamlar tamamlanmış; kaynaklar incelenmiş; somut aday incelenmiş; kritik çelişki/iddia açık değil; sayısal envanter ve hesaplar doğrulanmış; karar alanları (`action, owner, guard_metric, kill_rule, user_cost, residual_risk, claim_ids`) dolu ve `owner` gerçek bir sorumlu (yer tutucu — unknown, bilinmiyor, n/a, tbd, -, ? — reddedilir); hiçbir BLOCKED/MISSING/INVALID örtülmemiş. **Hata, eksik kaynak ya da atlanmış karşılaştırma başarıya ÇEVRİLMEZ.** Son incelemenin `numeric_inventory_complete` kaydı, bu kontrol gerçekten yapılmadan true OLAMAZ. Bu paketin denetleyicisi kalıcı bir görev zamanlayıcısı DEĞİLDİR. **"Yüzde 100 hatasızlık" gibi kanıtlanamayacak bir koşul karşılanmış SAYILMAZ.**
 
+**4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
+
+- **Kısmi teslim yoktur.** Bir işçi 4 kapsamdan 3'ünü bitirse bile kapsamı eksik READY
+  gönderemez; ya bütün kapsamları kapatır ya BLOCKED döner (ve BLOCKED sonlandırıcıdır).
+  Kısmi ilerleme kapsam bölerek (Ç5) ifade edilir, yarım yanıtla değil.
+- **Parça kimliği tanımlıdır, birleşik onay yoktur.** Ç5 parçalaması her parçaya kendi
+  `run_id`'sini verir; parçaların toplamı için otomatik bir onay üretilmez — bütün-görev
+  onayı ancak her parçanın kendi kanıtı gösterilerek ELLE kurulur.
+- **İşçi sayısı 3-5 aralığındadır** (`WORKER_COUNT`). Ortamda yalnız 1-2 izole çalıştırıcı
+  varsa mod SINGLE_MODEL'dir ve çıktı ANALYSIS_ONLY olur; 5'ten fazla rol gerekiyorsa görev
+  Ç5 ile parçalanır. "Az işçiyle konsey kurdum" denmez.
+- **Token/maliyet bütçesi ÖLÇÜLMEZ.** Paket yalnız bayt sınırı (`WIRE_LIMIT`) ve çıktı
+  tavanı (`max_output_tokens=16384`) uygular; sağlayıcı `usage` alanı okunmaz ve makbuza
+  yazılmaz. Bu tavanın hedef modelde geçerli olduğu DOĞRULANMADI.
+- **Alternatif alanı karar şemasında YOKTUR.** Değerlendirilen alternatifler ADIM 5 saldırı
+  listesinde yazılır; `DECISION_SCHEMA` bunları taşımaz, dolayısıyla "N alternatif
+  değerlendirildi" iddiası MAKİNE tarafından denetlenmez.
+- **`CAPABILITY_NEED` ve `TOOL_ROUTE` metin sözleşmesidir.** Paketin yönlendirici kodu bu
+  kayıtların tüm alanlarını üretmez ve host defterine yazmaz; bu kayıtlar §3 Ç6'daki
+  `astra_records` bloğuyla METİN olarak tutulur. Kod tarafında karşılığı olduğu iddia edilmez.
+- **Kalıcı görev kaydı bu pakette KOD DEĞİLDİR.** Bağlam devri kuralı metin sözleşmesidir;
+  paket kalıcı zamanlayıcı ya da kalıcı depo kurmaz.
+- **Sağlayıcı makbuzu `store=false` ile sonradan getirilemez** (VARSAYIM — belge bu
+  ortamda doğrulanamadı): `openai:resp_...` kimliği yerel bir kayıttır, sağlayıcıda
+  sorgulanabilir bir kanıt olduğu iddia edilmez.
+- **Effort yankısı dairesel olabilir:** sağlayıcının bildirdiği `reasoning.effort`,
+  istenenle karşılaştırılır; sağlayıcının gerçekten o ayarla çalıştığının bağımsız kanıtı
+  DEĞİLDİR. Talep edilen effort donmuş sözleşmeye yazılır ve daha ucuz bir ayar kapıyı
+  kapatır (`REVIEWER_EFFORT_BINDING`).
+- **Kullanıcının verdiği eski biçimli inceleme kaydı makbuzda görünmez;** yalnız ek ret
+  koşuludur ve hiçbir onay üretmez.
+- **Bu komut metni artık SINANIR** (`tests/test_command_text.py` + depo düzeyinde kural
+  envanteri), ama sınama DİZGE düzeyindedir: silinmeyi yakalar, anlamı denetlemez.
+
 **5. Çıktı biçimi**
 
 Anlatı kısa, artefakt tam: sonuç önce gelir; gerekçe yalnız sonucu değerlendirmeye yarayanla sınırlıdır; ADIM 1 envanteri, ADIM 5 saldırı listesi, ADIM 6 rubrik tablosu ve YAPILMAYANLAR her yanıtta bulunur. Gizli düşünce zinciri istenmez ve yayımlanmaz; "neyi sınadığın" yazılır, "ne düşündüğün" değil. Kullanıcıya bütün teknik envanteri dökmek yerine işe yarayan özet + artefakt bağlantısı verilir. **Kısalık derinliğin yerine geçmez:** ADIM 1 envanteri, ADIM 5 saldırı listesi ve ADIM 6 rubrik tablosu ARTEFAKTTIR, özet değildir — "yer kazanmak için kısalttım" gerekçesiyle çıkarılamaz, tek cümleye indirilemez. Kısaltılacak olan gerekçe anlatısıdır, kayıt değil.
@@ -224,7 +258,7 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
 ```json
 {
   "version": "1.4",
-  "created_at": "2026-09-07T18:51:50.664716+00:00",
+  "created_at": "2026-09-07T18:54:45.066916+00:00",
   "files": [
     {
       "path": "CHANGELOG.md",
@@ -238,8 +272,8 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "astra_command.md",
-      "sha256": "55448634f010e415311ce84fd66942fa53e420515ed967bba6d560f96eea6181",
-      "size_bytes": 46519
+      "sha256": "9206bc12edf0912c6055f57a005dc14bd4054142b0c6e8d8cff9b0bc8c09ba6a",
+      "size_bytes": 49276
     },
     {
       "path": "astra_compare.py",
@@ -248,13 +282,13 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "astra_host.py",
-      "sha256": "c38352d5c903e5c93ac3cd23b4d6ece794dffdb4d07866221a11f008bf5eaee9",
-      "size_bytes": 26398
+      "sha256": "6fb0ed7e8502dcce9951831988095376d492741e8cec52347f6245a4c5f7579e",
+      "size_bytes": 27569
     },
     {
       "path": "astra_openai_reviewer.py",
-      "sha256": "99363480dfed10c8b75033929ca802fa67215e0f443bc486e3c08ef5b3e3a167",
-      "size_bytes": 6057
+      "sha256": "a0b6780a50f9afbe2f29f8c9332a107d02502470ad1872ab0b064c998721521f",
+      "size_bytes": 6506
     },
     {
       "path": "astra_plugin_atlas.json",
@@ -268,8 +302,8 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "astra_reference.py",
-      "sha256": "e02f2ce9a0d386806e5c737fa2ff35f209239a7ee4b8e99572a8b71b8b817f7a",
-      "size_bytes": 31752
+      "sha256": "b66437380c107d0ec4de2c79192cc52f4e4014d91efe7cabfb623fd35f871515",
+      "size_bytes": 33593
     },
     {
       "path": "astra_run.py",
@@ -338,13 +372,13 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "tests/semantic_reviewer_fixture.py",
-      "sha256": "0258b92414c48ad184a6c44ccbee30ccd0fc572b30c465bd52b376f6b9cc0021",
-      "size_bytes": 3341
+      "sha256": "36478e1cb4134f07ddcea548d2fb61bee1246748439efbe8267cf935e1f9280b",
+      "size_bytes": 3643
     },
     {
       "path": "tests/test_astra.py",
-      "sha256": "3d8fb1aa6203e5e6c5470898fbad9a680354da9f11ddb88aadd3af2ef91ad7ac",
-      "size_bytes": 14691
+      "sha256": "e011c91edd0cca7349e594cc591d91b265e2730dd81ca31982e4b4743183d786",
+      "size_bytes": 15909
     },
     {
       "path": "tests/test_command_text.py",
@@ -357,19 +391,24 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
       "size_bytes": 6470
     },
     {
+      "path": "tests/test_edge_gates.py",
+      "sha256": "add4ef32546894bbd8e4f0d582e1200a149b1eb4e34356dea60189aeec0df5c4",
+      "size_bytes": 6947
+    },
+    {
       "path": "tests/test_goal_regressions.py",
       "sha256": "38ed35df8fd0519e1c412f5522331e57e1e83e1f87dfa5bef13b70db993fd915",
       "size_bytes": 2395
     },
     {
       "path": "tests/test_host_integration.py",
-      "sha256": "3c1d93fee3b95d753aded3452612fceeed6764f6f4289f7c7a03cf9eeb5f6156",
-      "size_bytes": 27447
+      "sha256": "19aae8c7bbe878f466096c57a2984f47d99e1d20cbb26dae04d783445547ffd2",
+      "size_bytes": 28480
     },
     {
       "path": "tests/test_openai_reviewer.py",
-      "sha256": "4ee43a3f54c349be146656671352c4b2f07c13860aeae3eb9ccaa607329b244d",
-      "size_bytes": 8448
+      "sha256": "b279dd1cf09358baad1cf2ed923bbeafbab610cad833451256a2bb737c8b3074",
+      "size_bytes": 9862
     },
     {
       "path": "tests/test_plugin_router.py",
@@ -398,12 +437,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/method_mismatch/config.json",
-      "sha256": "a36d3aa715faaf808dad8e157446f239a829cb5a802ef67688f7d98effa1849e",
+      "sha256": "cb80431bf45f2d03eb10942c0af494e981610ce5a2f78fe42be627169fb0b553",
       "size_bytes": 2935
     },
     {
       "path": "verification/cli_runs/method_mismatch/result.json",
-      "sha256": "58892f30fb3ef61a0de1a031541233e0a203e62b4c66b50cb08315384bc1b202",
+      "sha256": "aa0bf7d8d0d0de680dcf6fc5e0d698235e9d587c896dff3396df6d8334fccaee",
       "size_bytes": 2336
     },
     {
@@ -418,12 +457,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/reviewer_missing/config.json",
-      "sha256": "84ed534bd5b8889b5c833101b858605909851b03fae84d3378191b17fe28ebec",
+      "sha256": "c81070d1a084ecfd194926c6fd058d66d9b4500403333a319e180de2acd5d7ad",
       "size_bytes": 2696
     },
     {
       "path": "verification/cli_runs/reviewer_missing/result.json",
-      "sha256": "f3b610273ffca5c9b7e6dc66eeb9fa91b844bf30432b41f897fe0d4293c97300",
+      "sha256": "c989969eb603bcddc3fa5d7c52b4b160bff9e5066964f7117cbfd01944022d29",
       "size_bytes": 2722
     },
     {
@@ -438,12 +477,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/semantic_rejection/config.json",
-      "sha256": "c720d797d1745691f952981600a0052cf19a3746398600ab9b414f1412c5fa59",
+      "sha256": "a4fb8fd13b00dabf64997cdeb98699e480afb76e706d554062080b310a3b1ef9",
       "size_bytes": 2967
     },
     {
       "path": "verification/cli_runs/semantic_rejection/result.json",
-      "sha256": "c1dd3eb747d17a0cf4dac48fabc9294245c64a98ea6dcf8282d5f394eb44de2e",
+      "sha256": "e82983aabf919bb54d75b79fd1e9936148fd0a3a8de7141d61dea16cff095171",
       "size_bytes": 3088
     },
     {
@@ -458,13 +497,13 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/valid/config.json",
-      "sha256": "7fcfba40f4aa8e93396e2455d610ce44f227b5e1046482ebe199c4550e4dc6b3",
+      "sha256": "5924f83d5693c5c2a617f5de01c484d7ec5e903d24c07b38570a8749127cc9fe",
       "size_bytes": 2951
     },
     {
       "path": "verification/cli_runs/valid/result.json",
-      "sha256": "4848b7fd8ebf16f6e36464b368f50c4ed28031df4002f5ac2e7b2a249d9e3ce9",
-      "size_bytes": 13574
+      "sha256": "d3c50232d1c406c15ba8e202a12f5a607eb57047111356278a59564119bdd936",
+      "size_bytes": 13606
     },
     {
       "path": "verification/cli_runs/valid/source_0.txt",
@@ -478,7 +517,7 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_summary.json",
-      "sha256": "5d26895093883b98d50c53baf3812c4edc0b3ba5675c5ca841bcc31a25a6e9c8",
+      "sha256": "e9c4a05eac0b3ab4fd04c83643628fc38315b8f7e4eff673e1ff074cfef5b0cd",
       "size_bytes": 891
     },
     {
@@ -488,13 +527,13 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/test_result.json",
-      "sha256": "e071ee0faefa225d4fe0f1d14aab4845277254c4e811607f2ad9a3f33f42a40f",
+      "sha256": "242e465d447641095ffe0638ae0c153e83e08d649bb0e0c48044e8fdcf97cbd0",
       "size_bytes": 323
     },
     {
       "path": "verification/test_run.txt",
-      "sha256": "7ab958e394c70f491e0a0e60457c8bf9fc8695c4e356a79753b12d0d3555b22e",
-      "size_bytes": 24935
+      "sha256": "d35c52be9652943377bb71ea23776a7162ae93168291a0405082a7ab62a94f06",
+      "size_bytes": 27586
     }
   ]
 }
@@ -859,6 +898,40 @@ Kapı olayları deftere yazılır: `COMPARISON_STARTED`, `COMPARISON_VALIDATED`,
 Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kayıt `requirement_id, basis_quote, delivery, acceptance_check, evidence_ids, status (OPEN|WORKING|VERIFIED|BLOCKED), depends_on` taşır. `VERIFIED` bir öz-değerlendirme DEĞİLDİR: `evidence_ids` boş olamaz ve her kimlik bu koşuda gerçekten var olan bir artefaktı adlandırmalıdır (kaynak kimliği, kart kimliği, hesap kanıtı, karşılaştırma kimliği ya da `sha256:<64 hex>`); aksi halde `REQUIREMENT_UNVERIFIED`. Bir gereksinim, dayandığı gereksinim VERIFIED değilken VERIFIED olamaz. `TASK_STATUS` beyan edilmez, host tarafından defterden TÜRETİLİR (hepsi VERIFIED → COMPLETE; biri BLOCKED → BLOCKED; defter boş → NO_REQUIREMENTS; aksi PARTIAL) — yapılandırmada `task_status` alanı bulunması koşuyu kapatır (`HOST_CONFIG_FIELDS`).
 
 Nihai yayın kapısı: mod ve izinler doğrulanmış; PHASE_VALIDATED; bütün kapsamlar tamamlanmış; kaynaklar incelenmiş; somut aday incelenmiş; kritik çelişki/iddia açık değil; sayısal envanter ve hesaplar doğrulanmış; karar alanları (`action, owner, guard_metric, kill_rule, user_cost, residual_risk, claim_ids`) dolu ve `owner` gerçek bir sorumlu (yer tutucu — unknown, bilinmiyor, n/a, tbd, -, ? — reddedilir); hiçbir BLOCKED/MISSING/INVALID örtülmemiş. **Hata, eksik kaynak ya da atlanmış karşılaştırma başarıya ÇEVRİLMEZ.** Son incelemenin `numeric_inventory_complete` kaydı, bu kontrol gerçekten yapılmadan true OLAMAZ. Bu paketin denetleyicisi kalıcı bir görev zamanlayıcısı DEĞİLDİR. **"Yüzde 100 hatasızlık" gibi kanıtlanamayacak bir koşul karşılanmış SAYILMAZ.**
+
+**4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
+
+- **Kısmi teslim yoktur.** Bir işçi 4 kapsamdan 3'ünü bitirse bile kapsamı eksik READY
+  gönderemez; ya bütün kapsamları kapatır ya BLOCKED döner (ve BLOCKED sonlandırıcıdır).
+  Kısmi ilerleme kapsam bölerek (Ç5) ifade edilir, yarım yanıtla değil.
+- **Parça kimliği tanımlıdır, birleşik onay yoktur.** Ç5 parçalaması her parçaya kendi
+  `run_id`'sini verir; parçaların toplamı için otomatik bir onay üretilmez — bütün-görev
+  onayı ancak her parçanın kendi kanıtı gösterilerek ELLE kurulur.
+- **İşçi sayısı 3-5 aralığındadır** (`WORKER_COUNT`). Ortamda yalnız 1-2 izole çalıştırıcı
+  varsa mod SINGLE_MODEL'dir ve çıktı ANALYSIS_ONLY olur; 5'ten fazla rol gerekiyorsa görev
+  Ç5 ile parçalanır. "Az işçiyle konsey kurdum" denmez.
+- **Token/maliyet bütçesi ÖLÇÜLMEZ.** Paket yalnız bayt sınırı (`WIRE_LIMIT`) ve çıktı
+  tavanı (`max_output_tokens=16384`) uygular; sağlayıcı `usage` alanı okunmaz ve makbuza
+  yazılmaz. Bu tavanın hedef modelde geçerli olduğu DOĞRULANMADI.
+- **Alternatif alanı karar şemasında YOKTUR.** Değerlendirilen alternatifler ADIM 5 saldırı
+  listesinde yazılır; `DECISION_SCHEMA` bunları taşımaz, dolayısıyla "N alternatif
+  değerlendirildi" iddiası MAKİNE tarafından denetlenmez.
+- **`CAPABILITY_NEED` ve `TOOL_ROUTE` metin sözleşmesidir.** Paketin yönlendirici kodu bu
+  kayıtların tüm alanlarını üretmez ve host defterine yazmaz; bu kayıtlar §3 Ç6'daki
+  `astra_records` bloğuyla METİN olarak tutulur. Kod tarafında karşılığı olduğu iddia edilmez.
+- **Kalıcı görev kaydı bu pakette KOD DEĞİLDİR.** Bağlam devri kuralı metin sözleşmesidir;
+  paket kalıcı zamanlayıcı ya da kalıcı depo kurmaz.
+- **Sağlayıcı makbuzu `store=false` ile sonradan getirilemez** (VARSAYIM — belge bu
+  ortamda doğrulanamadı): `openai:resp_...` kimliği yerel bir kayıttır, sağlayıcıda
+  sorgulanabilir bir kanıt olduğu iddia edilmez.
+- **Effort yankısı dairesel olabilir:** sağlayıcının bildirdiği `reasoning.effort`,
+  istenenle karşılaştırılır; sağlayıcının gerçekten o ayarla çalıştığının bağımsız kanıtı
+  DEĞİLDİR. Talep edilen effort donmuş sözleşmeye yazılır ve daha ucuz bir ayar kapıyı
+  kapatır (`REVIEWER_EFFORT_BINDING`).
+- **Kullanıcının verdiği eski biçimli inceleme kaydı makbuzda görünmez;** yalnız ek ret
+  koşuludur ve hiçbir onay üretmez.
+- **Bu komut metni artık SINANIR** (`tests/test_command_text.py` + depo düzeyinde kural
+  envanteri), ama sınama DİZGE düzeyindedir: silinmeyi yakalar, anlamı denetlemez.
 
 **5. Çıktı biçimi**
 
@@ -1292,6 +1365,11 @@ class ReviewerEndpoint:
             raise Rejected("REVIEWER_KIND")
         if self.kind == "TEST_FIXTURE" and self.credential_env:
             raise Rejected("REVIEWER_CREDENTIAL_SCOPE")  # only the packaged adapter may see the key
+        if self.kind == "TEST_FIXTURE" and (self.model == "gpt-6-astra"
+                                            or self.effort in {"low", "medium", "high", "xhigh", "max"}):
+            # A fixture that declares the pinned identity would echo it into the receipt,
+            # where "provider_model": "gpt-6-astra" reads like a real provider answer.
+            raise Rejected("REVIEWER_IDENTITY_SCOPE")
         validate(self.model, ID)
         validate(self.effort, ID)
         if type(self.timeout) not in (int, float) or not math.isfinite(self.timeout) or not 0 < self.timeout <= 300:
@@ -1338,7 +1416,7 @@ class ReviewerEndpoint:
 class TrustedHost:
     """Immutable task contract. Every Controller finalization calls this host."""
     def __init__(self, *, task, scope_ids, source_vault, comparisons,
-                 comparison_exemption, reviewer=None, requirements=()):
+                 comparison_exemption, reviewer=None, requirements=(), requested_effort=None):
         validate(task, string(20000))
         validate(scope_ids, array(ID, 64, 1))
         unique(scope_ids)
@@ -1349,6 +1427,12 @@ class TrustedHost:
             raise Rejected("SOURCE_VAULT_REQUIRED")
         if reviewer is not None and type(reviewer) is not ReviewerEndpoint:
             raise Rejected("REVIEWER_ENDPOINT_REQUIRED")
+        if requested_effort is not None:
+            # What the user asked for is part of the frozen contract: a cheaper setting
+            # cannot quietly answer a request for a more expensive one.
+            validate(requested_effort, ID)
+            if reviewer is not None and reviewer.effort != requested_effort:
+                raise Rejected("REVIEWER_EFFORT_BINDING")
         if comparisons:
             if comparison_exemption is not None:
                 raise Rejected("COMPARISON_CONTRACT_AMBIGUOUS")
@@ -1372,7 +1456,7 @@ class TrustedHost:
                 raise Rejected("REQUIREMENT_DEPENDENCY")
         contract = dict(task=task, task_digest=digest(task), scope_ids=scope_ids,
                         comparisons=comparisons, comparison_exemption=comparison_exemption,
-                        requirements=requirements,
+                        requirements=requirements, requested_effort=requested_effort,
                         semantic_policy=SEMANTIC_POLICY,
                         reviewer_configuration=None if reviewer is None else dict(
                             argv=list(reviewer.argv), kind=reviewer.kind, model=reviewer.model,
@@ -1428,7 +1512,10 @@ class TrustedHost:
                        comparison_exemption=contract["comparison_exemption"],
                        expected_model=self._reviewer.model, expected_effort=self._reviewer.effort,
                        assessment_schema=ASSESSMENT_SCHEMA,
-                       wire_schema=transport_schema(ASSESSMENT_SCHEMA))
+                       wire_schema=transport_schema(ASSESSMENT_SCHEMA),
+                       # One clock, not two: the HTTP call must finish before the host
+                       # kills the adapter, otherwise the provider's reason is lost.
+                       http_timeout=max(5.0, float(self._reviewer.timeout) - 5.0))
         request["request_digest"] = digest(request)
         controller.log("SEMANTIC_REVIEW_STARTED", {"request_digest": request["request_digest"],
                        "reviewer_kind": self._reviewer.kind})
@@ -1499,6 +1586,7 @@ class TrustedHost:
                        source_registry_digest=digest(sources),
                        comparison_results_digest=digest(results), comparisons=results,
                        requirements=contract["requirements"],
+                       requested_effort=contract["requested_effort"],
                        task_status=derive_task_status(contract["requirements"]),
                        source_access_receipts=self._vault.receipts(),
                        source_access_scope="LOCAL_FILE_SNAPSHOT_READ",
@@ -1567,6 +1655,9 @@ def review(request, *, opener=None):
             or request.get("assessment_schema") != ASSESSMENT_SCHEMA
             or request.get("wire_schema") != transport_schema(ASSESSMENT_SCHEMA)):
         raise Rejected("REVIEW_POLICY_MISMATCH")
+    http_timeout = request.get("http_timeout")
+    if type(http_timeout) not in (int, float) or not 0 < http_timeout <= 300:
+        raise Rejected("REVIEW_TIMEOUT_CONFIGURATION")
     if request.get("expected_model") != "gpt-6-astra" or request.get("expected_effort") not in {"low", "medium", "high", "xhigh", "max"}:
         raise Rejected("UNSUPPORTED_REVIEWER_CONFIGURATION")
     body = dict(model=request["expected_model"], reasoning={"effort": request["expected_effort"]},
@@ -1579,12 +1670,16 @@ def review(request, *, opener=None):
     if opener is None:
         opener = build_opener()
     try:
-        with opener.open(http_request, timeout=45) as response:
+        with opener.open(http_request, timeout=http_timeout) as response:
             if response.status != 200:
                 raise Rejected("REVIEW_PROVIDER_HTTP_STATUS")
             raw = response.read(WIRE_LIMIT + 1)
     except urllib.error.HTTPError as exc:
         # The class is reported; the provider body is never read, logged, or raised.
+        # 429 is separated from the other 4XX codes: it is transient, and lumping it in
+        # with a permanent 400 hides that. There is still NO automatic retry.
+        if exc.code == 429:
+            raise Rejected("REVIEW_PROVIDER_HTTP_429") from None
         raise Rejected("REVIEW_PROVIDER_HTTP_4XX" if 400 <= exc.code < 500
                        else "REVIEW_PROVIDER_HTTP_5XX") from None
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
@@ -6145,12 +6240,16 @@ def validate(value, schema):
     expected = schema["type"]
     allowed = expected if isinstance(expected, list) else [expected]
     kinds = {"null": type(None), "string": str, "object": dict, "array": list, "boolean": bool}
+    if any(t not in kinds for t in allowed):
+        # number/integer are outside this subset; an unsupported schema is a rejection,
+        # not a KeyError escaping into the caller.
+        raise Rejected("SCHEMA_UNSUPPORTED_TYPE")
     if not any(type(value) is kinds[t] for t in allowed):
         raise Rejected("SCHEMA_TYPE")
+    if value is None:
+        return  # a nullable field may be null even when an enum lists the non-null values
     if "enum" in schema and value not in schema["enum"]:
         raise Rejected("SCHEMA_ENUM")
-    if value is None:
-        return
     if type(value) is str:
         if not schema.get("minLength", 0) <= len(value) <= schema.get("maxLength", WIRE_LIMIT):
             raise Rejected("SCHEMA_LENGTH")
@@ -6162,7 +6261,10 @@ def validate(value, schema):
         for key, child in value.items():
             validate(child, schema["properties"][key])
     elif type(value) is list:
-        if not schema.get("minItems", 0) <= len(value) <= schema.get("maxItems", 320):
+        low, high = schema.get("minItems", 0), schema.get("maxItems", 320)
+        if low < 0 or high < low:
+            raise Rejected("SCHEMA_BOUNDS")  # an impossible bound is a schema defect
+        if not low <= len(value) <= high:
             raise Rejected("SCHEMA_ITEMS")
         for child in value:
             validate(child, schema["items"])
@@ -6281,7 +6383,7 @@ def invoke(argv, request, timeout, *, environment=None):
         p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, cwd=workdir, start_new_session=True,
                              env=child_env)
-        output, error = bytearray(), bytearray()
+        output, error, reaped = bytearray(), bytearray(), False
         started, offset = time.monotonic(), 0
         sel = selectors.DefaultSelector()
         streams = [p.stdin, p.stdout, p.stderr]
@@ -6318,6 +6420,7 @@ def invoke(argv, request, timeout, *, environment=None):
             remaining = timeout - (time.monotonic() - started)
             try:
                 code = p.wait(timeout=max(0, remaining))
+                reaped = True
             except subprocess.TimeoutExpired as e:
                 raise TimeoutError("MISSING") from e
             if code != 0:
@@ -6330,11 +6433,14 @@ def invoke(argv, request, timeout, *, environment=None):
             return bytes(output)
         finally:
             sel.close()
-            try:
-                os.killpg(p.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            p.wait()
+            if not reaped:
+                # Only kill a group whose leader is still ours: after wait() the PID is
+                # free and could already belong to an unrelated process group.
+                try:
+                    os.killpg(p.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                p.wait()
             for stream in streams:
                 if not stream.closed:
                     stream.close()
@@ -6454,8 +6560,17 @@ class Controller:
                 raise Rejected("UNAUTHORIZED_SOURCE")
             if card["label"] in {"KULLANICI", "ARAÇ"} and not card["source_ids"]:
                 raise Rejected("SOURCE_REQUIRED")
-            if card["math"] is not None and card["statement"] != card["math"]["expression"]:
-                raise Rejected("MATH_STATEMENT_MISMATCH")
+            if card["math"] is not None:
+                if card["statement"] != card["math"]["expression"]:
+                    raise Rejected("MATH_STATEMENT_MISMATCH")
+                # Settle the arithmetic before the phase is sealed: a reply whose maths
+                # cannot stand must not reach PHASE_VALIDATED and burn the retry budget.
+                try:
+                    computed = exact_math(card["math"]["expression"])["exact"]
+                except MathRejected as exc:
+                    raise Rejected("MATH_" + str(exc)) from None
+                if card["math"]["value"] != computed:
+                    raise Rejected("MATH_VALUE_MISMATCH")
         if {card["scope_id"] for card in reply["cards"]} != set(self.scope_ids):
             raise Rejected("CARD_SCOPE_INCOMPLETE")
         return canonical(reply)
@@ -6567,7 +6682,16 @@ class Controller:
                     proof.pop("proof_id")
                     proof["proof_id"] = digest(proof)
                     proofs[cid] = proof
-            if any({"support", "refute"}.issubset(stances) for stances in propositions.values()):
+            conflicting = sorted(pid for pid, stances in propositions.items()
+                                 if {"support", "refute"}.issubset(stances))
+            if conflicting:
+                # A bare code hides what conflicted; the ledger records the subject.
+                self.log("CONTRADICTION_DETECTED", {
+                    "proposition_ids": conflicting,
+                    "claim_ids": sorted(cid for cid, card in cards.items()
+                                        if card["proposition_id"] in conflicting),
+                    "scope_ids": sorted({card["scope_id"] for card in cards.values()
+                                         if card["proposition_id"] in conflicting})})
                 raise Rejected("CONTRADICTION")
             # Render from the verified card fields. No free-form numeric result is substituted.
             selected = [{"claim_id": cid, "statement": (proofs[cid]["source"] + " = " + proofs[cid]["exact"]) if cid in proofs else cards[cid]["statement"],
@@ -7363,6 +7487,10 @@ for cid, card in request["cards"].items():
     verdict = {"support": "supported", "refute": "refuted", "uncertain": "uncertain"}[card["stance"]]
     if mode == "reject":
         verdict = "uncertain"
+    if mode == "genuine_refutation":
+        # test_kapsam-12: every other mode mirrors the card's own stance, so the host is
+        # comparing a label with its own copy. This mode contradicts the card instead.
+        verdict = {"supported": "refuted", "refuted": "supported"}.get(verdict, verdict)
     excerpts = [{"source_id": sid, "quote": request["source_snapshots"][sid]}
                 for sid in card["source_ids"]]
     verdicts.append(dict(claim_id=cid, verdict=verdict, source_ids=card["source_ids"],
@@ -7625,12 +7753,33 @@ class PublicationTests(unittest.TestCase):
         p = r["proofs"]["a:c1"]
         self.assertEqual(p["run_id"], c.run_id)
         pid = p.pop("proof_id"); self.assertEqual(pid, digest(p))
-    def test_wrong_numeric_value_fails_publication(self):
-        c = controller(("wrong_math", "ready", "ready")); c.run("Compute.")
-        self.assertEqual(finish(c)["reason"], "MATH_VALUE_MISMATCH")
+    def test_wrong_numeric_value_fails_before_the_phase_is_sealed(self):
+        """kod_hata-13: the maths used to be settled only at finalize.
+
+        Renamed from test_wrong_numeric_value_fails_publication. A card whose value does
+        not match its own expression is now rejected while the reply is validated, so the
+        phase never reaches PHASE_VALIDATED and the retry budget is not spent on a reply
+        that cannot stand. The finalize-side check is kept as a second line.
+        """
+        c = controller(("wrong_math", "ready", "ready"))
+        phase = c.run("Compute.")
+        self.assertNotEqual(phase.status, "PHASE_VALIDATED")
+        self.assertTrue(any("MATH_VALUE_MISMATCH" in e for e in phase.errors), phase.errors)
+        self.assertEqual(finish(c)["reason"], "PHASE_NOT_VALIDATED")
     def test_contradiction_cannot_be_voted_away(self):
         c = controller(("ready", "ready", "refute")); c.run("Review.")
         self.assertEqual(finish(c)["reason"], "CONTRADICTION")
+
+    def test_contradiction_is_logged_with_its_subject(self):
+        # celiski-10: the run reported a bare code, so nothing said WHAT contradicted.
+        c = controller(("ready", "ready", "refute")); c.run("Review.")
+        finish(c)
+        detected = [bounded_json(e) for e in c.events]
+        detail = [e["detail"] for e in detected if e["kind"] == "CONTRADICTION_DETECTED"]
+        self.assertEqual(len(detail), 1, [e["kind"] for e in detected])
+        self.assertTrue(detail[0]["proposition_ids"])
+        self.assertTrue(detail[0]["claim_ids"])
+        self.assertTrue(detail[0]["scope_ids"])
     def test_unresolved_review_stays_closed(self):
         c = controller(); c.run("Review.")
         for key, value in [("unresolved_claim_ids", ["a:c1"]), ("unresolved_contradictions", ["Conflict"]), ("candidate_review_passed", False), ("numeric_inventory_complete", False)]:
@@ -7996,6 +8145,165 @@ class ComparisonTests(unittest.TestCase):
         data[0][0]["quote"] = "modified"
         data[1][0]["access_record_id"] = "modified"
         self.assertEqual(result, frozen)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+```
+<!-- END FILE -->
+
+
+<!-- BEGIN FILE: tests/test_edge_gates.py -->
+```python
+"""Task 14A: defects the plan left unassigned, each bound to a finding id."""
+import os
+import sys
+import unittest
+from unittest.mock import patch
+from pathlib import Path
+from astra_reference import Rejected, invoke, string, validate
+from astra_host import ReviewerEndpoint
+from host_fixture_support import fixture_reviewer
+
+WORKER = str(Path(__file__).with_name("exit_code_fixture.py").resolve())
+
+
+class ValidatorGapTests(unittest.TestCase):
+    """kod_hata-9: the validator crashed or mis-ordered checks on lawful schemas."""
+
+    def test_numeric_schema_is_rejected_not_crashed(self):
+        for kind in ("number", "integer"):
+            with self.subTest(kind=kind):
+                with self.assertRaises(Rejected):
+                    validate(1, {"type": kind})
+
+    def test_null_is_allowed_before_enum_is_checked(self):
+        validate(None, string(80, values=["a"], nullable=True))
+        with self.assertRaisesRegex(Rejected, "SCHEMA_ENUM"):
+            validate("b", string(80, values=["a"], nullable=True))
+
+    def test_negative_bounds_are_rejected(self):
+        with self.assertRaises(Rejected):
+            validate([], {"type": "array", "items": string(), "minItems": -1, "maxItems": 3})
+
+
+class ProcessLifecycleTests(unittest.TestCase):
+    """kod_hata-8: killpg ran after the child had been reaped, so a recycled PID could die."""
+
+    def test_reaped_process_group_is_not_killed(self):
+        seen = []
+        real = os.killpg
+
+        def spy(pid, signal_number):
+            seen.append(pid)
+            return real(pid, signal_number)
+        with patch.object(os, "killpg", spy), self.assertRaises(Rejected):
+            invoke([sys.executable, WORKER, "SOME_CODE"], b"{}", 5)
+        self.assertEqual(seen, [])
+
+
+class ReviewerIdentityTests(unittest.TestCase):
+    """kod_hata-14: a fixture could declare the pinned external identity and echo it."""
+
+    def test_fixture_cannot_claim_the_pinned_model(self):
+        argv = fixture_reviewer().argv
+        with self.assertRaisesRegex(Rejected, "REVIEWER_IDENTITY_SCOPE"):
+            ReviewerEndpoint(argv, "TEST_FIXTURE", "gpt-6-astra", "fixture-effort")
+
+    def test_fixture_cannot_claim_a_supported_effort(self):
+        argv = fixture_reviewer().argv
+        with self.assertRaisesRegex(Rejected, "REVIEWER_IDENTITY_SCOPE"):
+            ReviewerEndpoint(argv, "TEST_FIXTURE", "fixture-model", "max")
+
+
+class SourceCaptureGateTests(unittest.TestCase):
+    """test_kapsam-13: five SourceVault read gates had no test at all."""
+
+    def setUp(self):
+        import tempfile
+        from datetime import datetime, timedelta, timezone
+        self.tmp = tempfile.TemporaryDirectory(prefix="astra-capture-")
+        self.addCleanup(self.tmp.cleanup)
+        self.now = datetime.now(timezone.utc)
+        self.timedelta = timedelta
+
+    def spec(self, path, **overrides):
+        base = dict(source_id="s0", path=str(path), kind="USER", tool_call_record=None,
+                    as_of=(self.now - self.timedelta(seconds=2)).isoformat(),
+                    valid_until=(self.now + self.timedelta(hours=1)).isoformat())
+        base.update(overrides)
+        return base
+
+    def test_directory_is_not_a_source(self):
+        from astra_host import SourceVault
+        with self.assertRaisesRegex(Rejected, "SOURCE_REGULAR_FILE_REQUIRED|SOURCE_READ_FAILED"):
+            SourceVault([self.spec(Path(self.tmp.name))])
+
+    def test_empty_file_is_rejected(self):
+        from astra_host import SourceVault
+        path = Path(self.tmp.name) / "empty.txt"
+        path.write_text("", encoding="utf-8")
+        with self.assertRaisesRegex(Rejected, "SOURCE_EMPTY"):
+            SourceVault([self.spec(path)])
+
+    def test_oversized_file_is_rejected(self):
+        from astra_host import SourceVault
+        from astra_reference import WIRE_LIMIT
+        path = Path(self.tmp.name) / "big.txt"
+        path.write_text("x" * (WIRE_LIMIT + 10), encoding="utf-8")
+        with self.assertRaisesRegex(Rejected, "SOURCE_SIZE"):
+            SourceVault([self.spec(path)])
+
+    def test_source_read_before_its_own_as_of_is_rejected(self):
+        from astra_host import SourceVault
+        path = Path(self.tmp.name) / "future.txt"
+        path.write_text("later", encoding="utf-8")
+        with self.assertRaisesRegex(Rejected, "SOURCE_STALE_OR_TIME"):
+            SourceVault([self.spec(path, as_of=(self.now + self.timedelta(hours=1)).isoformat())])
+
+    def test_expired_source_is_rejected(self):
+        from astra_host import SourceVault
+        path = Path(self.tmp.name) / "old.txt"
+        path.write_text("older", encoding="utf-8")
+        with self.assertRaisesRegex(Rejected, "SOURCE_STALE_OR_TIME"):
+            SourceVault([self.spec(path,
+                                   valid_until=(self.now - self.timedelta(seconds=1)).isoformat())])
+
+    def test_missing_file_is_rejected(self):
+        from astra_host import SourceVault
+        with self.assertRaisesRegex(Rejected, "SOURCE_READ_FAILED"):
+            SourceVault([self.spec(Path(self.tmp.name) / "absent.txt")])
+
+
+class ComparisonContractTests(unittest.TestCase):
+    """test_kapsam-5: the ambiguous branch (both comparisons AND an exemption) was untested."""
+
+    def test_comparisons_with_an_exemption_are_ambiguous(self):
+        import tempfile
+        from datetime import datetime, timedelta, timezone
+        from astra_host import SourceVault, TrustedHost
+        import astra_compare
+        now = datetime.now(timezone.utc)
+        with tempfile.TemporaryDirectory(prefix="astra-contract-") as folder:
+            path = Path(folder) / "s.txt"
+            quote = "Candidate A: median completion latency 100 ms."
+            path.write_text(quote, encoding="utf-8")
+            vault = SourceVault([dict(source_id="s0", path=str(path), kind="USER",
+                                      tool_call_record=None,
+                                      as_of=(now - timedelta(seconds=2)).isoformat(),
+                                      valid_until=(now + timedelta(hours=1)).isoformat())])
+            context = dict(metric="latency", definition="median completion latency", unit="ms",
+                           period="one fixed test", population="same queries",
+                           method="same median harness")
+            rows = [dict(context, entity=e, source_id="s0", quote=quote, value=v)
+                    for e, v in (("A", "100"), ("B", "120"))]
+            comparisons = [dict(requirement_id="latency", scope_id="comparison",
+                                claim_ids=["a:c1"], direction="lower_is_better", rows=rows)]
+            with self.assertRaisesRegex(Rejected, "COMPARISON_CONTRACT_AMBIGUOUS"):
+                TrustedHost(task="t" * 30, scope_ids=["comparison"], source_vault=vault,
+                            comparisons=comparisons,
+                            comparison_exemption="No comparison is required.")
 
 
 if __name__ == "__main__":
@@ -8578,6 +8886,24 @@ class HostIntegrationTests(unittest.TestCase):
         self.build(requirements_ledger=reqs)
         self.assertEqual(self.finish()["host_verification"]["task_status"], "PARTIAL")
 
+    def test_reviewer_that_contradicts_the_card_closes_the_gate(self):
+        """test_kapsam-12: every other fixture mode mirrors the card's own stance.
+
+        With a mirroring fixture the stance/verdict comparison can only agree, so the
+        gate was structurally guaranteed to pass. This mode answers 'refuted' to a
+        'support' card, which is the case the gate actually exists for.
+        """
+        self.build(mode="genuine_refutation")
+        self.assert_closed("SEMANTIC_CLAIM_UNSUPPORTED")
+
+    def test_requested_effort_binds_the_reviewer(self):
+        # eksiklik-8 / celiski-11 / api_uyum-14: a cheaper setting answered a max request.
+        self.vault = SourceVault(self.specs)
+        with self.assertRaisesRegex(Rejected, "REVIEWER_EFFORT_BINDING"):
+            TrustedHost(task=TASK, scope_ids=["comparison"], source_vault=self.vault,
+                        comparisons=[], comparison_exemption="No comparison is required.",
+                        reviewer=fixture_reviewer(), requested_effort="max")
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -8616,6 +8942,7 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
     def setUp(self):
         self.request = dict(instructions=SEMANTIC_POLICY, assessment_schema=ASSESSMENT_SCHEMA,
                             wire_schema=transport_schema(ASSESSMENT_SCHEMA),
+                            http_timeout=55.0,
                             expected_model="gpt-6-astra", expected_effort="max")
         self.request["request_digest"] = digest(self.request)
         self.assessment = dict(claim_verdicts=[dict(claim_id="a:c1", verdict="supported",
@@ -8696,7 +9023,7 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
     def test_http_error_classes_are_distinguished_without_body(self):
         # api_uyum-6 / K-13: the caller learns the class, never the provider body.
         import urllib.error
-        for code, expected in ((400, "HTTP_4XX"), (429, "HTTP_4XX"), (503, "HTTP_5XX")):
+        for code, expected in ((400, "HTTP_4XX"), (429, "HTTP_429"), (503, "HTTP_5XX")):
             with self.subTest(code=code):
                 class Failing:
                     def open(self, request, timeout):
@@ -8751,6 +9078,36 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
                         clear=True):
             proxies = [h.proxies for h in build_opener().handlers if getattr(h, "proxies", None)]
         self.assertEqual(proxies, [])
+
+    def test_http_timeout_comes_from_the_request(self):
+        # kod_hata-10 / api_uyum-9: the adapter used a fixed 45s while the host used its
+        # own deadline, so one of the two clocks was always wrong.
+        self.call()
+        self.assertEqual(self.opener.requests[0][1], 55.0)
+
+    def test_missing_or_impossible_http_timeout_is_rejected(self):
+        for value in (None, 0, -1, 301, "45"):
+            with self.subTest(value=value):
+                request = copy.deepcopy(self.request)
+                request["http_timeout"] = value
+                request["request_digest"] = digest(
+                    {k: v for k, v in request.items() if k != "request_digest"})
+                with self.assertRaisesRegex(Rejected, "REVIEW_TIMEOUT_CONFIGURATION"):
+                    self.call(request=request)
+
+    def test_non_error_non_200_response_is_rejected(self):
+        # test_kapsam-11: an opener that returns a non-200 without raising HTTPError.
+        class Odd(io.BytesIO):
+            status = 204
+
+        class OddOpener:
+            requests = []
+
+            def open(self, request, timeout):
+                return Odd(b"{}")
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "k"}, clear=True), \
+                self.assertRaisesRegex(Rejected, "REVIEW_PROVIDER_HTTP_STATUS"):
+            review(self.request, opener=OddOpener())
 
 
 if __name__ == "__main__":
@@ -9208,16 +9565,16 @@ print(json.dumps(r))
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.299456+00:00",
-      "valid_until": "2026-09-07T19:51:44.299456+00:00"
+      "as_of": "2026-09-07T18:54:06.601667+00:00",
+      "valid_until": "2026-09-07T19:54:07.601667+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.299456+00:00",
-      "valid_until": "2026-09-07T19:51:44.299456+00:00"
+      "as_of": "2026-09-07T18:54:06.601667+00:00",
+      "valid_until": "2026-09-07T19:54:07.601667+00:00"
     }
   ],
   "comparisons": [
@@ -9334,43 +9691,43 @@ print(json.dumps(r))
   "events": [
     {
       "detail": {
-        "phase_id": "5eb64bc9f6a94614b851ec41c778b024",
-        "reply_digest": "sha256:8009afb88349efe2de32a814086835d5aba71d88e958fae4eff401238c62380f",
+        "phase_id": "ae55d7fd2af549e9908bb9a6f007b70d",
+        "reply_digest": "sha256:602e570b5c3cf9f0583fd09f2c4dae5b6872c4d05823e1ddb0469ea5b8d1709c",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "aac56752400943738ff0e2a00ad94656"
+      "run_id": "72717c4ac56443d4ad6e8870e67ab8ea"
     },
     {
       "detail": {
-        "phase_id": "5eb64bc9f6a94614b851ec41c778b024",
-        "reply_digest": "sha256:9b9412a4b9e476bd94c792697808ee9f9ac76fe07d9d113de1fd64fb4bcd529f",
+        "phase_id": "ae55d7fd2af549e9908bb9a6f007b70d",
+        "reply_digest": "sha256:8679261aaef83494244574ecdcb9541c69a9e20642463a1d5520086b53e8459a",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:ad8873c80cb67548b9305756954a344ca3a0de49bfe7bb03be0436c3b18b5765",
-      "run_id": "aac56752400943738ff0e2a00ad94656"
+      "previous": "sha256:2bfd3026cd83afa78a9be0fbf2f078b1047b972c948473e9cb73f0d9c3d8946e",
+      "run_id": "72717c4ac56443d4ad6e8870e67ab8ea"
     },
     {
       "detail": {
-        "phase_id": "5eb64bc9f6a94614b851ec41c778b024",
-        "reply_digest": "sha256:0681d0c9295a7753bae098d831000eeb02cb1d269b83ba0e8fa154a70ff8c80a",
+        "phase_id": "ae55d7fd2af549e9908bb9a6f007b70d",
+        "reply_digest": "sha256:d5711b2f7ff8b6e7dbe20b8695314622a88138154cf8d3aea871573b4e4b030e",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:9f20d934aa289350f907f5a64797d970f515b0bd793192d48bccba2bb0999d2b",
-      "run_id": "aac56752400943738ff0e2a00ad94656"
+      "previous": "sha256:d9f1fb0ee108f0433c827b9e5116a1fa278cee76178f0d0088808c5227894d24",
+      "run_id": "72717c4ac56443d4ad6e8870e67ab8ea"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "5eb64bc9f6a94614b851ec41c778b024"
+        "phase_id": "ae55d7fd2af549e9908bb9a6f007b70d"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:78a5a20e38a3943dfb20e3f9469a797a7ae7e355d4d39ded285d1168e85bc5d6",
-      "run_id": "aac56752400943738ff0e2a00ad94656"
+      "previous": "sha256:510fa3b860c1dbc752f7cf9b50000178258a512a7c0b0c6a1ba5963405113ad6",
+      "run_id": "72717c4ac56443d4ad6e8870e67ab8ea"
     },
     {
       "detail": {
@@ -9378,16 +9735,16 @@ print(json.dumps(r))
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:2e8bf9f594d474d05c46cfdb43135c2b3ea65114ebcf87a7ca5c64c892825e23",
-      "run_id": "aac56752400943738ff0e2a00ad94656"
+      "previous": "sha256:e31b6721755481ee8cf9524298b2c5782b8a04fbc5f779308b91780f89f000e8",
+      "run_id": "72717c4ac56443d4ad6e8870e67ab8ea"
     },
     {
       "detail": {
         "reason": "NOT_COMPARABLE"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:3c1ddb4db0b71d71b15d785c8d7807732f550ea4b15b145cf2f737113f2c96f9",
-      "run_id": "aac56752400943738ff0e2a00ad94656"
+      "previous": "sha256:26ab18409ddf0a88b65c461fcece5117f2dc7ad5d6a1b1e1a03fbf9da9a9904e",
+      "run_id": "72717c4ac56443d4ad6e8870e67ab8ea"
     }
   ],
   "production_approval": false
@@ -9424,16 +9781,16 @@ Candidate B: median completion latency 120 ms. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.701100+00:00",
-      "valid_until": "2026-09-07T19:51:44.701100+00:00"
+      "as_of": "2026-09-07T18:54:07.004508+00:00",
+      "valid_until": "2026-09-07T19:54:08.004508+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.701100+00:00",
-      "valid_until": "2026-09-07T19:51:44.701100+00:00"
+      "as_of": "2026-09-07T18:54:07.004508+00:00",
+      "valid_until": "2026-09-07T19:54:08.004508+00:00"
     }
   ],
   "comparisons": [
@@ -9539,43 +9896,43 @@ Candidate B: median completion latency 120 ms. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "06c23d174dc34aaa81e04598162fa737",
-        "reply_digest": "sha256:4055934473717e2affbfbabcf022644116b5858d8da6b9f0dbfbf4c0b2d9c831",
+        "phase_id": "8b7980089fb2451e8d0b80ea592dab05",
+        "reply_digest": "sha256:172bde8a43e631947d04e020f19ece58527ea93cba029e19f95ca06eabc7bd7a",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     },
     {
       "detail": {
-        "phase_id": "06c23d174dc34aaa81e04598162fa737",
-        "reply_digest": "sha256:d783f7996028e6195f7b8502f9071d2c88f1985a4f0888043eda64de337fb7d1",
+        "phase_id": "8b7980089fb2451e8d0b80ea592dab05",
+        "reply_digest": "sha256:43ac205294799f28eca025ec936b2ad1092f105a3a2e5b8d92615f05f595cca3",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:8cdae74112806feb76669b55fcd77863fbf257a185a7e5736ad22eebd838755a",
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "previous": "sha256:0c765ef26ffb3728d033b40246867b18b65aa7a80e7d1b050a5a906186d48b19",
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     },
     {
       "detail": {
-        "phase_id": "06c23d174dc34aaa81e04598162fa737",
-        "reply_digest": "sha256:ba97bde4edb2020333c9d74730c01755119cdaa7e870905e6f95c3d4485ff5b4",
+        "phase_id": "8b7980089fb2451e8d0b80ea592dab05",
+        "reply_digest": "sha256:5d9e85c5dbf625c96fd9dea76d0333d5e4a462fa5ba515e04c8f021997ceb4a7",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:5e89bd0d9d8dabb759d419e7b7c4cb5050d8714a834747bacfedb2605fa2bc9b",
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "previous": "sha256:ba119d03f84bff8cb591083c4fbccb05f0b78554199c6f06f61be7fc88a6a1fe",
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "06c23d174dc34aaa81e04598162fa737"
+        "phase_id": "8b7980089fb2451e8d0b80ea592dab05"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:2eddeba41f601cb9c038a8e79ecc5da6116ddef0c57ea247bac58dc23708a552",
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "previous": "sha256:2b9ae202e11ebc55c3a783167e4f55cfebc779cbe1d3d8275931abdba0b11227",
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     },
     {
       "detail": {
@@ -9583,25 +9940,25 @@ Candidate B: median completion latency 120 ms. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:037383f56e5e95ad8abe0d7fc13df17d91352329bfb5fd7755167c4b75aa6e58",
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "previous": "sha256:a8a5a098af75e4bb7d9dc55f297c05399a40cb5a62ad04ce6ca5ef3e338564fe",
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:18c4ce5800ba2878cc6ff0c9cc82ca61080031cd39aebdcf33cf2eae319756b5",
+        "comparison_digest": "sha256:8bbe4e70c04c6b2d35ae5f3203b1590c146ecba4b74853626e46b55afa39394d",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:cb33a37ca0a521557469fc1b12dafc8a37aaf2a067678a773110f5a23c9ecd33",
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "previous": "sha256:9e2ae2c239c3f6722240716295c1906c0628b8cf17a782a3ef3927e51b0b5872",
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     },
     {
       "detail": {
         "reason": "SEMANTIC_REVIEWER_REQUIRED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:2e4b0e30bc1848030afe5d49da941b3687913874db5e4a40acf8d3202a2b46b1",
-      "run_id": "b4230c5ab6ba488a90ba8c182bf9e5ad"
+      "previous": "sha256:7c3848df829579b85dad121a2618be664ecddc19c1c1c44b025a52eecf30e270",
+      "run_id": "f2251f8810ca41dba40dab42d1c3eedc"
     }
   ],
   "production_approval": false
@@ -9638,16 +9995,16 @@ Candidate B: median completion latency 120 ms. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.501821+00:00",
-      "valid_until": "2026-09-07T19:51:44.501821+00:00"
+      "as_of": "2026-09-07T18:54:06.805761+00:00",
+      "valid_until": "2026-09-07T19:54:07.805761+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.501821+00:00",
-      "valid_until": "2026-09-07T19:51:44.501821+00:00"
+      "as_of": "2026-09-07T18:54:06.805761+00:00",
+      "valid_until": "2026-09-07T19:54:07.805761+00:00"
     }
   ],
   "comparisons": [
@@ -9764,43 +10121,43 @@ Candidate B: median completion latency 120 ms. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "25954a37b3914b8d9e7d1cfedf94e3b2",
-        "reply_digest": "sha256:b394a61e3d5669c2a07ccfaed6a7de20ce2906f6882a097a0f6e39cd848ce7e3",
+        "phase_id": "6d845cb0d82d472d99c098844b79cd44",
+        "reply_digest": "sha256:ca853f5a11171a8551dce736e07699bb1096d768db72c23950af3990028b59b2",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
-        "phase_id": "25954a37b3914b8d9e7d1cfedf94e3b2",
-        "reply_digest": "sha256:da98022e0c388d55be48028b5a6f1057e6e4f56821c548b3458b34fb9ac14a92",
+        "phase_id": "6d845cb0d82d472d99c098844b79cd44",
+        "reply_digest": "sha256:1d5e269fd00dfcaffff8ad576165594034c88617f71a2d69a8c60188d347c62a",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:b97250986c0c5b55de0f4174c7ba34be79d81e86e318192d1f1d574ac21f861a",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:d869e7fee938f1246126fd312d3599b2637d1cc1b255f863fa1cac397c147037",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
-        "phase_id": "25954a37b3914b8d9e7d1cfedf94e3b2",
-        "reply_digest": "sha256:5ae49ab4954aeed3af0bf7298ef13f9fe1caf8f70bf90c8aaa9bf1acc031a8e9",
+        "phase_id": "6d845cb0d82d472d99c098844b79cd44",
+        "reply_digest": "sha256:0e17a3be4aec8e2f0d6ab3fec80961faa5ffd858a60d21bd6d9b6f6ca046319d",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:3d1c2b7fb4f4219c6fc81d87419acd1f783812b2a8add44d3bbe80b9ac1a26c1",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:929c50ed73dc554b9af2336d6dd3f4447be483dbded675a8f47f1233ca27e148",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "25954a37b3914b8d9e7d1cfedf94e3b2"
+        "phase_id": "6d845cb0d82d472d99c098844b79cd44"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:9aef14a0cdd524afabba2b05112bd6f3e3d4afea2b2c3c02b7b3a2b30d3f8a23",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:c4ac92388b6fc20bcdaa716082cd1b5df2eb74695032d6598c4b02daa3730460",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
@@ -9808,34 +10165,34 @@ Candidate B: median completion latency 120 ms. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:da0292023ddbbd71de81940917124dd94cac2c9607121043fb9ce2e395f668a4",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:371c5222fea654831b2b9381ce70c75b289238dd3ed30c3ec24b448edae0f527",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:983ce6b4048f355e05afd3714ec916d80e86f88caacc87a06923aa8423558b79",
+        "comparison_digest": "sha256:cb856ed0ebcf4b2a9f46d28a54aa5d19e992fb0f491b0254cca65b29d9789fb7",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:b9b9b2a977ed9db8eeabfd0ce486339387bdf16c7ebb1782151696858b46454a",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:b0d5711a1d767e8b654fe4b8efda90d5b53c0a75335bd0b54194220c68d91422",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
-        "request_digest": "sha256:6405d4a7817b718ac0c346a04d21a9e88145c77bfe250865c1cfe2b4dd671299",
+        "request_digest": "sha256:638a5e3fb7e2081e38843a09e7595f55dd27bb5113e7c57034d50dcf6bf2def6",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:ba06318e570b60b2863ef08666ec591d3823cc05bb99f5fee623831a5c2d071a",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:d106bc114a8421e0290958c03ba2bd9793279c3c14be1e205b24ce229fe1680a",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     },
     {
       "detail": {
         "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:5964c85ae15400a97dacbb3c75b7d97f1e4192a4b55912fb7427453325179c1e",
-      "run_id": "cb29e87c522845798c17673f072080d2"
+      "previous": "sha256:5881dc52abff1efd2ab3e69af27ddf87a1289880b3c521c8fbeb91a64b5b7e89",
+      "run_id": "f4f0478baf7143649ffab6b0d2145317"
     }
   ],
   "production_approval": false
@@ -9872,16 +10229,16 @@ Request count 120 requests. Latency was not measured. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.098834+00:00",
-      "valid_until": "2026-09-07T19:51:44.098834+00:00"
+      "as_of": "2026-09-07T18:54:06.395931+00:00",
+      "valid_until": "2026-09-07T19:54:07.395931+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.098834+00:00",
-      "valid_until": "2026-09-07T19:51:44.098834+00:00"
+      "as_of": "2026-09-07T18:54:06.395931+00:00",
+      "valid_until": "2026-09-07T19:54:07.395931+00:00"
     }
   ],
   "comparisons": [
@@ -9989,8 +10346,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
     "status": "LOCAL_CHECKS_PASSED",
     "production_approval": false,
     "verification_boundary": "HOST_CAPTURED_LOCAL_SNAPSHOTS_AND_EXECUTED_GATES; reviewer judgment is not a truth or isolation guarantee",
-    "run_id": "1296075ab5db4d7d8cde956bf147f842",
-    "phase_digest": "sha256:f752cf4e09293f7b04390b5dfa396b9adb4340160692d05c2d1bd58d1a72cf9b",
+    "run_id": "de12ecfffd2045ffb7a0de5a792e4739",
+    "phase_digest": "sha256:3099a9adaa1099ee4e4b19e3c58f71644ec43b716c2fd369b480f5b643d687ea",
     "decision": {
       "action": "Report the observed latency comparison only.",
       "claim_ids": [
@@ -10054,7 +10411,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
     "proofs": {},
     "host_verification": {
       "candidate_digest": "sha256:e7726678f2a086117a8980db34f2015eea5bbd31a2f828bf69e0200ffba570e5",
-      "comparison_results_digest": "sha256:fa9a0a927fbae7e48f230bc533184d154e952a7525ca1376e857325da5568586",
+      "comparison_results_digest": "sha256:e36f13b132831ab28c9d58f46d94edbbf0e48f5244d56378ef5c6b7f1a6634ff",
       "comparisons": [
         {
           "claim_ids": [
@@ -10064,7 +10421,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           ],
           "requirement_id": "latency",
           "result": {
-            "comparison_digest": "sha256:c558599daf864801ca366c4f43aa07b8c73b2ef530dca5563bbba1b6fa0c8623",
+            "comparison_digest": "sha256:a64997e7337fedf880eccc7ee7629343f821e44c975f315ba7230487a99f7ab8",
             "context": {
               "definition": "median completion latency",
               "method": "same median harness",
@@ -10081,7 +10438,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
             "ranking_scope": "OBSERVED_VALUES_ONLY",
             "rows": [
               {
-                "access_record_id": "sha256:a43d398393848dd74fc4cf736f9fae4b1446d69bc85053b1e8c356349669cbb1",
+                "access_record_id": "sha256:c6d8b14e4ad74e8fb2e8f457108e053f3384e53e21ed43f2647e680de11e37a1",
                 "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
                 "definition": "median completion latency",
                 "entity": "A",
@@ -10097,7 +10454,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
                 "value": "100"
               },
               {
-                "access_record_id": "sha256:9765627fcf57630cb8b0dac1cc74628bd197b1fe5f837db7628faef2ef0d3074",
+                "access_record_id": "sha256:98cfec24eceaa1c7bc3256b1876a21a1f6adbf675349f553febc9e2b34e2016f",
                 "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
                 "definition": "median completion latency",
                 "entity": "B",
@@ -10119,17 +10476,18 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           }
         }
       ],
-      "contract_digest": "sha256:5f7bc024313ed037b06b0fcbeab3287176fa364bc3a022a49bf161f995253929",
-      "created_at": "2026-09-07T18:51:44.220918+00:00",
-      "host_receipt_id": "sha256:4bde0964d8d831b5281304e1d964c995719022c4cf384fb2e9a61b18f94b6dc6",
-      "issued_at": "2026-09-07T18:51:44.201087+00:00",
-      "phase_digest": "sha256:f752cf4e09293f7b04390b5dfa396b9adb4340160692d05c2d1bd58d1a72cf9b",
+      "contract_digest": "sha256:a886e196f83ec14e6a2adade731342cd99ac677f424b17a896009d5c53afe5b3",
+      "created_at": "2026-09-07T18:54:07.536547+00:00",
+      "host_receipt_id": "sha256:edab3e3f109fce888c86607b1247804b777ecad491e242ebac7780ee881f40aa",
+      "issued_at": "2026-09-07T18:54:07.515527+00:00",
+      "phase_digest": "sha256:3099a9adaa1099ee4e4b19e3c58f71644ec43b716c2fd369b480f5b643d687ea",
       "production_approval": false,
       "protocol": "ASTRA-HOST-1.3",
       "rendered_claims_digest": "sha256:6766430b75dc68871fadb0c2ffec8e843d999decea7e1982905ea154d8a1cc2e",
-      "request_digest": "sha256:62a49529bbbfddf4187469de5e2459a851a78ffa5879fdc9425ff8b7ffd0f226",
+      "request_digest": "sha256:b416e85531e1b852381ae681cb5c64d541b3d51d000a6d7cbba2f42b8775a6d6",
+      "requested_effort": null,
       "requirements": [],
-      "review_nonce": "7c017725e6977358dffeff0a7fc01c3d197c49df6148efc6",
+      "review_nonce": "a81861e5dff334b1213f26dcc41485fc789c42dd205bd969",
       "reviewer_kind": "TEST_FIXTURE",
       "reviewer_response": {
         "assessment": {
@@ -10214,7 +10572,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         },
         "provider_effort": "fixture-effort",
         "provider_model": "fixture-model",
-        "request_digest": "sha256:62a49529bbbfddf4187469de5e2459a851a78ffa5879fdc9425ff8b7ffd0f226",
+        "request_digest": "sha256:b416e85531e1b852381ae681cb5c64d541b3d51d000a6d7cbba2f42b8775a6d6",
         "reviewer_record_id": "TEST_FIXTURE_ONLY"
       },
       "semantic_review_scope": "REVIEWER_JUDGMENT_NOT_TRUTH_GUARANTEE",
@@ -10223,8 +10581,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
       "source_access_authenticated": false,
       "source_access_receipts": [
         {
-          "access_record_id": "sha256:a43d398393848dd74fc4cf736f9fae4b1446d69bc85053b1e8c356349669cbb1",
-          "captured_at": "2026-09-07T18:51:44.143504+00:00",
+          "access_record_id": "sha256:c6d8b14e4ad74e8fb2e8f457108e053f3384e53e21ed43f2647e680de11e37a1",
+          "captured_at": "2026-09-07T18:54:07.444807+00:00",
           "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
           "locator": "file://<RUN>/source_0.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -10232,8 +10590,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           "upstream_authentication_verified": false
         },
         {
-          "access_record_id": "sha256:9765627fcf57630cb8b0dac1cc74628bd197b1fe5f837db7628faef2ef0d3074",
-          "captured_at": "2026-09-07T18:51:44.143665+00:00",
+          "access_record_id": "sha256:98cfec24eceaa1c7bc3256b1876a21a1f6adbf675349f553febc9e2b34e2016f",
+          "captured_at": "2026-09-07T18:54:07.444978+00:00",
           "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
           "locator": "file://<RUN>/source_1.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -10242,7 +10600,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         }
       ],
       "source_access_scope": "LOCAL_FILE_SNAPSHOT_READ",
-      "source_registry_digest": "sha256:29b3d87d0be2554f97f9fc1553a7c9323dcca2e4c281494d6c36a99f0d2ea10c",
+      "source_registry_digest": "sha256:c0de240570151872fa7f72fb69391dbcf19942b7b2c20188e283b5afa17c2564",
       "task_status": "NO_REQUIREMENTS",
       "upstream_origin_verified": false
     }
@@ -10256,43 +10614,43 @@ Request count 120 requests. Latency was not measured. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "19d3bccac0ba45c8b2d397ec933ad6cc",
-        "reply_digest": "sha256:cafa62a106d2a79d858d200e481b4936632c7539c48e78256b3dc0411b780f7a",
+        "phase_id": "5108feed1470445dae85c697c0641cf5",
+        "reply_digest": "sha256:2d2c449afa510731aa8a43c42c0c1288989d6324c6848ec0a8f0cfa1158bf9d2",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
-        "phase_id": "19d3bccac0ba45c8b2d397ec933ad6cc",
-        "reply_digest": "sha256:db76974c718a2e7b7a9576e0db4673a7adbc24179de95fbf5b70398b04cb3424",
+        "phase_id": "5108feed1470445dae85c697c0641cf5",
+        "reply_digest": "sha256:88578f473f9d4ce68cc444bbe250b4b94e2d556f8d8ef49d6f095d8520666ff7",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:50a55b123e637015d34b49dfaf02490fc36f7500ea02d414cac416a5f8329d20",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:3ecfa750b1704a77ae579355d8215583af43396e88c903451e8807fb58b95011",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
-        "phase_id": "19d3bccac0ba45c8b2d397ec933ad6cc",
-        "reply_digest": "sha256:b16031ba178f489928acb1b91619ebe9b8eb580c604b83767f2e5c676b313ce0",
+        "phase_id": "5108feed1470445dae85c697c0641cf5",
+        "reply_digest": "sha256:63b493c03c067138ded39f13849ffa4949c0a63322de05a6a2cc048d93eadff7",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:d0e472246b0611d62385c912ab248844dce42d447ed128ac9e1b2e860d762e2a",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:50f653660638978703f9a56ea8524c68366242d0e76b77ba5ff5cce70cf6617d",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "19d3bccac0ba45c8b2d397ec933ad6cc"
+        "phase_id": "5108feed1470445dae85c697c0641cf5"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:d14e2436a54e4268279ec227123d80be7f6859f5017a836e10a0ced4604720ca",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:05fd736da0c07ef85be29114ba019f1ff8725e3023fac5328a91bde57083227b",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
@@ -10300,42 +10658,42 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:80c6239e317eb3cb9a63ffd5a2b88e54f586e73054869545b9ec5b16b72b3c61",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:3eb12c8e0b31d11f32d2c8adbb07eb031a6f9d584e743c1755f0997127aa8a8e",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:c558599daf864801ca366c4f43aa07b8c73b2ef530dca5563bbba1b6fa0c8623",
+        "comparison_digest": "sha256:a64997e7337fedf880eccc7ee7629343f821e44c975f315ba7230487a99f7ab8",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:58ca41bcdca804dfe3ba80e592a0dac4d6d1e830f18a6e2c0cfc497d2b075d75",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:337677337a856f93c5efd85ea0e519ceb19b9f7e6c31b5b655ca0d6f91a872f0",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
-        "request_digest": "sha256:62a49529bbbfddf4187469de5e2459a851a78ffa5879fdc9425ff8b7ffd0f226",
+        "request_digest": "sha256:b416e85531e1b852381ae681cb5c64d541b3d51d000a6d7cbba2f42b8775a6d6",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:788370fe612244aed418aa0738a6cfeae67665528237971ed01267bc7eb0145c",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:d1fde7ebf3cfc3bd03bb112382303397550f83d33edf60de00c9e6b978eaabaa",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
-        "host_receipt_id": "sha256:4bde0964d8d831b5281304e1d964c995719022c4cf384fb2e9a61b18f94b6dc6"
+        "host_receipt_id": "sha256:edab3e3f109fce888c86607b1247804b777ecad491e242ebac7780ee881f40aa"
       },
       "kind": "HOST_GATES_PASSED",
-      "previous": "sha256:206c5c7d1ac0dd319f9d0c45df0b2757e255ab78c37a9e58d0cc41cd75924630",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:3ce94aabeaee5f017b645aad3434a96c9976ab72806da387b0977985074a3ad3",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     },
     {
       "detail": {
-        "result_digest": "sha256:5cbd6aac64a886e1a75f5bdfe331895abb574ac1dc5a2145e99625fa02fda3ee"
+        "result_digest": "sha256:f094c2d49480d0e62b94377945f2a3861d2aee852f67eb308a156acfced64baf"
       },
       "kind": "LOCAL_CHECKS_PASSED",
-      "previous": "sha256:5bf119c47edba45eb7d2d4943fa70761e1735129a72cdf8f341bcbacd98c796c",
-      "run_id": "1296075ab5db4d7d8cde956bf147f842"
+      "previous": "sha256:70af717ef4bcc0d3f63ef39a20f8ff98b44275de4a9912d9175d9cc792063d5f",
+      "run_id": "de12ecfffd2045ffb7a0de5a792e4739"
     }
   ],
   "production_approval": false
@@ -10389,7 +10747,7 @@ Candidate B: median completion latency 120 ms. Synthetic data.
     }
   },
   "python_version": "3.11.15",
-  "generated_at": "2026-09-07T18:51:44.874619+00:00",
+  "generated_at": "2026-09-07T18:54:08.176871+00:00",
   "scope": "Local CLI scenarios with fixture workers and a fixture reviewer; they exercise the pipeline, not semantic quality"
 }
 
@@ -10460,11 +10818,11 @@ Candidate B: median completion latency 120 ms. Synthetic data.
 {
   "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
   "returncode": 0,
-  "summary": "Ran 179 tests in 9.121s",
+  "summary": "Ran 198 tests in 9.395s",
   "outcome": "OK",
   "python_version": "3.11.15",
   "platform": "Linux",
-  "generated_at": "2026-09-07T18:51:44.874619+00:00",
+  "generated_at": "2026-09-07T18:54:08.176871+00:00",
   "scope": "LOCAL_TEST only; no live provider call was made"
 }
 
@@ -10486,6 +10844,7 @@ test_supported_fraction_fits_reply_value_schema (test_astra.MathTests.test_suppo
 test_underflow_is_nonzero (test_astra.MathTests.test_underflow_is_nonzero) ... ok
 test_blank_action_and_unknown_owner_fail (test_astra.PublicationTests.test_blank_action_and_unknown_owner_fail) ... ok
 test_contradiction_cannot_be_voted_away (test_astra.PublicationTests.test_contradiction_cannot_be_voted_away) ... ok
+test_contradiction_is_logged_with_its_subject (test_astra.PublicationTests.test_contradiction_is_logged_with_its_subject) ... ok
 test_genuine_math_proof_and_final_value (test_astra.PublicationTests.test_genuine_math_proof_and_final_value) ... ok
 test_missing_decision_and_review_fields_fail (test_astra.PublicationTests.test_missing_decision_and_review_fields_fail) ... ok
 test_missing_source_fails (test_astra.PublicationTests.test_missing_source_fails) ... ok
@@ -10494,7 +10853,8 @@ test_review_binds_candidate_phase_sources (test_astra.PublicationTests.test_revi
 test_second_finalize_is_locked (test_astra.PublicationTests.test_second_finalize_is_locked) ... ok
 test_unresolved_review_stays_closed (test_astra.PublicationTests.test_unresolved_review_stays_closed) ... ok
 test_valid_and_stale_source (test_astra.PublicationTests.test_valid_and_stale_source) ... ok
-test_wrong_numeric_value_fails_publication (test_astra.PublicationTests.test_wrong_numeric_value_fails_publication) ... ok
+test_wrong_numeric_value_fails_before_the_phase_is_sealed (test_astra.PublicationTests.test_wrong_numeric_value_fails_before_the_phase_is_sealed)
+kod_hata-13: the maths used to be settled only at finalize. ... ok
 test_bad_command_rejected_before_any_dispatch (test_astra.RuntimeTests.test_bad_command_rejected_before_any_dispatch) ... ok
 test_bad_startup_config_rejected (test_astra.RuntimeTests.test_bad_startup_config_rejected) ... ok
 test_blocked_dominates_other_worker_error_without_retry (test_astra.RuntimeTests.test_blocked_dominates_other_worker_error_without_retry) ... ok
@@ -10543,6 +10903,19 @@ test_source_number_sign_cannot_be_dropped (test_comparison.ComparisonTests.test_
 test_stale_future_or_unzoned_sources_are_rejected (test_comparison.ComparisonTests.test_stale_future_or_unzoned_sources_are_rejected) ... ok
 test_tie_does_not_invent_a_unique_leader (test_comparison.ComparisonTests.test_tie_does_not_invent_a_unique_leader) ... ok
 test_unicode_sign_and_separators_cannot_be_dropped (test_comparison.ComparisonTests.test_unicode_sign_and_separators_cannot_be_dropped) ... ok
+test_comparisons_with_an_exemption_are_ambiguous (test_edge_gates.ComparisonContractTests.test_comparisons_with_an_exemption_are_ambiguous) ... ok
+test_reaped_process_group_is_not_killed (test_edge_gates.ProcessLifecycleTests.test_reaped_process_group_is_not_killed) ... ok
+test_fixture_cannot_claim_a_supported_effort (test_edge_gates.ReviewerIdentityTests.test_fixture_cannot_claim_a_supported_effort) ... ok
+test_fixture_cannot_claim_the_pinned_model (test_edge_gates.ReviewerIdentityTests.test_fixture_cannot_claim_the_pinned_model) ... ok
+test_directory_is_not_a_source (test_edge_gates.SourceCaptureGateTests.test_directory_is_not_a_source) ... ok
+test_empty_file_is_rejected (test_edge_gates.SourceCaptureGateTests.test_empty_file_is_rejected) ... ok
+test_expired_source_is_rejected (test_edge_gates.SourceCaptureGateTests.test_expired_source_is_rejected) ... ok
+test_missing_file_is_rejected (test_edge_gates.SourceCaptureGateTests.test_missing_file_is_rejected) ... ok
+test_oversized_file_is_rejected (test_edge_gates.SourceCaptureGateTests.test_oversized_file_is_rejected) ... ok
+test_source_read_before_its_own_as_of_is_rejected (test_edge_gates.SourceCaptureGateTests.test_source_read_before_its_own_as_of_is_rejected) ... ok
+test_negative_bounds_are_rejected (test_edge_gates.ValidatorGapTests.test_negative_bounds_are_rejected) ... ok
+test_null_is_allowed_before_enum_is_checked (test_edge_gates.ValidatorGapTests.test_null_is_allowed_before_enum_is_checked) ... ok
+test_numeric_schema_is_rejected_not_crashed (test_edge_gates.ValidatorGapTests.test_numeric_schema_is_rejected_not_crashed) ... ok
 test_complete_multiscope_local_result_still_passes (test_goal_regressions.GoalRegressions.test_complete_multiscope_local_result_still_passes) ... ok
 test_final_selection_cannot_drop_required_scope (test_goal_regressions.GoalRegressions.test_final_selection_cannot_drop_required_scope) ... ok
 test_ready_cannot_claim_scope_without_a_card (test_goal_regressions.GoalRegressions.test_ready_cannot_claim_scope_without_a_card) ... ok
@@ -10583,12 +10956,15 @@ test_noncritical_uncertain_card_outside_decision_is_published (test_host_integra
 test_partial_status_when_work_is_open (test_host_integration.HostIntegrationTests.test_partial_status_when_work_is_open) ... ok
 test_real_source_digest_is_accepted_as_evidence (test_host_integration.HostIntegrationTests.test_real_source_digest_is_accepted_as_evidence) ... ok
 test_replayed_reviewer_digest_rejects (test_host_integration.HostIntegrationTests.test_replayed_reviewer_digest_rejects) ... ok
+test_requested_effort_binds_the_reviewer (test_host_integration.HostIntegrationTests.test_requested_effort_binds_the_reviewer) ... ok
 test_requirement_cannot_depend_on_an_unknown_requirement (test_host_integration.HostIntegrationTests.test_requirement_cannot_depend_on_an_unknown_requirement) ... ok
 test_review_budget_precheck_stops_before_call (test_host_integration.HostIntegrationTests.test_review_budget_precheck_stops_before_call) ... ok
 test_review_request_carries_both_full_and_wire_schema (test_host_integration.HostIntegrationTests.test_review_request_carries_both_full_and_wire_schema) ... ok
 test_review_request_carries_fresh_nonce (test_host_integration.HostIntegrationTests.test_review_request_carries_fresh_nonce)
 celiski-1: each review request is unique, so a cached response cannot be replayed. ... ok
 test_reviewer_model_identity_must_match_host_config (test_host_integration.HostIntegrationTests.test_reviewer_model_identity_must_match_host_config) ... ok
+test_reviewer_that_contradicts_the_card_closes_the_gate (test_host_integration.HostIntegrationTests.test_reviewer_that_contradicts_the_card_closes_the_gate)
+test_kapsam-12: every other fixture mode mirrors the card's own stance. ... ok
 test_source_change_before_finalize_rejects (test_host_integration.HostIntegrationTests.test_source_change_before_finalize_rejects) ... ok
 test_source_change_during_reviewer_rejects (test_host_integration.HostIntegrationTests.test_source_change_during_reviewer_rejects) ... ok
 test_source_getters_cannot_modify_host_capture (test_host_integration.HostIntegrationTests.test_source_getters_cannot_modify_host_capture) ... ok
@@ -10612,11 +10988,14 @@ test_verified_requirement_needs_real_evidence (test_host_integration.HostIntegra
 test_worker_exit_code_is_carried_when_declared (test_host_integration.HostIntegrationTests.test_worker_exit_code_is_carried_when_declared) ... ok
 test_changed_request_is_rejected_before_network (test_openai_reviewer.OpenAIReviewerTransportTests.test_changed_request_is_rejected_before_network) ... ok
 test_http_error_classes_are_distinguished_without_body (test_openai_reviewer.OpenAIReviewerTransportTests.test_http_error_classes_are_distinguished_without_body) ... ok
+test_http_timeout_comes_from_the_request (test_openai_reviewer.OpenAIReviewerTransportTests.test_http_timeout_comes_from_the_request) ... ok
 test_incomplete_reason_is_reported (test_openai_reviewer.OpenAIReviewerTransportTests.test_incomplete_reason_is_reported) ... ok
 test_incomplete_response_closes_gate (test_openai_reviewer.OpenAIReviewerTransportTests.test_incomplete_response_closes_gate) ... ok
 test_malformed_response_shapes_are_controlled (test_openai_reviewer.OpenAIReviewerTransportTests.test_malformed_response_shapes_are_controlled) ... ok
 test_missing_credential_never_calls_network (test_openai_reviewer.OpenAIReviewerTransportTests.test_missing_credential_never_calls_network) ... ok
+test_missing_or_impossible_http_timeout_is_rejected (test_openai_reviewer.OpenAIReviewerTransportTests.test_missing_or_impossible_http_timeout_is_rejected) ... ok
 test_missing_provider_receipt_is_rejected (test_openai_reviewer.OpenAIReviewerTransportTests.test_missing_provider_receipt_is_rejected) ... ok
+test_non_error_non_200_response_is_rejected (test_openai_reviewer.OpenAIReviewerTransportTests.test_non_error_non_200_response_is_rejected) ... ok
 test_opener_without_config_uses_no_proxy (test_openai_reviewer.OpenAIReviewerTransportTests.test_opener_without_config_uses_no_proxy) ... ok
 test_proxy_comes_only_from_config_env (test_openai_reviewer.OpenAIReviewerTransportTests.test_proxy_comes_only_from_config_env) ... ok
 test_reasoning_items_are_ignored (test_openai_reviewer.OpenAIReviewerTransportTests.test_reasoning_items_are_ignored) ... ok
@@ -10666,7 +11045,7 @@ test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 179 tests in 9.121s
+Ran 198 tests in 9.395s
 
 OK
 

@@ -10,6 +10,7 @@ test_supported_fraction_fits_reply_value_schema (test_astra.MathTests.test_suppo
 test_underflow_is_nonzero (test_astra.MathTests.test_underflow_is_nonzero) ... ok
 test_blank_action_and_unknown_owner_fail (test_astra.PublicationTests.test_blank_action_and_unknown_owner_fail) ... ok
 test_contradiction_cannot_be_voted_away (test_astra.PublicationTests.test_contradiction_cannot_be_voted_away) ... ok
+test_contradiction_is_logged_with_its_subject (test_astra.PublicationTests.test_contradiction_is_logged_with_its_subject) ... ok
 test_genuine_math_proof_and_final_value (test_astra.PublicationTests.test_genuine_math_proof_and_final_value) ... ok
 test_missing_decision_and_review_fields_fail (test_astra.PublicationTests.test_missing_decision_and_review_fields_fail) ... ok
 test_missing_source_fails (test_astra.PublicationTests.test_missing_source_fails) ... ok
@@ -18,7 +19,8 @@ test_review_binds_candidate_phase_sources (test_astra.PublicationTests.test_revi
 test_second_finalize_is_locked (test_astra.PublicationTests.test_second_finalize_is_locked) ... ok
 test_unresolved_review_stays_closed (test_astra.PublicationTests.test_unresolved_review_stays_closed) ... ok
 test_valid_and_stale_source (test_astra.PublicationTests.test_valid_and_stale_source) ... ok
-test_wrong_numeric_value_fails_publication (test_astra.PublicationTests.test_wrong_numeric_value_fails_publication) ... ok
+test_wrong_numeric_value_fails_before_the_phase_is_sealed (test_astra.PublicationTests.test_wrong_numeric_value_fails_before_the_phase_is_sealed)
+kod_hata-13: the maths used to be settled only at finalize. ... ok
 test_bad_command_rejected_before_any_dispatch (test_astra.RuntimeTests.test_bad_command_rejected_before_any_dispatch) ... ok
 test_bad_startup_config_rejected (test_astra.RuntimeTests.test_bad_startup_config_rejected) ... ok
 test_blocked_dominates_other_worker_error_without_retry (test_astra.RuntimeTests.test_blocked_dominates_other_worker_error_without_retry) ... ok
@@ -67,6 +69,19 @@ test_source_number_sign_cannot_be_dropped (test_comparison.ComparisonTests.test_
 test_stale_future_or_unzoned_sources_are_rejected (test_comparison.ComparisonTests.test_stale_future_or_unzoned_sources_are_rejected) ... ok
 test_tie_does_not_invent_a_unique_leader (test_comparison.ComparisonTests.test_tie_does_not_invent_a_unique_leader) ... ok
 test_unicode_sign_and_separators_cannot_be_dropped (test_comparison.ComparisonTests.test_unicode_sign_and_separators_cannot_be_dropped) ... ok
+test_comparisons_with_an_exemption_are_ambiguous (test_edge_gates.ComparisonContractTests.test_comparisons_with_an_exemption_are_ambiguous) ... ok
+test_reaped_process_group_is_not_killed (test_edge_gates.ProcessLifecycleTests.test_reaped_process_group_is_not_killed) ... ok
+test_fixture_cannot_claim_a_supported_effort (test_edge_gates.ReviewerIdentityTests.test_fixture_cannot_claim_a_supported_effort) ... ok
+test_fixture_cannot_claim_the_pinned_model (test_edge_gates.ReviewerIdentityTests.test_fixture_cannot_claim_the_pinned_model) ... ok
+test_directory_is_not_a_source (test_edge_gates.SourceCaptureGateTests.test_directory_is_not_a_source) ... ok
+test_empty_file_is_rejected (test_edge_gates.SourceCaptureGateTests.test_empty_file_is_rejected) ... ok
+test_expired_source_is_rejected (test_edge_gates.SourceCaptureGateTests.test_expired_source_is_rejected) ... ok
+test_missing_file_is_rejected (test_edge_gates.SourceCaptureGateTests.test_missing_file_is_rejected) ... ok
+test_oversized_file_is_rejected (test_edge_gates.SourceCaptureGateTests.test_oversized_file_is_rejected) ... ok
+test_source_read_before_its_own_as_of_is_rejected (test_edge_gates.SourceCaptureGateTests.test_source_read_before_its_own_as_of_is_rejected) ... ok
+test_negative_bounds_are_rejected (test_edge_gates.ValidatorGapTests.test_negative_bounds_are_rejected) ... ok
+test_null_is_allowed_before_enum_is_checked (test_edge_gates.ValidatorGapTests.test_null_is_allowed_before_enum_is_checked) ... ok
+test_numeric_schema_is_rejected_not_crashed (test_edge_gates.ValidatorGapTests.test_numeric_schema_is_rejected_not_crashed) ... ok
 test_complete_multiscope_local_result_still_passes (test_goal_regressions.GoalRegressions.test_complete_multiscope_local_result_still_passes) ... ok
 test_final_selection_cannot_drop_required_scope (test_goal_regressions.GoalRegressions.test_final_selection_cannot_drop_required_scope) ... ok
 test_ready_cannot_claim_scope_without_a_card (test_goal_regressions.GoalRegressions.test_ready_cannot_claim_scope_without_a_card) ... ok
@@ -107,12 +122,15 @@ test_noncritical_uncertain_card_outside_decision_is_published (test_host_integra
 test_partial_status_when_work_is_open (test_host_integration.HostIntegrationTests.test_partial_status_when_work_is_open) ... ok
 test_real_source_digest_is_accepted_as_evidence (test_host_integration.HostIntegrationTests.test_real_source_digest_is_accepted_as_evidence) ... ok
 test_replayed_reviewer_digest_rejects (test_host_integration.HostIntegrationTests.test_replayed_reviewer_digest_rejects) ... ok
+test_requested_effort_binds_the_reviewer (test_host_integration.HostIntegrationTests.test_requested_effort_binds_the_reviewer) ... ok
 test_requirement_cannot_depend_on_an_unknown_requirement (test_host_integration.HostIntegrationTests.test_requirement_cannot_depend_on_an_unknown_requirement) ... ok
 test_review_budget_precheck_stops_before_call (test_host_integration.HostIntegrationTests.test_review_budget_precheck_stops_before_call) ... ok
 test_review_request_carries_both_full_and_wire_schema (test_host_integration.HostIntegrationTests.test_review_request_carries_both_full_and_wire_schema) ... ok
 test_review_request_carries_fresh_nonce (test_host_integration.HostIntegrationTests.test_review_request_carries_fresh_nonce)
 celiski-1: each review request is unique, so a cached response cannot be replayed. ... ok
 test_reviewer_model_identity_must_match_host_config (test_host_integration.HostIntegrationTests.test_reviewer_model_identity_must_match_host_config) ... ok
+test_reviewer_that_contradicts_the_card_closes_the_gate (test_host_integration.HostIntegrationTests.test_reviewer_that_contradicts_the_card_closes_the_gate)
+test_kapsam-12: every other fixture mode mirrors the card's own stance. ... ok
 test_source_change_before_finalize_rejects (test_host_integration.HostIntegrationTests.test_source_change_before_finalize_rejects) ... ok
 test_source_change_during_reviewer_rejects (test_host_integration.HostIntegrationTests.test_source_change_during_reviewer_rejects) ... ok
 test_source_getters_cannot_modify_host_capture (test_host_integration.HostIntegrationTests.test_source_getters_cannot_modify_host_capture) ... ok
@@ -136,11 +154,14 @@ test_verified_requirement_needs_real_evidence (test_host_integration.HostIntegra
 test_worker_exit_code_is_carried_when_declared (test_host_integration.HostIntegrationTests.test_worker_exit_code_is_carried_when_declared) ... ok
 test_changed_request_is_rejected_before_network (test_openai_reviewer.OpenAIReviewerTransportTests.test_changed_request_is_rejected_before_network) ... ok
 test_http_error_classes_are_distinguished_without_body (test_openai_reviewer.OpenAIReviewerTransportTests.test_http_error_classes_are_distinguished_without_body) ... ok
+test_http_timeout_comes_from_the_request (test_openai_reviewer.OpenAIReviewerTransportTests.test_http_timeout_comes_from_the_request) ... ok
 test_incomplete_reason_is_reported (test_openai_reviewer.OpenAIReviewerTransportTests.test_incomplete_reason_is_reported) ... ok
 test_incomplete_response_closes_gate (test_openai_reviewer.OpenAIReviewerTransportTests.test_incomplete_response_closes_gate) ... ok
 test_malformed_response_shapes_are_controlled (test_openai_reviewer.OpenAIReviewerTransportTests.test_malformed_response_shapes_are_controlled) ... ok
 test_missing_credential_never_calls_network (test_openai_reviewer.OpenAIReviewerTransportTests.test_missing_credential_never_calls_network) ... ok
+test_missing_or_impossible_http_timeout_is_rejected (test_openai_reviewer.OpenAIReviewerTransportTests.test_missing_or_impossible_http_timeout_is_rejected) ... ok
 test_missing_provider_receipt_is_rejected (test_openai_reviewer.OpenAIReviewerTransportTests.test_missing_provider_receipt_is_rejected) ... ok
+test_non_error_non_200_response_is_rejected (test_openai_reviewer.OpenAIReviewerTransportTests.test_non_error_non_200_response_is_rejected) ... ok
 test_opener_without_config_uses_no_proxy (test_openai_reviewer.OpenAIReviewerTransportTests.test_opener_without_config_uses_no_proxy) ... ok
 test_proxy_comes_only_from_config_env (test_openai_reviewer.OpenAIReviewerTransportTests.test_proxy_comes_only_from_config_env) ... ok
 test_reasoning_items_are_ignored (test_openai_reviewer.OpenAIReviewerTransportTests.test_reasoning_items_are_ignored) ... ok
@@ -190,6 +211,6 @@ test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 179 tests in 9.121s
+Ran 198 tests in 9.395s
 
 OK

@@ -9,16 +9,16 @@
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.701100+00:00",
-      "valid_until": "2026-09-07T19:51:44.701100+00:00"
+      "as_of": "2026-09-07T18:54:07.004508+00:00",
+      "valid_until": "2026-09-07T19:54:08.004508+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T18:51:43.701100+00:00",
-      "valid_until": "2026-09-07T19:51:44.701100+00:00"
+      "as_of": "2026-09-07T18:54:07.004508+00:00",
+      "valid_until": "2026-09-07T19:54:08.004508+00:00"
     }
   ],
   "comparisons": [
