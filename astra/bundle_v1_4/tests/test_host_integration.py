@@ -234,6 +234,21 @@ class HostIntegrationTests(unittest.TestCase):
         self.decision["action"] = "A will always outperform B in every task."
         self.assert_closed("SEMANTIC_CLAIM_UNSUPPORTED")
 
+    def test_fixture_reviewer_cannot_receive_credentials(self):
+        # kod_hata-5: only the packaged EXTERNAL_MODEL adapter may receive the API key.
+        fixture = fixture_reviewer()
+        with self.assertRaisesRegex(Rejected, "REVIEWER_CREDENTIAL_SCOPE"):
+            ReviewerEndpoint(fixture.argv, "TEST_FIXTURE", "fixture-model", "fixture-effort",
+                             credential_env=("OPENAI_API_KEY",))
+
+    def test_symlinked_source_is_rejected(self):
+        # kod_hata-7: resolve() followed symlinks before O_NOFOLLOW could act.
+        link = Path(self.tmp.name) / "link.txt"
+        link.symlink_to(self.specs[0]["path"])
+        self.specs[0]["path"] = str(link)
+        with self.assertRaisesRegex(Rejected, "SOURCE_SYMLINK_REJECTED"):
+            SourceVault(self.specs)
+
     def test_fixture_cannot_be_relabelled_as_external_model(self):
         fixture = fixture_reviewer()
         with self.assertRaisesRegex(Rejected, "EXTERNAL_REVIEWER_ADAPTER_REQUIRED"):

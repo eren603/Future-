@@ -92,7 +92,10 @@ class SourceVault:
         unique([s["source_id"] for s in specs])
         records, contents, receipts, paths = [], {}, [], {}
         for spec in specs:
-            path = Path(spec["path"]).resolve()
+            declared = Path(spec["path"])
+            if os.path.islink(declared):
+                raise Rejected("SOURCE_SYMLINK_REJECTED")  # resolve() would follow it before O_NOFOLLOW
+            path = declared.resolve()
             content = self._read(path)
             captured = stamp()
             if not timestamp(spec["as_of"]) <= timestamp(captured) <= timestamp(spec["valid_until"]):
@@ -174,6 +177,8 @@ class ReviewerEndpoint:
         validate_argv(list(self.argv))
         if self.kind not in {"EXTERNAL_MODEL", "TEST_FIXTURE"}:
             raise Rejected("REVIEWER_KIND")
+        if self.kind == "TEST_FIXTURE" and self.credential_env:
+            raise Rejected("REVIEWER_CREDENTIAL_SCOPE")  # only the packaged adapter may see the key
         validate(self.model, ID)
         validate(self.effort, ID)
         if type(self.timeout) not in (int, float) or not math.isfinite(self.timeout) or not 0 < self.timeout <= 300:

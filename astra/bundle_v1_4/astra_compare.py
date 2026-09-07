@@ -7,6 +7,7 @@ semantic review. No HTTP request, LLM call, installation or production approval.
 """
 from fractions import Fraction
 import re
+import unicodedata
 from astra_reference import (
     Rejected, ID, SOURCE_SCHEMA, array, bounded_json, canonical, digest,
     exact_math, obj, stamp, string, timestamp, unique, validate,
@@ -63,8 +64,10 @@ This checker cannot authenticate a caller or replace a source/claim reviewer.
         if row["quote"] not in content:
             raise Rejected("QUOTE_NOT_IN_SNAPSHOT")
         # Do not mistake 10 inside 100 for support for the value 10.
-        numeric_literal = r"(?<![\w.,+\-])" + re.escape(value) + r"(?![\w.,])"
-        if re.search(numeric_literal, row["quote"]) is None:
+        # NFKC folds full-width signs; the class also covers Unicode minus/dashes and ratio separators.
+        quote = unicodedata.normalize("NFKC", row["quote"])
+        numeric_literal = r"(?<![\w.,+\-/:−‒-―])" + re.escape(value) + r"(?![\w.,/:])"
+        if re.search(numeric_literal, quote) is None:
             raise Rejected("VALUE_NOT_IN_QUOTE")
         proof = exact_math(value)
         values.append(Fraction(proof["exact"]))

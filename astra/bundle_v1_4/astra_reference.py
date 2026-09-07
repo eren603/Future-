@@ -223,6 +223,8 @@ def exact_math(source):
     if type(source) is not str or not source.strip() or len(source) > 512:
         raise MathRejected("UNSUPPORTED")
     source = source.strip()
+    if any(ch in source for ch in "#\n\r\\;"):
+        raise MathRejected("UNSUPPORTED")  # comments and continuations would leak into the proof
     number = re.compile(r"(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE]([+-]?[0-9]+))?\Z")
     def bound(value):
         if max(abs(value.numerator).bit_length(), value.denominator.bit_length()) > BIT_LIMIT:

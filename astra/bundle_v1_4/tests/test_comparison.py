@@ -90,6 +90,18 @@ class ComparisonTests(unittest.TestCase):
                 with self.assertRaisesRegex(Rejected, "VALUE_NOT_IN_QUOTE"):
                     compare(data)
 
+    def test_unicode_sign_and_separators_cannot_be_dropped(self):
+        # kod_hata-6: only ASCII +/- were guarded; U+2212 and ratio separators slipped through.
+        for quote in ("Measured latency: −100 ms.", "Measured latency: 100/200 ms.", "ratio 100:200"):
+            with self.subTest(quote=quote):
+                data = fixture()
+                data[2]["s0"] = quote
+                data[0][0]["quote"] = quote
+                data[0][0]["value"] = "100"
+                data[1][0]["content_digest"] = digest(quote)
+                with self.assertRaisesRegex(Rejected, "VALUE_NOT_IN_QUOTE"):
+                    compare(data)
+
     def test_stale_future_or_unzoned_sources_are_rejected(self):
         for key, value in (("valid_until", "2026-09-05T00:00:00+00:00"),
                            ("as_of", "2026-09-08T00:00:00+00:00"),

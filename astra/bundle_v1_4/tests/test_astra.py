@@ -69,6 +69,11 @@ class MathTests(unittest.TestCase):
         for s in ["1e1001", "2**21", "((((2**20)**20)**20)**20)", "1" * 513]:
             with self.subTest(source=s), self.assertRaises(MathRejected):
                 exact_math(s)
+    def test_comments_and_newlines_are_rejected(self):
+        # kod_hata-2: ast.parse accepts comments, which then leak into the rendered proof.
+        for s in ["1+1 # really 3", "1+1\n# note", "1+\\\n1", "1+1;"]:
+            with self.subTest(source=s), self.assertRaises(MathRejected):
+                exact_math(s)
     def test_negative_power_and_unary(self):
         self.assertEqual(exact_math("-(2**-3)")["exact"], "-1/8")
     def test_supported_fraction_fits_reply_value_schema(self):
