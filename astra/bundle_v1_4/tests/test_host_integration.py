@@ -1,5 +1,6 @@
 """Mandatory gate regressions; actual subprocess and source reads, no live LLM."""
 import copy
+import os
 import sys
 import tempfile
 import unittest
@@ -279,6 +280,23 @@ class HostIntegrationTests(unittest.TestCase):
         link = Path(self.tmp.name) / "link.txt"
         link.symlink_to(self.specs[0]["path"])
         self.specs[0]["path"] = str(link)
+        with self.assertRaisesRegex(Rejected, "SOURCE_SYMLINK_REJECTED"):
+            SourceVault(self.specs)
+
+    def test_symlinked_parent_directory_is_rejected(self):
+        """kod_hata-7 (second half): an intermediate symlink was still followed.
+
+        O_NOFOLLOW only guards the last component and resolve() walks the rest, so a
+        symlinked directory redirected the read while the declared path looked local.
+        """
+        real = Path(self.tmp.name) / "real_dir"
+        real.mkdir()
+        (real / "source.txt").write_text("Candidate A: median completion latency 100 ms.",
+                                         encoding="utf-8")
+        link_dir = Path(self.tmp.name) / "link_dir"
+        link_dir.symlink_to(real, target_is_directory=True)
+        self.specs[0]["path"] = str(link_dir / "source.txt")
+        self.assertFalse(os.path.islink(self.specs[0]["path"]))  # last component is real
         with self.assertRaisesRegex(Rejected, "SOURCE_SYMLINK_REJECTED"):
             SourceVault(self.specs)
 

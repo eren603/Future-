@@ -59,3 +59,23 @@ request_digest equal: True
 aynı request_digest ile geçiyor; nonce/kilit yok.
 
 `python3 astra/probes/probe_replay.py` (Task 4 SONRASI): `first: LOCAL_CHECKS_PASSED | second: FAIL_CLOSED FINALIZE_ALREADY_DONE`, `request_digest equal: False` (nonce).
+
+## ÖLÇÜM (Task 8) — asgari hüküm baytı (MIN_VERDICT_BYTES)
+
+Plan metni bu sabiti `534` diye "OLCUM" etiketiyle veriyordu; hiçbir ölçüm kaydı
+bulunamadı (grep: `534` → OLCUM_FAZ3.md / probes / spec içinde YOK). Kaynaksız sayı
+kullanılmadı; değer bu ortamda yeniden ölçüldü:
+
+```
+$ python3 -c 'from astra_reference import canonical; ...'   # bundle_v1_4
+iki kaynaklı asgari hüküm (120 karakter alıntı ×2): 451 bayt
+tek kaynaklı asgari hüküm  (120 karakter alıntı ×1): 296 bayt
+```
+
+`MIN_VERDICT_BYTES = 451` alındı ve sabit ARTIK BEYAN DEĞİL: 
+`tests/test_host_integration.py::test_min_verdict_bytes_is_a_measurement` sabiti
+her koşuda `canonical()` ile yeniden türetip karşılaştırıyor (sürüklenirse test düşer).
+
+Kapı: `len(cards) * 451 > 131072` → `REVIEW_BUDGET_EXCEEDED`; yani üst sınır 290 karttır
+(v1.3'te sınır yoktu: kart sayısı arttıkça hiçbir yasal yanıt tele sığmıyordu, hata ancak
+sağlayıcı çağrısından SONRA görülüyordu).

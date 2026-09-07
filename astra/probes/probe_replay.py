@@ -12,7 +12,7 @@ from host_fixture_support import fixture_reviewer
 tmp = Path(tempfile.mkdtemp(prefix="astra-replay-"))
 src = tmp / "s.txt"; src.write_text("fixture evidence")
 now = datetime.now(timezone.utc)
-vault = SourceVault([dict(source_id="s1", path=str(src), kind="TOOL",
+vault = SourceVault([dict(source_id="s1", path=str(src), kind="USER", tool_call_record=None,
                           as_of=(now - timedelta(seconds=2)).isoformat(),
                           valid_until=(now + timedelta(hours=1)).isoformat())])
 host = TrustedHost(task="probe", scope_ids=["scope1"], source_vault=vault, comparisons=[],

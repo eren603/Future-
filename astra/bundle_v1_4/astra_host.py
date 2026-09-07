@@ -93,10 +93,13 @@ class SourceVault:
         unique([s["source_id"] for s in specs])
         records, contents, receipts, paths = [], {}, [], {}
         for spec in specs:
-            declared = Path(spec["path"])
-            if os.path.islink(declared):
-                raise Rejected("SOURCE_SYMLINK_REJECTED")  # resolve() would follow it before O_NOFOLLOW
-            path = declared.resolve()
+            # O_NOFOLLOW guards only the last component and resolve() silently walks the
+            # rest, so a symlink ANYWHERE on the path is refused and nothing is resolved.
+            # abspath normalises ".." lexically, which is sound once no component is a link.
+            declared = Path(os.path.abspath(spec["path"]))
+            if any(os.path.islink(part) for part in (declared, *declared.parents)):
+                raise Rejected("SOURCE_SYMLINK_REJECTED")
+            path = declared
             content = self._read(path)
             captured = stamp()
             if not timestamp(spec["as_of"]) <= timestamp(captured) <= timestamp(spec["valid_until"]):
