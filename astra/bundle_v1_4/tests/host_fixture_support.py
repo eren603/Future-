@@ -25,7 +25,7 @@ class Controller(BaseController):
             for index, sid in enumerate(self.source_ids):
                 path = Path(self._fixture_directory.name) / f"source{index}.txt"
                 path.write_text("fixture evidence", encoding="utf-8")
-                specs.append(dict(source_id=sid, path=str(path), kind="TOOL",
+                specs.append(dict(source_id=sid, path=str(path), kind="USER", tool_call_record=None,
                                   as_of=(now-timedelta(seconds=2)).isoformat(),
                                   valid_until=(now+timedelta(hours=1)).isoformat()))
             self._host = TrustedHost(task=task, scope_ids=list(self.scope_ids),

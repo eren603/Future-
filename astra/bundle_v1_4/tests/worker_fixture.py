@@ -59,7 +59,7 @@ elif mode == "wrong_statement":
 elif mode == "refute":
     card["stance"] = "refute"
 elif mode == "sourced":
-    card["label"] = "ARAÇ"
+    card["label"] = "KULLANICI"  # fixture sources are operator-written files, not tool output
     card["source_ids"] = ["s1"]
 elif mode == "empty_cards":
     r["cards"] = []

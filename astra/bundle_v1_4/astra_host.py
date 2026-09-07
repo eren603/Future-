@@ -13,7 +13,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 import astra_compare
-from astra_reference import (Rejected, ID, SOURCE_SCHEMA, WIRE_LIMIT, array,
+from astra_reference import (Rejected, ID, SOURCE_SCHEMA, TOOL_CALL_RECORD_SCHEMA, WIRE_LIMIT, array,
     bounded_json, canonical, digest, invoke, obj, stamp, string, timestamp,
     unique, validate, validate_argv)
 
@@ -49,6 +49,7 @@ SOURCE_SPEC_SCHEMA = obj({
     "source_id": ID, "path": string(),
     "kind": string(12, values=["USER", "TOOL"]),
     "as_of": string(80), "valid_until": string(80),
+    "tool_call_record": TOOL_CALL_RECORD_SCHEMA,
 })
 
 SEMANTIC_POLICY = """ASTRA semantic source review v1.3.
@@ -101,6 +102,13 @@ class SourceVault:
             if not timestamp(spec["as_of"]) <= timestamp(captured) <= timestamp(spec["valid_until"]):
                 raise Rejected("SOURCE_STALE_OR_TIME")
             sid = spec["source_id"]
+            record = spec["tool_call_record"]
+            if spec["kind"] == "TOOL":
+                # A file is tool output only if a call record binds to exactly this content.
+                if record is None or record["output_digest"] != digest(content):
+                    raise Rejected("SOURCE_TOOL_BINDING")
+            elif record is not None:
+                raise Rejected("SOURCE_TOOL_BINDING")
             receipt = dict(source_id=sid, operation="READ_LOCAL_UTF8_FILE",
                            locator=path.as_uri(), content_digest=digest(content),
                            captured_at=captured, upstream_authentication_verified=False)
@@ -108,7 +116,8 @@ class SourceVault:
             records.append(dict(source_id=sid, kind=spec["kind"], locator=path.as_uri(),
                                 content_digest=digest(content), retrieved_at=captured,
                                 as_of=spec["as_of"], valid_until=spec["valid_until"],
-                                access_record_id=receipt["access_record_id"]))
+                                access_record_id=receipt["access_record_id"],
+                                tool_call_record=record))
             contents[sid], paths[sid] = content, str(path)
             receipts.append(receipt)
         self._records = canonical(records)

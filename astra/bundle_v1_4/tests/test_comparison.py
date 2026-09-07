@@ -13,7 +13,7 @@ def fixture(values=("100", "120")):
         content = f"Measured latency: {value} ms. Test fixture, not a real benchmark."
         contents[sid] = content
         sources.append({
-            "source_id": sid, "kind": "TOOL", "locator": f"fixture://{sid}",
+            "source_id": sid, "kind": "USER", "tool_call_record": None, "locator": f"fixture://{sid}",
             "content_digest": digest(content),
             "retrieved_at": "2026-09-06T11:00:00+00:00",
             "as_of": "2026-09-06T10:00:00+00:00",

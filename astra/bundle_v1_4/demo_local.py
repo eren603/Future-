@@ -27,7 +27,7 @@ def main():
         path = folder / f"source_{i}.txt"
         path.write_text(quote, encoding="utf-8")
         rows.append(dict(context, entity=("A", "B")[i], source_id=f"s{i}", quote=quote, value=value))
-        sources.append(dict(source_id=f"s{i}", path=str(path), kind="TOOL",
+        sources.append(dict(source_id=f"s{i}", path=str(path), kind="USER", tool_call_record=None,
             as_of=(now-timedelta(seconds=1)).isoformat(), valid_until=(now+timedelta(hours=1)).isoformat()))
     if args.case == "method_mismatch":
         rows[1]["method"] = "p95"

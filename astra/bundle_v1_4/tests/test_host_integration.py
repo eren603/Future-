@@ -27,7 +27,7 @@ class HostIntegrationTests(unittest.TestCase):
             path = Path(self.tmp.name) / f"source{i}.txt"
             quote = f"Candidate {('A', 'B')[i]}: median completion latency {value} ms."
             path.write_text(quote, encoding="utf-8")
-            self.specs.append(dict(source_id=f"s{i}", path=str(path), kind="TOOL",
+            self.specs.append(dict(source_id=f"s{i}", path=str(path), kind="USER", tool_call_record=None,
                 as_of=(now-timedelta(seconds=2)).isoformat(), valid_until=(now+timedelta(hours=1)).isoformat()))
             self.rows.append(dict(context, entity=("A", "B")[i], source_id=f"s{i}", quote=quote, value=value))
 
@@ -233,6 +233,29 @@ class HostIntegrationTests(unittest.TestCase):
         self.build(mode="reject")
         self.decision["action"] = "A will always outperform B in every task."
         self.assert_closed("SEMANTIC_CLAIM_UNSUPPORTED")
+
+    def test_tool_source_requires_binding_record(self):
+        # eksiklik-6: a hand-written file labelled TOOL was accepted as tool output.
+        spec = dict(self.specs[0], kind="TOOL", tool_call_record=None)
+        with self.assertRaisesRegex(Rejected, "SOURCE_TOOL_BINDING"):
+            SourceVault([spec])
+
+    def test_tool_source_digest_must_match_record(self):
+        rec = dict(tool_name="fixture_tool", args_digest=digest(["x"]), exit_status="0",
+                   output_digest=digest("other"))
+        spec = dict(self.specs[0], kind="TOOL", tool_call_record=rec)
+        with self.assertRaisesRegex(Rejected, "SOURCE_TOOL_BINDING"):
+            SourceVault([spec])
+        rec["output_digest"] = digest(Path(self.specs[0]["path"]).read_text(encoding="utf-8"))
+        vault = SourceVault([dict(spec, tool_call_record=rec)])
+        self.assertEqual(vault.sources()[0]["kind"], "TOOL")
+        self.assertEqual(vault.sources()[0]["tool_call_record"]["tool_name"], "fixture_tool")
+
+    def test_user_source_cannot_carry_tool_record(self):
+        rec = dict(tool_name="fixture_tool", args_digest=digest(["x"]), exit_status="0",
+                   output_digest=digest(Path(self.specs[0]["path"]).read_text(encoding="utf-8")))
+        with self.assertRaisesRegex(Rejected, "SOURCE_TOOL_BINDING"):
+            SourceVault([dict(self.specs[0], kind="USER", tool_call_record=rec)])
 
     def test_fixture_reviewer_cannot_receive_credentials(self):
         # kod_hata-5: only the packaged EXTERNAL_MODEL adapter may receive the API key.

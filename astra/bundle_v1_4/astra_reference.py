@@ -149,10 +149,15 @@ REPLY_SCHEMA = obj({
     "unresolved_scope_ids": array(ID, 64), "block_reason": string(nullable=True),
     "next_safe_step": string(nullable=True), "attempts": array(string(4000, 10), 16),
 })
+# A TOOL source must be bound to the call that produced it; a USER source carries no record.
+TOOL_CALL_RECORD_SCHEMA = obj({
+    "tool_name": ID, "args_digest": ID, "exit_status": string(12), "output_digest": ID,
+}, nullable=True)
 SOURCE_SCHEMA = obj({
     "source_id": ID, "kind": string(12, values=["USER", "TOOL"]), "locator": string(),
     "content_digest": ID, "retrieved_at": string(80), "as_of": string(80),
     "valid_until": string(80), "access_record_id": ID,
+    "tool_call_record": TOOL_CALL_RECORD_SCHEMA,
 })
 REVIEW_SCHEMA = obj({
     "phase_digest": ID, "candidate_digest": ID, "source_registry_digest": ID,
