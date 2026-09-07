@@ -1,0 +1,1 @@
+Candidate A: median completion latency 100 ms. Synthetic data.

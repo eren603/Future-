@@ -1,0 +1,66 @@
+test_domain_and_unsupported_are_controlled (test_astra.MathTests.test_domain_and_unsupported_are_controlled) ... ok
+test_exact_fraction (test_astra.MathTests.test_exact_fraction) ... ok
+test_large_scientific_literal_is_exact (test_astra.MathTests.test_large_scientific_literal_is_exact) ... ok
+test_long_decimal_preserves_original_token (test_astra.MathTests.test_long_decimal_preserves_original_token) ... ok
+test_negative_power_and_unary (test_astra.MathTests.test_negative_power_and_unary) ... ok
+test_proof_records_source_and_python (test_astra.MathTests.test_proof_records_source_and_python) ... ok
+test_resource_limits_precede_large_operations (test_astra.MathTests.test_resource_limits_precede_large_operations) ... ok
+test_supported_fraction_fits_reply_value_schema (test_astra.MathTests.test_supported_fraction_fits_reply_value_schema) ... ok
+test_underflow_is_nonzero (test_astra.MathTests.test_underflow_is_nonzero) ... ok
+test_blank_action_and_unknown_owner_fail (test_astra.PublicationTests.test_blank_action_and_unknown_owner_fail) ... ok
+test_contradiction_cannot_be_voted_away (test_astra.PublicationTests.test_contradiction_cannot_be_voted_away) ... ok
+test_genuine_math_proof_and_final_value (test_astra.PublicationTests.test_genuine_math_proof_and_final_value) ... ok
+test_missing_decision_and_review_fields_fail (test_astra.PublicationTests.test_missing_decision_and_review_fields_fail) ... ok
+test_missing_source_fails (test_astra.PublicationTests.test_missing_source_fails) ... ok
+test_review_binds_candidate_phase_sources (test_astra.PublicationTests.test_review_binds_candidate_phase_sources) ... ok
+test_unresolved_review_stays_closed (test_astra.PublicationTests.test_unresolved_review_stays_closed) ... ok
+test_valid_and_stale_source (test_astra.PublicationTests.test_valid_and_stale_source) ... ok
+test_wrong_numeric_value_fails_publication (test_astra.PublicationTests.test_wrong_numeric_value_fails_publication) ... ok
+test_bad_command_rejected_before_any_dispatch (test_astra.RuntimeTests.test_bad_command_rejected_before_any_dispatch) ... ok
+test_bad_startup_config_rejected (test_astra.RuntimeTests.test_bad_startup_config_rejected) ... ok
+test_blocked_dominates_other_worker_error_without_retry (test_astra.RuntimeTests.test_blocked_dominates_other_worker_error_without_retry) ... ok
+test_budget_exhaustion_is_fail_closed (test_astra.RuntimeTests.test_budget_exhaustion_is_fail_closed) ... ok
+test_errors_then_blocked_also_stop (test_astra.RuntimeTests.test_errors_then_blocked_also_stop) ... ok
+test_fresh_phase_and_nonce_on_retry (test_astra.RuntimeTests.test_fresh_phase_and_nonce_on_retry) ... ok
+test_good_phase_is_not_final_approval (test_astra.RuntimeTests.test_good_phase_is_not_final_approval) ... ok
+test_output_flood_is_bounded (test_astra.RuntimeTests.test_output_flood_is_bounded) ... ok
+test_real_hanging_process_is_terminated (test_astra.RuntimeTests.test_real_hanging_process_is_terminated) ... ok
+test_reference_cannot_claim_real_isolation (test_astra.RuntimeTests.test_reference_cannot_claim_real_isolation) ... ok
+test_schema_binding_and_coverage_failures (test_astra.RuntimeTests.test_schema_binding_and_coverage_failures) ... ok
+test_stdin_backpressure_has_deadline (test_astra.RuntimeTests.test_stdin_backpressure_has_deadline) ... ok
+test_digest_binds_real_policy_and_role (test_astra.WireTests.test_digest_binds_real_policy_and_role) ... ok
+test_empty_payload_and_wrong_type_fail_schema (test_astra.WireTests.test_empty_payload_and_wrong_type_fail_schema) ... ok
+test_json_rejects_duplicates_nonfinite_and_deep_input (test_astra.WireTests.test_json_rejects_duplicates_nonfinite_and_deep_input) ... ok
+test_mutation_does_not_change_stored_bytes (test_astra.WireTests.test_mutation_does_not_change_stored_bytes) ... ok
+test_python_object_and_cycles_cannot_cross_boundary (test_astra.WireTests.test_python_object_and_cycles_cannot_cross_boundary) ... ok
+test_binance_public_data_is_not_order_execution (test_plugin_router.PluginRouterTests.test_binance_public_data_is_not_order_execution) ... ok
+test_catalog_advertisement_is_not_executable_capability (test_plugin_router.PluginRouterTests.test_catalog_advertisement_is_not_executable_capability) ... ok
+test_catalogue_is_complete_and_never_used_as_live_evidence (test_plugin_router.PluginRouterTests.test_catalogue_is_complete_and_never_used_as_live_evidence) ... ok
+test_coinmarketcap_decline_is_preserved (test_plugin_router.PluginRouterTests.test_coinmarketcap_decline_is_preserved) ... ok
+test_current_manifest_must_expose_actual_tool (test_plugin_router.PluginRouterTests.test_current_manifest_must_expose_actual_tool) ... ok
+test_each_topic_has_its_own_pair (test_plugin_router.PluginRouterTests.test_each_topic_has_its_own_pair) ... ok
+test_explicit_named_reversal_can_restore_eligibility (test_plugin_router.PluginRouterTests.test_explicit_named_reversal_can_restore_eligibility) ... ok
+test_external_write_requires_its_own_authorization (test_plugin_router.PluginRouterTests.test_external_write_requires_its_own_authorization) ... ok
+test_installed_but_auth_required_requests_account_connection (test_plugin_router.PluginRouterTests.test_installed_but_auth_required_requests_account_connection) ... ok
+test_known_skill_is_read_not_an_external_model_call (test_plugin_router.PluginRouterTests.test_known_skill_is_read_not_an_external_model_call) ... ok
+test_minimal_pair_covers_complementary_capabilities (test_plugin_router.PluginRouterTests.test_minimal_pair_covers_complementary_capabilities) ... ok
+test_native_capability_needs_no_plugin (test_plugin_router.PluginRouterTests.test_native_capability_needs_no_plugin) ... ok
+test_no_id_means_search_not_invented_install (test_plugin_router.PluginRouterTests.test_no_id_means_search_not_invented_install) ... ok
+test_no_useless_third_install_for_two_provider_limit (test_plugin_router.PluginRouterTests.test_no_useless_third_install_for_two_provider_limit) ... ok
+test_one_provider_is_preferred_when_sufficient (test_plugin_router.PluginRouterTests.test_one_provider_is_preferred_when_sufficient) ... ok
+test_only_one_new_connection_suggestion_per_turn (test_plugin_router.PluginRouterTests.test_only_one_new_connection_suggestion_per_turn) ... ok
+test_pending_is_not_suggested_again (test_plugin_router.PluginRouterTests.test_pending_is_not_suggested_again) ... ok
+test_policy_block_does_not_trigger_permission_bypass (test_plugin_router.PluginRouterTests.test_policy_block_does_not_trigger_permission_bypass) ... ok
+test_prior_suggestion_is_not_repeated (test_plugin_router.PluginRouterTests.test_prior_suggestion_is_not_repeated) ... ok
+test_provider_and_private_account_cannot_be_substituted (test_plugin_router.PluginRouterTests.test_provider_and_private_account_cannot_be_substituted) ... ok
+test_same_new_connection_is_reused_for_multiple_needs (test_plugin_router.PluginRouterTests.test_same_new_connection_is_reused_for_multiple_needs) ... ok
+test_skill_finder_is_not_gpu_training (test_plugin_router.PluginRouterTests.test_skill_finder_is_not_gpu_training) ... ok
+test_snapshot_installed_flag_does_not_make_ready (test_plugin_router.PluginRouterTests.test_snapshot_installed_flag_does_not_make_ready) ... ok
+test_three_disjoint_providers_do_not_become_a_false_pair (test_plugin_router.PluginRouterTests.test_three_disjoint_providers_do_not_become_a_false_pair) ... ok
+test_unlisted_topic_uses_open_capability_discovery (test_plugin_router.PluginRouterTests.test_unlisted_topic_uses_open_capability_discovery) ... ok
+
+----------------------------------------------------------------------
+Ran 60 tests in 3.575s
+
+OK
+

@@ -1,0 +1,30 @@
+{
+  "review_date": "2026-09-06",
+  "claims": [
+    {
+      "claim": "Responses API accepts text.format JSON schema",
+      "verdict": "SUPPORTED",
+      "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
+      "location": "text: { format: { type: json_schema, strict, schema } } examples"
+    },
+    {
+      "claim": "Responses request supports reasoning.effort and response reports the requested effort",
+      "verdict": "SUPPORTED",
+      "url": "https://developers.openai.com/api/docs/guides/reasoning",
+      "location": "Reasoning effort and configuration update response semantics"
+    },
+    {
+      "claim": "gpt-6-astra supports max effort",
+      "verdict": "SUPPORTED",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "location": "Model introduction and supported effort list; checked in previous audit this session"
+    }
+  ],
+  "limits": [
+    "Documentation was inspected; it does not prove a live provider call occurred.",
+    "HTTP response fixtures tested the adapter contract only.",
+    "Page publication/as_of times unknown; no future freshness guarantee."
+  ],
+  "model_eval": "NOT_RUN",
+  "semantic_model_accuracy": "NOT_MEASURED"
+}

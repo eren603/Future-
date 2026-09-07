@@ -1,0 +1,68 @@
+[
+  {
+    "case": "valid",
+    "exit_code": 0,
+    "status": "LOCAL_CHECKS_PASSED",
+    "expected_status": "LOCAL_CHECKS_PASSED",
+    "reason": null,
+    "events": [
+      "READY",
+      "READY",
+      "READY",
+      "PHASE_CHECK",
+      "COMPARISON_STARTED",
+      "COMPARISON_VALIDATED",
+      "SEMANTIC_REVIEW_STARTED",
+      "HOST_GATES_PASSED",
+      "LOCAL_CHECKS_PASSED"
+    ]
+  },
+  {
+    "case": "method_mismatch",
+    "exit_code": 1,
+    "status": "FAIL_CLOSED",
+    "expected_status": "FAIL_CLOSED",
+    "reason": "NOT_COMPARABLE",
+    "events": [
+      "READY",
+      "READY",
+      "READY",
+      "PHASE_CHECK",
+      "COMPARISON_STARTED",
+      "FINALIZATION_REJECTED"
+    ]
+  },
+  {
+    "case": "semantic_rejection",
+    "exit_code": 1,
+    "status": "FAIL_CLOSED",
+    "expected_status": "FAIL_CLOSED",
+    "reason": "SEMANTIC_CLAIM_UNSUPPORTED",
+    "events": [
+      "READY",
+      "READY",
+      "READY",
+      "PHASE_CHECK",
+      "COMPARISON_STARTED",
+      "COMPARISON_VALIDATED",
+      "SEMANTIC_REVIEW_STARTED",
+      "FINALIZATION_REJECTED"
+    ]
+  },
+  {
+    "case": "reviewer_missing",
+    "exit_code": 1,
+    "status": "FAIL_CLOSED",
+    "expected_status": "FAIL_CLOSED",
+    "reason": "SEMANTIC_REVIEWER_REQUIRED",
+    "events": [
+      "READY",
+      "READY",
+      "READY",
+      "PHASE_CHECK",
+      "COMPARISON_STARTED",
+      "COMPARISON_VALIDATED",
+      "FINALIZATION_REJECTED"
+    ]
+  }
+]

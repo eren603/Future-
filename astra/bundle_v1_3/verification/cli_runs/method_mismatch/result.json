@@ -1,0 +1,69 @@
+{
+  "mode": "LOCAL_TEST",
+  "phase_status": "PHASE_VALIDATED",
+  "final_status": "FAIL_CLOSED",
+  "result": {
+    "status": "FAIL_CLOSED",
+    "reason": "NOT_COMPARABLE"
+  },
+  "events": [
+    {
+      "detail": {
+        "phase_id": "d8ae8a9cea0944578c1f7795ebfa39a9",
+        "reply_digest": "sha256:bd04788810513df67662e04b72525b02626477302a2125265ed5650bdf0881d9",
+        "worker_id": "a"
+      },
+      "kind": "READY",
+      "previous": null,
+      "run_id": "adab0575bf964e539613b07dd199c4bc"
+    },
+    {
+      "detail": {
+        "phase_id": "d8ae8a9cea0944578c1f7795ebfa39a9",
+        "reply_digest": "sha256:da3d38fa0c553bf4b187da0d22c071ace7228f820d96de4117f2750e1e85fc42",
+        "worker_id": "b"
+      },
+      "kind": "READY",
+      "previous": "sha256:b64be9ce5788ed945007ce99cdb2d2929acb94d9f77eea187ce24a73194afbc4",
+      "run_id": "adab0575bf964e539613b07dd199c4bc"
+    },
+    {
+      "detail": {
+        "phase_id": "d8ae8a9cea0944578c1f7795ebfa39a9",
+        "reply_digest": "sha256:54a961e470464f1b27b04024c608de5d924557e450b22016b0c8b20f40e10a7f",
+        "worker_id": "c"
+      },
+      "kind": "READY",
+      "previous": "sha256:493e09b01432c1572cf4b0cbc03fb04bf2613cf610db196e9ca0b32553e06a48",
+      "run_id": "adab0575bf964e539613b07dd199c4bc"
+    },
+    {
+      "detail": {
+        "blocked": false,
+        "errors": [],
+        "phase_id": "d8ae8a9cea0944578c1f7795ebfa39a9"
+      },
+      "kind": "PHASE_CHECK",
+      "previous": "sha256:fe9ffae8a0079fd4b81446c0303db4435cecb2c4292be45f43c544edfa4f2d0f",
+      "run_id": "adab0575bf964e539613b07dd199c4bc"
+    },
+    {
+      "detail": {
+        "input_digest": "sha256:84a11a7785bfa0a195427cabd5e17087bb5dbfa1d35582b9e6e4645f3e825664",
+        "requirement_id": "latency"
+      },
+      "kind": "COMPARISON_STARTED",
+      "previous": "sha256:10e89629be4f0a674ea694d7113d63691594e668d7fdb75275f62f74b4813468",
+      "run_id": "adab0575bf964e539613b07dd199c4bc"
+    },
+    {
+      "detail": {
+        "reason": "NOT_COMPARABLE"
+      },
+      "kind": "FINALIZATION_REJECTED",
+      "previous": "sha256:6c0fc0e43992bf06f2a40d18863b3e37400dd08a38ef6f9a706ef4d25c8eac61",
+      "run_id": "adab0575bf964e539613b07dd199c4bc"
+    }
+  ],
+  "production_approval": false
+}

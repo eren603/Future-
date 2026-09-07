@@ -1,0 +1,87 @@
+{
+  "mode": "LOCAL_TEST",
+  "phase_status": "PHASE_VALIDATED",
+  "final_status": "FAIL_CLOSED",
+  "result": {
+    "status": "FAIL_CLOSED",
+    "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
+  },
+  "events": [
+    {
+      "detail": {
+        "phase_id": "f6c8593bda1547c08b84ac58a38ea6d3",
+        "reply_digest": "sha256:d855fe751d93bcf81c4b16ce1a2ff16cf5ddced862184f8aff448909355a0192",
+        "worker_id": "a"
+      },
+      "kind": "READY",
+      "previous": null,
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "phase_id": "f6c8593bda1547c08b84ac58a38ea6d3",
+        "reply_digest": "sha256:b14f6d4020e1f0584cacf31e9f2f2ddb1817f29a2e82b73c3570181b6f78f56a",
+        "worker_id": "b"
+      },
+      "kind": "READY",
+      "previous": "sha256:8e4a744e05d7ea2a87921f2ee5275552440f882ca8ae997e4519e9d0f6ab413c",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "phase_id": "f6c8593bda1547c08b84ac58a38ea6d3",
+        "reply_digest": "sha256:a2866dd19d7a4101eac54febbdaf007604a5260081858cc2dbaefe9cbd2c3998",
+        "worker_id": "c"
+      },
+      "kind": "READY",
+      "previous": "sha256:ba4277bca3b4a114e45f077ddbb09898d76e70d88951fd7c1aa949039c66bb96",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "blocked": false,
+        "errors": [],
+        "phase_id": "f6c8593bda1547c08b84ac58a38ea6d3"
+      },
+      "kind": "PHASE_CHECK",
+      "previous": "sha256:d11b367fc96fc5275c1ef6c0725cf9bf58e3829628599db323bddf0e3ca9e056",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "input_digest": "sha256:6e993ffa1c9eafc397bfbfcbe7c247754d35afb421bfaca6c32b607fbed8e46d",
+        "requirement_id": "latency"
+      },
+      "kind": "COMPARISON_STARTED",
+      "previous": "sha256:f04401ac8eb589c52e985e165d3c1d6f434dd26cc14a278ffae7adedafb6c995",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "comparison_digest": "sha256:0b58551942adeef7ec589d2583d4a1d2e0af0d64e6a7aa15ddaef101fa2cb819",
+        "requirement_id": "latency"
+      },
+      "kind": "COMPARISON_VALIDATED",
+      "previous": "sha256:10bb91a6c608310aa3ea49cacfdd57968ea250177c4e4f514ebfdf4ca52ff8dc",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "request_digest": "sha256:5a53cbb5e73b7d294365f38a1355865c1d14be158eec8a271add290f06d67479",
+        "reviewer_kind": "TEST_FIXTURE"
+      },
+      "kind": "SEMANTIC_REVIEW_STARTED",
+      "previous": "sha256:090617988b52d9eeb5722fd0aeea6325d6daaab362fd3004f36c0faaa4a5ad58",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    },
+    {
+      "detail": {
+        "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
+      },
+      "kind": "FINALIZATION_REJECTED",
+      "previous": "sha256:fe18f3d027c48841a7e4e9f63a6f8a47c17660e14fa5250996b99ec58246e9ec",
+      "run_id": "a11f5478f8e14358b390e44f41d1cfe6"
+    }
+  ],
+  "production_approval": false
+}

@@ -1,0 +1,44 @@
+{
+  "version": "1.3",
+  "original_request": "Nihai tamir eddigin halini ver",
+  "requirements": [
+    {
+      "id": "R1",
+      "delivery": "Comparison gate mandatory in Controller.finalize, bound to frozen task/claims/sources/results",
+      "status": "VERIFIED",
+      "evidence": [
+        "verification/test_run.txt",
+        "verification/cli_summary.json"
+      ]
+    },
+    {
+      "id": "R2",
+      "delivery": "Actual semantic reviewer invocation mandatory; missing/forged/negative/stale evidence blocks",
+      "status": "VERIFIED",
+      "evidence": [
+        "verification/test_run.txt",
+        "verification/cli_runs/valid/result.json",
+        "verification/cli_runs/semantic_rejection/result.json",
+        "verification/cli_runs/reviewer_missing/result.json"
+      ]
+    },
+    {
+      "id": "R3",
+      "delivery": "Self-contained updated command and executable package with real test evidence",
+      "status": "VERIFIED",
+      "evidence": [
+        "astra_command.md",
+        "README.md",
+        "BUNDLE_MANIFEST.json"
+      ]
+    }
+  ],
+  "production_approval": false,
+  "model_eval": "NOT_RUN",
+  "updated_at": "2026-09-06T12:44:44.824302+00:00",
+  "task_status": "COMPLETE",
+  "repair_status": "IMPLEMENTED_AND_LOCAL_TESTED",
+  "final_status": "LOCAL_CHECKS_PASSED",
+  "live_model_dependency": "OPENAI_API_KEY not available in this environment",
+  "tests_run": 113
+}
