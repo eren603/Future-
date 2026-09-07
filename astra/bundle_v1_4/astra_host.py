@@ -40,8 +40,12 @@ REVIEW_RESPONSE_SCHEMA = obj({
     "provider_model": ID, "provider_effort": ID,
     "assessment": ASSESSMENT_SCHEMA,
 })
-MIN_VERDICT_BYTES = 451  # measured, see tests/test_host_integration.py:
-                         # test_min_verdict_bytes_is_a_measurement
+# Measured two-source verdict floor, re-derived by
+# tests/test_host_integration.py::test_min_verdict_bytes_is_a_measurement.
+# It is NOT the absolute schema minimum: a sourceless card with a one-character
+# reason is smaller. The gate therefore refuses slightly earlier than the schema
+# alone would require, which is the fail-closed direction.
+MIN_VERDICT_BYTES = 451
 
 
 def transport_schema(schema):

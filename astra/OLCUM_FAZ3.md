@@ -76,6 +76,11 @@ tek kaynaklı asgari hüküm  (120 karakter alıntı ×1): 296 bayt
 `tests/test_host_integration.py::test_min_verdict_bytes_is_a_measurement` sabiti
 her koşuda `canonical()` ile yeniden türetip karşılaştırıyor (sürüklenirse test düşer).
 
+Sabitin ne OLMADIĞI da yazılır (Madde 8 denetçisinin gözlemi): 451 ŞEMANIN MUTLAK
+TABANI DEĞİLDİR — kaynaksız ve tek karakterlik gerekçeli bir kart daha küçüktür.
+Yani kapı şemanın izin verdiğinden bir miktar ERKEN reddeder; bu fail-closed yöndür
+ve bilinçlidir.
+
 Kapı: `len(cards) * 451 > 131072` → `REVIEW_BUDGET_EXCEEDED`; yani üst sınır 290 karttır
 (v1.3'te sınır yoktu: kart sayısı arttıkça hiçbir yasal yanıt tele sığmıyordu, hata ancak
 sağlayıcı çağrısından SONRA görülüyordu).
