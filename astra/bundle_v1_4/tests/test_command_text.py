@@ -1,4 +1,5 @@
 """The command text is an artefact under test: protected sentences and banned patterns."""
+import collections
 import re
 import unittest
 from pathlib import Path
@@ -81,6 +82,10 @@ def _stems(text):
     return {_fold(w)[:6] for w in re.findall(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}", text)}
 
 
+def _literal(text):
+    return re.sub(r"[^0-9a-zçğıöşü]+", " ", _fold(text)).strip()
+
+
 def _split(text):
     return [s.strip() for s in re.split(r"(?<=[.;:])\s+|\n", text)
             if 15 < len(s.strip()) < 400]
@@ -143,30 +148,46 @@ class CommandTextTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertNotIn(phrase, TEXT)
 
-    def test_size_budget(self):
-        """Bloat is REPETITION, not length — the ceiling is measured, not chosen.
+    def test_no_rule_is_kept_beside_its_own_rewording(self):
+        """Bloat is a rule stored twice — once reworded, once verbatim.
 
-        The plan set 30000; the Madde 10 audit caught that number being used as a reason to
-        drop rules, so it became v1.3's own size (55213). The sixth audit made that ceiling
-        unsatisfiable: once the coverage test demands every v1.3 rule back, v1.4 must be
-        v1.3's rules PLUS its own new sections, which cannot fit inside v1.3's bytes. Two
-        tests were contradicting each other and the byte count was the wrong lever.
+        Three revisions of this test used a byte ceiling: 30000 from the plan, then v1.3's own
+        55213, then a ceiling derived from what v1.4 adds. Each was wrong in the same way. The
+        first two were chosen numbers that an audit caught being used as a reason to drop rules.
+        The third was arithmetic that assumed each rule appears once, so once the coverage test
+        put v1.3's rules back beside v1.4's rewordings of them, it reported an overage that no
+        deletion of duplicated content could fix — the formula was wrong, not the text.
 
-        So the ceiling is derived here from what v1.4 actually adds: every v1.4 sentence with
-        no v1.3 counterpart is measured, and the text may be at most v1.3 plus that. Padding
-        with restatements of existing rules does NOT raise the ceiling — it only raises the
-        left-hand side — so the guard still bites where it was meant to.
+        So there is no byte ceiling. Length is not the defect; REPETITION is, and it is now
+        measured directly in both of its forms: identical wording (the test below) and a
+        rewording kept alongside the original it replaced (here). Padding cannot pass either.
         """
-        source = Path(__file__).resolve().parents[2] / "bundle_v1_3" / "astra_command.md"
-        if not source.exists():
-            self.skipTest("bundle_v1_3 pakete dahil değil; tavan depoda ölçülür, "
-                          "pakette test_no_rule_is_stated_twice geçerlidir")
-        v1_3 = source.read_text(encoding="utf-8")
-        old_paragraphs = [_stems(l) for l in v1_3.splitlines() if l.strip()]
-        added = [s for s in _split(TEXT) if _stems(s) and not any(
-            len(_stems(s) & p) / len(_stems(s)) >= 0.6 for p in old_paragraphs)]
-        ceiling = len(v1_3.encode("utf-8")) + sum(len(s.encode("utf-8")) + 1 for s in added)
-        self.assertLess(len(TEXT.encode("utf-8")), ceiling)
+        v1_3 = Path(__file__).resolve().parents[2] / "bundle_v1_3" / "astra_command.md"
+        if not v1_3.exists():
+            self.skipTest("bundle_v1_3 pakete dahil değil; bu kapı depoda ölçülür")
+        old = v1_3.read_text(encoding="utf-8")
+        literal = _literal(TEXT)
+        verbatim = {_literal(s) for s in _split(old)
+                    if len(_stems(s)) >= 5 and _literal(s) in literal}
+        mine = [(s, _stems(s)) for s in _split(TEXT) if len(_stems(s)) >= 5]
+        index = {}
+        for i, (_, st) in enumerate(mine):
+            for stem in st:
+                index.setdefault(stem, []).append(i)
+        pairs = []
+        for i, (sentence, st) in enumerate(mine):
+            if _literal(sentence) not in verbatim:
+                continue
+            hits = collections.Counter(j for stem in st for j in index[stem] if j != i)
+            for j, count in hits.most_common(3):
+                other, other_st = mine[j]
+                if _literal(other) in verbatim:
+                    continue
+                if count / max(len(st), len(other_st)) >= 0.6:
+                    pairs.append(f"{other[:60]} <-> {sentence[:60]}")
+                    break
+        self.assertEqual(pairs, [], "Kural hem yeniden yazılmış hem aslıyla duruyor:\n" +
+                         "\n".join(pairs))
 
     def test_no_rule_is_stated_twice(self):
         """The guard the byte budget was pretending to be: the same rule, said again."""

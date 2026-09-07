@@ -17,7 +17,9 @@ So the measure is now POSITION-BOUND, and the promise is a test rather than a se
     visible. All 8 undetected deletions in the fifth audit were table rows.
   * `test_deleting_a_carried_line_is_detected` is the guarantee itself: every v1.4 line that is
     byte-identical to a v1.3 line is deleted in turn and the measure MUST report new uncovered
-    sentences. It is 18/18 today; a change that weakens the measure turns it red.
+    sentences, or prove the rule still lives on another line. No count is written here:
+    a number in a docstring goes stale silently, and the sixth audit caught one that had
+    (it said 18/18 for an artefact measuring 52). The test reports what it measured.
 
 Turkish morphology is handled by two fixed rules rather than an analyser: a stem prefix (a rule
 kept but re-inflected, "kullanma" -> "KULLANILMAZ", still matches) and `fold`, which maps the
@@ -33,7 +35,10 @@ Remaining limits, stated rather than claimed away:
   * sentences are split on [.;:] and newlines, so an unusual layout can merge or split one;
   * a sentence of 15 characters or fewer is skipped (it carries no distinctive word);
   * the measure is lexical: it detects DELETION, not a sentence left in place and negated;
-  * the stem is a fixed prefix, so it over-matches; the mutation test is what bounds that.
+  * the stem is a fixed prefix, so it over-matches; the mutation test is what bounds that;
+  * a sentence with fewer than MIN_STEMS content words cannot be measured by ratio at all —
+    60% of two stems is one word, which any section supplies. Those sentences are checked
+    by literal text instead, which is stricter but blind to rewording.
 """
 import collections
 import hashlib
@@ -50,8 +55,12 @@ WAIVER = ROOT / "KAPSAM_MUAFIYET.md"
 SHARE = 0.6  # a reworded sentence counts as covered when most content words survive
 STEM = 6     # fixed prefix: enough to bridge Turkish inflection, short of a real stemmer
 WORD = re.compile(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}")
-ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK)\]\s*—\s*(.+)$")
+NORMATIVE = re.compile(
+    r"(?:[a-zçğıöşü]{3,}(?:maz|mez|mal[ıi]d[ıi]r|melidir|meli|mal[ıi])\b"
+    r"|üretir\.|sayılır\.|olamaz\b|edilemez\b|verilmez\b|geçmez\b|değildir\b)")
+ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK|ONARILDI)\]\s*—\s*(.+)$")
 OLD_LINES = OLD.splitlines()
+_LITERAL_NEW = ""
 
 
 def fold(text):
@@ -90,10 +99,32 @@ FREQUENCY = collections.Counter(fold(w)[:STEM] for w in WORD.findall(OLD))
 
 
 def regions(text):
-    """v1.4 split into the two places a rule can live: paragraphs and table rows."""
-    lines = [l for l in text.splitlines() if l.strip()]
-    return ([stems(l) for l in lines if not l.lstrip().startswith("|")],
-            [stems(l) for l in lines if l.lstrip().startswith("|")])
+    """v1.4 split into the two places a rule can live: SECTIONS and table rows.
+
+    An earlier revision anchored to the paragraph, which quietly rewarded dumping: split a
+    2000-character blob into readable paragraphs and coverage fell, so the measure pushed
+    the text towards being unreadable. The section is the smallest unit that survives
+    honest editing while still being a POSITION — vocabulary scattered across the whole
+    document, the loophole this measure exists to close, still does not count.
+    """
+    sections, current, rows = [], [], []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        if line.lstrip().startswith("|"):
+            rows.append(stems(line))
+            continue
+        if re.match(r"^\*\*(?:\d|Ek |ASTRA)", line):
+            if current:
+                sections.append(stems("\n".join(current)))
+            current = []
+        current.append(line)
+    if current:
+        sections.append(stems("\n".join(current)))
+    return sections, rows
+
+
+MIN_STEMS = 3  # altında oran ölçüsü anlamsız: %60 tek kelimeye iner
 
 
 def matches(target, region):
@@ -108,7 +139,13 @@ def matches(target, region):
     return min(target, key=lambda s: (FREQUENCY[s], s)) in region
 
 
+def _literal(text):
+    return re.sub(r"[^0-9a-zçğıöşü]+", " ", fold(text)).strip()
+
+
 def uncovered_in(text):
+    global _LITERAL_NEW
+    _LITERAL_NEW = _literal(text)
     paragraphs, rows = regions(text)
     out = []
     for sentence in sentences():
@@ -116,6 +153,15 @@ def uncovered_in(text):
         if not target:
             continue
         # a table row must be answered by a table row; rows are too generic for prose to carry
+        if len(target) < MIN_STEMS:
+            # Too few content words for a ratio to mean anything: 60% of two stems is one
+            # word, which any paragraph supplies. Measured in the sixth audit: 253 of 739
+            # sentences fall here and 164 of them were "covered" while absent from v1.4.
+            # For these the text itself must survive, near enough to be recognisable.
+            if _literal(sentence) in _LITERAL_NEW:
+                continue
+            out.append((rule_id(sentence), sentence))
+            continue
         pool = rows if owning_line(sentence).lstrip().startswith("|") else paragraphs + rows
         if not any(matches(target, region) for region in pool):
             out.append((rule_id(sentence), sentence))
@@ -139,7 +185,23 @@ def class_holds(kind, sentence):
         head = re.sub(r"^[^0-9A-Za-zÇĞİÖŞÜçğıöşü]+", "", sentence)[:1]
         if not (head and head.islower()):
             return False  # a full sentence is not a continuation clause
+        if NORMATIVE.search(sentence):
+            # Starting in lowercase is not enough: a sentence opening with an identifier
+            # ("candidate_review_passed ... gerçek inceleme sonuçlarıdır") is a full rule.
+            # The sixth audit found three such rules waived as fragments while their text
+            # was absent from v1.4. A mood marker means the sentence carries a verdict.
+            return False
         return any(is_covered(s) for s in split(line) if s != sentence)
+    if kind == "ONARILDI":
+        # The sentence was a FINDING, not a rule to carry: v1.4 repaired it on purpose and
+        # a test now forbids its wording. Restoring it verbatim would reintroduce the defect.
+        # Mechanically: the repair register must name a finding whose text quotes this
+        # sentence, and the package must carry a test that bans the old wording.
+        register = (ROOT / "BULGU_DEGISIKLIK.md")
+        if not register.exists():
+            return False
+        banned = re.findall(r"'([^']{8,})'", register.read_text(encoding="utf-8"))
+        return any(phrase in sentence and phrase.lower() not in fold(NEW) for phrase in banned)
     if kind == "ORNEK":
         if not sentence.lstrip().startswith("Örneğin"):
             return False

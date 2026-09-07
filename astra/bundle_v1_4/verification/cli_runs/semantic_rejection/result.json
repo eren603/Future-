@@ -15,43 +15,43 @@
   "events": [
     {
       "detail": {
-        "phase_id": "8eb44b3cc62d48e290d9dc3539c5ee41",
-        "reply_digest": "sha256:c65d258d9653bc366c4319d94d50ab7e84d146dccec1ad6c24c1ee717e9704fc",
+        "phase_id": "18c0314778944e66a08eb6a3a891f1c0",
+        "reply_digest": "sha256:ce3ec649d079b3e13832579bb3847b3a0cb9389b6afdea841376ff2933e8e44b",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
-        "phase_id": "8eb44b3cc62d48e290d9dc3539c5ee41",
-        "reply_digest": "sha256:f83481c877fa53bcab3d3c3a381d7c4437775cd4f62c20db99fa1b19b28fa2ee",
+        "phase_id": "18c0314778944e66a08eb6a3a891f1c0",
+        "reply_digest": "sha256:61129e1c6be8a18539fe0db75328b2a82dbebd37f4d4fcd36cf770b74c7d739e",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:7272e96460297ee058b5aca917b013233cb73bcff05da9459a768b53a3a7853e",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:9139552779434da342479b55d475eba27c842737d20d45ff7fc1b37dbd029e7a",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
-        "phase_id": "8eb44b3cc62d48e290d9dc3539c5ee41",
-        "reply_digest": "sha256:216233e4f2932da81ec0bbfbd9650196eee77c3b1614e979605a8a5b6a4091fd",
+        "phase_id": "18c0314778944e66a08eb6a3a891f1c0",
+        "reply_digest": "sha256:427ac7c06e421208dd85acf9787b6d084846b8d9476c05dafafa8a792ae3d16d",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:6165d7137df11d9a4566f3b07dfedf8e16a3342112ce916be877a96da54c050f",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:fe5df2ffa0ad60826840bb03e84b8e0da10831c004572c64a061c60ffa2da710",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "8eb44b3cc62d48e290d9dc3539c5ee41"
+        "phase_id": "18c0314778944e66a08eb6a3a891f1c0"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:e72a6a13ea88ef2cf1d23c432c148dabf02befac07a9219ab2591887dabe6055",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:d0c13deb0d3c5cf8049bdd053136aef6d5035152f17f46e00b0fbfcf1bb928c2",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
@@ -59,34 +59,34 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:b3c9ac12118b3e3d98caf23cba5e1d74bacb8d226029870a0cccd2a68e84b06e",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:a3691e83cb96978b32b0733ebbb6e192468cdad18ecb11a857712f9e24693839",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:40cbea9644468f1bfaa495c93a562fd86cb5bba73de827ee74a3ca865da4d909",
+        "comparison_digest": "sha256:b0c2d35c3a86710b96207037b2e66829cb625f3c123d0b5c0e3421fcae9893c8",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:9058329efca022d75b815dfbc059e7f6255c7ea3d389107dcb3984dc4a4d4b3a",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:49434c92629880da6bd96e19439c9c1ff7054d05d838a95c6537cb2b1137cfe4",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
-        "request_digest": "sha256:aa932a23bcf399306ee85f2797201079aa69bc90f4bca2cbae06a1f7b958d1bd",
+        "request_digest": "sha256:23323cc264db5515021fba97ef950a4106e8f4416ea87529cc5268e2d4b08d73",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:075ae0287d3d7a6a62c874c3c5ef55886ecf35711772df60e50605e162235580",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:74be6da4ad2be58b5e6146782a7e3ad1d6c68907bdc17edce87fa4e41cc70e2a",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     },
     {
       "detail": {
         "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:7fe3d6994bc4684dd328672c765686b244f443fb5cbeba5e363424de65c7f578",
-      "run_id": "13cd9fab72884ef68f0beae5df10a61f"
+      "previous": "sha256:ac4338e0140c717d9fdf0e9cebbb00aabba4a004c7c06677863285a2a291fd79",
+      "run_id": "4cd1f46b93674afeb1c78765293dc991"
     }
   ],
   "production_approval": false

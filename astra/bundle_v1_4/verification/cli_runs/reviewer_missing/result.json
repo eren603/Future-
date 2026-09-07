@@ -15,43 +15,43 @@
   "events": [
     {
       "detail": {
-        "phase_id": "1ba900d301d74f8ba43d14a3e892f1d7",
-        "reply_digest": "sha256:f50195f93bfb1a4851a9b1d39403d8c855bca8f4b9bf62da972be5ae4865c67a",
+        "phase_id": "cfb95dbe00994dbe92795625d083d8db",
+        "reply_digest": "sha256:bdc8c382a580a658ddb200b5f18d3bbcc6f0aad029e28058c11833c5e1e44c11",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "run_id": "20603106c76c43889af70ef25f27020c"
     },
     {
       "detail": {
-        "phase_id": "1ba900d301d74f8ba43d14a3e892f1d7",
-        "reply_digest": "sha256:e01abd9f00fa2ec4d0306eeb23e809d715463218fc9030bb81636481fa3bc8d2",
+        "phase_id": "cfb95dbe00994dbe92795625d083d8db",
+        "reply_digest": "sha256:e3491f732bfd86446070754f513dfbea5deb729b245087a5bd31d2e6925214f4",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:55fac83865924d1fc5448604dc212675c86154d361fe954afba4db157a809c70",
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "previous": "sha256:a6930950ff3f2cdb680a7973363efe0f3d48436f2c33a513aa00ab97b8bae3ff",
+      "run_id": "20603106c76c43889af70ef25f27020c"
     },
     {
       "detail": {
-        "phase_id": "1ba900d301d74f8ba43d14a3e892f1d7",
-        "reply_digest": "sha256:114ae2b9f1dca73648565f1ab223c291eff0559e8dbe6962e453db4e6feba057",
+        "phase_id": "cfb95dbe00994dbe92795625d083d8db",
+        "reply_digest": "sha256:52ba563c0a7435e23b4ee0f310ce3d37a85e6ab4343bff0942da835a1725bdac",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:02616d28e48197825ce83dbb0fba9bbf61ba5cd59be62189efd2dd86520c814f",
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "previous": "sha256:ad821f352b4002b80f9391ce2ebf310f43804c48b8aa79efc5ba9d412abe8baf",
+      "run_id": "20603106c76c43889af70ef25f27020c"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "1ba900d301d74f8ba43d14a3e892f1d7"
+        "phase_id": "cfb95dbe00994dbe92795625d083d8db"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:78d63d5e12a1c22d434069441e845edf2f2e094127a6c71192b52fd43d5ac5e7",
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "previous": "sha256:9931f4ea126b9f98932a5820e6b4eb18d78be8d1f0c53c15f719e90e223413bc",
+      "run_id": "20603106c76c43889af70ef25f27020c"
     },
     {
       "detail": {
@@ -59,25 +59,25 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:ae42ab060348564d1829270056a4c3b2673d511da359401878397685e627f014",
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "previous": "sha256:07c4aaf65c3e399f46537ece8462d3926d27e90528053472bb164854508c8a4b",
+      "run_id": "20603106c76c43889af70ef25f27020c"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:3e2f5142ac2805363bd06fe34a597ef8234dabc4d7458383e3e7d51fc5f2a522",
+        "comparison_digest": "sha256:678cdf9c76c55bbd79e4f3217f0fa4713e84c44c4bbe1a9ba04b13ef77b060a6",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:3cda1896f01c0387570fe43be5b6db616c0c05877af527ea412cc5c055127baa",
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "previous": "sha256:0f817b064c89d3fecc04ee607c6a7c959cbab2ea4b7e55483d9777a7a2626304",
+      "run_id": "20603106c76c43889af70ef25f27020c"
     },
     {
       "detail": {
         "reason": "SEMANTIC_REVIEWER_REQUIRED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:3c21825186331e1467084daee086ed8d9b92e1285e3de989850c53002eaf0cce",
-      "run_id": "7cfacdf78357488bba50c79dec5c0167"
+      "previous": "sha256:97e2f43369eb9dadf87edc0591e035f6e9330c5481d45e9274b82b43a6e0874a",
+      "run_id": "20603106c76c43889af70ef25f27020c"
     }
   ],
   "production_approval": false
