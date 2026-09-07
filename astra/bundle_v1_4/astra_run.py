@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 from astra_reference import Controller, Rejected, WIRE_LIMIT, bounded_json, canonical
-from astra_host import SourceVault, TrustedHost, ReviewerEndpoint
+from astra_host import SourceVault, TrustedHost, ReviewerEndpoint, derive_task_status
 
 
 def execute(config):
@@ -39,8 +39,12 @@ def execute(config):
             produced.extend(reply["worker_id"] + ":" + c["claim_id"] for c in reply["cards"])
         decision = dict(decision, claim_ids=sorted(set(produced)))
     result = controller.finalize(canonical(decision))
+    # The status is derived from the ledger by the same host function, so it is reported
+    # even when a gate closes and no receipt was produced. It is never read from config.
     return dict(mode="LOCAL_TEST", phase_status=phase.status, final_status=result["status"],
                 result=result, claim_ids=decision["claim_ids"],
+                task_status=derive_task_status(bounded_json(canonical(
+                    list(config.get("requirements", ()))))),
                 events=[bounded_json(e) for e in controller.events],
                 production_approval=False)
 

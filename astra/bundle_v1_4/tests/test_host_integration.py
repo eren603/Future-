@@ -56,6 +56,10 @@ class HostIntegrationTests(unittest.TestCase):
     def finish(self):
         return self.controller.finalize(canonical(self.decision))
 
+    def vault_digest(self):
+        """A digest this run really produced, taken from the host's own capture."""
+        return SourceVault(self.specs).sources()[0]["content_digest"]
+
     def fixture_invoke(self, mode):
         """Route the EXTERNAL_MODEL argv to the local fixture; no network is reachable."""
         from astra_reference import invoke as real_invoke
@@ -438,6 +442,40 @@ class HostIntegrationTests(unittest.TestCase):
         self.build(requirements_ledger=reqs)
         receipt = self.finish()["host_verification"]
         self.assertEqual(receipt["task_status"], "COMPLETE")
+
+    def test_fabricated_digest_evidence_is_rejected(self):
+        """A well-formed sha256 that matches nothing in this run is not evidence.
+
+        The first repair accepted any `sha256:<64 hex>` by SHAPE, so "VERIFIED" was
+        still a self-declaration for anyone willing to type 64 hex characters.
+        """
+        reqs = [dict(requirement_id="R1", basis_quote="compare", delivery="comparison",
+                     acceptance_check="leaders", evidence_ids=["sha256:" + "a" * 64],
+                     status="VERIFIED", depends_on=[])]
+        self.build(requirements_ledger=reqs)
+        self.assert_closed("REQUIREMENT_UNVERIFIED")
+
+    def test_real_source_digest_is_accepted_as_evidence(self):
+        content_digest = self.vault_digest()
+        reqs = [dict(requirement_id="R1", basis_quote="compare", delivery="comparison",
+                     acceptance_check="leaders", evidence_ids=[content_digest],
+                     status="VERIFIED", depends_on=[])]
+        self.build(requirements_ledger=reqs)
+        self.assertEqual(self.finish()["host_verification"]["task_status"], "COMPLETE")
+
+    def test_requirement_cannot_depend_on_an_unknown_requirement(self):
+        reqs = [dict(requirement_id="R1", basis_quote="q", delivery="d", acceptance_check="a",
+                     evidence_ids=[], status="OPEN", depends_on=["R404"])]
+        with self.assertRaisesRegex(Rejected, "REQUIREMENT_DEPENDENCY"):
+            self.build(requirements_ledger=reqs)
+
+    def test_verified_requirement_cannot_rest_on_an_unverified_one(self):
+        reqs = [dict(requirement_id="R1", basis_quote="q", delivery="d", acceptance_check="a",
+                     evidence_ids=[], status="OPEN", depends_on=[]),
+                dict(requirement_id="R2", basis_quote="q", delivery="d", acceptance_check="a",
+                     evidence_ids=["latency"], status="VERIFIED", depends_on=["R1"])]
+        with self.assertRaisesRegex(Rejected, "REQUIREMENT_DEPENDENCY"):
+            self.build(requirements_ledger=reqs)
 
     def test_task_status_is_derived_not_declared(self):
         # celiski-7: the run declared its own status; now the host derives it.

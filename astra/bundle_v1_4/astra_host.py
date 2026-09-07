@@ -7,7 +7,6 @@ The package remains LOCAL_TEST; fixture reviews never attest semantic truth.
 from __future__ import annotations
 import os
 import math
-import re
 import secrets
 import stat
 import sys
@@ -75,7 +74,6 @@ REQUIREMENT_SCHEMA = obj({
     "status": string(12, values=["OPEN", "WORKING", "VERIFIED", "BLOCKED"]),
     "depends_on": array(ID, 64),
 })
-DIGEST_ID = re.compile(r"sha256:[0-9a-f]{64}")
 
 
 def derive_task_status(requirements):
@@ -429,13 +427,21 @@ class TrustedHost:
         if not all(v["passed"] for v in comparison_verdicts):
             raise Rejected("SEMANTIC_COMPARISON_UNSUPPORTED")
         # "VERIFIED" must name artefacts that exist in this run, not a self-assessment.
+        # A sha256 id must MATCH a digest produced here; matching the shape is not evidence.
         known = (set(controller.source_ids) | set(cards) | set(proofs)
                  | {c["requirement_id"] for c in contract["comparisons"]})
+        known_digests = ({s["content_digest"] for s in sources}
+                         | {s["access_record_id"] for s in sources}
+                         | {digest(card) for card in cards.values()}
+                         | {digest(proof) for proof in proofs.values()}
+                         | {r["result"]["comparison_digest"] for r in results}
+                         | {controller._phase.phase_digest, digest(decision),
+                            digest(rendered_claims), digest(sources)})
         for requirement in contract["requirements"]:
             if requirement["status"] != "VERIFIED":
                 continue
             if not requirement["evidence_ids"] or any(
-                    eid not in known and not DIGEST_ID.fullmatch(eid)
+                    eid not in known and eid not in known_digests
                     for eid in requirement["evidence_ids"]):
                 raise Rejected("REQUIREMENT_UNVERIFIED")
         self._vault.assert_current()

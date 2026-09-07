@@ -43,6 +43,35 @@ class RunCliTests(unittest.TestCase):
         result = json.loads((self.folder / "cli_result.json").read_text(encoding="utf-8"))
         self.assertEqual(result["reason"], "HOST_CONFIG_FIELDS")
 
+    def test_task_status_is_reported_at_top_level_and_matches_the_receipt(self):
+        # Madde 9 denetimi: plan `execute()` çıktısında task_status istiyordu.
+        self.config["requirements"] = [dict(
+            requirement_id="R1", basis_quote="compare A and B", delivery="comparison",
+            acceptance_check="observed leaders", evidence_ids=["latency"],
+            status="VERIFIED", depends_on=[])]
+        done, printed = self.run_cli()
+        result = json.loads((self.folder / "cli_result.json").read_text(encoding="utf-8"))
+        self.assertEqual(result["task_status"], "COMPLETE", done.stdout + done.stderr)
+        self.assertEqual(result["result"]["host_verification"]["task_status"], "COMPLETE")
+
+    def test_task_status_is_reported_even_when_a_gate_closes(self):
+        self.config["requirements"] = [dict(
+            requirement_id="R1", basis_quote="live model", delivery="none",
+            acceptance_check="receipt", evidence_ids=[], status="BLOCKED", depends_on=[])]
+        self.config["reviewer"] = None  # closes the gate before any receipt exists
+        done, printed = self.run_cli()
+        result = json.loads((self.folder / "cli_result.json").read_text(encoding="utf-8"))
+        self.assertEqual(printed["final_status"], "FAIL_CLOSED")
+        self.assertEqual(result["task_status"], "BLOCKED")
+
+    def test_regenerated_summary_matches_expected_statuses(self):
+        # Task 11: verification/cli_summary.json bir koşunun ÇIKTISIDIR, elle yazılmaz.
+        summary = json.loads((ROOT / "verification" / "cli_summary.json").read_text(encoding="utf-8"))
+        self.assertEqual({case: row["final_status"] for case, row in summary["cases"].items()},
+                         {"valid": "LOCAL_CHECKS_PASSED", "method_mismatch": "FAIL_CLOSED",
+                          "semantic_rejection": "FAIL_CLOSED", "reviewer_missing": "FAIL_CLOSED"})
+        self.assertFalse(any(row["production_approval"] for row in summary["cases"].values()))
+
     def test_output_to_directory_path_is_fail_closed_not_traceback(self):
         # kod_hata-12: an unwritable --output raised OSError out of main().
         target = self.folder / "as_directory"
