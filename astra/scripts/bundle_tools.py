@@ -5,6 +5,7 @@
   build    <kaynak_dizin> <sablon.md> <cikti.md> : dizindeki dosyaları belgeye gömer,
                                         BUNDLE_MANIFEST.json'ı yeniden üretir
   verify   <belge.md>                   : yalnız envanter + hash denetimi (dosya yazmaz)
+  roundtrip <belge.md>                  : geçici dizine çıkarır ve paketin kendi testlerini koşar
 
 Hash kimlik doğrulama imzası değildir; yalnız içerik bütünlüğü denetimidir.
 """
@@ -59,7 +60,7 @@ def verify(doc_path: Path) -> dict:
     return {"files": len(names), "manifest_files": len(listed), "ok": True}
 
 
-def extract(doc_path: Path, target: Path) -> None:
+def extract(doc_path: Path, target: Path, quiet: bool = False) -> None:
     verify(doc_path)
     doc = doc_path.read_text(encoding="utf-8")
     target.mkdir(parents=True, exist_ok=False)
@@ -67,7 +68,8 @@ def extract(doc_path: Path, target: Path) -> None:
         path = target / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(body, encoding="utf-8")
-    print("Extracted:", target.resolve())
+    if not quiet:
+        print("Extracted:", target.resolve())
 
 
 def build(source: Path, template: Path, output: Path, version: str) -> None:
@@ -93,6 +95,13 @@ def build(source: Path, template: Path, output: Path, version: str) -> None:
     if marker not in head:
         raise SystemExit("Template lacks the embedded-files marker")
     head = head.split(marker)[0] + marker + "\n\n"
+    command_marker = "<!-- ASTRA_COMMAND_HERE -->"
+    if command_marker in head:
+        # The header carries the command verbatim; drift between the two is a defect.
+        command = embedded.get("astra_command.md")
+        if command is None:
+            raise SystemExit("astra_command.md missing from the source directory")
+        head = head.replace(command_marker, command.strip())
     parts = [head]
     order = ["BUNDLE_MANIFEST.json"] + sorted(n for n in embedded if n != "BUNDLE_MANIFEST.json")
     for name in order:
@@ -102,6 +111,23 @@ def build(source: Path, template: Path, output: Path, version: str) -> None:
     print("Built:", output, "files:", len(embedded))
 
 
+def roundtrip(doc_path: Path) -> dict:
+    """Extract into a throwaway directory and run the package's own tests there."""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="astra-roundtrip-") as workdir:
+        target = Path(workdir) / "bundle"
+        extract(doc_path, target, quiet=True)  # stdout stays a single JSON report
+        done = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests",
+                               "-p", "test_*.py"], cwd=target, capture_output=True,
+                              text=True, timeout=600)
+        log = done.stdout + done.stderr
+        ran = re.search(r"^Ran (\d+) tests", log, re.M)
+        return {"tests_ok": done.returncode == 0, "tests_run": int(ran.group(1)) if ran else 0,
+                "returncode": done.returncode,
+                "summary": log.strip().splitlines()[-1] if log.strip() else ""}
+
+
 def main(argv):
     if len(argv) >= 3 and argv[1] == "extract":
         extract(Path(argv[2]), Path(argv[3]))
@@ -109,6 +135,10 @@ def main(argv):
         build(Path(argv[2]), Path(argv[3]), Path(argv[4]), argv[5] if len(argv) > 5 else "1.4")
     elif len(argv) >= 3 and argv[1] == "verify":
         print(json.dumps(verify(Path(argv[2]))))
+    elif len(argv) >= 3 and argv[1] == "roundtrip":
+        report = roundtrip(Path(argv[2]))
+        print(json.dumps(report, ensure_ascii=False))
+        return 0 if report["tests_ok"] else 1
     else:
         print(__doc__)
         return 2

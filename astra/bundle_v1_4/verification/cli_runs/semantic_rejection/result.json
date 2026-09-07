@@ -11,46 +11,47 @@
     "b:c1",
     "c:c1"
   ],
+  "task_status": "NO_REQUIREMENTS",
   "events": [
     {
       "detail": {
-        "phase_id": "dbff953f19b149c7be4d1575055a1d8b",
-        "reply_digest": "sha256:ffae5365d39dcff5fde4da7845dad4e8a2d5db7e3c35eb6311d949632368bf78",
+        "phase_id": "41993eab15004baca7c92d7f2600c825",
+        "reply_digest": "sha256:3e09d80b87f3c43ec69205cd4077989e7d787ccf7c0234c28a84b2b44c575ec1",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
-        "phase_id": "dbff953f19b149c7be4d1575055a1d8b",
-        "reply_digest": "sha256:16395332e28c300dc782be575b255cb3054b0fa121169dc9fd025c73d7430d66",
+        "phase_id": "41993eab15004baca7c92d7f2600c825",
+        "reply_digest": "sha256:62508b1ab1f899d2393e58f46c2fb2124e79c419b15701af3b0992d2b5e94ebe",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:3158c4f9e0b882f8a0ca0405818fbb80c9245112cd0e5d609f8d26cb2db71b15",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:5d97f44aa182133cd6c0c3e1c46916eb472412931f717a7a28010035dbaf0c22",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
-        "phase_id": "dbff953f19b149c7be4d1575055a1d8b",
-        "reply_digest": "sha256:f0acf1d4f866a7dac35e705d722bde41a88e2f789458d6fb34a8f51311ac6559",
+        "phase_id": "41993eab15004baca7c92d7f2600c825",
+        "reply_digest": "sha256:4c491c286b5bac56a187c390f6d5b80b55a28ab62893ecb512db308d91d1dde6",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:f6d5f2ab0a5b85b4e9059b2e94807f34ac886b28c71cfc8e01bce19a49f343c3",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:b64970a4fd7b07f4f63cdf4bd8036617f0cfb148c11791257cc4efd4c121cc14",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "dbff953f19b149c7be4d1575055a1d8b"
+        "phase_id": "41993eab15004baca7c92d7f2600c825"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:dd2b01f6887a753350a88a408011930211218e92e08c2a501fe06a161ab6c001",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:43ff37752c88057d8ef73597a764bbb1c7634e2f8172dc9e048bc2d750be44bd",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
@@ -58,34 +59,34 @@
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:b3c4913a1ceda21d695075f51f638e6dd508b2b48ded746ad30e50895a70e4db",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:6ead5ad94e931fcb59170ef72f28d405c6e2c8f6ade330479f37e6c9f9119055",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:598ea66a84af2307641173aa383ac738b8c1adaea1b2f812bd5e3abc9a39ea35",
+        "comparison_digest": "sha256:bbcdb79157dbe4528b09b563b8b3758ec1233c128c96d14ba8289f3da625e5dc",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:6c5afd0608f878d3a69f5fb57f9402c546193e2ff62ce3d14657cec54aee2246",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:8805f9abf0c57c0de72576fbfe4f34b09b32eed1b3a5e0691231affca9db42dd",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
-        "request_digest": "sha256:b8da1393c21971524ad1790890678c9d76f0719568d41e02e68b8c65ca7e8396",
+        "request_digest": "sha256:52954c8baad16407e9ce94af2708e14170835f37333f1288f0f328b5022fb05d",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:2fdec5f6ec96aad86df6b20e5b799b6e27aa4b99c21a76a7e6259c4bc3c6de4e",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:6725f7952b7a4a5fae7ee1f148fd26b8715cea4b7117039a8d4f3b754152e6fd",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     },
     {
       "detail": {
         "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:979cf5dc2c4cc233aaebc7ec14663fbef0ed327578125840acaed46205aad734",
-      "run_id": "806789b017ac44d29607440e0ae49ba6"
+      "previous": "sha256:426956f46ad7b95bf84d616ad219c164cdedb322f3ec9223df032e5c23e80530",
+      "run_id": "2d099064ca3a4746b4bbf75758a5a836"
     }
   ],
   "production_approval": false

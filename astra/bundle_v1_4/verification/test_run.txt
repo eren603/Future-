@@ -45,7 +45,10 @@ test_no_discretionary_adverbs_outside_quotes (test_command_text.CommandTextTests
 test_no_slop_phrases_outside_quotes (test_command_text.CommandTextTests.test_no_slop_phrases_outside_quotes) ... ok
 test_protected_sentences_present (test_command_text.CommandTextTests.test_protected_sentences_present) ... ok
 test_repairs_are_named_in_the_text (test_command_text.CommandTextTests.test_repairs_are_named_in_the_text) ... ok
-test_size_budget (test_command_text.CommandTextTests.test_size_budget) ... ok
+test_rules_carried_over_from_v1_3_are_present (test_command_text.CommandTextTests.test_rules_carried_over_from_v1_3_are_present)
+Kapsam daraltma kapısı: a rewrite may compress prose, not delete rules. ... ok
+test_size_budget (test_command_text.CommandTextTests.test_size_budget)
+The budget guards bloat, not completeness. ... ok
 test_synthetic_is_never_called_real (test_command_text.CommandTextTests.test_synthetic_is_never_called_real) ... ok
 test_version_header_is_v1_4 (test_command_text.CommandTextTests.test_version_header_is_v1_4) ... ok
 test_changed_source_snapshot_invalidates_binding (test_comparison.ComparisonTests.test_changed_source_snapshot_invalidates_binding) ... ok
@@ -80,6 +83,8 @@ test_external_like_response_sets_semantic_support_verified (test_host_integratio
 Host accept branch for EXTERNAL_MODEL, driven by a local fixture reply. ... ok
 test_external_model_rejects_fixture_model_identity (test_host_integration.HostIntegrationTests.test_external_model_rejects_fixture_model_identity)
 No live provider is reachable here, so this path cannot end in success. ... ok
+test_fabricated_digest_evidence_is_rejected (test_host_integration.HostIntegrationTests.test_fabricated_digest_evidence_is_rejected)
+A well-formed sha256 that matches nothing in this run is not evidence. ... ok
 test_fabricated_reviewer_excerpt_rejects (test_host_integration.HostIntegrationTests.test_fabricated_reviewer_excerpt_rejects) ... ok
 test_fixture_cannot_be_relabelled_as_external_model (test_host_integration.HostIntegrationTests.test_fixture_cannot_be_relabelled_as_external_model) ... ok
 test_fixture_reviewer_cannot_receive_credentials (test_host_integration.HostIntegrationTests.test_fixture_reviewer_cannot_receive_credentials) ... ok
@@ -100,7 +105,9 @@ test_missing_value_rejects_in_real_finalize (test_host_integration.HostIntegrati
 test_no_host_cannot_use_fabricated_review_flags (test_host_integration.HostIntegrationTests.test_no_host_cannot_use_fabricated_review_flags) ... ok
 test_noncritical_uncertain_card_outside_decision_is_published (test_host_integration.HostIntegrationTests.test_noncritical_uncertain_card_outside_decision_is_published) ... ok
 test_partial_status_when_work_is_open (test_host_integration.HostIntegrationTests.test_partial_status_when_work_is_open) ... ok
+test_real_source_digest_is_accepted_as_evidence (test_host_integration.HostIntegrationTests.test_real_source_digest_is_accepted_as_evidence) ... ok
 test_replayed_reviewer_digest_rejects (test_host_integration.HostIntegrationTests.test_replayed_reviewer_digest_rejects) ... ok
+test_requirement_cannot_depend_on_an_unknown_requirement (test_host_integration.HostIntegrationTests.test_requirement_cannot_depend_on_an_unknown_requirement) ... ok
 test_review_budget_precheck_stops_before_call (test_host_integration.HostIntegrationTests.test_review_budget_precheck_stops_before_call) ... ok
 test_review_request_carries_both_full_and_wire_schema (test_host_integration.HostIntegrationTests.test_review_request_carries_both_full_and_wire_schema) ... ok
 test_review_request_carries_fresh_nonce (test_host_integration.HostIntegrationTests.test_review_request_carries_fresh_nonce)
@@ -124,6 +131,7 @@ test_two_hosts_never_issue_the_same_request_digest (test_host_integration.HostIn
 test_uncertain_card_selected_by_decision_closes_gate (test_host_integration.HostIntegrationTests.test_uncertain_card_selected_by_decision_closes_gate) ... ok
 test_user_source_cannot_carry_tool_record (test_host_integration.HostIntegrationTests.test_user_source_cannot_carry_tool_record) ... ok
 test_verified_requirement_accepts_declared_artefact_ids (test_host_integration.HostIntegrationTests.test_verified_requirement_accepts_declared_artefact_ids) ... ok
+test_verified_requirement_cannot_rest_on_an_unverified_one (test_host_integration.HostIntegrationTests.test_verified_requirement_cannot_rest_on_an_unverified_one) ... ok
 test_verified_requirement_needs_real_evidence (test_host_integration.HostIntegrationTests.test_verified_requirement_needs_real_evidence) ... ok
 test_worker_exit_code_is_carried_when_declared (test_host_integration.HostIntegrationTests.test_worker_exit_code_is_carried_when_declared) ... ok
 test_changed_request_is_rejected_before_network (test_openai_reviewer.OpenAIReviewerTransportTests.test_changed_request_is_rejected_before_network) ... ok
@@ -170,9 +178,12 @@ test_three_disjoint_providers_do_not_become_a_false_pair (test_plugin_router.Plu
 test_unlisted_topic_uses_open_capability_discovery (test_plugin_router.PluginRouterTests.test_unlisted_topic_uses_open_capability_discovery) ... ok
 test_declared_task_status_in_config_is_rejected (test_run_cli.RunCliTests.test_declared_task_status_in_config_is_rejected) ... ok
 test_output_to_directory_path_is_fail_closed_not_traceback (test_run_cli.RunCliTests.test_output_to_directory_path_is_fail_closed_not_traceback) ... ok
+test_regenerated_summary_matches_expected_statuses (test_run_cli.RunCliTests.test_regenerated_summary_matches_expected_statuses) ... ok
+test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.RunCliTests.test_task_status_is_reported_at_top_level_and_matches_the_receipt) ... ok
+test_task_status_is_reported_even_when_a_gate_closes (test_run_cli.RunCliTests.test_task_status_is_reported_even_when_a_gate_closes) ... ok
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 166 tests in 7.381s
+Ran 174 tests in 8.729s
 
 OK
