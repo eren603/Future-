@@ -10,7 +10,8 @@ from astra_host import SourceVault, TrustedHost, ReviewerEndpoint
 def execute(config):
     required = {"task", "scope_ids", "sources", "comparisons", "comparison_exemption",
                 "workers", "reviewer", "decision", "worker_timeout", "max_restarts"}
-    if type(config) is not dict or set(config) != required:
+    optional = {"requirements"}  # the ledger is optional; task_status is never configurable
+    if type(config) is not dict or not required <= set(config) <= required | optional:
         raise Rejected("HOST_CONFIG_FIELDS")
     reviewer_config = config["reviewer"]
     reviewer = None
@@ -21,15 +22,26 @@ def execute(config):
     vault = SourceVault(config["sources"])
     host = TrustedHost(task=config["task"], scope_ids=config["scope_ids"],
                        source_vault=vault, comparisons=config["comparisons"],
-                       comparison_exemption=config["comparison_exemption"], reviewer=reviewer)
+                       comparison_exemption=config["comparison_exemption"], reviewer=reviewer,
+                       requirements=config.get("requirements", ()))
     controller = Controller(config["workers"], config["scope_ids"],
                             [s["source_id"] for s in vault.sources()], host=host,
                             source_contents=vault.contents(),
                             timeout=config["worker_timeout"], max_restarts=config["max_restarts"])
     phase = controller.run(config["task"])
-    result = controller.finalize(canonical(config["decision"]))
+    decision = config["decision"]
+    if decision["claim_ids"] == ["*"]:
+        # Card ids are worker-scoped and unknown before the phase runs, so the operator
+        # asks for "every card produced" instead of guessing identifiers.
+        produced = []
+        for raw in phase.replies:
+            reply = bounded_json(raw)
+            produced.extend(reply["worker_id"] + ":" + c["claim_id"] for c in reply["cards"])
+        decision = dict(decision, claim_ids=sorted(set(produced)))
+    result = controller.finalize(canonical(decision))
     return dict(mode="LOCAL_TEST", phase_status=phase.status, final_status=result["status"],
-                result=result, events=[bounded_json(e) for e in controller.events],
+                result=result, claim_ids=decision["claim_ids"],
+                events=[bounded_json(e) for e in controller.events],
                 production_approval=False)
 
 
@@ -46,10 +58,18 @@ def main():
         reason = str(exc) if isinstance(exc, Rejected) else "HOST_CONFIG_OR_IO_ERROR"
         result = dict(mode="LOCAL_TEST", final_status="FAIL_CLOSED", reason=reason,
                       production_approval=False)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+    written = None
+    try:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2)+"\n",
+                               encoding="utf-8")
+        written = str(args.output.resolve())
+    except OSError:
+        # An unwritable destination is a closed run, not a traceback.
+        result = dict(mode="LOCAL_TEST", final_status="FAIL_CLOSED",
+                      reason="HOST_CONFIG_OR_IO_ERROR", production_approval=False)
     print(json.dumps({"mode": result["mode"], "final_status": result["final_status"],
-                      "output": str(args.output.resolve())}, ensure_ascii=False))
+                      "output": written}, ensure_ascii=False))
     return 0 if result["final_status"] == "LOCAL_CHECKS_PASSED" else 1
 
 

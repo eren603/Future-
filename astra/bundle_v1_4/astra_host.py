@@ -7,6 +7,7 @@ The package remains LOCAL_TEST; fixture reviews never attest semantic truth.
 from __future__ import annotations
 import os
 import math
+import re
 import secrets
 import stat
 import sys
@@ -68,6 +69,25 @@ COMPARISON_REQUIREMENT_SCHEMA = obj({
     "direction": string(30, values=["lower_is_better", "higher_is_better"]),
     "rows": array(astra_compare.ROW_SCHEMA, 64, 2),
 })
+REQUIREMENT_SCHEMA = obj({
+    "requirement_id": ID, "basis_quote": string(2000), "delivery": string(2000),
+    "acceptance_check": string(2000), "evidence_ids": array(ID, 64),
+    "status": string(12, values=["OPEN", "WORKING", "VERIFIED", "BLOCKED"]),
+    "depends_on": array(ID, 64),
+})
+DIGEST_ID = re.compile(r"sha256:[0-9a-f]{64}")
+
+
+def derive_task_status(requirements):
+    """The host derives the status from the ledger; a run cannot declare its own."""
+    if not requirements:
+        return "NO_REQUIREMENTS"
+    states = {r["status"] for r in requirements}
+    if "BLOCKED" in states:
+        return "BLOCKED"
+    return "COMPLETE" if states == {"VERIFIED"} else "PARTIAL"
+
+
 SOURCE_SPEC_SCHEMA = obj({
     "source_id": ID, "path": string(),
     "kind": string(12, values=["USER", "TOOL"]),
@@ -271,7 +291,7 @@ class ReviewerEndpoint:
 class TrustedHost:
     """Immutable task contract. Every Controller finalization calls this host."""
     def __init__(self, *, task, scope_ids, source_vault, comparisons,
-                 comparison_exemption, reviewer=None):
+                 comparison_exemption, reviewer=None, requirements=()):
         validate(task, string(20000))
         validate(scope_ids, array(ID, 64, 1))
         unique(scope_ids)
@@ -291,8 +311,21 @@ class TrustedHost:
             if requirement["scope_id"] not in scope_ids:
                 raise Rejected("COMPARISON_SCOPE")
             unique(requirement["claim_ids"])
+        requirements = bounded_json(canonical(list(requirements)))
+        validate(requirements, array(REQUIREMENT_SCHEMA, 320))
+        unique([r["requirement_id"] for r in requirements])
+        declared = {r["requirement_id"] for r in requirements}
+        for requirement in requirements:
+            # A requirement cannot be VERIFIED while what it rests on is not.
+            if not set(requirement["depends_on"]).issubset(declared - {requirement["requirement_id"]}):
+                raise Rejected("REQUIREMENT_DEPENDENCY")
+            if requirement["status"] == "VERIFIED" and any(
+                    r["status"] != "VERIFIED" for r in requirements
+                    if r["requirement_id"] in requirement["depends_on"]):
+                raise Rejected("REQUIREMENT_DEPENDENCY")
         contract = dict(task=task, task_digest=digest(task), scope_ids=scope_ids,
                         comparisons=comparisons, comparison_exemption=comparison_exemption,
+                        requirements=requirements,
                         semantic_policy=SEMANTIC_POLICY,
                         reviewer_configuration=None if reviewer is None else dict(
                             argv=list(reviewer.argv), kind=reviewer.kind, model=reviewer.model,
@@ -390,6 +423,16 @@ class TrustedHost:
             raise Rejected("SEMANTIC_COMPARISON_COVERAGE")
         if not all(v["passed"] for v in comparison_verdicts):
             raise Rejected("SEMANTIC_COMPARISON_UNSUPPORTED")
+        # "VERIFIED" must name artefacts that exist in this run, not a self-assessment.
+        known = (set(controller.source_ids) | set(cards) | set(proofs)
+                 | {c["requirement_id"] for c in contract["comparisons"]})
+        for requirement in contract["requirements"]:
+            if requirement["status"] != "VERIFIED":
+                continue
+            if not requirement["evidence_ids"] or any(
+                    eid not in known and not DIGEST_ID.fullmatch(eid)
+                    for eid in requirement["evidence_ids"]):
+                raise Rejected("REQUIREMENT_UNVERIFIED")
         self._vault.assert_current()
         receipt = dict(protocol="ASTRA-HOST-1.3", request_digest=request["request_digest"],
                        review_nonce=request["review_nonce"], issued_at=request["issued_at"],
@@ -398,6 +441,8 @@ class TrustedHost:
                        rendered_claims_digest=digest(rendered_claims),
                        source_registry_digest=digest(sources),
                        comparison_results_digest=digest(results), comparisons=results,
+                       requirements=contract["requirements"],
+                       task_status=derive_task_status(contract["requirements"]),
                        source_access_receipts=self._vault.receipts(),
                        source_access_scope="LOCAL_FILE_SNAPSHOT_READ",
                        source_access_authenticated=False, upstream_origin_verified=False,

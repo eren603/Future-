@@ -33,12 +33,14 @@ class HostIntegrationTests(unittest.TestCase):
                 as_of=(now-timedelta(seconds=2)).isoformat(), valid_until=(now+timedelta(hours=1)).isoformat()))
             self.rows.append(dict(context, entity=("A", "B")[i], source_id=f"s{i}", quote=quote, value=value))
 
-    def build(self, mode="pass", *, requirements=None, reviewer=True, task=TASK, worker=WORKER):
+    def build(self, mode="pass", *, requirements=None, reviewer=True, task=TASK, worker=WORKER,
+              requirements_ledger=()):
         self.vault = SourceVault(self.specs)
         self.requirements = [dict(requirement_id="latency", scope_id="comparison",
             claim_ids=["a:c1", "b:c1", "c:c1"], direction="lower_is_better", rows=self.rows)] if requirements is None else requirements
         host = TrustedHost(task=task, scope_ids=["comparison"], source_vault=self.vault,
             comparisons=self.requirements, comparison_exemption=None if self.requirements else "No comparison is required.",
+            requirements=requirements_ledger,
             reviewer=fixture_reviewer(mode, .15 if mode == "timeout" else 2) if reviewer else None)
         workers = {wid: dict(role=role, argv=[sys.executable, worker])
                    for wid, role in zip(("a", "b", "c"), ("model", "counterexample", "evidence"))}
@@ -420,6 +422,50 @@ class HostIntegrationTests(unittest.TestCase):
         from astra_host import ASSESSMENT_SCHEMA, transport_schema
         self.assertEqual(captured[0]["assessment_schema"], ASSESSMENT_SCHEMA)
         self.assertEqual(captured[0]["wire_schema"], transport_schema(ASSESSMENT_SCHEMA))
+
+    def test_verified_requirement_needs_real_evidence(self):
+        # eksiklik-1 / K-11: "VERIFIED" was a self-declaration with no artefact behind it.
+        reqs = [dict(requirement_id="R1", basis_quote="compare A and B", delivery="comparison",
+                     acceptance_check="observed leaders", evidence_ids=["ghost"],
+                     status="VERIFIED", depends_on=[])]
+        self.build(requirements_ledger=reqs)
+        self.assert_closed("REQUIREMENT_UNVERIFIED")
+
+    def test_verified_requirement_accepts_declared_artefact_ids(self):
+        reqs = [dict(requirement_id="R1", basis_quote="compare A and B", delivery="comparison",
+                     acceptance_check="observed leaders", evidence_ids=["latency", "s0", "a:c1"],
+                     status="VERIFIED", depends_on=[])]
+        self.build(requirements_ledger=reqs)
+        receipt = self.finish()["host_verification"]
+        self.assertEqual(receipt["task_status"], "COMPLETE")
+
+    def test_task_status_is_derived_not_declared(self):
+        # celiski-7: the run declared its own status; now the host derives it.
+        reqs = [dict(requirement_id="R1", basis_quote="compare", delivery="comparison",
+                     acceptance_check="leaders", evidence_ids=["latency"], status="VERIFIED",
+                     depends_on=[]),
+                dict(requirement_id="R2", basis_quote="live model", delivery="none",
+                     acceptance_check="receipt", evidence_ids=[], status="BLOCKED", depends_on=[])]
+        self.build(requirements_ledger=reqs)
+        receipt = self.finish()["host_verification"]
+        self.assertEqual(receipt["task_status"], "BLOCKED")
+        self.assertEqual([r["requirement_id"] for r in receipt["requirements"]], ["R1", "R2"])
+
+    def test_task_status_says_no_requirements_when_the_ledger_is_empty(self):
+        # makyaj-5: an empty ledger must not read as COMPLETE.
+        self.build()
+        receipt = self.finish()["host_verification"]
+        self.assertEqual(receipt["task_status"], "NO_REQUIREMENTS")
+        self.assertEqual(receipt["requirements"], [])
+
+    def test_partial_status_when_work_is_open(self):
+        reqs = [dict(requirement_id="R1", basis_quote="compare", delivery="comparison",
+                     acceptance_check="leaders", evidence_ids=["latency"], status="VERIFIED",
+                     depends_on=[]),
+                dict(requirement_id="R2", basis_quote="second pass", delivery="none",
+                     acceptance_check="none", evidence_ids=[], status="OPEN", depends_on=["R1"])]
+        self.build(requirements_ledger=reqs)
+        self.assertEqual(self.finish()["host_verification"]["task_status"], "PARTIAL")
 
 
 if __name__ == "__main__":
