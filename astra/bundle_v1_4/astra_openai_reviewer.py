@@ -47,6 +47,9 @@ def review(request, *, opener=None):
             or request.get("assessment_schema") != ASSESSMENT_SCHEMA
             or request.get("wire_schema") != transport_schema(ASSESSMENT_SCHEMA)):
         raise Rejected("REVIEW_POLICY_MISMATCH")
+    http_timeout = request.get("http_timeout")
+    if type(http_timeout) not in (int, float) or not 0 < http_timeout <= 300:
+        raise Rejected("REVIEW_TIMEOUT_CONFIGURATION")
     if request.get("expected_model") != "gpt-6-astra" or request.get("expected_effort") not in {"low", "medium", "high", "xhigh", "max"}:
         raise Rejected("UNSUPPORTED_REVIEWER_CONFIGURATION")
     body = dict(model=request["expected_model"], reasoning={"effort": request["expected_effort"]},
@@ -59,12 +62,16 @@ def review(request, *, opener=None):
     if opener is None:
         opener = build_opener()
     try:
-        with opener.open(http_request, timeout=45) as response:
+        with opener.open(http_request, timeout=http_timeout) as response:
             if response.status != 200:
                 raise Rejected("REVIEW_PROVIDER_HTTP_STATUS")
             raw = response.read(WIRE_LIMIT + 1)
     except urllib.error.HTTPError as exc:
         # The class is reported; the provider body is never read, logged, or raised.
+        # 429 is separated from the other 4XX codes: it is transient, and lumping it in
+        # with a permanent 400 hides that. There is still NO automatic retry.
+        if exc.code == 429:
+            raise Rejected("REVIEW_PROVIDER_HTTP_429") from None
         raise Rejected("REVIEW_PROVIDER_HTTP_4XX" if 400 <= exc.code < 500
                        else "REVIEW_PROVIDER_HTTP_5XX") from None
     except (urllib.error.URLError, TimeoutError, OSError) as exc:

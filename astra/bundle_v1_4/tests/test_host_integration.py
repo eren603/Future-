@@ -505,6 +505,24 @@ class HostIntegrationTests(unittest.TestCase):
         self.build(requirements_ledger=reqs)
         self.assertEqual(self.finish()["host_verification"]["task_status"], "PARTIAL")
 
+    def test_reviewer_that_contradicts_the_card_closes_the_gate(self):
+        """test_kapsam-12: every other fixture mode mirrors the card's own stance.
+
+        With a mirroring fixture the stance/verdict comparison can only agree, so the
+        gate was structurally guaranteed to pass. This mode answers 'refuted' to a
+        'support' card, which is the case the gate actually exists for.
+        """
+        self.build(mode="genuine_refutation")
+        self.assert_closed("SEMANTIC_CLAIM_UNSUPPORTED")
+
+    def test_requested_effort_binds_the_reviewer(self):
+        # eksiklik-8 / celiski-11 / api_uyum-14: a cheaper setting answered a max request.
+        self.vault = SourceVault(self.specs)
+        with self.assertRaisesRegex(Rejected, "REVIEWER_EFFORT_BINDING"):
+            TrustedHost(task=TASK, scope_ids=["comparison"], source_vault=self.vault,
+                        comparisons=[], comparison_exemption="No comparison is required.",
+                        reviewer=fixture_reviewer(), requested_effort="max")
+
 
 if __name__ == "__main__":
     unittest.main()

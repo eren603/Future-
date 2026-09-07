@@ -26,6 +26,7 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
     def setUp(self):
         self.request = dict(instructions=SEMANTIC_POLICY, assessment_schema=ASSESSMENT_SCHEMA,
                             wire_schema=transport_schema(ASSESSMENT_SCHEMA),
+                            http_timeout=55.0,
                             expected_model="gpt-6-astra", expected_effort="max")
         self.request["request_digest"] = digest(self.request)
         self.assessment = dict(claim_verdicts=[dict(claim_id="a:c1", verdict="supported",
@@ -106,7 +107,7 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
     def test_http_error_classes_are_distinguished_without_body(self):
         # api_uyum-6 / K-13: the caller learns the class, never the provider body.
         import urllib.error
-        for code, expected in ((400, "HTTP_4XX"), (429, "HTTP_4XX"), (503, "HTTP_5XX")):
+        for code, expected in ((400, "HTTP_4XX"), (429, "HTTP_429"), (503, "HTTP_5XX")):
             with self.subTest(code=code):
                 class Failing:
                     def open(self, request, timeout):
@@ -161,6 +162,36 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
                         clear=True):
             proxies = [h.proxies for h in build_opener().handlers if getattr(h, "proxies", None)]
         self.assertEqual(proxies, [])
+
+    def test_http_timeout_comes_from_the_request(self):
+        # kod_hata-10 / api_uyum-9: the adapter used a fixed 45s while the host used its
+        # own deadline, so one of the two clocks was always wrong.
+        self.call()
+        self.assertEqual(self.opener.requests[0][1], 55.0)
+
+    def test_missing_or_impossible_http_timeout_is_rejected(self):
+        for value in (None, 0, -1, 301, "45"):
+            with self.subTest(value=value):
+                request = copy.deepcopy(self.request)
+                request["http_timeout"] = value
+                request["request_digest"] = digest(
+                    {k: v for k, v in request.items() if k != "request_digest"})
+                with self.assertRaisesRegex(Rejected, "REVIEW_TIMEOUT_CONFIGURATION"):
+                    self.call(request=request)
+
+    def test_non_error_non_200_response_is_rejected(self):
+        # test_kapsam-11: an opener that returns a non-200 without raising HTTPError.
+        class Odd(io.BytesIO):
+            status = 204
+
+        class OddOpener:
+            requests = []
+
+            def open(self, request, timeout):
+                return Odd(b"{}")
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "k"}, clear=True), \
+                self.assertRaisesRegex(Rejected, "REVIEW_PROVIDER_HTTP_STATUS"):
+            review(self.request, opener=OddOpener())
 
 
 if __name__ == "__main__":

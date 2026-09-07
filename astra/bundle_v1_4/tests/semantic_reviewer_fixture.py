@@ -22,6 +22,10 @@ for cid, card in request["cards"].items():
     verdict = {"support": "supported", "refute": "refuted", "uncertain": "uncertain"}[card["stance"]]
     if mode == "reject":
         verdict = "uncertain"
+    if mode == "genuine_refutation":
+        # test_kapsam-12: every other mode mirrors the card's own stance, so the host is
+        # comparing a label with its own copy. This mode contradicts the card instead.
+        verdict = {"supported": "refuted", "refuted": "supported"}.get(verdict, verdict)
     excerpts = [{"source_id": sid, "quote": request["source_snapshots"][sid]}
                 for sid in card["source_ids"]]
     verdicts.append(dict(claim_id=cid, verdict=verdict, source_ids=card["source_ids"],

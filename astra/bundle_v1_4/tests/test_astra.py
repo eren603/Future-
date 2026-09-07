@@ -207,12 +207,33 @@ class PublicationTests(unittest.TestCase):
         p = r["proofs"]["a:c1"]
         self.assertEqual(p["run_id"], c.run_id)
         pid = p.pop("proof_id"); self.assertEqual(pid, digest(p))
-    def test_wrong_numeric_value_fails_publication(self):
-        c = controller(("wrong_math", "ready", "ready")); c.run("Compute.")
-        self.assertEqual(finish(c)["reason"], "MATH_VALUE_MISMATCH")
+    def test_wrong_numeric_value_fails_before_the_phase_is_sealed(self):
+        """kod_hata-13: the maths used to be settled only at finalize.
+
+        Renamed from test_wrong_numeric_value_fails_publication. A card whose value does
+        not match its own expression is now rejected while the reply is validated, so the
+        phase never reaches PHASE_VALIDATED and the retry budget is not spent on a reply
+        that cannot stand. The finalize-side check is kept as a second line.
+        """
+        c = controller(("wrong_math", "ready", "ready"))
+        phase = c.run("Compute.")
+        self.assertNotEqual(phase.status, "PHASE_VALIDATED")
+        self.assertTrue(any("MATH_VALUE_MISMATCH" in e for e in phase.errors), phase.errors)
+        self.assertEqual(finish(c)["reason"], "PHASE_NOT_VALIDATED")
     def test_contradiction_cannot_be_voted_away(self):
         c = controller(("ready", "ready", "refute")); c.run("Review.")
         self.assertEqual(finish(c)["reason"], "CONTRADICTION")
+
+    def test_contradiction_is_logged_with_its_subject(self):
+        # celiski-10: the run reported a bare code, so nothing said WHAT contradicted.
+        c = controller(("ready", "ready", "refute")); c.run("Review.")
+        finish(c)
+        detected = [bounded_json(e) for e in c.events]
+        detail = [e["detail"] for e in detected if e["kind"] == "CONTRADICTION_DETECTED"]
+        self.assertEqual(len(detail), 1, [e["kind"] for e in detected])
+        self.assertTrue(detail[0]["proposition_ids"])
+        self.assertTrue(detail[0]["claim_ids"])
+        self.assertTrue(detail[0]["scope_ids"])
     def test_unresolved_review_stays_closed(self):
         c = controller(); c.run("Review.")
         for key, value in [("unresolved_claim_ids", ["a:c1"]), ("unresolved_contradictions", ["Conflict"]), ("candidate_review_passed", False), ("numeric_inventory_complete", False)]:

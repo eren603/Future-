@@ -181,12 +181,16 @@ def validate(value, schema):
     expected = schema["type"]
     allowed = expected if isinstance(expected, list) else [expected]
     kinds = {"null": type(None), "string": str, "object": dict, "array": list, "boolean": bool}
+    if any(t not in kinds for t in allowed):
+        # number/integer are outside this subset; an unsupported schema is a rejection,
+        # not a KeyError escaping into the caller.
+        raise Rejected("SCHEMA_UNSUPPORTED_TYPE")
     if not any(type(value) is kinds[t] for t in allowed):
         raise Rejected("SCHEMA_TYPE")
+    if value is None:
+        return  # a nullable field may be null even when an enum lists the non-null values
     if "enum" in schema and value not in schema["enum"]:
         raise Rejected("SCHEMA_ENUM")
-    if value is None:
-        return
     if type(value) is str:
         if not schema.get("minLength", 0) <= len(value) <= schema.get("maxLength", WIRE_LIMIT):
             raise Rejected("SCHEMA_LENGTH")
@@ -198,7 +202,10 @@ def validate(value, schema):
         for key, child in value.items():
             validate(child, schema["properties"][key])
     elif type(value) is list:
-        if not schema.get("minItems", 0) <= len(value) <= schema.get("maxItems", 320):
+        low, high = schema.get("minItems", 0), schema.get("maxItems", 320)
+        if low < 0 or high < low:
+            raise Rejected("SCHEMA_BOUNDS")  # an impossible bound is a schema defect
+        if not low <= len(value) <= high:
             raise Rejected("SCHEMA_ITEMS")
         for child in value:
             validate(child, schema["items"])
@@ -317,7 +324,7 @@ def invoke(argv, request, timeout, *, environment=None):
         p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, cwd=workdir, start_new_session=True,
                              env=child_env)
-        output, error = bytearray(), bytearray()
+        output, error, reaped = bytearray(), bytearray(), False
         started, offset = time.monotonic(), 0
         sel = selectors.DefaultSelector()
         streams = [p.stdin, p.stdout, p.stderr]
@@ -354,6 +361,7 @@ def invoke(argv, request, timeout, *, environment=None):
             remaining = timeout - (time.monotonic() - started)
             try:
                 code = p.wait(timeout=max(0, remaining))
+                reaped = True
             except subprocess.TimeoutExpired as e:
                 raise TimeoutError("MISSING") from e
             if code != 0:
@@ -366,11 +374,14 @@ def invoke(argv, request, timeout, *, environment=None):
             return bytes(output)
         finally:
             sel.close()
-            try:
-                os.killpg(p.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            p.wait()
+            if not reaped:
+                # Only kill a group whose leader is still ours: after wait() the PID is
+                # free and could already belong to an unrelated process group.
+                try:
+                    os.killpg(p.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                p.wait()
             for stream in streams:
                 if not stream.closed:
                     stream.close()
@@ -490,8 +501,17 @@ class Controller:
                 raise Rejected("UNAUTHORIZED_SOURCE")
             if card["label"] in {"KULLANICI", "ARAÇ"} and not card["source_ids"]:
                 raise Rejected("SOURCE_REQUIRED")
-            if card["math"] is not None and card["statement"] != card["math"]["expression"]:
-                raise Rejected("MATH_STATEMENT_MISMATCH")
+            if card["math"] is not None:
+                if card["statement"] != card["math"]["expression"]:
+                    raise Rejected("MATH_STATEMENT_MISMATCH")
+                # Settle the arithmetic before the phase is sealed: a reply whose maths
+                # cannot stand must not reach PHASE_VALIDATED and burn the retry budget.
+                try:
+                    computed = exact_math(card["math"]["expression"])["exact"]
+                except MathRejected as exc:
+                    raise Rejected("MATH_" + str(exc)) from None
+                if card["math"]["value"] != computed:
+                    raise Rejected("MATH_VALUE_MISMATCH")
         if {card["scope_id"] for card in reply["cards"]} != set(self.scope_ids):
             raise Rejected("CARD_SCOPE_INCOMPLETE")
         return canonical(reply)
@@ -603,7 +623,16 @@ class Controller:
                     proof.pop("proof_id")
                     proof["proof_id"] = digest(proof)
                     proofs[cid] = proof
-            if any({"support", "refute"}.issubset(stances) for stances in propositions.values()):
+            conflicting = sorted(pid for pid, stances in propositions.items()
+                                 if {"support", "refute"}.issubset(stances))
+            if conflicting:
+                # A bare code hides what conflicted; the ledger records the subject.
+                self.log("CONTRADICTION_DETECTED", {
+                    "proposition_ids": conflicting,
+                    "claim_ids": sorted(cid for cid, card in cards.items()
+                                        if card["proposition_id"] in conflicting),
+                    "scope_ids": sorted({card["scope_id"] for card in cards.values()
+                                         if card["proposition_id"] in conflicting})})
                 raise Rejected("CONTRADICTION")
             # Render from the verified card fields. No free-form numeric result is substituted.
             selected = [{"claim_id": cid, "statement": (proofs[cid]["source"] + " = " + proofs[cid]["exact"]) if cid in proofs else cards[cid]["statement"],

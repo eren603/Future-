@@ -106,6 +106,40 @@ Gereksinim defteri (`requirements`) donmuş sözleşmenin parçasıdır: her kay
 
 Nihai yayın kapısı: mod ve izinler doğrulanmış; PHASE_VALIDATED; bütün kapsamlar tamamlanmış; kaynaklar incelenmiş; somut aday incelenmiş; kritik çelişki/iddia açık değil; sayısal envanter ve hesaplar doğrulanmış; karar alanları (`action, owner, guard_metric, kill_rule, user_cost, residual_risk, claim_ids`) dolu ve `owner` gerçek bir sorumlu (yer tutucu — unknown, bilinmiyor, n/a, tbd, -, ? — reddedilir); hiçbir BLOCKED/MISSING/INVALID örtülmemiş. **Hata, eksik kaynak ya da atlanmış karşılaştırma başarıya ÇEVRİLMEZ.** Son incelemenin `numeric_inventory_complete` kaydı, bu kontrol gerçekten yapılmadan true OLAMAZ. Bu paketin denetleyicisi kalıcı bir görev zamanlayıcısı DEĞİLDİR. **"Yüzde 100 hatasızlık" gibi kanıtlanamayacak bir koşul karşılanmış SAYILMAZ.**
 
+**4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
+
+- **Kısmi teslim yoktur.** Bir işçi 4 kapsamdan 3'ünü bitirse bile kapsamı eksik READY
+  gönderemez; ya bütün kapsamları kapatır ya BLOCKED döner (ve BLOCKED sonlandırıcıdır).
+  Kısmi ilerleme kapsam bölerek (Ç5) ifade edilir, yarım yanıtla değil.
+- **Parça kimliği tanımlıdır, birleşik onay yoktur.** Ç5 parçalaması her parçaya kendi
+  `run_id`'sini verir; parçaların toplamı için otomatik bir onay üretilmez — bütün-görev
+  onayı ancak her parçanın kendi kanıtı gösterilerek ELLE kurulur.
+- **İşçi sayısı 3-5 aralığındadır** (`WORKER_COUNT`). Ortamda yalnız 1-2 izole çalıştırıcı
+  varsa mod SINGLE_MODEL'dir ve çıktı ANALYSIS_ONLY olur; 5'ten fazla rol gerekiyorsa görev
+  Ç5 ile parçalanır. "Az işçiyle konsey kurdum" denmez.
+- **Token/maliyet bütçesi ÖLÇÜLMEZ.** Paket yalnız bayt sınırı (`WIRE_LIMIT`) ve çıktı
+  tavanı (`max_output_tokens=16384`) uygular; sağlayıcı `usage` alanı okunmaz ve makbuza
+  yazılmaz. Bu tavanın hedef modelde geçerli olduğu DOĞRULANMADI.
+- **Alternatif alanı karar şemasında YOKTUR.** Değerlendirilen alternatifler ADIM 5 saldırı
+  listesinde yazılır; `DECISION_SCHEMA` bunları taşımaz, dolayısıyla "N alternatif
+  değerlendirildi" iddiası MAKİNE tarafından denetlenmez.
+- **`CAPABILITY_NEED` ve `TOOL_ROUTE` metin sözleşmesidir.** Paketin yönlendirici kodu bu
+  kayıtların tüm alanlarını üretmez ve host defterine yazmaz; bu kayıtlar §3 Ç6'daki
+  `astra_records` bloğuyla METİN olarak tutulur. Kod tarafında karşılığı olduğu iddia edilmez.
+- **Kalıcı görev kaydı bu pakette KOD DEĞİLDİR.** Bağlam devri kuralı metin sözleşmesidir;
+  paket kalıcı zamanlayıcı ya da kalıcı depo kurmaz.
+- **Sağlayıcı makbuzu `store=false` ile sonradan getirilemez** (VARSAYIM — belge bu
+  ortamda doğrulanamadı): `openai:resp_...` kimliği yerel bir kayıttır, sağlayıcıda
+  sorgulanabilir bir kanıt olduğu iddia edilmez.
+- **Effort yankısı dairesel olabilir:** sağlayıcının bildirdiği `reasoning.effort`,
+  istenenle karşılaştırılır; sağlayıcının gerçekten o ayarla çalıştığının bağımsız kanıtı
+  DEĞİLDİR. Talep edilen effort donmuş sözleşmeye yazılır ve daha ucuz bir ayar kapıyı
+  kapatır (`REVIEWER_EFFORT_BINDING`).
+- **Kullanıcının verdiği eski biçimli inceleme kaydı makbuzda görünmez;** yalnız ek ret
+  koşuludur ve hiçbir onay üretmez.
+- **Bu komut metni artık SINANIR** (`tests/test_command_text.py` + depo düzeyinde kural
+  envanteri), ama sınama DİZGE düzeyindedir: silinmeyi yakalar, anlamı denetlemez.
+
 **5. Çıktı biçimi**
 
 Anlatı kısa, artefakt tam: sonuç önce gelir; gerekçe yalnız sonucu değerlendirmeye yarayanla sınırlıdır; ADIM 1 envanteri, ADIM 5 saldırı listesi, ADIM 6 rubrik tablosu ve YAPILMAYANLAR her yanıtta bulunur. Gizli düşünce zinciri istenmez ve yayımlanmaz; "neyi sınadığın" yazılır, "ne düşündüğün" değil. Kullanıcıya bütün teknik envanteri dökmek yerine işe yarayan özet + artefakt bağlantısı verilir. **Kısalık derinliğin yerine geçmez:** ADIM 1 envanteri, ADIM 5 saldırı listesi ve ADIM 6 rubrik tablosu ARTEFAKTTIR, özet değildir — "yer kazanmak için kısalttım" gerekçesiyle çıkarılamaz, tek cümleye indirilemez. Kısaltılacak olan gerekçe anlatısıdır, kayıt değil.

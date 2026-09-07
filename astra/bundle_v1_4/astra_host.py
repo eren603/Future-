@@ -248,6 +248,11 @@ class ReviewerEndpoint:
             raise Rejected("REVIEWER_KIND")
         if self.kind == "TEST_FIXTURE" and self.credential_env:
             raise Rejected("REVIEWER_CREDENTIAL_SCOPE")  # only the packaged adapter may see the key
+        if self.kind == "TEST_FIXTURE" and (self.model == "gpt-6-astra"
+                                            or self.effort in {"low", "medium", "high", "xhigh", "max"}):
+            # A fixture that declares the pinned identity would echo it into the receipt,
+            # where "provider_model": "gpt-6-astra" reads like a real provider answer.
+            raise Rejected("REVIEWER_IDENTITY_SCOPE")
         validate(self.model, ID)
         validate(self.effort, ID)
         if type(self.timeout) not in (int, float) or not math.isfinite(self.timeout) or not 0 < self.timeout <= 300:
@@ -294,7 +299,7 @@ class ReviewerEndpoint:
 class TrustedHost:
     """Immutable task contract. Every Controller finalization calls this host."""
     def __init__(self, *, task, scope_ids, source_vault, comparisons,
-                 comparison_exemption, reviewer=None, requirements=()):
+                 comparison_exemption, reviewer=None, requirements=(), requested_effort=None):
         validate(task, string(20000))
         validate(scope_ids, array(ID, 64, 1))
         unique(scope_ids)
@@ -305,6 +310,12 @@ class TrustedHost:
             raise Rejected("SOURCE_VAULT_REQUIRED")
         if reviewer is not None and type(reviewer) is not ReviewerEndpoint:
             raise Rejected("REVIEWER_ENDPOINT_REQUIRED")
+        if requested_effort is not None:
+            # What the user asked for is part of the frozen contract: a cheaper setting
+            # cannot quietly answer a request for a more expensive one.
+            validate(requested_effort, ID)
+            if reviewer is not None and reviewer.effort != requested_effort:
+                raise Rejected("REVIEWER_EFFORT_BINDING")
         if comparisons:
             if comparison_exemption is not None:
                 raise Rejected("COMPARISON_CONTRACT_AMBIGUOUS")
@@ -328,7 +339,7 @@ class TrustedHost:
                 raise Rejected("REQUIREMENT_DEPENDENCY")
         contract = dict(task=task, task_digest=digest(task), scope_ids=scope_ids,
                         comparisons=comparisons, comparison_exemption=comparison_exemption,
-                        requirements=requirements,
+                        requirements=requirements, requested_effort=requested_effort,
                         semantic_policy=SEMANTIC_POLICY,
                         reviewer_configuration=None if reviewer is None else dict(
                             argv=list(reviewer.argv), kind=reviewer.kind, model=reviewer.model,
@@ -384,7 +395,10 @@ class TrustedHost:
                        comparison_exemption=contract["comparison_exemption"],
                        expected_model=self._reviewer.model, expected_effort=self._reviewer.effort,
                        assessment_schema=ASSESSMENT_SCHEMA,
-                       wire_schema=transport_schema(ASSESSMENT_SCHEMA))
+                       wire_schema=transport_schema(ASSESSMENT_SCHEMA),
+                       # One clock, not two: the HTTP call must finish before the host
+                       # kills the adapter, otherwise the provider's reason is lost.
+                       http_timeout=max(5.0, float(self._reviewer.timeout) - 5.0))
         request["request_digest"] = digest(request)
         controller.log("SEMANTIC_REVIEW_STARTED", {"request_digest": request["request_digest"],
                        "reviewer_kind": self._reviewer.kind})
@@ -455,6 +469,7 @@ class TrustedHost:
                        source_registry_digest=digest(sources),
                        comparison_results_digest=digest(results), comparisons=results,
                        requirements=contract["requirements"],
+                       requested_effort=contract["requested_effort"],
                        task_status=derive_task_status(contract["requirements"]),
                        source_access_receipts=self._vault.receipts(),
                        source_access_scope="LOCAL_FILE_SNAPSHOT_READ",
