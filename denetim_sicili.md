@@ -44,3 +44,5 @@ BEYAN (Madde 5 GİZLİ_GÜNDEM — bulgu KABUL EDİLDİ, kusur gerçektir ve TEK
   istismar edilemez olduğunu gösterdi (açılan yol da sadeleşmiş dizgedir, symlink
   TAKİP EDİLMİYOR), ama yorumun yanlışlığı makyajdır. Deneme 3/3'te kapı, sadeleştirme
   ÖNCESİ bileşenleri de denetleyecek biçimde kesinleştirildi.
+Madde 5 | Deneme 3/3 | Ajan kod-denetci#11 | Kapı: 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT PASS; TÜNEL N/A — tasarım deneme 2'de kayıtlı, bu commit tamlık düzeltmesi; ÇARPIŞMA N/A) | Kanıt: git diff-tree 559644f → yalnız 2 dosya, sicil ayrı commit'te (2f74c6e, ebeveyn); git archive 559644f izole koşusu → 149 test OK; revert-repro (559644f^ host + HEAD test) → beklenen KIRMIZI (Rejected not raised); kendi symlink repro'ları: link_dir/../real_dir/x ve a/link/../../b/file → ikisi de SOURCE_SYMLINK_REJECTED; göreli yol → aşırı sıkılık yok | Karar: PASS | Arşiv: -
+  GÖZLEM (Task 11'e taşınır, kapı düşürmedi): kaynak `path` alanının MUTLAK olması gerektiği hiçbir yerde belgelenmiş değil; göreli yol `Path.cwd()`/`os.path.abspath` üzerinden koşu dizinine bağımlı hale geliyor. README ve komut metninde açıkça yazılacak.
