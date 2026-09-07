@@ -86,3 +86,17 @@ BEYAN (Madde 9 ve 10 üçüncü deneme — bulguların tamamı KABUL EDİLDİ):
   docstring'inde yazıyor — iddia, aracın yaptığı kadar.
 Madde 9 | Deneme 3/3 | Ajan kod-denetci#18 | Kapı: 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT/TÜNEL PASS; ÇARPIŞMA N/A) | Kanıt: kendi koşusu 179 test OK; taban 67df2bf + HEAD testleri → 3 kırmızı, en çarpıcısı tabanda uydurma kanıtla task_status=COMPLETE (iddia edilen hata birebir yeniden üretildi); 8 probe gerçek astra_run/demo_local CLI ile: uydurma sha256 → FAIL_CLOSED/REQUIREMENT_UNVERIFIED/NOT_DERIVED, digest(decision) ve digest(rendered_claims) artık reddediliyor, meşru content_digest hâlâ kabul, başarılı koşuda top-level task_status makbuzla birebir | Karar: PASS | Arşiv: -
   DENETÇİ NOTU (kabul edildi, kapı düşürmedi): `digest(sources)` kanıt kümesinde kalıyor ama dairesel değil — `sources` kaydı host'un canlı `retrieved_at` damgasını taşır, operatör config yazarken önceden üretemez. `NOT_DERIVED` tek başına açıklama içermiyor; yanındaki `final_status` + `reason` ile birlikte okunduğunda yanıltmıyor (UX notu).
+Madde 11 | Deneme 2/3 | Ajan kod-denetci#20 | Kapı: 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT PASS; TÜNEL/ÇARPIŞMA N/A) | Kanıt: 20/20 evidence kaydı denetçinin kendi script'iyle çözümlendi (uydurma yok) ve en az 11'i okunarak iddiayla eşleştiği doğrulandı; test_repair_contract.py bilerek kırıldı → FAILED(1) → geri alındı; izole `git archive` koşusu commit anında 177 OK (iddiayla birebir), HEAD 179 OK; regenerate_verification.py yalnız nonce/zaman farkı üretti; CHANGELOG'un değişen-test listesi hâlâ TAM (67df2bf ve 022f747 yalnız YENİ test ekliyor) | Karar: PASS | Arşiv: -
+Madde 10 | Deneme 3/3 | Ajan kod-denetci#19 | Kapı: ATLAMA FAIL (en az 5 v1.3 kuralı v1.4'te ve muafiyette YOK; kök neden: test_rule_coverage.py'nin NORMATIVE deseni "göstermez/doğrulamaz/koru/kaydetme/bitirme" sınıflarını yakalamıyor → cümleler envantere HİÇ girmiyor); GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT/TÜNEL PASS (mekanik kapı 3 mutasyonla gerçek doğrulandı; 19 muafiyetin tamamı elle doğrulandı; 48−19=29 sayımı yeniden üretildi); ÇARPIŞMA N/A | Kanıt: v1.3 satır 13/17(×2)/21/281; paket 179 OK + astra/tests 9 OK; verify/roundtrip OK | Karar: ESKALE | Arşiv: -
+
+ESKALE KAYDI (Madde 10 — üç deneme de FAIL; sözleşme gereği kullanıcıya bildirilir):
+  Üç turun ortak dersi: kusur tek tek kurallarda değil, KURALLARI BULMA YÖNTEMİMDEYDİ.
+  1. tur: elle liste. 2. tur: denetçinin verdiği listeyi kapatma. 3. tur: elle yazılmış
+  kelime desenli otomatik envanter — hepsi bir SINIF kuralı sessizce dışarıda bıraktı.
+  4. turda yöntem kökten değişti: desen artık Türkçenin EK yapısına dayanıyor
+  (`-maz/-mez`, `-ma/-me` + değildir/yasak/zorunlu/gerekir/şart/koru/sakla), envanter
+  119'dan 288 cümleye çıktı, 21 kural daha metne alındı ve kalan 32 cümlenin HER BİRİ
+  v1.4'teki karşılığı alıntılanarak muaf tutuldu. "Kapsam dışı" bölümü BOŞ.
+  KULLANICIYA BİLDİRİM: bu madde üç denemede geçemedi; dördüncü tur yöntem değişikliğiyle
+  yapıldı ve bağımsız denetime yeniden gönderiliyor. Kalan bilinen sınır, testin
+  docstring'inde yazılı: araç SİLİNMEYİ yakalar, ANLAMI denetlemez.
