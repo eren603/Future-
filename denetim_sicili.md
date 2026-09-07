@@ -59,3 +59,15 @@ BEYAN (Madde 9 ve 10 — her iki bulgu kümesi de KABUL EDİLDİ, kusurlar gerç
   (2) tekrarı engelleyen mekanik kapı eklendi (test_rules_carried_over_from_v1_3_are_present,
   28 kural parçası). Boyut bütçesi kural silmenin gerekçesi olamayacağı için
   30000 → 55213'e (v1.3 metninin boyutu) çekildi ve bu testin docstring'inde yazıldı.
+Madde 12 | Deneme 1/3 | Ajan kod-denetci#17 | Kapı: 6/6 (ATLAMA/GİZLİ_GÜNDEM/TİYATRO/SAHTE_KANIT PASS; TÜNEL/ÇARPIŞMA N/A) | Kanıt: kendi koşusu verify={"files":54,"manifest_files":53,"ok":true}, roundtrip tests_run=174 ok, astra/tests 6 OK, paket 174 OK; K-16 testi bilerek bozulup KIRMIZI'ya döndürüldü (komut metni değişti, belge yeniden üretilmedi → FAIL) ve dosya-karşılaştırma testi de bozulup kırmızıya döndürüldü, ikisi de restore edildi; sızıntı taraması: /home/user 0, gerçek anahtar deseni 0 | Karar: PASS | Arşiv: -
+Madde 11 | Deneme 1/3 | Ajan kod-denetci#16 | Kapı: ATLAMA FAIL (plan Task 11'in istediği test_regenerated_summary_matches_expected_statuses 1121b25'te YOK; sonradan 67df2bf'te geldi) + SAHTE_KANIT FAIL (repair_contract.json R2 kanıtı var olmayan bir test adı gösteriyor: test_blocked_reply_requires_attempts); GİZLİ_GÜNDEM/TİYATRO PASS; TÜNEL/ÇARPIŞMA N/A | Kanıt: git worktree 1121b25 + grep (0 eşleşme); regenerate_verification.py iki kez koşuldu → 166 test OK, dört senaryo eşleşti, diff yalnız nonce/digest/zaman damgası; mutlak yol sızıntısı 0; CHANGELOG'daki değişen-test listesi git diff 76e5c8d..1121b25 ile doğrulandı (eksik yok) | Karar: RESTART | Arşiv: -
+
+BEYAN (Madde 11 — iki bulgu da KABUL EDİLDİ):
+  SAHTE_KANIT bu turun en utandırıcı kusurudur: kanıt listesi olması gereken dosyada
+  UYDURMA bir test adı vardı. Onarım iki parçalı: (1) R2 kanıtları gerçek adlarla
+  yeniden yazıldı, (2) tests/test_repair_contract.py sözleşmedeki HER referansı
+  diskte çözümlüyor — çözülemeyen referans testi düşürür. Yani aynı kusur bir daha
+  sessizce geçemez.
+  ATLAMA: test gerçekten var ve geçiyor, ama Task 11'in commit'inde değil Task 9'un
+  onarım commit'inde teslim edildi. Kusur commit hijyenidir (aynı `git add -A`
+  alışkanlığının kalıntısı); geçmiş yeniden yazılmadı, burada kayda geçirildi.
