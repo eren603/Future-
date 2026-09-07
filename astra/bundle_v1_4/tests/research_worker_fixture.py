@@ -9,5 +9,5 @@ reply.update(envelope_digest=e["digest"], status="READY", summary="Synthetic com
     cards=[dict(claim_id="c1", proposition_id="latency", scope_id=e["scope_ids"][0],
        statement=claim, label="ARAÇ", source_ids=e["source_ids"], stance="support",
        uncertainty="low", critical=True, math=None)], covered_scope_ids=e["scope_ids"],
-    unresolved_scope_ids=[], block_reason=None, next_safe_step=None)
+    unresolved_scope_ids=[], block_reason=None, next_safe_step=None, attempts=[])
 print(json.dumps(reply))

@@ -168,6 +168,17 @@ class RuntimeTests(unittest.TestCase):
         p = c.run("Review.")
         self.assertEqual(p.status, "FAIL_CLOSED")
         self.assertEqual(p.attempts, 2)
+    def test_blocked_without_attempts_is_invalid(self):
+        # K-03 / kacis_yolu-1: a BLOCKED reply must carry evidence of at least two attempts.
+        c = controller(("blocked_no_attempts", "ready", "ready"))
+        p = c.run("Review.")
+        self.assertEqual(p.status, "FAIL_CLOSED")
+        self.assertTrue(any("BLOCKED_ATTEMPTS_REQUIRED" in e for e in p.errors), p.errors)
+    def test_ready_with_attempts_is_invalid(self):
+        c = controller(("ready_with_attempts", "ready", "ready"))
+        p = c.run("Review.")
+        self.assertEqual(p.status, "FAIL_CLOSED")
+        self.assertTrue(any("READY_SCHEMA" in e for e in p.errors), p.errors)
     def test_schema_binding_and_coverage_failures(self):
         for mode in ["wrong_nonce", "forbidden", "empty_cards", "too_many_cards", "coverage", "duplicate_claim", "worker_invalid", "missing_block_reason", "candidate_statement_leak", "wrong_statement"]:
             with self.subTest(mode=mode):

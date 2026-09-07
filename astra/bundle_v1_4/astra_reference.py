@@ -35,6 +35,8 @@ DEFAULT_POLICY = (
     "Return exactly one JSON object conforming to reply_schema. Echo all binding fields. "
     "Only READY or BLOCKED may be emitted by a worker. A legitimate permission, safety or "
     "missing-tool block is BLOCKED, with reason and next_safe_step, no claims. "
+    "BLOCKED must list at least two distinct attempts actually made (attempts), each naming "
+    "what was tried and what happened; READY leaves attempts empty. "
     "READY must cover every scope_id explicitly with at least one scoped card. "
     "A covered_scope_ids declaration alone is insufficient. For omissions return BLOCKED and name "
     "missing scopes in block_reason. "
@@ -145,7 +147,7 @@ REPLY_SCHEMA = obj({
     "status": string(12, values=["READY", "BLOCKED"]), "summary": string(2000, 0),
     "cards": array(CARD_SCHEMA), "covered_scope_ids": array(ID, 64),
     "unresolved_scope_ids": array(ID, 64), "block_reason": string(nullable=True),
-    "next_safe_step": string(nullable=True),
+    "next_safe_step": string(nullable=True), "attempts": array(string(4000, 10), 16),
 })
 SOURCE_SCHEMA = obj({
     "source_id": ID, "kind": string(12, values=["USER", "TOOL"]), "locator": string(),
@@ -445,8 +447,10 @@ class Controller:
         if reply["status"] == "BLOCKED":
             if not reply["block_reason"] or not reply["next_safe_step"] or reply["cards"] or reply["summary"] or reply["covered_scope_ids"] or reply["unresolved_scope_ids"]:
                 raise Rejected("BLOCKED_SCHEMA")
+            if len(reply["attempts"]) < 2:
+                raise Rejected("BLOCKED_ATTEMPTS_REQUIRED")
             return canonical(reply)
-        if reply["block_reason"] is not None or reply["next_safe_step"] is not None or not reply["summary"].strip():
+        if reply["block_reason"] is not None or reply["next_safe_step"] is not None or not reply["summary"].strip() or reply["attempts"]:
             raise Rejected("READY_SCHEMA")
         if set(reply["covered_scope_ids"]) != set(self.scope_ids) or reply["unresolved_scope_ids"]:
             raise Rejected("COVERAGE_INCOMPLETE")

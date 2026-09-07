@@ -36,10 +36,16 @@ card = {"claim_id": "c1", "proposition_id": "p1", "scope_id": e["scope_ids"][0],
 r = {k: e[k] for k in ["protocol", "run_id", "phase_id", "worker_id", "nonce"]}
 r.update({"envelope_digest": e["digest"], "status": "READY", "summary": "Scope checked.",
           "cards": [card], "covered_scope_ids": e["scope_ids"], "unresolved_scope_ids": [],
-          "block_reason": None, "next_safe_step": None})
+          "block_reason": None, "next_safe_step": None, "attempts": []})
+ATTEMPTS = ["Requested tool X: permission denied", "Searched local docs: no alternative tool"]
 if mode == "blocked":
     r.update(status="BLOCKED", summary="", cards=[], covered_scope_ids=[],
-             block_reason="PERMISSION_UNAVAILABLE", next_safe_step="Stop this run.")
+             block_reason="PERMISSION_UNAVAILABLE", next_safe_step="Stop this run.", attempts=ATTEMPTS)
+elif mode == "blocked_no_attempts":
+    r.update(status="BLOCKED", summary="", cards=[], covered_scope_ids=[],
+             block_reason="PERMISSION_UNAVAILABLE", next_safe_step="Stop this run.", attempts=[])
+elif mode == "ready_with_attempts":
+    r["attempts"] = ["Tried something long enough"]
 elif mode == "wrong_nonce":
     r["nonce"] = "wrong"
 elif mode == "forbidden":
@@ -66,7 +72,7 @@ elif mode == "duplicate_claim":
 elif mode == "worker_invalid":
     r["status"] = "INVALID"
 elif mode == "missing_block_reason":
-    r.update(status="BLOCKED", summary="", cards=[], covered_scope_ids=[])
+    r.update(status="BLOCKED", summary="", cards=[], covered_scope_ids=[], attempts=ATTEMPTS)
 elif mode == "candidate_statement_leak":
     card["peer_results"] = "leak"
 print(json.dumps(r))

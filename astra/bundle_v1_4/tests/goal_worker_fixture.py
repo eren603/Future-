@@ -18,5 +18,5 @@ reply = {k: envelope[k] for k in
 reply.update(envelope_digest=envelope["digest"], status="READY",
              summary="Deterministic local fixture.", cards=cards,
              covered_scope_ids=scopes, unresolved_scope_ids=[],
-             block_reason=None, next_safe_step=None)
+             block_reason=None, next_safe_step=None, attempts=[])
 print(json.dumps(reply))
