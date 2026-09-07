@@ -72,6 +72,19 @@ SLOP = ["Sonuç olarak:", "Özetle:", "önemle belirtmek gerekir", "kayda değer
         "sorunsuzca", "oyun değiştirici", "kusursuz"]
 
 
+
+def _fold(text):
+    return text.replace("I", "ı").replace("İ", "i").lower()
+
+
+def _stems(text):
+    return {_fold(w)[:6] for w in re.findall(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}", text)}
+
+
+def _split(text):
+    return [s.strip() for s in re.split(r"(?<=[.;:])\s+|\n", text)
+            if 15 < len(s.strip()) < 400]
+
 class CommandTextTests(unittest.TestCase):
     def body(self):
         """Quoted occurrences are the ban itself being stated, not a violation."""
@@ -131,14 +144,43 @@ class CommandTextTests(unittest.TestCase):
                 self.assertNotIn(phrase, TEXT)
 
     def test_size_budget(self):
-        """The budget guards bloat, not completeness.
+        """Bloat is REPETITION, not length — the ceiling is measured, not chosen.
 
-        It was 30000 in the plan. The Madde 10 audit showed that number being used as a
-        reason to drop rules, so it is set above the v1.3 text (55213 bytes) instead: the
-        text may not grow past what it replaces, and it may not shrink by deleting rules
-        (test_rules_carried_over_from_v1_3_are_present guards that side).
+        The plan set 30000; the Madde 10 audit caught that number being used as a reason to
+        drop rules, so it became v1.3's own size (55213). The sixth audit made that ceiling
+        unsatisfiable: once the coverage test demands every v1.3 rule back, v1.4 must be
+        v1.3's rules PLUS its own new sections, which cannot fit inside v1.3's bytes. Two
+        tests were contradicting each other and the byte count was the wrong lever.
+
+        So the ceiling is derived here from what v1.4 actually adds: every v1.4 sentence with
+        no v1.3 counterpart is measured, and the text may be at most v1.3 plus that. Padding
+        with restatements of existing rules does NOT raise the ceiling — it only raises the
+        left-hand side — so the guard still bites where it was meant to.
         """
-        self.assertLess(len(TEXT.encode("utf-8")), 55213)
+        source = Path(__file__).resolve().parents[2] / "bundle_v1_3" / "astra_command.md"
+        if not source.exists():
+            self.skipTest("bundle_v1_3 pakete dahil değil; tavan depoda ölçülür, "
+                          "pakette test_no_rule_is_stated_twice geçerlidir")
+        v1_3 = source.read_text(encoding="utf-8")
+        old_paragraphs = [_stems(l) for l in v1_3.splitlines() if l.strip()]
+        added = [s for s in _split(TEXT) if _stems(s) and not any(
+            len(_stems(s) & p) / len(_stems(s)) >= 0.6 for p in old_paragraphs)]
+        ceiling = len(v1_3.encode("utf-8")) + sum(len(s.encode("utf-8")) + 1 for s in added)
+        self.assertLess(len(TEXT.encode("utf-8")), ceiling)
+
+    def test_no_rule_is_stated_twice(self):
+        """The guard the byte budget was pretending to be: the same rule, said again."""
+        seen, repeated = [], []
+        for sentence in _split(TEXT):
+            current = _stems(sentence)
+            if len(current) < 6:
+                continue
+            for previous, before in seen:
+                if len(current & before) / max(len(current), len(before)) >= 0.85:
+                    repeated.append(f"{previous[:70]} <-> {sentence[:70]}")
+                    break
+            seen.append((sentence, current))
+        self.assertEqual(repeated, [], "Aynı kural iki kez yazılmış:\n" + "\n".join(repeated))
 
     def test_version_header_is_v1_4(self):
         self.assertIn("ASTRA v1.4", TEXT.splitlines()[0])
