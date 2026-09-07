@@ -88,7 +88,15 @@ class CommandTextTests(unittest.TestCase):
                 self.assertIn(marker, TEXT)
 
     def test_rules_carried_over_from_v1_3_are_present(self):
-        """Kapsam daraltma kapısı: a rewrite may compress prose, not delete rules."""
+        """Kapsam daraltma kapısı: a rewrite may compress prose, not delete rules.
+
+        LIMIT, stated plainly: this checks that a STRING is present, not that its meaning
+        survived. A sentence left in place but negated ("... is not produced, one might
+        think, but in practice it can be") passes here. The audit demonstrated exactly
+        that. Deletion is what this catches; meaning is checked by a reader, and the
+        repo-level astra/tests/test_rule_coverage.py checks the v1.3 inventory as a whole
+        so that no rule can leave the text without a written waiver.
+        """
         for rule in CARRIED_RULES:
             with self.subTest(rule=rule):
                 self.assertIn(rule, TEXT)
