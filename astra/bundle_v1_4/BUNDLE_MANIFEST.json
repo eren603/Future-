@@ -1,0 +1,246 @@
+{
+  "version": "1.3",
+  "created_at": "2026-09-06T12:48:44.990496+00:00",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "38d9c424a62c28075d949ef3572c7d069b0de8ec99689ee9658caba04502c2f7",
+      "size_bytes": 1512
+    },
+    {
+      "path": "README.md",
+      "sha256": "93f53e904cf1986d0b0bd1956d1f40e4029aa27555140d3f006e175a07e70dd4",
+      "size_bytes": 6429
+    },
+    {
+      "path": "astra_command.md",
+      "sha256": "ea40968bbdbdcbf6778f34af5abef24592b521bcd7811da33d1c1c062e8cd8fd",
+      "size_bytes": 55213
+    },
+    {
+      "path": "astra_compare.py",
+      "sha256": "f41655814caa5b1fab2d229ad15d5b1cb39bfbbf454d3d38f7c4dbf055dd5c64",
+      "size_bytes": 4375
+    },
+    {
+      "path": "astra_host.py",
+      "sha256": "437f2de445d016ff367ee2ec7aef96631dab687eefe38bc4a43de403771847ab",
+      "size_bytes": 18479
+    },
+    {
+      "path": "astra_openai_reviewer.py",
+      "sha256": "377a0c146542deca76d0b669f91b538dd99b4e0bf6af2136413da6e8058e859d",
+      "size_bytes": 4693
+    },
+    {
+      "path": "astra_plugin_atlas.json",
+      "sha256": "bcd90a12373b11acd008dcd43f0c5010de7ecf8a5bcc8fa22666574f947ed18c",
+      "size_bytes": 182674
+    },
+    {
+      "path": "astra_plugin_router.py",
+      "sha256": "bbf8a0951bbd7fc12b6dc29f4545bb85fa9cb1730aba9d491e7f92707f61b69f",
+      "size_bytes": 9851
+    },
+    {
+      "path": "astra_reference.py",
+      "sha256": "b58d7bec97759f3debb8e40d583334e2181e615a6b46694845afecb548f60402",
+      "size_bytes": 29161
+    },
+    {
+      "path": "astra_run.py",
+      "sha256": "761dda3827c0e515993be76a34e292020b8a0965cea2293dba7df100a3ebda41",
+      "size_bytes": 2974
+    },
+    {
+      "path": "demo_local.py",
+      "sha256": "0a0e1da1c7f77008a6326ea936a88ee83af4ef6481ef232a1c7d19bf9cd5b285",
+      "size_bytes": 3443
+    },
+    {
+      "path": "history/v1_2/audit_records.json",
+      "sha256": "bac246f32c925c643c94c9201b9cdb2b986a5828ee703a1090bf93e4e8c9f34b",
+      "size_bytes": 2549
+    },
+    {
+      "path": "history/v1_2/baseline_test_run.txt",
+      "sha256": "ccaeae6b054f553cc18b6dc947d3dadcfc3c6a54727958299d467d8baf806b50",
+      "size_bytes": 7591
+    },
+    {
+      "path": "history/v1_2/test_result.json",
+      "sha256": "d90a9d28bb7de04086bea5f3271683adad02807c6dbf0e01be070003f66fe8cf",
+      "size_bytes": 177
+    },
+    {
+      "path": "history/v1_2/test_run.txt",
+      "sha256": "f13ad25aec0a11349e1a9157822cce4b9258df65cd3ad114d4aa7ce55723bf8b",
+      "size_bytes": 10125
+    },
+    {
+      "path": "prompt_spec.md",
+      "sha256": "2a02f8293c151d00a066ed6ab01627ffe2d9c172cfff06bc9d21eb4629636925",
+      "size_bytes": 1316
+    },
+    {
+      "path": "repair_contract.json",
+      "sha256": "bbe054cd37460e0879d828a24fc15aef5d656adda791049cf3e83c644f38e2ae",
+      "size_bytes": 1393
+    },
+    {
+      "path": "tests/goal_worker_fixture.py",
+      "sha256": "562ef87d59f24c5d1b48cd47d798eacacffe041852004e3558fa0a04cd3a0f47",
+      "size_bytes": 952
+    },
+    {
+      "path": "tests/host_fixture_support.py",
+      "sha256": "8d42d9a5eea54fd842ac8fdeb87ad4472bad00e6819e2fbfdf5424c48f067424",
+      "size_bytes": 1784
+    },
+    {
+      "path": "tests/research_worker_fixture.py",
+      "sha256": "8da0c045818e01f04bb873259306cfc6cbd1175765e38050a49aeab8029d1a10",
+      "size_bytes": 750
+    },
+    {
+      "path": "tests/semantic_reviewer_fixture.py",
+      "sha256": "c2d00bc90e1ad637adb1aede98cfe7e7cdd255ff7a18ab7db72829aaa81d0296",
+      "size_bytes": 3108
+    },
+    {
+      "path": "tests/test_astra.py",
+      "sha256": "0a4170872af92661a1eccb1eef70a3cbe33f0b01ab22134d81fb43de3b898b09",
+      "size_bytes": 12213
+    },
+    {
+      "path": "tests/test_comparison.py",
+      "sha256": "b63740fbde12f19adc7190ecdaa5c3d06017a1003c933cf79df0b538058c80eb",
+      "size_bytes": 5801
+    },
+    {
+      "path": "tests/test_goal_regressions.py",
+      "sha256": "38ed35df8fd0519e1c412f5522331e57e1e83e1f87dfa5bef13b70db993fd915",
+      "size_bytes": 2395
+    },
+    {
+      "path": "tests/test_host_integration.py",
+      "sha256": "ca330509dd8af9988790d7be4e3caa2b558b2aa3ad9b5b61c6d21b4e2ae279a4",
+      "size_bytes": 9902
+    },
+    {
+      "path": "tests/test_openai_reviewer.py",
+      "sha256": "00a6ceaf2d0b59e486a59bad433bf87bc4b14f09ed09a821dcc92f31d473823d",
+      "size_bytes": 4440
+    },
+    {
+      "path": "tests/test_plugin_router.py",
+      "sha256": "24ecc2732fbb51d5594d1434adaf3177e5765e490ed58c71053425793c08fbfd",
+      "size_bytes": 9227
+    },
+    {
+      "path": "tests/worker_fixture.py",
+      "sha256": "af398412a80d0110a079a27772935dbe3c78eb50b5549d52726c4a6b00e2f379",
+      "size_bytes": 2780
+    },
+    {
+      "path": "verification/cli_runs/method_mismatch/config.json",
+      "sha256": "3e931857f0f385f7bb5d08e401e676d99482a97d1eebdefe4e41ec0b6cd0b36c",
+      "size_bytes": 3439
+    },
+    {
+      "path": "verification/cli_runs/method_mismatch/result.json",
+      "sha256": "da893eb346e9bbaf641a6e7a90da82d4fea215237b67be4f26e04f6bc7982319",
+      "size_bytes": 2247
+    },
+    {
+      "path": "verification/cli_runs/method_mismatch/source_0.txt",
+      "sha256": "dcd729bd2114781778cc2b4db25b1ee1bd224401bfc729e5bff6f2cb33c072ff",
+      "size_bytes": 62
+    },
+    {
+      "path": "verification/cli_runs/method_mismatch/source_1.txt",
+      "sha256": "6897a310ce0c845130afe96b745bc9a4ddab63ca8a4eaf70e2d32c1837a6492c",
+      "size_bytes": 62
+    },
+    {
+      "path": "verification/cli_runs/reviewer_missing/config.json",
+      "sha256": "2ffb35680d3de6badbe441886ac6912774834fba94c75a32be071d8f84100f5d",
+      "size_bytes": 3104
+    },
+    {
+      "path": "verification/cli_runs/reviewer_missing/result.json",
+      "sha256": "5f8c1bc73074f1ce560bb9c10c46c5d83b441a46677be5ff5030ea99ce0d9d81",
+      "size_bytes": 2633
+    },
+    {
+      "path": "verification/cli_runs/reviewer_missing/source_0.txt",
+      "sha256": "dcd729bd2114781778cc2b4db25b1ee1bd224401bfc729e5bff6f2cb33c072ff",
+      "size_bytes": 62
+    },
+    {
+      "path": "verification/cli_runs/reviewer_missing/source_1.txt",
+      "sha256": "6897a310ce0c845130afe96b745bc9a4ddab63ca8a4eaf70e2d32c1837a6492c",
+      "size_bytes": 62
+    },
+    {
+      "path": "verification/cli_runs/semantic_rejection/config.json",
+      "sha256": "442528a95f1092cb01b672c66bf41e9230a9bdd6a54c75c76552941cc9ef942d",
+      "size_bytes": 3477
+    },
+    {
+      "path": "verification/cli_runs/semantic_rejection/result.json",
+      "sha256": "7dabdc0a7b8f7b190821045bf5d204566e4c44b54e05a93646986f1ea5d0f539",
+      "size_bytes": 2999
+    },
+    {
+      "path": "verification/cli_runs/semantic_rejection/source_0.txt",
+      "sha256": "998fc51938f99ffe8ace8f07188730ead3bb8c572f17ee5d06b546c5a134d0fc",
+      "size_bytes": 69
+    },
+    {
+      "path": "verification/cli_runs/semantic_rejection/source_1.txt",
+      "sha256": "c6fe21de6d7f6724cc580a6c94df347d4554de6ff074d68ac934a1e16ae2c6f4",
+      "size_bytes": 69
+    },
+    {
+      "path": "verification/cli_runs/valid/config.json",
+      "sha256": "56b8c57197aca49d7a0958a44ee7b2ad2af10cd4fe8a7153bde9092e36f5ca1c",
+      "size_bytes": 3435
+    },
+    {
+      "path": "verification/cli_runs/valid/result.json",
+      "sha256": "09c177fd37400ee11d84b9026961961cf1ad2e23b0bbe3328f8d6895aed06eaf",
+      "size_bytes": 13430
+    },
+    {
+      "path": "verification/cli_runs/valid/source_0.txt",
+      "sha256": "dcd729bd2114781778cc2b4db25b1ee1bd224401bfc729e5bff6f2cb33c072ff",
+      "size_bytes": 62
+    },
+    {
+      "path": "verification/cli_runs/valid/source_1.txt",
+      "sha256": "6897a310ce0c845130afe96b745bc9a4ddab63ca8a4eaf70e2d32c1837a6492c",
+      "size_bytes": 62
+    },
+    {
+      "path": "verification/cli_summary.json",
+      "sha256": "f4b447ee7acc7cdd25c85eae9f5ba568078358b50b3ac745e3e9d5636e5677ec",
+      "size_bytes": 1426
+    },
+    {
+      "path": "verification/source_review_notes.json",
+      "sha256": "af52b3e2828cb911dc8adc55e6db70c1d52f3ec764d31b8169c57c2df0aced93",
+      "size_bytes": 1212
+    },
+    {
+      "path": "verification/test_result.json",
+      "sha256": "c38ee752b5fca05bd7f02b6f9d07e9fbf6df01935b7e2edb568e63fffc717c99",
+      "size_bytes": 432
+    },
+    {
+      "path": "verification/test_run.txt",
+      "sha256": "a15f48e932b2d3ea243cc8bf9c782f8611360d39d628805c0556306e88d6b493",
+      "size_bytes": 15107
+    }
+  ]
+}

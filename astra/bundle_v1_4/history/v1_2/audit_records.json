@@ -1,0 +1,82 @@
+{
+  "document_version": "1.2",
+  "controller_protocol": "ASTRA-1.2",
+  "router_protocol": "ASTRA-ROUTER-1.0",
+  "original_file": "astra_birinci_promp.md",
+  "original_sha256": "40cd479098612d8d16e44a1287e8647905ed67d379bb7852dba3a3cd82fdb750",
+  "read_scope": {
+    "command_original_lines": [
+      1,
+      312
+    ],
+    "all_five_original_python_files_reviewed": true,
+    "atlas_parsed_in_full": true,
+    "atlas_entries_live_verified": false,
+    "atlas_topics_content_reviewed": [
+      "C02",
+      "C12",
+      "C36",
+      "C64"
+    ]
+  },
+  "original_tests": {
+    "tests_run": 60,
+    "failures": 0,
+    "errors": 0,
+    "python": "3.12.13"
+  },
+  "regressions_before_repair": {
+    "tests_run": 4,
+    "failures": 3,
+    "errors": 0,
+    "failed_cases": [
+      "test_ready_cannot_claim_scope_without_a_card",
+      "test_final_selection_cannot_drop_required_scope",
+      "test_refuted_statement_keeps_its_polarity_in_output"
+    ]
+  },
+  "repaired_tests": {
+    "python": "3.12.13",
+    "tests_run": 79,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "passed",
+    "model_calls": 0,
+    "production_isolation_verified": false
+  },
+  "model_eval": {
+    "requested_model": "gpt-6-astra",
+    "requested_effort": "max",
+    "actual_model_receipt_verified": false,
+    "actual_effort_receipt_verified": false,
+    "status": "NOT_RUN"
+  },
+  "production_approval": false,
+  "official_sources_opened_on": "2026-09-06",
+  "official_sources": [
+    {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "supports": "Declared model and supported max reasoning effort."
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/latest-model",
+      "supports": "Astra follow-through, clarification and instruction-audit guidance."
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/evaluation-best-practices",
+      "supports": "Variable outputs and task-specific model evaluations."
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
+      "supports": "Schema adherence does not eliminate content mistakes."
+    }
+  ],
+  "remaining_dependencies": [
+    "Actual provider/model/effort receipts and behavior evaluation.",
+    "Trusted source-access and source-claim semantic review adapters.",
+    "Durable host task scheduler and immutable requirement/acceptance records.",
+    "Host invocation and publication binding of comparison results.",
+    "Actual isolation attestation for any REAL_ISOLATION claim."
+  ]
+}

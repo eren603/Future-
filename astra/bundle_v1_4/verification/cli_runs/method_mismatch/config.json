@@ -1,0 +1,111 @@
+{
+  "task": "Compare A and B using observed median latency in the same fixed test.",
+  "scope_ids": [
+    "comparison"
+  ],
+  "sources": [
+    {
+      "source_id": "s0",
+      "path": "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/verification/cli_runs/method_mismatch/source_0.txt",
+      "kind": "TOOL",
+      "as_of": "2026-09-06T12:36:16.384194+00:00",
+      "valid_until": "2026-09-06T13:36:17.384194+00:00"
+    },
+    {
+      "source_id": "s1",
+      "path": "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/verification/cli_runs/method_mismatch/source_1.txt",
+      "kind": "TOOL",
+      "as_of": "2026-09-06T12:36:16.384194+00:00",
+      "valid_until": "2026-09-06T13:36:17.384194+00:00"
+    }
+  ],
+  "comparisons": [
+    {
+      "requirement_id": "latency",
+      "scope_id": "comparison",
+      "claim_ids": [
+        "a:c1",
+        "b:c1",
+        "c:c1"
+      ],
+      "direction": "lower_is_better",
+      "rows": [
+        {
+          "metric": "latency",
+          "definition": "median completion latency",
+          "unit": "ms",
+          "period": "same fixed synthetic window",
+          "population": "same synthetic queries",
+          "method": "same median harness",
+          "entity": "A",
+          "source_id": "s0",
+          "quote": "Candidate A: median completion latency 100 ms. Synthetic data.",
+          "value": "100"
+        },
+        {
+          "metric": "latency",
+          "definition": "median completion latency",
+          "unit": "ms",
+          "period": "same fixed synthetic window",
+          "population": "same synthetic queries",
+          "method": "p95",
+          "entity": "B",
+          "source_id": "s1",
+          "quote": "Candidate B: median completion latency 120 ms. Synthetic data.",
+          "value": "120"
+        }
+      ]
+    }
+  ],
+  "comparison_exemption": null,
+  "workers": {
+    "a": {
+      "role": "model",
+      "argv": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/research_worker_fixture.py"
+      ]
+    },
+    "b": {
+      "role": "counterexample",
+      "argv": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/research_worker_fixture.py"
+      ]
+    },
+    "c": {
+      "role": "evidence",
+      "argv": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/research_worker_fixture.py"
+      ]
+    }
+  },
+  "reviewer": {
+    "argv": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "/workspace/scratch/52fc0e57f193/astra_final_bundle_v1_3/tests/semantic_reviewer_fixture.py",
+      "pass"
+    ],
+    "kind": "TEST_FIXTURE",
+    "model": "fixture-model",
+    "effort": "fixture-effort",
+    "timeout": 2.0,
+    "credential_env": []
+  },
+  "worker_timeout": 2.0,
+  "max_restarts": 0,
+  "decision": {
+    "action": "Report the observed latency comparison only.",
+    "owner": "demo_operator",
+    "guard_metric": "Valid comparable source measurements",
+    "kill_rule": "Stop when a gate fails",
+    "user_cost": "Local synthetic demo",
+    "residual_risk": "No live model or production isolation",
+    "claim_ids": [
+      "a:c1",
+      "b:c1",
+      "c:c1"
+    ]
+  }
+}
