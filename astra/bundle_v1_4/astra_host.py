@@ -114,9 +114,14 @@ class SourceVault:
         for spec in specs:
             # O_NOFOLLOW guards only the last component and resolve() silently walks the
             # rest, so a symlink ANYWHERE on the path is refused and nothing is resolved.
-            # abspath normalises ".." lexically, which is sound once no component is a link.
+            # Both spellings are checked: the path as written (where ".." can hide a link
+            # behind a component that lexical normalisation would delete) and the
+            # normalised path that is actually opened.
+            written = Path(spec["path"])
+            written = written if written.is_absolute() else Path.cwd() / written
             declared = Path(os.path.abspath(spec["path"]))
-            if any(os.path.islink(part) for part in (declared, *declared.parents)):
+            parts = {written, *written.parents, declared, *declared.parents}
+            if any(os.path.islink(part) for part in parts):
                 raise Rejected("SOURCE_SYMLINK_REJECTED")
             path = declared
             content = self._read(path)

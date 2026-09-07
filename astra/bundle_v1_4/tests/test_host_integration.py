@@ -315,6 +315,24 @@ class HostIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(Rejected, "SOURCE_SYMLINK_REJECTED"):
             SourceVault(self.specs)
 
+    def test_symlink_hidden_behind_a_parent_reference_is_rejected(self):
+        """A ".." can delete the symlink from the path before it is inspected.
+
+        os.path.abspath collapses "link_dir/.." lexically, so a check that only sees the
+        normalised spelling never learns a symlink was written. The path as written is
+        inspected too, so the declaration is refused rather than quietly rewritten.
+        """
+        real = Path(self.tmp.name) / "real_dir"
+        real.mkdir()
+        (real / "source.txt").write_text("Candidate A: median completion latency 100 ms.",
+                                         encoding="utf-8")
+        link_dir = Path(self.tmp.name) / "link_dir"
+        link_dir.symlink_to(real, target_is_directory=True)
+        self.specs[0]["path"] = str(link_dir / ".." / "real_dir" / "source.txt")
+        self.assertFalse(os.path.islink(os.path.abspath(self.specs[0]["path"])))
+        with self.assertRaisesRegex(Rejected, "SOURCE_SYMLINK_REJECTED"):
+            SourceVault(self.specs)
+
     def test_fixture_cannot_be_relabelled_as_external_model(self):
         fixture = fixture_reviewer()
         with self.assertRaisesRegex(Rejected, "EXTERNAL_REVIEWER_ADAPTER_REQUIRED"):
