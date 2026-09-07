@@ -71,3 +71,16 @@ BEYAN (Madde 11 — iki bulgu da KABUL EDİLDİ):
   ATLAMA: test gerçekten var ve geçiyor, ama Task 11'in commit'inde değil Task 9'un
   onarım commit'inde teslim edildi. Kusur commit hijyenidir (aynı `git add -A`
   alışkanlığının kalıntısı); geçmiş yeniden yazılmadı, burada kayda geçirildi.
+Madde 9 | Deneme 2/3 | Ajan kod-denetci#14 | Kapı: TİYATRO FAIL (iki ayrı ihlal, denetçinin kendi koşusuyla üretildi): (a) top-level task_status config'in HAM status alanından türetiliyordu → uydurma kanıtla FAIL_CLOSED/REQUIREMENT_UNVERIFIED iken task_status=COMPLETE; koddaki "never read from config" yorumu YANLIŞ; (b) known_digests içindeki digest(decision) dairesel kanıt → operatör kendi kararının hash'iyle VERIFIED/LOCAL_CHECKS_PASSED üretti; ATLAMA/GİZLİ_GÜNDEM/SAHTE_KANIT/TÜNEL PASS; ÇARPIŞMA N/A | Kanıt: 4 probe scripti gerçek astra_run/Controller/TrustedHost ile koşuldu; HEAD 174 test OK; taban+HEAD testleri beklenen kırmızı | Karar: RESTART | Arşiv: -
+Madde 10 | Deneme 2/3 | Ajan kod-denetci#15 | Kapı: ATLAMA FAIL (denetçinin KENDİ bağımsız taramasıyla 15+ v1.3 kuralı hâlâ yok — ilk onarım yalnız verilen listeyi kapatmıştı) + TİYATRO FAIL (dizge kapısı anlamı denetlemiyor: cümle silinmeden tersine çevrildiğinde test yeşil kaldı, sınır belgelenmemişti) + TÜNEL FAIL (onarım tasarımının alternatifleri yazılmamış); GİZLİ_GÜNDEM/SAHTE_KANIT PASS; ÇARPIŞMA N/A | Kanıt: grep ile v1.4'te 0 eşleşme (15+ cümle, v1.3 satır numaralarıyla); silme→kırmızı / tersine-çevirme→yeşil deneyi; 174 test OK; 38628/55213 bayt doğrulandı | Karar: RESTART | Arşiv: -
+
+BEYAN (Madde 9 ve 10 üçüncü deneme — bulguların tamamı KABUL EDİLDİ):
+  Madde 9'da iki kez aynı hata sınıfını yaptım: KODUN YAPTIĞINDAN FAZLASINI SÖYLEYEN
+  yorum/commit cümlesi. "Yapılandırmadan okunmuyor" dedim, okuyordu. Onarım davranışı
+  düzeltti (durum yalnız makbuzdan; makbuz yoksa NOT_DERIVED) ve yanlış davranışı
+  kodlayan testi değiştirdi. Dairesel kanıt kapısı da kapandı: karardan türeyen
+  digest'ler kanıt kümesinden çıkarıldı.
+  Madde 10'da yöntem hatası vardı: denetçinin verdiği listeyi kapatmak, kaynak metni
+  taramanın yerine geçmez. Artık envanter MEKANİK (test_rule_coverage.py) ve muafiyet
+  YAZILI (KAPSAM_MUAFIYET.md). Dizge kapısının anlamı denetlemediği de artık kendi
+  docstring'inde yazıyor — iddia, aracın yaptığı kadar.
