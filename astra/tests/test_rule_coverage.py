@@ -9,7 +9,7 @@ caught in only 3 of 18 cases.
 
 So the measure is now POSITION-BOUND, and the promise is a test rather than a sentence:
 
-  * A sentence is covered when SHARE of its content-word stems appear in ONE v1.4 paragraph.
+  * A sentence is covered when SHARE of its content-word stems appear in ONE v1.4 SECTION.
     Vocabulary scattered across the document no longer counts — that was the loophole that
     let a whole table row be deleted while the test stayed green.
   * A sentence that lives in a v1.3 TABLE ROW must be matched by a v1.4 TABLE ROW. Rows carry
@@ -57,6 +57,8 @@ STEM = 6     # fixed prefix: enough to bridge Turkish inflection, short of a rea
 WORD = re.compile(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}")
 NORMATIVE = re.compile(
     r"(?:[a-zçğıöşü]{3,}(?:maz|mez|mal[ıi]d[ıi]r|melidir|meli|mal[ıi])\b"
+    r"|[a-zçğıöşü]{4,}(?:ma|me)\b"          # olumsuz emir: \"sunma\", \"üretme\", \"sayma\"
+    r"|[a-zçğıöşü]{4,}(?:d[ıiuü]r)\b"       # koşaç: \"sonuçlarıdır\", \"zorunludur\"
     r"|üretir\.|sayılır\.|olamaz\b|edilemez\b|verilmez\b|geçmez\b|değildir\b)")
 ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK|ONARILDI)\]\s*—\s*(.+)$")
 OLD_LINES = OLD.splitlines()
@@ -156,7 +158,8 @@ def uncovered_in(text):
         if len(target) < MIN_STEMS:
             # Too few content words for a ratio to mean anything: 60% of two stems is one
             # word, which any paragraph supplies. Measured in the sixth audit: 253 of 739
-            # sentences fall here and 164 of them were "covered" while absent from v1.4.
+            # sentences fall here. How many of those were wrongly "covered" depends on how
+            # "absent" is defined, so no count is quoted: the rule is the fix, not a number.
             # For these the text itself must survive, near enough to be recognisable.
             if _literal(sentence) in _LITERAL_NEW:
                 continue
@@ -193,15 +196,26 @@ def class_holds(kind, sentence):
             return False
         return any(is_covered(s) for s in split(line) if s != sentence)
     if kind == "ONARILDI":
-        # The sentence was a FINDING, not a rule to carry: v1.4 repaired it on purpose and
-        # a test now forbids its wording. Restoring it verbatim would reintroduce the defect.
-        # Mechanically: the repair register must name a finding whose text quotes this
-        # sentence, and the package must carry a test that bans the old wording.
-        register = (ROOT / "BULGU_DEGISIKLIK.md")
-        if not register.exists():
+        # The sentence was a FINDING, not a rule to carry: v1.4 repaired it on purpose and a
+        # test forbids its wording, so restoring it verbatim would reintroduce the defect.
+        #
+        # The seventh audit broke the first version of this check: it only asked whether the
+        # repair register mentioned the phrase, so ONE fabricated register line waived ANY
+        # rule. A register is a document; anyone can write in it. The repair itself is the
+        # test that bans the wording, so that is what is required here — and a test cannot be
+        # forged by adding a line, because the banned phrase must then be absent from v1.4,
+        # which is exactly the repair having happened.
+        register = ROOT / "BULGU_DEGISIKLIK.md"
+        tests = ROOT / "bundle_v1_4" / "tests"
+        if not (register.exists() and tests.is_dir()):
             return False
-        banned = re.findall(r"'([^']{8,})'", register.read_text(encoding="utf-8"))
-        return any(phrase in sentence and phrase.lower() not in fold(NEW) for phrase in banned)
+        guards = "\n".join(f.read_text(encoding="utf-8") for f in sorted(tests.glob("test_*.py")))
+        for phrase in re.findall(r"'([^']{8,})'", register.read_text(encoding="utf-8")):
+            if (phrase in sentence                       # the register names THIS sentence
+                    and phrase.lower() not in fold(NEW)  # the wording is gone from v1.4
+                    and phrase in guards):               # and a test keeps it gone
+                return True
+        return False
     if kind == "ORNEK":
         if not sentence.lstrip().startswith("Örneğin"):
             return False

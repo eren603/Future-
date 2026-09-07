@@ -152,15 +152,21 @@ class CommandTextTests(unittest.TestCase):
         """Bloat is a rule stored twice — once reworded, once verbatim.
 
         Three revisions of this test used a byte ceiling: 30000 from the plan, then v1.3's own
-        55213, then a ceiling derived from what v1.4 adds. Each was wrong in the same way. The
-        first two were chosen numbers that an audit caught being used as a reason to drop rules.
-        The third was arithmetic that assumed each rule appears once, so once the coverage test
-        put v1.3's rules back beside v1.4's rewordings of them, it reported an overage that no
-        deletion of duplicated content could fix — the formula was wrong, not the text.
+        55213, then a ceiling derived from what v1.4 adds. The first two were chosen numbers,
+        and an audit caught each being used as a reason to drop rules.
 
-        So there is no byte ceiling. Length is not the defect; REPETITION is, and it is now
-        measured directly in both of its forms: identical wording (the test below) and a
-        rewording kept alongside the original it replaced (here). Padding cannot pass either.
+        The measured truth about the third, stated because an earlier version of this docstring
+        got it wrong: the derived ceiling PASSED at the previous commit with 663 bytes to spare.
+        It broke in the round that added 3550 bytes of restored rules while the ceiling rose by
+        49 — because the formula credits only v1.4-original sentences, so a rule kept both as
+        v1.3's wording and as v1.4's rewording of it costs bytes the ceiling never grants. The
+        formula was too narrow AND the text had grown; both are true, and the ceiling was
+        removed because length is the wrong lever, not because it could not be met.
+
+        REPETITION is the defect a length limit was proxying for, and it is measured directly
+        in both of its forms: identical wording (the test below) and a rewording kept alongside
+        the original it replaced (here). Neither catches a restatement built from entirely
+        different words — that limit is real and is not claimed away.
         """
         v1_3 = Path(__file__).resolve().parents[2] / "bundle_v1_3" / "astra_command.md"
         if not v1_3.exists():
@@ -192,9 +198,10 @@ class CommandTextTests(unittest.TestCase):
     def test_no_rule_is_stated_twice(self):
         """The guard the byte budget was pretending to be: the same rule, said again."""
         seen, repeated = [], []
-        for sentence in _split(TEXT):
+        body = "\n".join(l for l in TEXT.splitlines() if not l.startswith("**"))
+        for sentence in _split(body):
             current = _stems(sentence)
-            if len(current) < 6:
+            if len(current) < 3:
                 continue
             for previous, before in seen:
                 if len(current & before) / max(len(current), len(before)) >= 0.85:
