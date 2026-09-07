@@ -270,3 +270,33 @@ ESKALE KAYDI (Madde 10 — üç deneme de FAIL; sözleşme gereği kullanıcıya
   1'i). Listenin kendi silinmesi yakalanıyor. Bu sınır testin docstring'inde yazılı.
 - Ölçüm: kapsanmayan 69 (hepsi sınıflı), mutasyon 64/65 + 1 yapısal gerekçeli.
 - Doğrulama: bundle 200 OK, depo 10 OK, roundtrip 200 OK.
+
+## Madde 10 — 10. tur (9. tur FAIL'inin ardından)
+- 9. tur hükmü: **FAIL**, kapı 4/6. Denetçinin KÖK NEDEN teşhisi kabul edildi:
+  "Muafiyet sınıflarını sertleştirmek yerine SAYISI artırıldı; her yeni sınıf
+  'depo içi bir dosyadan türetiliyor' diye meşrulaştırıldı, oysa o dosyayı da
+  onarımı yapan taraf yazıyor." 7. turda defter, 8. turda sahte test, 9. turda
+  yasak listesi + ikiz-benzerliği — üçü de bir tur içinde kırıldı.
+- Doğrulanan bulgular: (1) `YASAK_IFADE` ile gerçek bir "dolanma yasağı" kuralı
+  silinip muaf tutuldu, tüm kapılar yeşil kaldı; (2) `V13_TEKRAR` ilgisiz bir
+  parçayı "ikiz" sayıp gerçek bir kuralı sildirdi; (3) sıralı-sözcük ölçüsü
+  yanlış-pozitif üretiyordu ve v1.3'ün "öneri beklerken bağımsız iş durmasın."
+  kuralı O ANDA maskeleniyordu (v1.4'te 0, muafiyet yok, ölçüm "kapsanmış" diyordu);
+  (4) "12 mükerrer" ölçümde 1'di; (5) MIN_STEMS 3→4'tü, "5→4" değil; (6) `- -`
+  artığı 1→2 çıkmıştı; (7) belge eşikleri kodunkiyle çelişiyordu.
+- 10. turda yapılan:
+  * `YASAK_IFADE` ve `V13_TEKRAR` KALDIRILDI; sıralı-sözcük eşleşmesi KALDIRILDI.
+    Geriye yalnız v1.3 metninin KENDİ yapısından türeyen üç sınıf kaldı
+    (BASLIK/PARCA/ORNEK). Yeni sınıf EKLENMEDİ.
+  * Taşınamayan iki cümle artık sınıf değil, `IRREDUCIBLE` adlı EN FAZLA İKİ
+    kayıtlık sayılı liste: her kaydı testte doğrulanıyor (cümle var, hâlâ
+    kapsanmıyor, yasaklı ifadeyi içeriyor, yasağı uygulayan test pakette var) ve
+    liste büyürse test DÜŞÜYOR. Genel kaçış yolu değil, adı adına iki istisna.
+  * `NORMATIVE`'e olumsuz istek kipi (-masın/-mesin) eklendi; denetçinin bulduğu
+    maskelenmiş kural artık muafiyete kaçamıyor ve metne geri alındı.
+  * Yanlış sayılar düzeltildi: bayat "58/58" yorumu silindi, belge eşikleri kodla
+    eşitlendi (dörtten az içerik kelimesi; birebir dize), `- -` artığı 0.
+- Ölçüm: kapsanmayan 73 (71 sınıflı + 2 sayılı liste), mutasyon 62/66.
+- Doğrulama: bundle 200 OK, depo 11 OK, roundtrip 200 OK.
+- ⚠ AÇIK KALEM (gizlenmiyor): mutasyon yakalama 66'da 62; kalan 4'ün gerekçesi
+  ölçülmedi. Önceki turda 65'te 64'tü — sıkılaştırmalar hedef sayısını artırdı.

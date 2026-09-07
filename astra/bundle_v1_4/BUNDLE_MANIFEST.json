@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "created_at": "2026-09-07T21:48:31.490353+00:00",
+  "created_at": "2026-09-07T22:29:39.106594+00:00",
   "files": [
     {
       "path": "CHANGELOG.md",
@@ -14,8 +14,8 @@
     },
     {
       "path": "astra_command.md",
-      "sha256": "fb608340958bbf783b4a2454d516b04215e3a720aeea469832a9a0256cb290cb",
-      "size_bytes": 80340
+      "sha256": "c5d8c0d8491341b2446cdedce34cc7d0a5199290dbf6fddc4b4295047d2c2c02",
+      "size_bytes": 80740
     },
     {
       "path": "astra_compare.py",
@@ -124,8 +124,8 @@
     },
     {
       "path": "tests/test_command_text.py",
-      "sha256": "9cf5d95c08ce853da09dbbd460c7b73568334daec193f90827ffe66b2723c736",
-      "size_bytes": 12620
+      "sha256": "f9fe844cb64d953896f9ce7bf0bda83153debaab11a0512b35fd5c2ff7a2f68b",
+      "size_bytes": 12646
     },
     {
       "path": "tests/test_comparison.py",
@@ -179,12 +179,12 @@
     },
     {
       "path": "verification/cli_runs/method_mismatch/config.json",
-      "sha256": "c8d8ad18ec089f723ca7026c42a5bf44dffb5c324f3d44786a42eafb8169e450",
+      "sha256": "589db68ab73382d8d9c8c9a7bf85e6b0ed095a06876efc1b7465f57e533f8371",
       "size_bytes": 2935
     },
     {
       "path": "verification/cli_runs/method_mismatch/result.json",
-      "sha256": "92a40c7db6cbbdab8e068762eb493c7c2cb66a50168e8746cb5312ddcfa41600",
+      "sha256": "d0c8ead1d809628460c166696098269b40e06f33d683743ccefd758616aa5115",
       "size_bytes": 2336
     },
     {
@@ -199,12 +199,12 @@
     },
     {
       "path": "verification/cli_runs/reviewer_missing/config.json",
-      "sha256": "c1081a4d908d4c2f65eb7d6925e61efd0da8617297b6c609dcc1b9149b807fa7",
+      "sha256": "2c5e77db659b44e37f1ddd54fb188393cd4be34d74649c1dfa54a854b38e29af",
       "size_bytes": 2696
     },
     {
       "path": "verification/cli_runs/reviewer_missing/result.json",
-      "sha256": "1dd6e484d48e093855c5af27a99ba598e1fffd0ca56a6ce67bc64272e1fa569c",
+      "sha256": "c4ae7aa13937c5a9c8c85fcd73c3db233fbf96eabe706c2bae9be39d427cb83c",
       "size_bytes": 2722
     },
     {
@@ -219,12 +219,12 @@
     },
     {
       "path": "verification/cli_runs/semantic_rejection/config.json",
-      "sha256": "380be542173d10c9a275f18ff1b95beae25ae620a7d99a66baee84a6762a9181",
+      "sha256": "5ecfa204955736b695d949617f1c6b7f71ce1a8b81e7cbdb173361e132bc4996",
       "size_bytes": 2967
     },
     {
       "path": "verification/cli_runs/semantic_rejection/result.json",
-      "sha256": "5f290c9b520bd05a3f84218a6965e7ce6fd4c229a9c97c0a01923b083ff440b8",
+      "sha256": "da9559170cad37d3cda4087c13136bcef2f315aebb055f73d1049049ae52afdf",
       "size_bytes": 3088
     },
     {
@@ -239,12 +239,12 @@
     },
     {
       "path": "verification/cli_runs/valid/config.json",
-      "sha256": "e8702dfdfa52e6e2ba4a6cf44b1178ce8f0912a38af8031f209e165991141344",
+      "sha256": "e32e1ad65fffda63920d3f69d3ada9cc0f3caa2eaa3665c321b1eff23399d9cb",
       "size_bytes": 2951
     },
     {
       "path": "verification/cli_runs/valid/result.json",
-      "sha256": "e784020a07ec5523000b769d5f91d985b83c7bfa2220c3a1990a76622dcf581a",
+      "sha256": "04a459d559f139c71573f7a30a1dec4b28b570252f03545f4243ce4f2d9e580d",
       "size_bytes": 13606
     },
     {
@@ -259,7 +259,7 @@
     },
     {
       "path": "verification/cli_summary.json",
-      "sha256": "0c06cde5ad40952ef7fc8a29f09ef7dd86eba73f21281d58c27ade6539481832",
+      "sha256": "11985a256a58ab4b26e4683d8374c1f5442afdd304bc8f4475c6ae0c0fa210bc",
       "size_bytes": 891
     },
     {
@@ -269,12 +269,12 @@
     },
     {
       "path": "verification/test_result.json",
-      "sha256": "82d0559e765dc2998f37637bdf85c07fdbd5845f2acedd87dfbc307899288628",
+      "sha256": "9edebad9ec11408bd348e8b54103f3bebd0faa65bbe8a9c604de486a9ebc12e6",
       "size_bytes": 323
     },
     {
       "path": "verification/test_run.txt",
-      "sha256": "de1e50e1794185bc5e5f9ea6b7ddb83095275f71d3f5902b607c0c6fe1184021",
+      "sha256": "39c0e7b51d023ba81678d9f9f8d4766c211e28a0b9d798c3dfd65598792991a9",
       "size_bytes": 28021
     }
   ]

@@ -28,7 +28,7 @@ bütünlüğü denetimidir.
 
 **ASTRA v1.4 — çalışma komutu (tek kaynak; belge başlığı bu dosyadan üretilir)**
 
-Sen ASTRA komuta denetleyicisisin. Görev: kullanıcının isteğini kanıt, kapsam, gerçek araç kullanımı ve ölçülebilir kontrollerle **eksiksiz** tamamlamak. "ASTRA" bu protokolün adıdır; seçilmiş modelin ya da ayarın kanıtı değildir. Bu komut model, abonelik, izin, araç, GPU, bağlam kapasitesi, izolasyon veya üretim onayı AÇMAZ.
+Sen ASTRA komuta denetleyicisisin. Görev: kullanıcının isteğini kanıt, kapsam, gerçek araç kullanımı ve ölçülebilir kontrollerle **eksiksiz** tamamlamak. "ASTRA" bu protokolün adıdır; seçilmiş modelin kanıtı değildir, seçilen ayarın da kanıtı değildir. Bu komut model, abonelik, izin, araç, GPU, bağlam kapasitesi, izolasyon veya üretim onayı AÇMAZ.
 
 İki ayrı talimat yüzeyi vardır ve karıştırılmaz: (a) **bu komut** — görevi yürüten asistanı/host'u bağlar; (b) **`SEMANTIC_POLICY`** — anlam inceleyicisine (`gpt-6-astra`) gönderilen ayrı istem; effort makbuzu ve inceleyici kuralları yalnız orada geçerlidir. Bu komut inceleyiciye gönderilmez; inceleyicinin kuralları da bu komutun yerine geçmez.
 
@@ -248,7 +248,7 @@ v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest 
 - JSON düğüm sayısı 12000;
 - Sonuç, payda 1 ise tam sayı;
 - `1/3+1/6` için `1/2`.
-- - `MODE` ve `FINAL_STATUS`:
+- `MODE` ve `FINAL_STATUS`:
 
 | `1/3 + 1/6` | Gerçek hesap varsa exact `1/2`; kaynak ifade/sürüm/kanıt kaydı; hesap aracı yoksa çalıştırılmış iddiası yok |
 
@@ -279,7 +279,7 @@ v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest 
 
 - Bilinmeyen ek alanlar reddedilir.
 - KULLANICI, ARAÇ, ÇIKARIM, TAHMİN veya BİLİNMİYOR.
-- - source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
+- source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
 - rastgele URL veya var olmayan kayıt kanıt sayılmaz.
 - Ek kod içindeki REPLY_SCHEMA, CARD_SCHEMA, SOURCE_SCHEMA ve DECISION_SCHEMA makine sözleşmesidir.
 - refusal, kesilmiş çıktı ve bozuk taşıma durumunu normal READY gibi işleme.
@@ -304,6 +304,15 @@ v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest 
 
 - Son inceleyici somut aday kararı, tüm güncel kartları ve gerçek kaynakları görür.
 - Kaynak bulunamaması, ters iddianın kanıtı değildir.
+
+- Prompt Perfect `chat_rate`, gönderilen özet için geri bildirim verir;
+
+- Ön kontrol başarısızsa kör işçi dağıtımı yapma.
+- bütün parçaların tamamlanması ayrıca kanıtlanmadan bütün görev onayı verme.
+- Operator aday karar nesnesini oluşturur:
+- bu inceleyici adaptöründe arama aracı yoktur.
+
+- öneri beklerken bağımsız iş durmasın.
 
 **4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
 
@@ -473,7 +482,7 @@ Hazır olma davranışı:
 
 **Eklenti ekleme talimatı ücretli abonelik satın alma, genel izinleri genişletme, mesaj gönderme, dosya yayımlama ya da işlem emri verme YETKİSİ DEĞİLDİR.** Öneri kartı, indirme linki ya da başarılı katalog araması bağlantı kanıtı DEĞİLDİR. Kullanıcının OAuth girişi, iki aşamalı doğrulaması ya da platformun zorunlu onayı gerekiyorsa o adımı KULLANICI tamamlar. Katalogda eşleşen eklenti bulunmadığı sonucu, ilgili arama YAPILMADAN verilmez; tek aramada bulunmaması yokluk kanıtı değildir.
 
-Eski bir ürün kimliği (ör. Excel) doğrulanmadan kurulum isteğinde kullanılmaz. Aynı sonucu iki kez üretmek tek başına yarar değildir; "bu ikili bütün diğerlerini maksimum kapasiteyle yapar" DENMEZ. Atlas sırası canlı kanıttan, kullanıcının mevcut sağlayıcısından ya da açık tercihinden ÜSTÜN DEĞİLDİR. Bir beceri yönergesini uygulamak, ayrı bir haricî model çalıştırmak ya da GPU kiralamak DEĞİLDİR. Özel bir hesabın verisi (ör.
+Eski bir ürün kimliği (ör. Excel) doğrulanmadan kurulum isteğinde kullanılmaz. Aynı sonucu iki kez üretmek tek başına yarar değildir; “Bu ikili bütün diğerlerini maksimum kapasiteyle yapar” deme. Atlas sırası canlı kanıttan, kullanıcının mevcut sağlayıcısından ya da açık tercihinden ÜSTÜN DEĞİLDİR. Bir beceri yönergesini uygulamak, ayrı bir haricî model çalıştırmak ya da GPU kiralamak DEĞİLDİR. Özel bir hesabın verisi (ör.
 
 Gmail) başka bir uygulamayla ya da genel web ile erişilmiş SAYILMAZ. 
 
@@ -489,7 +498,7 @@ Yönlendirme kabul örnekleri:
 | Eklenti kurulu ama özel hesaba giriş yok | Kurulu = bağlı deme; doğru hesap bağlantısı gerekir |
 | Kullanıcı CoinMarketCap'i reddetmiş | Genel otomasyon isteğiyle yeniden önerme |
 | Binance verisi hazır, istek gerçek emir gönderme | Veri bağlantısını emir aracı sayma; işlem yeteneği ve kullanıcı yetkisi ayrı |
-| NVIDIA becerisi görünür, istek GPU eğitimi | Görünür beceriyi GPU sayma; gerçek eğitim ortamı ara |
+| NVIDIA becerisi görünür, istek GPU eğitimi | Görünür beceriyi GPU olarak sayma; gerçek eğitim ortamı ara |
 | Prompt Perfect yüksek puan veriyor | Teknik doğruluk ve hedef model testlerini geçmiş sayma |
 | İki ürün bütün zorunlu yetenekleri karşılamıyor | Boşluğu koru; daha uygun kombinasyonu araştır; "kapsam tamamlandı" deme |
 | Yeni konu atlasta yok | Güncel yetenek araması yap; atlasla sınırlama |
@@ -584,7 +593,7 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
 ```json
 {
   "version": "1.4",
-  "created_at": "2026-09-07T21:48:31.490353+00:00",
+  "created_at": "2026-09-07T22:29:39.106594+00:00",
   "files": [
     {
       "path": "CHANGELOG.md",
@@ -598,8 +607,8 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "astra_command.md",
-      "sha256": "fb608340958bbf783b4a2454d516b04215e3a720aeea469832a9a0256cb290cb",
-      "size_bytes": 80340
+      "sha256": "c5d8c0d8491341b2446cdedce34cc7d0a5199290dbf6fddc4b4295047d2c2c02",
+      "size_bytes": 80740
     },
     {
       "path": "astra_compare.py",
@@ -708,8 +717,8 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "tests/test_command_text.py",
-      "sha256": "9cf5d95c08ce853da09dbbd460c7b73568334daec193f90827ffe66b2723c736",
-      "size_bytes": 12620
+      "sha256": "f9fe844cb64d953896f9ce7bf0bda83153debaab11a0512b35fd5c2ff7a2f68b",
+      "size_bytes": 12646
     },
     {
       "path": "tests/test_comparison.py",
@@ -763,12 +772,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/method_mismatch/config.json",
-      "sha256": "c8d8ad18ec089f723ca7026c42a5bf44dffb5c324f3d44786a42eafb8169e450",
+      "sha256": "589db68ab73382d8d9c8c9a7bf85e6b0ed095a06876efc1b7465f57e533f8371",
       "size_bytes": 2935
     },
     {
       "path": "verification/cli_runs/method_mismatch/result.json",
-      "sha256": "92a40c7db6cbbdab8e068762eb493c7c2cb66a50168e8746cb5312ddcfa41600",
+      "sha256": "d0c8ead1d809628460c166696098269b40e06f33d683743ccefd758616aa5115",
       "size_bytes": 2336
     },
     {
@@ -783,12 +792,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/reviewer_missing/config.json",
-      "sha256": "c1081a4d908d4c2f65eb7d6925e61efd0da8617297b6c609dcc1b9149b807fa7",
+      "sha256": "2c5e77db659b44e37f1ddd54fb188393cd4be34d74649c1dfa54a854b38e29af",
       "size_bytes": 2696
     },
     {
       "path": "verification/cli_runs/reviewer_missing/result.json",
-      "sha256": "1dd6e484d48e093855c5af27a99ba598e1fffd0ca56a6ce67bc64272e1fa569c",
+      "sha256": "c4ae7aa13937c5a9c8c85fcd73c3db233fbf96eabe706c2bae9be39d427cb83c",
       "size_bytes": 2722
     },
     {
@@ -803,12 +812,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/semantic_rejection/config.json",
-      "sha256": "380be542173d10c9a275f18ff1b95beae25ae620a7d99a66baee84a6762a9181",
+      "sha256": "5ecfa204955736b695d949617f1c6b7f71ce1a8b81e7cbdb173361e132bc4996",
       "size_bytes": 2967
     },
     {
       "path": "verification/cli_runs/semantic_rejection/result.json",
-      "sha256": "5f290c9b520bd05a3f84218a6965e7ce6fd4c229a9c97c0a01923b083ff440b8",
+      "sha256": "da9559170cad37d3cda4087c13136bcef2f315aebb055f73d1049049ae52afdf",
       "size_bytes": 3088
     },
     {
@@ -823,12 +832,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_runs/valid/config.json",
-      "sha256": "e8702dfdfa52e6e2ba4a6cf44b1178ce8f0912a38af8031f209e165991141344",
+      "sha256": "e32e1ad65fffda63920d3f69d3ada9cc0f3caa2eaa3665c321b1eff23399d9cb",
       "size_bytes": 2951
     },
     {
       "path": "verification/cli_runs/valid/result.json",
-      "sha256": "e784020a07ec5523000b769d5f91d985b83c7bfa2220c3a1990a76622dcf581a",
+      "sha256": "04a459d559f139c71573f7a30a1dec4b28b570252f03545f4243ce4f2d9e580d",
       "size_bytes": 13606
     },
     {
@@ -843,7 +852,7 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/cli_summary.json",
-      "sha256": "0c06cde5ad40952ef7fc8a29f09ef7dd86eba73f21281d58c27ade6539481832",
+      "sha256": "11985a256a58ab4b26e4683d8374c1f5442afdd304bc8f4475c6ae0c0fa210bc",
       "size_bytes": 891
     },
     {
@@ -853,12 +862,12 @@ Prompt/çalıştırıcı değerlendirmesinde hedef model/sürüm ve ayar makbuzl
     },
     {
       "path": "verification/test_result.json",
-      "sha256": "82d0559e765dc2998f37637bdf85c07fdbd5845f2acedd87dfbc307899288628",
+      "sha256": "9edebad9ec11408bd348e8b54103f3bebd0faa65bbe8a9c604de486a9ebc12e6",
       "size_bytes": 323
     },
     {
       "path": "verification/test_run.txt",
-      "sha256": "de1e50e1794185bc5e5f9ea6b7ddb83095275f71d3f5902b607c0c6fe1184021",
+      "sha256": "39c0e7b51d023ba81678d9f9f8d4766c211e28a0b9d798c3dfd65598792991a9",
       "size_bytes": 28021
     }
   ]
@@ -1119,7 +1128,7 @@ bkz. `verification/source_review_notes.json`):
 ```markdown
 **ASTRA v1.4 — çalışma komutu (tek kaynak; belge başlığı bu dosyadan üretilir)**
 
-Sen ASTRA komuta denetleyicisisin. Görev: kullanıcının isteğini kanıt, kapsam, gerçek araç kullanımı ve ölçülebilir kontrollerle **eksiksiz** tamamlamak. "ASTRA" bu protokolün adıdır; seçilmiş modelin ya da ayarın kanıtı değildir. Bu komut model, abonelik, izin, araç, GPU, bağlam kapasitesi, izolasyon veya üretim onayı AÇMAZ.
+Sen ASTRA komuta denetleyicisisin. Görev: kullanıcının isteğini kanıt, kapsam, gerçek araç kullanımı ve ölçülebilir kontrollerle **eksiksiz** tamamlamak. "ASTRA" bu protokolün adıdır; seçilmiş modelin kanıtı değildir, seçilen ayarın da kanıtı değildir. Bu komut model, abonelik, izin, araç, GPU, bağlam kapasitesi, izolasyon veya üretim onayı AÇMAZ.
 
 İki ayrı talimat yüzeyi vardır ve karıştırılmaz: (a) **bu komut** — görevi yürüten asistanı/host'u bağlar; (b) **`SEMANTIC_POLICY`** — anlam inceleyicisine (`gpt-6-astra`) gönderilen ayrı istem; effort makbuzu ve inceleyici kuralları yalnız orada geçerlidir. Bu komut inceleyiciye gönderilmez; inceleyicinin kuralları da bu komutun yerine geçmez.
 
@@ -1339,7 +1348,7 @@ v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest 
 - JSON düğüm sayısı 12000;
 - Sonuç, payda 1 ise tam sayı;
 - `1/3+1/6` için `1/2`.
-- - `MODE` ve `FINAL_STATUS`:
+- `MODE` ve `FINAL_STATUS`:
 
 | `1/3 + 1/6` | Gerçek hesap varsa exact `1/2`; kaynak ifade/sürüm/kanıt kaydı; hesap aracı yoksa çalıştırılmış iddiası yok |
 
@@ -1370,7 +1379,7 @@ v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest 
 
 - Bilinmeyen ek alanlar reddedilir.
 - KULLANICI, ARAÇ, ÇIKARIM, TAHMİN veya BİLİNMİYOR.
-- - source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
+- source_ids yalnız işçiye izin verilen kaynak kimliklerini içerir;
 - rastgele URL veya var olmayan kayıt kanıt sayılmaz.
 - Ek kod içindeki REPLY_SCHEMA, CARD_SCHEMA, SOURCE_SCHEMA ve DECISION_SCHEMA makine sözleşmesidir.
 - refusal, kesilmiş çıktı ve bozuk taşıma durumunu normal READY gibi işleme.
@@ -1395,6 +1404,15 @@ v1.3 inceleme isteği yukarıdaki alanların tamamını içerir. request_digest 
 
 - Son inceleyici somut aday kararı, tüm güncel kartları ve gerçek kaynakları görür.
 - Kaynak bulunamaması, ters iddianın kanıtı değildir.
+
+- Prompt Perfect `chat_rate`, gönderilen özet için geri bildirim verir;
+
+- Ön kontrol başarısızsa kör işçi dağıtımı yapma.
+- bütün parçaların tamamlanması ayrıca kanıtlanmadan bütün görev onayı verme.
+- Operator aday karar nesnesini oluşturur:
+- bu inceleyici adaptöründe arama aracı yoktur.
+
+- öneri beklerken bağımsız iş durmasın.
 
 **4.1 Bilinen sınırlar (bu paketin YAPMADIKLARI — her biri bir denetim bulgusuna karşılık)**
 
@@ -1564,7 +1582,7 @@ Hazır olma davranışı:
 
 **Eklenti ekleme talimatı ücretli abonelik satın alma, genel izinleri genişletme, mesaj gönderme, dosya yayımlama ya da işlem emri verme YETKİSİ DEĞİLDİR.** Öneri kartı, indirme linki ya da başarılı katalog araması bağlantı kanıtı DEĞİLDİR. Kullanıcının OAuth girişi, iki aşamalı doğrulaması ya da platformun zorunlu onayı gerekiyorsa o adımı KULLANICI tamamlar. Katalogda eşleşen eklenti bulunmadığı sonucu, ilgili arama YAPILMADAN verilmez; tek aramada bulunmaması yokluk kanıtı değildir.
 
-Eski bir ürün kimliği (ör. Excel) doğrulanmadan kurulum isteğinde kullanılmaz. Aynı sonucu iki kez üretmek tek başına yarar değildir; "bu ikili bütün diğerlerini maksimum kapasiteyle yapar" DENMEZ. Atlas sırası canlı kanıttan, kullanıcının mevcut sağlayıcısından ya da açık tercihinden ÜSTÜN DEĞİLDİR. Bir beceri yönergesini uygulamak, ayrı bir haricî model çalıştırmak ya da GPU kiralamak DEĞİLDİR. Özel bir hesabın verisi (ör.
+Eski bir ürün kimliği (ör. Excel) doğrulanmadan kurulum isteğinde kullanılmaz. Aynı sonucu iki kez üretmek tek başına yarar değildir; “Bu ikili bütün diğerlerini maksimum kapasiteyle yapar” deme. Atlas sırası canlı kanıttan, kullanıcının mevcut sağlayıcısından ya da açık tercihinden ÜSTÜN DEĞİLDİR. Bir beceri yönergesini uygulamak, ayrı bir haricî model çalıştırmak ya da GPU kiralamak DEĞİLDİR. Özel bir hesabın verisi (ör.
 
 Gmail) başka bir uygulamayla ya da genel web ile erişilmiş SAYILMAZ. 
 
@@ -1580,7 +1598,7 @@ Yönlendirme kabul örnekleri:
 | Eklenti kurulu ama özel hesaba giriş yok | Kurulu = bağlı deme; doğru hesap bağlantısı gerekir |
 | Kullanıcı CoinMarketCap'i reddetmiş | Genel otomasyon isteğiyle yeniden önerme |
 | Binance verisi hazır, istek gerçek emir gönderme | Veri bağlantısını emir aracı sayma; işlem yeteneği ve kullanıcı yetkisi ayrı |
-| NVIDIA becerisi görünür, istek GPU eğitimi | Görünür beceriyi GPU sayma; gerçek eğitim ortamı ara |
+| NVIDIA becerisi görünür, istek GPU eğitimi | Görünür beceriyi GPU olarak sayma; gerçek eğitim ortamı ara |
 | Prompt Perfect yüksek puan veriyor | Teknik doğruluk ve hedef model testlerini geçmiş sayma |
 | İki ürün bütün zorunlu yetenekleri karşılamıyor | Boşluğu koru; daha uygun kombinasyonu araştır; "kapsam tamamlandı" deme |
 | Yeni konu atlasta yok | Güncel yetenek araması yap; atlasla sınırlama |
@@ -8503,7 +8521,7 @@ from pathlib import Path
 TEXT = (Path(__file__).resolve().parents[1] / "astra_command.md").read_text(encoding="utf-8")
 
 PROTECTED = [
-    "\"ASTRA\" bu protokolün adıdır; seçilmiş modelin ya da ayarın kanıtı değildir",
+    "\"ASTRA\" bu protokolün adıdır; seçilmiş modelin kanıtı değildir, seçilen ayarın da kanıtı değildir",
     "Yapmadığını yaptım deme",
     "Kendi ayarını beyan edemezsin",
     "APPROVED yalnız REAL_ISOLATION modunda",
@@ -10310,16 +10328,16 @@ print(json.dumps(r))
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:29.933244+00:00",
-      "valid_until": "2026-09-07T22:48:30.933244+00:00"
+      "as_of": "2026-09-07T22:29:37.548139+00:00",
+      "valid_until": "2026-09-07T23:29:38.548139+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:29.933244+00:00",
-      "valid_until": "2026-09-07T22:48:30.933244+00:00"
+      "as_of": "2026-09-07T22:29:37.548139+00:00",
+      "valid_until": "2026-09-07T23:29:38.548139+00:00"
     }
   ],
   "comparisons": [
@@ -10436,43 +10454,43 @@ print(json.dumps(r))
   "events": [
     {
       "detail": {
-        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
-        "reply_digest": "sha256:8a11c4ece1f9052fe4626ef1ee7673070b3d9f6b7e5ab22cd832e37a610c37c6",
+        "phase_id": "c3cefda4d92f4fdc8e6d5604933cf42a",
+        "reply_digest": "sha256:61501c964ccbcef5b61ffcc6f1b5af7e3c8c3adc179fd16e4591e7c8d91847f7",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
+      "run_id": "f7910f1404114127a776aa6781e6ba5d"
     },
     {
       "detail": {
-        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
-        "reply_digest": "sha256:e31fab2cae2decb660a4212f6ec72a29108971ba27ec7a783abeefc08279320b",
+        "phase_id": "c3cefda4d92f4fdc8e6d5604933cf42a",
+        "reply_digest": "sha256:5b9189697bfdfcd5fdfe487ee9812d2fc337ce07b8b139ea2a3f601a31ee0a2d",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:8cbdfa34010c3424da803aa411eafa7b64a3d55295801b94d87cf26b6a26e482",
-      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
+      "previous": "sha256:0e6ab27b2e554c77eea448309ba6a0b00da8c68a853461b42b31ddbc58176d20",
+      "run_id": "f7910f1404114127a776aa6781e6ba5d"
     },
     {
       "detail": {
-        "phase_id": "bac9c462477348beb903f71b7d08b3f2",
-        "reply_digest": "sha256:23bb3159c2405dca58003e1adad959f15da1662cf99eb4b23f44ced549caa8b6",
+        "phase_id": "c3cefda4d92f4fdc8e6d5604933cf42a",
+        "reply_digest": "sha256:ce46a339d5c028a145dda4a865723599ef1e622656c7883b10114aa7aae98132",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:a3d00af072c8f6984c1c64135aa3499187909e7c5c5595b54f502844b5c32e5f",
-      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
+      "previous": "sha256:8eb6c1ec820bf80d2a1df6f9ed5e60c5937e9188dcd89f8d2057d41249921f73",
+      "run_id": "f7910f1404114127a776aa6781e6ba5d"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "bac9c462477348beb903f71b7d08b3f2"
+        "phase_id": "c3cefda4d92f4fdc8e6d5604933cf42a"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:fb7a108158734a19c8e056cc031bbd1edd079d71f36fd0cf49859011571e8aa3",
-      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
+      "previous": "sha256:4438c2e55acbd608798373ebdf95c05cd47ca3d2d750dbe5fe83d71113f1ab72",
+      "run_id": "f7910f1404114127a776aa6781e6ba5d"
     },
     {
       "detail": {
@@ -10480,16 +10498,16 @@ print(json.dumps(r))
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:0433f40476f0d3023e8aad1f3b0c04c50ab9e5ee1fa44db71fa97fcc7f0a73bd",
-      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
+      "previous": "sha256:5071b31f4cac2b11a03499cdb0f82fd76b5bf82010ba99dd4b2e82b8fb6a3113",
+      "run_id": "f7910f1404114127a776aa6781e6ba5d"
     },
     {
       "detail": {
         "reason": "NOT_COMPARABLE"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:3cfe6bfc029c1079283035ffddaf65a8cd50eb67e2240271861be93933b99c6c",
-      "run_id": "2d9ce69c51f3486980535b4769e6bd24"
+      "previous": "sha256:4732f51201023b32a0f249580ecb71e1c9822fd995ce33c53562250431f52956",
+      "run_id": "f7910f1404114127a776aa6781e6ba5d"
     }
   ],
   "production_approval": false
@@ -10526,16 +10544,16 @@ Candidate B: median completion latency 120 ms. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:30.282469+00:00",
-      "valid_until": "2026-09-07T22:48:31.282469+00:00"
+      "as_of": "2026-09-07T22:29:37.890166+00:00",
+      "valid_until": "2026-09-07T23:29:38.890166+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:30.282469+00:00",
-      "valid_until": "2026-09-07T22:48:31.282469+00:00"
+      "as_of": "2026-09-07T22:29:37.890166+00:00",
+      "valid_until": "2026-09-07T23:29:38.890166+00:00"
     }
   ],
   "comparisons": [
@@ -10641,43 +10659,43 @@ Candidate B: median completion latency 120 ms. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "cb2e310e40714e479fcf652e4570e1d6",
-        "reply_digest": "sha256:b4e41061616d39117dc4a57a0f15a9510c1c147f004ac51c83c87f8e49ee3710",
+        "phase_id": "7f3ee0a58d3745dfa8ac29ab505714fd",
+        "reply_digest": "sha256:379189fe2e1dc52f8676e88db80d44d2f2cf9738a69900a4a551f01c60b5637b",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     },
     {
       "detail": {
-        "phase_id": "cb2e310e40714e479fcf652e4570e1d6",
-        "reply_digest": "sha256:c695fc6e999434867c34b286575b69ec27a935746147ab3d66739bbf112b8ea4",
+        "phase_id": "7f3ee0a58d3745dfa8ac29ab505714fd",
+        "reply_digest": "sha256:f929ec6bb274a5c6b57b1d0798efd43f50fae6e8536677b89bb31a793d53a780",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:69a00f568e9d026ca69a948b724a795c1aec12c75aed14fd70432a79ec98fee0",
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "previous": "sha256:f0c1948d3aec9e998db9bf85bd2d42dd88b9940334d50d24329cb75e138b3f7b",
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     },
     {
       "detail": {
-        "phase_id": "cb2e310e40714e479fcf652e4570e1d6",
-        "reply_digest": "sha256:dc7891610e9cae1667d738a0ca107a7728837defe9420cf1f21f23c3ebf2f8f6",
+        "phase_id": "7f3ee0a58d3745dfa8ac29ab505714fd",
+        "reply_digest": "sha256:92b13deac6ea35b70363fd10e25a54aa1ce8ab7cc0fd2e3cca80dab3b08abfc8",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:c6af43d7ffa719064f154bb6e9cc6f6e040e22338430003fd16360d54e1aeb17",
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "previous": "sha256:f14dc084a00939c211332fab01f3bd1a8230b9791530f3002e7ed852d70a3e08",
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "cb2e310e40714e479fcf652e4570e1d6"
+        "phase_id": "7f3ee0a58d3745dfa8ac29ab505714fd"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:fadedb66c042f312b4f35cdcd2b90ca361afc527ddf929658f2cbf475159c33c",
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "previous": "sha256:477dcffe9dbe808069eec38df46143129d02e6330c0ac29e275e2f4a4128528b",
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     },
     {
       "detail": {
@@ -10685,25 +10703,25 @@ Candidate B: median completion latency 120 ms. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:c1749c0a01a4b3b11553a6c73df5e1d058d3a3fb61de818f31c1b4117a4f89ae",
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "previous": "sha256:07f441627c67b6a51cce57b04ccbce43f6219ea3422266e493158b8d9facc579",
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:202fe82d01ab3fbbc0e318b662b07c8a9555165eae2a80bc3896b7bcb2495cc5",
+        "comparison_digest": "sha256:7b2888b07feda2c2da38a9eff4f056f25a901ae05fa39d72bd95aa45ee6f9ad0",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:558341124e50fb27f17e7685e36fdf54e73a0cbc1b4a608e440574fdb0def14e",
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "previous": "sha256:703d21a92eff685fecc96367b9baf46c2b20bad4ec780bf3f73482c440ad6f2e",
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     },
     {
       "detail": {
         "reason": "SEMANTIC_REVIEWER_REQUIRED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:b4f465b81d6c7fddf874dae35e7a3e544959f9b4670e2889097a9dd0dca9be6e",
-      "run_id": "9348fa662de44d04a85cae1e5be15c81"
+      "previous": "sha256:35b0672777ec01aa9a980392823da79aa9a3ea5b2053484b22dc9bc84e1977f2",
+      "run_id": "9dc71588e19a4cb498a4ce1dc4544c27"
     }
   ],
   "production_approval": false
@@ -10740,16 +10758,16 @@ Candidate B: median completion latency 120 ms. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:30.082230+00:00",
-      "valid_until": "2026-09-07T22:48:31.082230+00:00"
+      "as_of": "2026-09-07T22:29:37.695735+00:00",
+      "valid_until": "2026-09-07T23:29:38.695735+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:30.082230+00:00",
-      "valid_until": "2026-09-07T22:48:31.082230+00:00"
+      "as_of": "2026-09-07T22:29:37.695735+00:00",
+      "valid_until": "2026-09-07T23:29:38.695735+00:00"
     }
   ],
   "comparisons": [
@@ -10866,43 +10884,43 @@ Candidate B: median completion latency 120 ms. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9",
-        "reply_digest": "sha256:88340c2748cce4ee39b8ff5e81094b8927e8870d89e6fdd2ff303a5d56c4ec65",
+        "phase_id": "ac854c20e667474daff7b3826d8a8fed",
+        "reply_digest": "sha256:4d9a289e54e8b11d35e71b86fc1b522f4546872746919f7df9a5001c7c758f90",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
-        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9",
-        "reply_digest": "sha256:84c4384f9e9112b53fe2c19b87b06c8df72a7b38f16254bbcbbc572d7bfc2d3f",
+        "phase_id": "ac854c20e667474daff7b3826d8a8fed",
+        "reply_digest": "sha256:4579cad6631db58397c7c7659c9881acbcf45ed461488ab587ca26652d4bf9dd",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:1121380c9607d913c9b31a89db81b2d3333b652c1ce5d2b1c37fc6b94f703f09",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:765af7ea6a60868df75026e14cd79eee76b6faa2331227984e8d74e3b3743d55",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
-        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9",
-        "reply_digest": "sha256:4b34992abd3dd76393ee4390c9052baad525d5792c717d26c38595cf0fdc0914",
+        "phase_id": "ac854c20e667474daff7b3826d8a8fed",
+        "reply_digest": "sha256:cf8c62bad658aedc5b30ccfcd5e4c666e300ca31b3a3bc3f1ff9e238ccda8a83",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:ae180189f3a4fe680b6a7cf7daa74afa0e29e96da9989d0e60d0d0f8cc943ebb",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:46c1ddf307fdb715bccb75b1ef3b7604535a15e1b737a50484565b510da9f109",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "b08c8603ac444215ac4a4fd4c2e6b5f9"
+        "phase_id": "ac854c20e667474daff7b3826d8a8fed"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:0a8931d6fe084cfbbc826535472c3db1a618049a18330d576da7da004d53dd79",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:63ba4505b534b6c3a203524b7aa9e080f7030503d93004fac514d71829475220",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
@@ -10910,34 +10928,34 @@ Candidate B: median completion latency 120 ms. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:1d34f713ac52786f548e80d4c35521db21f5158af76c66991b0dd53e4b13173a",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:cb7099d2b05708db80a73345e701b93b368dd16d940fb9a06fb1a0b06bc50bb5",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:52b45c38775c7a1b82c1170eac1119cfa473c1d0b3b9014bbf53fc9595edcc9d",
+        "comparison_digest": "sha256:83333c77e09c973638200173f8ae3f3f655cccd02e678cc6142594a885ad0da8",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:b79edf792665c584a875a5e720d34ae4b799a208994bb4869224a5f909560c87",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:49503433ac873387c599f4f2a4c26dab0a45ddc4ed697297a0f3f24f8856d4f4",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
-        "request_digest": "sha256:22294a513e62d6ae311159a7efa94b928166d030b31a4c11dbcc9e4054fb0dc9",
+        "request_digest": "sha256:d6de1cbb92d325ee95ffee2b43845fab8fe06c1e0b81d0cf225eab772020258d",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:0ca835581b7529a756160b0881cbfac262ab1d76187b797d27f18d7ba64d0f2e",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:d6fe3835af830c06bf21e40f33ed407d7e6393ed2ecd5bd2dbf6a398420896fb",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     },
     {
       "detail": {
         "reason": "SEMANTIC_CLAIM_UNSUPPORTED"
       },
       "kind": "FINALIZATION_REJECTED",
-      "previous": "sha256:82dfe6db700e10e05374cd31c52f2f79bfc3af23c5cd9acd727f83175156cf87",
-      "run_id": "04c0c7a7bbb043719b8a88ac534d84a3"
+      "previous": "sha256:b885129329a5745f58faafcb767de8f453c6fe3f37c13f245d9a25c90660cae5",
+      "run_id": "74c1e0e2d55d4785a3ab6670d76f9e65"
     }
   ],
   "production_approval": false
@@ -10974,16 +10992,16 @@ Request count 120 requests. Latency was not measured. Synthetic data.
       "path": "<RUN>/source_0.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:29.739536+00:00",
-      "valid_until": "2026-09-07T22:48:30.739536+00:00"
+      "as_of": "2026-09-07T22:29:37.337620+00:00",
+      "valid_until": "2026-09-07T23:29:38.337620+00:00"
     },
     {
       "source_id": "s1",
       "path": "<RUN>/source_1.txt",
       "kind": "USER",
       "tool_call_record": null,
-      "as_of": "2026-09-07T21:48:29.739536+00:00",
-      "valid_until": "2026-09-07T22:48:30.739536+00:00"
+      "as_of": "2026-09-07T22:29:37.337620+00:00",
+      "valid_until": "2026-09-07T23:29:38.337620+00:00"
     }
   ],
   "comparisons": [
@@ -11091,8 +11109,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
     "status": "LOCAL_CHECKS_PASSED",
     "production_approval": false,
     "verification_boundary": "HOST_CAPTURED_LOCAL_SNAPSHOTS_AND_EXECUTED_GATES; reviewer judgment is not a truth or isolation guarantee",
-    "run_id": "211a66a407da426bb98dd3ec42ac3e3b",
-    "phase_digest": "sha256:53c8c0c320107d25a04a75b6c00d603bf4ef33cd7cee07d9c67f0552bdeb481e",
+    "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0",
+    "phase_digest": "sha256:2b5eabfc3b51701c78813d09468f824403bba9c06eb06004463add85ea275ecc",
     "decision": {
       "action": "Report the observed latency comparison only.",
       "claim_ids": [
@@ -11156,7 +11174,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
     "proofs": {},
     "host_verification": {
       "candidate_digest": "sha256:e7726678f2a086117a8980db34f2015eea5bbd31a2f828bf69e0200ffba570e5",
-      "comparison_results_digest": "sha256:cbd5e71623af0c502b5405e5912e117565037f73860b2889282e5e59d4ffc4d2",
+      "comparison_results_digest": "sha256:2403ea8d44f96adc721eeb6fabb7c80f20e6428e54bd8ed31053468887d858be",
       "comparisons": [
         {
           "claim_ids": [
@@ -11166,7 +11184,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           ],
           "requirement_id": "latency",
           "result": {
-            "comparison_digest": "sha256:7b7e2df2c527360f881fb178f410e3635594096ba90b662b3f9816c5f03a74c0",
+            "comparison_digest": "sha256:b8c15f26eb391f4395edeb4749b7ad570d879b3edfb7698648ea1557852a60d6",
             "context": {
               "definition": "median completion latency",
               "method": "same median harness",
@@ -11183,7 +11201,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
             "ranking_scope": "OBSERVED_VALUES_ONLY",
             "rows": [
               {
-                "access_record_id": "sha256:a72ae004c8973ae11cd2dee41934673dfedca06234dddfa8e8bf98f3a668c6fc",
+                "access_record_id": "sha256:c092d03e99dd1777dac1ca02227ecf6f2f4c5e192db1686bc46131b84b97d0d4",
                 "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
                 "definition": "median completion latency",
                 "entity": "A",
@@ -11199,7 +11217,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
                 "value": "100"
               },
               {
-                "access_record_id": "sha256:4fa2cb32805fb87230cda58617ac82cd56957a6856c449185a908d47f2ca1d08",
+                "access_record_id": "sha256:268d62bfee28ccab2ad7eed02df29710d3c9d6cf46bb82a732dc7580e036fba4",
                 "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
                 "definition": "median completion latency",
                 "entity": "B",
@@ -11222,17 +11240,17 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         }
       ],
       "contract_digest": "sha256:a886e196f83ec14e6a2adade731342cd99ac677f424b17a896009d5c53afe5b3",
-      "created_at": "2026-09-07T21:48:30.860316+00:00",
-      "host_receipt_id": "sha256:2f9933eb8128dcb7e66c80e40bde2efe1461127d683ac071ebbdd82ee59a4950",
-      "issued_at": "2026-09-07T21:48:30.841554+00:00",
-      "phase_digest": "sha256:53c8c0c320107d25a04a75b6c00d603bf4ef33cd7cee07d9c67f0552bdeb481e",
+      "created_at": "2026-09-07T22:29:38.463978+00:00",
+      "host_receipt_id": "sha256:7f182156b50d9241e5f4315f61cb600933b91bf9301d3b12d1dfa3e2a9e766b7",
+      "issued_at": "2026-09-07T22:29:38.444621+00:00",
+      "phase_digest": "sha256:2b5eabfc3b51701c78813d09468f824403bba9c06eb06004463add85ea275ecc",
       "production_approval": false,
       "protocol": "ASTRA-HOST-1.3",
       "rendered_claims_digest": "sha256:6766430b75dc68871fadb0c2ffec8e843d999decea7e1982905ea154d8a1cc2e",
-      "request_digest": "sha256:4b204193a8a3ba1d529b274d5f4dd46f017af9dad900011e2922a4dc38c3049f",
+      "request_digest": "sha256:45941a032db01005ce7d3623d78b5eb26601a70f043957dded42949fc0f6d63e",
       "requested_effort": null,
       "requirements": [],
-      "review_nonce": "34d955b3af7a00f7870142cdd82dc102d28afd1b4566e27d",
+      "review_nonce": "a7aa56aa281083655e24e5a5f0a4eb8fdbf0ec9dc99f0763",
       "reviewer_kind": "TEST_FIXTURE",
       "reviewer_response": {
         "assessment": {
@@ -11317,7 +11335,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         },
         "provider_effort": "fixture-effort",
         "provider_model": "fixture-model",
-        "request_digest": "sha256:4b204193a8a3ba1d529b274d5f4dd46f017af9dad900011e2922a4dc38c3049f",
+        "request_digest": "sha256:45941a032db01005ce7d3623d78b5eb26601a70f043957dded42949fc0f6d63e",
         "reviewer_record_id": "TEST_FIXTURE_ONLY"
       },
       "semantic_review_scope": "REVIEWER_JUDGMENT_NOT_TRUTH_GUARANTEE",
@@ -11326,8 +11344,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
       "source_access_authenticated": false,
       "source_access_receipts": [
         {
-          "access_record_id": "sha256:a72ae004c8973ae11cd2dee41934673dfedca06234dddfa8e8bf98f3a668c6fc",
-          "captured_at": "2026-09-07T21:48:30.784124+00:00",
+          "access_record_id": "sha256:c092d03e99dd1777dac1ca02227ecf6f2f4c5e192db1686bc46131b84b97d0d4",
+          "captured_at": "2026-09-07T22:29:38.389142+00:00",
           "content_digest": "sha256:5262c6e580c881395b81be939bd532aaec3757d621c6f6e79a1326b33560d953",
           "locator": "file://<RUN>/source_0.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -11335,8 +11353,8 @@ Request count 120 requests. Latency was not measured. Synthetic data.
           "upstream_authentication_verified": false
         },
         {
-          "access_record_id": "sha256:4fa2cb32805fb87230cda58617ac82cd56957a6856c449185a908d47f2ca1d08",
-          "captured_at": "2026-09-07T21:48:30.784279+00:00",
+          "access_record_id": "sha256:268d62bfee28ccab2ad7eed02df29710d3c9d6cf46bb82a732dc7580e036fba4",
+          "captured_at": "2026-09-07T22:29:38.389328+00:00",
           "content_digest": "sha256:23ed7e88dd6e6d17813b096286bab897c4f94513a51c00bf4021359ae468b20a",
           "locator": "file://<RUN>/source_1.txt",
           "operation": "READ_LOCAL_UTF8_FILE",
@@ -11345,7 +11363,7 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         }
       ],
       "source_access_scope": "LOCAL_FILE_SNAPSHOT_READ",
-      "source_registry_digest": "sha256:e4d7e195cb5f4c8268a9347cc7f34dc944c4ab5b5ffb9cb91fbbff84bbaaaf40",
+      "source_registry_digest": "sha256:baa01d7f65eaab318f562ca53060cbbf94c3a02e06f66e74012f1a1fe26f0e54",
       "task_status": "NO_REQUIREMENTS",
       "upstream_origin_verified": false
     }
@@ -11359,43 +11377,43 @@ Request count 120 requests. Latency was not measured. Synthetic data.
   "events": [
     {
       "detail": {
-        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5",
-        "reply_digest": "sha256:feed4ac4596a9da622cd9ed774ea4a9c3bb3e34b351f0cb0f8daf4337a0bd4ed",
+        "phase_id": "bd877b18fc564b0d9c22cfb1009cd80b",
+        "reply_digest": "sha256:a3b0a5da20a2fd4eb41b20cb9a32eadd2d656eadf95dac4b716b16e550ec9d69",
         "worker_id": "a"
       },
       "kind": "READY",
       "previous": null,
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
-        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5",
-        "reply_digest": "sha256:23a5b92552fa1ad75c6b067199ea34f4854cd2e18e2e7f56c4fbb5b46b05cada",
+        "phase_id": "bd877b18fc564b0d9c22cfb1009cd80b",
+        "reply_digest": "sha256:096a5003061d4a99a669e554d4d5bfbe2d582ea6b51605cf92cc182139be33e0",
         "worker_id": "b"
       },
       "kind": "READY",
-      "previous": "sha256:e2a92c2503c62d393a49805e22c4961b4846fa1f7fb8c4c7b2a956bb8eefc72c",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:03671baa841055c9fcf2d76580c60bf7e5a59f5794c240c49cef3bb83d3aa8ec",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
-        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5",
-        "reply_digest": "sha256:2691c4f15b6e823d9e23711d655acba198de992a151d5f0550cb69bb9a5d5e46",
+        "phase_id": "bd877b18fc564b0d9c22cfb1009cd80b",
+        "reply_digest": "sha256:51fa11c4b1a4997fd9f9822fe30f67aed742f3c432d4b3936e34e515deefa759",
         "worker_id": "c"
       },
       "kind": "READY",
-      "previous": "sha256:7bbc2ff9651d32ad6ef8ac96ba5cadf65d5341587df13d55ee89b05902bb638f",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:2bf26af79a60285d01e9cb8ae682541eae75413f47c957351601370b84e41c2e",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
         "blocked": false,
         "errors": [],
-        "phase_id": "b0cbfbf9c1ef4761aa2278b20389b2f5"
+        "phase_id": "bd877b18fc564b0d9c22cfb1009cd80b"
       },
       "kind": "PHASE_CHECK",
-      "previous": "sha256:cc972dc89cc84ee362ce8a5251c1d3d8701a6da7a31475e15fe37e55ea4e90c2",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:fa0a5fa065ab1414a14cf9ef5115ee022900b9f2f9dcfdb6dc33612bf883ae8e",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
@@ -11403,42 +11421,42 @@ Request count 120 requests. Latency was not measured. Synthetic data.
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_STARTED",
-      "previous": "sha256:2bc571b21bd485d8ffb3c348577fb406f332e46136e141afc27a8e34c30a830e",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:bdc5b6933d42f38cbbc1f8a8b80c8965bd3c50f9f5056588f76b24537de06e9d",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
-        "comparison_digest": "sha256:7b7e2df2c527360f881fb178f410e3635594096ba90b662b3f9816c5f03a74c0",
+        "comparison_digest": "sha256:b8c15f26eb391f4395edeb4749b7ad570d879b3edfb7698648ea1557852a60d6",
         "requirement_id": "latency"
       },
       "kind": "COMPARISON_VALIDATED",
-      "previous": "sha256:444ed2270b239bdcdcddba9a06c2bd6231b3203eb64d02c9a86c1350e9236c5b",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:77bffa680683c483e435dbfa303526f636bd1782ce0efb18b2033ae08933883f",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
-        "request_digest": "sha256:4b204193a8a3ba1d529b274d5f4dd46f017af9dad900011e2922a4dc38c3049f",
+        "request_digest": "sha256:45941a032db01005ce7d3623d78b5eb26601a70f043957dded42949fc0f6d63e",
         "reviewer_kind": "TEST_FIXTURE"
       },
       "kind": "SEMANTIC_REVIEW_STARTED",
-      "previous": "sha256:400e5d5cbd698e51500de16ec5630f0f61f42eff37c53199fe952f51989f5ff7",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:eceddf15930259050d85d9b1492a0d8b6009595ed1cd57cee0d82bef65d5d848",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
-        "host_receipt_id": "sha256:2f9933eb8128dcb7e66c80e40bde2efe1461127d683ac071ebbdd82ee59a4950"
+        "host_receipt_id": "sha256:7f182156b50d9241e5f4315f61cb600933b91bf9301d3b12d1dfa3e2a9e766b7"
       },
       "kind": "HOST_GATES_PASSED",
-      "previous": "sha256:23002ab2979e3d73f2bf6954bfc05cb60546176cb801836f21e5cb9fe7f75a05",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:2f0b5478c1fb783541a573271ebd80739564ecaac62d97763c89ddd62b6ba322",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     },
     {
       "detail": {
-        "result_digest": "sha256:68717fe547647f4f8325a72c436097e7c21464ddd859e4d2b7004b99e10ebbdc"
+        "result_digest": "sha256:ea956d0f77a2e8db407e3437f94f113c0bafbaa3cf185ce1973a7d35a6251424"
       },
       "kind": "LOCAL_CHECKS_PASSED",
-      "previous": "sha256:ab874ea533b593f602906887e5b626fa2c6ac9437026984bf18a4357caa6cd86",
-      "run_id": "211a66a407da426bb98dd3ec42ac3e3b"
+      "previous": "sha256:cd0dd622ad32ad27989c965e8cfef3bd97f11a3099b77a7a5d977f670d84931b",
+      "run_id": "b37f9ed4b0b84805aaffd710fc8b13e0"
     }
   ],
   "production_approval": false
@@ -11492,7 +11510,7 @@ Candidate B: median completion latency 120 ms. Synthetic data.
     }
   },
   "python_version": "3.11.15",
-  "generated_at": "2026-09-07T21:48:31.454862+00:00",
+  "generated_at": "2026-09-07T22:29:39.062801+00:00",
   "scope": "Local CLI scenarios with fixture workers and a fixture reviewer; they exercise the pipeline, not semantic quality"
 }
 
@@ -11563,11 +11581,11 @@ Candidate B: median completion latency 120 ms. Synthetic data.
 {
   "command": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
   "returncode": 0,
-  "summary": "Ran 200 tests in 9.089s",
+  "summary": "Ran 200 tests in 9.192s",
   "outcome": "OK",
   "python_version": "3.11.15",
   "platform": "Linux",
-  "generated_at": "2026-09-07T21:48:31.454862+00:00",
+  "generated_at": "2026-09-07T22:29:39.062801+00:00",
   "scope": "LOCAL_TEST only; no live provider call was made"
 }
 
@@ -11794,7 +11812,7 @@ test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 200 tests in 9.089s
+Ran 200 tests in 9.192s
 
 OK
 

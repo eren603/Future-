@@ -215,6 +215,6 @@ test_task_status_is_reported_at_top_level_and_matches_the_receipt (test_run_cli.
 test_wildcard_claim_ids_expand_after_phase (test_run_cli.RunCliTests.test_wildcard_claim_ids_expand_after_phase) ... ok
 
 ----------------------------------------------------------------------
-Ran 200 tests in 9.089s
+Ran 200 tests in 9.192s
 
 OK

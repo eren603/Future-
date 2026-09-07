@@ -7,7 +7,7 @@ from pathlib import Path
 TEXT = (Path(__file__).resolve().parents[1] / "astra_command.md").read_text(encoding="utf-8")
 
 PROTECTED = [
-    "\"ASTRA\" bu protokolün adıdır; seçilmiş modelin ya da ayarın kanıtı değildir",
+    "\"ASTRA\" bu protokolün adıdır; seçilmiş modelin kanıtı değildir, seçilen ayarın da kanıtı değildir",
     "Yapmadığını yaptım deme",
     "Kendi ayarını beyan edemezsin",
     "APPROVED yalnız REAL_ISOLATION modunda",

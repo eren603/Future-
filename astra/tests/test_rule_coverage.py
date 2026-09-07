@@ -36,6 +36,11 @@ Remaining limits, stated rather than claimed away:
   * a sentence of 15 characters or fewer is skipped (it carries no distinctive word);
   * the measure is lexical: it detects DELETION, not a sentence left in place and negated;
   * the stem is a fixed prefix, so it over-matches; the mutation test is what bounds that;
+  * only three waiver classes remain, and all three are derived from v1.3's own text. Two
+    others were tried and both were broken by an auditor within one round: a class verified
+    against a repair register, and a class verified against the package's ban lists. Any file
+    the repairer can write, the repairer can write to excuse a deletion — so no waiver class
+    may depend on one;
   * a lead-in ending in ":" cannot be told from its own list by a bag-of-words measure, so
     its deletion alone is not detected — measured: 1 of 65 carried lines; the list itself is;
   * a sentence with fewer than MIN_STEMS content words cannot be measured by ratio at all —
@@ -66,10 +71,11 @@ NORMATIVE = re.compile(
     r"(?:[a-zçğıöşü]{3,}(?:maz|mez|mal[ıi]d[ıi]r|melidir|meli|mal[ıi])\b"
     r"|olamaz\b|edilemez\b|verilmez\b|geçmez\b|değildir\b"
     r"|[a-zçğıöşü]{2,}(?:ma|me)\s*[.;:]?\s*$"      # sunma. / sayma. / yazma; (cümle sonu)
+    r"|[a-zçğıöşü]{2,}(?:mas[ıi]n|mesin)\b"       # olumsuz istek: durmasın, kalmasın
     r"|[a-zçğıöşü]{2,}(?:d[ıiuü]r|tur|tür)\s*[.;:]?\s*$"   # …sonuçlarıdır. / …zorunludur.
     r"|üretir\.|sayılır\.)")
 
-ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK|YASAK_IFADE|V13_TEKRAR)\]\s*—\s*(.+)$")
+ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK)\]\s*—\s*(.+)$")
 OLD_LINES = OLD.splitlines()
 _LITERAL_NEW = ""
 _LINES_NEW = []
@@ -136,7 +142,7 @@ def regions(text):
     return sections, rows
 
 
-STRONG = 0.85  # the repetition gate's own threshold; the two must agree
+STRONG = 0.85  # the repetition gate's own threshold; the two gates must agree
 MIN_STEMS = 4  # altında oran ölçüsü anlamsız: %60 tek kelimeye iner
 
 
@@ -163,33 +169,6 @@ def _literal(text):
     return re.sub(r"[^0-9a-zçğıöşü]+", " ", fold(text)).strip()
 
 
-LITERAL_SHARE = 0.8  # bounded by test_deleting_a_carried_line_is_detected, which must stay 58/58
-
-
-def _reworded(sentence):
-    """Low-stem sentences are matched on words in order, not on an exact string.
-
-    A sentence with two content words cannot be measured by ratio, so an earlier revision
-    demanded its literal text. That made any REWORDING look like a deletion, and the waiver
-    class invented to cover the one real case (a phrase v1.4 repaired on purpose) turned out
-    to be forgeable twice over — a register line, then a test file with no assertions. The
-    class is gone. Instead the sentence's own words are looked for IN ORDER inside one v1.4
-    line: a repair that changes a word or two still matches, while a deleted sentence does not.
-    """
-    want = _literal(sentence).split()
-    if not want:
-        return True
-    for line in _LINES_NEW:
-        have = _literal(line).split()
-        i = 0
-        for word in have:
-            if i < len(want) and word == want[i]:
-                i += 1
-        if i / len(want) >= LITERAL_SHARE:
-            return True
-    return False
-
-
 def uncovered_in(text):
     global _LITERAL_NEW, _LINES_NEW
     _LITERAL_NEW = _literal(text)
@@ -208,7 +187,7 @@ def uncovered_in(text):
             # sentences fall here. How many of those were wrongly "covered" depends on how
             # "absent" is defined, so no count is quoted: the rule is the fix, not a number.
             # For these the text itself must survive, near enough to be recognisable.
-            if _literal(sentence) in _LITERAL_NEW or _reworded(sentence):
+            if _literal(sentence) in _LITERAL_NEW:
                 continue
             out.append((rule_id(sentence), sentence))
             continue
@@ -242,37 +221,6 @@ def class_holds(kind, sentence):
             # was absent from v1.4. A mood marker means the sentence carries a verdict.
             return False
         return any(is_covered(s) for s in split(line) if s != sentence)
-    if kind == "V13_TEKRAR":
-        # v1.3 states this rule TWICE, in two places and two wordings. v1.4 carries it once,
-        # which is correct — and then the repetition gate forbids adding the second copy while
-        # the coverage gate reports it missing. The waiver is verified against v1.3 alone: an
-        # equivalent sentence must exist there AND be covered here. Nothing outside the two
-        # command texts is consulted, so there is no document to forge.
-        target = stems(sentence)
-        if len(target) < 2:
-            return False
-        for other in sentences():
-            if other == sentence:
-                continue
-            twin = stems(other)
-            if twin and len(target & twin) / max(len(target), len(twin)) >= STRONG:
-                if is_covered(other):
-                    return True
-        return False
-    if kind == "YASAK_IFADE":
-        # v1.4 forbids this sentence's wording, so carrying it verbatim would break the very
-        # repair the ban records. This is a real conflict between two rules of the repo, not a
-        # loophole, and it is verified from the BAN LISTS the package's own tests enforce —
-        # not from a document. The seventh and eighth audits broke two earlier attempts, both
-        # of which trusted a file someone could simply write: a repair register, then a test
-        # with no assertions. A ban list is different in kind: forging an entry FORBIDS that
-        # wording everywhere in the command text, so the forgery destroys what it was meant
-        # to smuggle in. The residual limit, stated: a check that reads repository files can
-        # never be unforgeable — it can only be made self-defeating to forge.
-        for phrase in banned_phrases():
-            if phrase in sentence and phrase.lower() not in fold(NEW):
-                return True
-        return False
     if kind == "ORNEK":
         if not sentence.lstrip().startswith("Örneğin"):
             return False
@@ -280,21 +228,18 @@ def class_holds(kind, sentence):
     return False
 
 
-def banned_phrases():
-    """The wordings the package's own tests keep out of the command text."""
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "_ct", ROOT / "bundle_v1_4" / "tests" / "test_command_text.py")
-    module = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(module)
-    except Exception:
-        return []
-    out = list(getattr(module, "DISCRETION", [])) + list(getattr(module, "SLOP", []))
-    source = (ROOT / "bundle_v1_4" / "tests" / "test_command_text.py").read_text(encoding="utf-8")
-    out += re.findall(r'for phrase in \(([^)]*)\):', source) and re.findall(
-        r'"([^"]+)"', re.search(r'for phrase in \(([^)]*)\):', source).group(1)) or []
-    return [p for p in out if len(p) > 6]
+IRREDUCIBLE = {
+    # Two v1.3 sentences cannot be carried at all, and this is stated rather than waived by a
+    # class. Each uses wording that a test in the package FORBIDS, because v1.4 repaired the
+    # claim that wording made. Carrying them verbatim would undo the repair; rewording them
+    # breaks the literal match a short sentence needs. There is no measurement that resolves
+    # this — it is a conflict between two rules of the repo, and the honest form is a list of
+    # exactly the sentences it applies to, bounded and inspectable, rather than a general
+    # class. Two earlier classes tried to generalise it and an auditor broke both within one
+    # round. The bound below is the point: a general escape hatch is what went wrong.
+    "32943a3183fa": "gerektiğinde",       # DISCRETION — v1.4 removed the discretionary adverb
+    "a8eb924a81e5": "gerçek alt süreç",   # makyaj-8 — v1.4 removed the overclaim
+}
 
 
 def entries():
@@ -307,7 +252,7 @@ def entries():
 
 class RuleCoverageTests(unittest.TestCase):
     def test_every_uncovered_v1_3_rule_is_waived_in_writing(self):
-        declared = {rid for rid, _, _ in entries()}
+        declared = {rid for rid, _, _ in entries()} | set(IRREDUCIBLE)
         missing = [(rid, text) for rid, text in uncovered() if rid not in declared]
         self.assertEqual(missing, [], "Bu v1.3 kuralları v1.4'te yok ve muafiyet kaydı da "
                                       "yok — ya metne geri alın ya da KAPSAM_MUAFIYET.md'ye "
@@ -324,10 +269,29 @@ class RuleCoverageTests(unittest.TestCase):
                                 f"{kind} sınıfı bu cümle için DOĞRULANAMADI: {by_id[rid]!r}")
                 self.assertGreater(len(reason.strip()), 30)
 
+    def test_the_irreducible_list_stays_small_and_true(self):
+        """The two sentences that cannot be carried: bounded, and each one checked.
+
+        This list is the only escape that is not derived from v1.3's own text, so it is kept
+        to the smallest possible size and every entry is verified: the sentence must exist,
+        must still be uncovered, and must contain the wording a package test forbids.
+        """
+        self.assertLessEqual(len(IRREDUCIBLE), 2, "liste büyüyorsa bu bir kaçış yoluna dönüşüyor")
+        by_id = {rid: text for rid, text in uncovered()}
+        guards = "\n".join(f.read_text(encoding="utf-8")
+                            for f in sorted((ROOT / "bundle_v1_4" / "tests").glob("test_*.py")))
+        for rid, phrase in IRREDUCIBLE.items():
+            with self.subTest(rule=rid):
+                self.assertIn(rid, by_id, "kapsanmış kural bu listede duramaz")
+                self.assertIn(phrase, by_id[rid])
+                self.assertIn(phrase, guards, "yasağı uygulayan test yok")
+                self.assertNotIn(phrase.lower(), fold(NEW), "yasaklı ifade metinde duruyor")
+
     def test_waiver_has_no_stale_entries(self):
         """A waiver for a rule that is now covered would hide a later deletion."""
         live = {rid for rid, _ in uncovered()}
         self.assertEqual({rid for rid, _, _ in entries()} - live, set())
+        self.assertEqual(set(IRREDUCIBLE) - live, set())
 
     def test_deleting_a_carried_line_is_detected(self):
         """The guarantee itself: a rule carried over verbatim cannot be deleted unnoticed.
