@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 import astra_compare
+import astra_host
 from astra_reference import Controller, Rejected, bounded_json, canonical, digest
 from astra_host import SourceVault, TrustedHost, ReviewerEndpoint
 from host_fixture_support import fixture_reviewer
@@ -52,6 +53,20 @@ class HostIntegrationTests(unittest.TestCase):
 
     def finish(self):
         return self.controller.finalize(canonical(self.decision))
+
+    def fixture_invoke(self, mode):
+        """Route the EXTERNAL_MODEL argv to the local fixture; no network is reachable."""
+        from astra_reference import invoke as real_invoke
+        argv = list(fixture_reviewer(mode).argv)
+
+        def fake(_argv, request, timeout, *, environment=None):
+            return real_invoke(argv, request, timeout)
+        return fake
+
+    def external_endpoint(self):
+        adapter = str(Path(__file__).resolve().parents[1] / "astra_openai_reviewer.py")
+        return ReviewerEndpoint((sys.executable, adapter), "EXTERNAL_MODEL", "gpt-6-astra",
+                                "max", credential_env=("OPENAI_API_KEY",))
 
     def assert_closed(self, reason):
         result = self.finish()
@@ -305,6 +320,88 @@ class HostIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(Rejected, "EXTERNAL_REVIEWER_ADAPTER_REQUIRED"):
             ReviewerEndpoint(fixture.argv, "EXTERNAL_MODEL", "gpt-6-astra", "max",
                              credential_env=("OPENAI_API_KEY",))
+
+    def test_worker_exit_code_is_carried_when_declared(self):
+        # kod_hata-4: a worker's own rejection code was flattened into WORKER_EXIT.
+        from astra_reference import invoke
+        fixture = str(Path(__file__).with_name("exit_code_fixture.py").resolve())
+        with self.assertRaisesRegex(Rejected, "^REVIEW_BUDGET_EXCEEDED$"):
+            invoke([sys.executable, fixture, "REVIEW_BUDGET_EXCEEDED"], b"{}", 5)
+        with self.assertRaisesRegex(Rejected, "^WORKER_EXIT$"):
+            invoke([sys.executable, fixture, "free text, not a code"], b"{}", 5)
+
+    def test_min_verdict_bytes_is_a_measurement(self):
+        """The budget constant is re-derived here, so it cannot drift into a guess."""
+        from astra_host import MIN_VERDICT_BYTES
+        verdict = dict(claim_id="w:c1", verdict="supported", source_ids=["s0", "s1"],
+                       excerpts=[dict(source_id="s0", quote="x" * 120),
+                                 dict(source_id="s1", quote="y" * 120)],
+                       reason="r", conditions_preserved=True, counterevidence_checked=True)
+        self.assertEqual(MIN_VERDICT_BYTES, len(canonical(verdict)))
+
+    def test_review_budget_precheck_stops_before_call(self):
+        # api_uyum-12 / K-14: a card set too large for any lawful reply is refused early.
+        self.build(requirements=[])
+        many = {f"w:c{i}": dict(claim_id=f"c{i}", proposition_id="p", scope_id="comparison",
+                                statement="x", label="ÇIKARIM", source_ids=[], stance="support",
+                                uncertainty="low", critical=False, math=None) for i in range(300)}
+        self.decision["claim_ids"] = list(many)[:3]
+        with self.assertRaisesRegex(Rejected, "REVIEW_BUDGET_EXCEEDED"):
+            self.controller._host.verify(self.controller, self.decision, many,
+                                         self.vault.sources(), [], {})
+
+    def test_external_model_rejects_fixture_model_identity(self):
+        """No live provider is reachable here, so this path cannot end in success.
+
+        The fixture answers as 'fixture-model' and the host refuses it. The accept
+        branch is covered by test_external_like_response_sets_semantic_support_verified;
+        neither test is evidence that an external model was actually consulted.
+        """
+        self.build()
+        self.controller._host._reviewer = self.external_endpoint()
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "fixture-not-a-real-key"}), \
+                patch.object(astra_host, "invoke", self.fixture_invoke("pass")):
+            self.assert_closed("REVIEWER_CONFIGURATION_MISMATCH")
+
+    def test_external_like_response_sets_semantic_support_verified(self):
+        """Host accept branch for EXTERNAL_MODEL, driven by a local fixture reply.
+
+        This tests the host's acceptance logic only. It is NOT a live provider call
+        and does not verify adapter transport against a real API.
+        """
+        self.build()
+        self.controller._host._reviewer = self.external_endpoint()
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "fixture-not-a-real-key"}), \
+                patch.object(astra_host, "invoke", self.fixture_invoke("external_like")):
+            result = self.finish()
+        self.assertEqual(result["status"], "LOCAL_CHECKS_PASSED", result)
+        self.assertTrue(result["host_verification"]["semantic_support_verified"])
+        self.assertEqual(result["host_verification"]["reviewer_kind"], "EXTERNAL_MODEL")
+
+    def test_dated_snapshot_model_is_accepted_by_the_host(self):
+        # api_uyum-3: the host must tolerate the dated snapshot of the pinned model.
+        self.build()
+        self.controller._host._reviewer = self.external_endpoint()
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "fixture-not-a-real-key"}), \
+                patch.object(astra_host, "invoke", self.fixture_invoke("external_snapshot")):
+            result = self.finish()
+        self.assertEqual(result["status"], "LOCAL_CHECKS_PASSED", result)
+        self.assertEqual(result["host_verification"]["reviewer_response"]["provider_model"],
+                         "gpt-6-astra-2026-09-01")
+
+    def test_review_request_carries_both_full_and_wire_schema(self):
+        # api_uyum-1: the adapter sends the length-free schema, the host keeps the full one.
+        self.build()
+        captured = []
+
+        def capture(argv, request, timeout, *, environment=None):
+            captured.append(bounded_json(request))
+            return self.fixture_invoke("pass")(argv, request, timeout)
+        with patch.object(astra_host, "invoke", capture):
+            self.finish()
+        from astra_host import ASSESSMENT_SCHEMA, transport_schema
+        self.assertEqual(captured[0]["assessment_schema"], ASSESSMENT_SCHEMA)
+        self.assertEqual(captured[0]["wire_schema"], transport_schema(ASSESSMENT_SCHEMA))
 
 
 if __name__ == "__main__":

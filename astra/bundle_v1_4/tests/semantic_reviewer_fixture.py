@@ -63,4 +63,8 @@ result = dict(request_digest="wrong" if mode == "replay" else request["request_d
               provider_effort="fixture-effort", assessment=assessment)
 if mode == "wrong_model":
     result["provider_model"] = "different-model"
+elif mode == "external_like":
+    result["provider_model"], result["provider_effort"] = "gpt-6-astra", "max"
+elif mode == "external_snapshot":
+    result["provider_model"], result["provider_effort"] = "gpt-6-astra-2026-09-01", "max"
 print(json.dumps(result))

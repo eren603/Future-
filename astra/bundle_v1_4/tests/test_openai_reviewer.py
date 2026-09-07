@@ -4,9 +4,9 @@ import io
 import json
 import unittest
 from unittest.mock import patch
-from astra_host import ASSESSMENT_SCHEMA, SEMANTIC_POLICY
+from astra_host import ASSESSMENT_SCHEMA, SEMANTIC_POLICY, transport_schema
 from astra_reference import Rejected, canonical, digest
-from astra_openai_reviewer import review
+from astra_openai_reviewer import build_opener, review
 
 
 class Response(io.BytesIO):
@@ -25,6 +25,7 @@ class Opener:
 class OpenAIReviewerTransportTests(unittest.TestCase):
     def setUp(self):
         self.request = dict(instructions=SEMANTIC_POLICY, assessment_schema=ASSESSMENT_SCHEMA,
+                            wire_schema=transport_schema(ASSESSMENT_SCHEMA),
                             expected_model="gpt-6-astra", expected_effort="max")
         self.request["request_digest"] = digest(self.request)
         self.assessment = dict(claim_verdicts=[dict(claim_id="a:c1", verdict="supported",
@@ -45,7 +46,7 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
         result = self.call()
         sent = json.loads(self.opener.requests[0][0].data)
         self.assertEqual(sent["reasoning"], {"effort":"max"})
-        self.assertEqual(sent["text"]["format"]["schema"], ASSESSMENT_SCHEMA)
+        self.assertEqual(sent["text"]["format"]["schema"], transport_schema(ASSESSMENT_SCHEMA))
         self.assertFalse(sent["store"])
         self.assertEqual(len(self.opener.requests), 1)
         self.assertEqual(result["request_digest"], self.request["request_digest"])
@@ -91,6 +92,75 @@ class OpenAIReviewerTransportTests(unittest.TestCase):
                 body=copy.deepcopy(self.body); body["output"]=value
                 with self.assertRaises(Rejected):
                     self.call(body=body)
+
+    def test_snapshot_model_name_is_accepted_and_recorded(self):
+        # api_uyum-3: providers answer with a dated snapshot of the requested model.
+        self.body["model"] = "gpt-6-astra-2026-09-01"
+        self.assertEqual(self.call()["provider_model"], "gpt-6-astra-2026-09-01")
+
+    def test_unrelated_model_is_rejected(self):
+        self.body["model"] = "gpt-5"
+        with self.assertRaisesRegex(Rejected, "MODEL_MISMATCH"):
+            self.call()
+
+    def test_http_error_classes_are_distinguished_without_body(self):
+        # api_uyum-6 / K-13: the caller learns the class, never the provider body.
+        import urllib.error
+        for code, expected in ((400, "HTTP_4XX"), (429, "HTTP_4XX"), (503, "HTTP_5XX")):
+            with self.subTest(code=code):
+                class Failing:
+                    def open(self, request, timeout):
+                        raise urllib.error.HTTPError(request.full_url, code, "x", {},
+                                                     io.BytesIO(b"secret body"))
+                with patch.dict("os.environ", {"OPENAI_API_KEY": "k"}, clear=True), \
+                        self.assertRaisesRegex(Rejected, expected) as cm:
+                    review(self.request, opener=Failing())
+                self.assertNotIn("secret", str(cm.exception))
+
+    def test_incomplete_reason_is_reported(self):
+        self.body["status"] = "incomplete"
+        self.body["incomplete_details"] = {"reason": "max_output_tokens"}
+        with self.assertRaisesRegex(Rejected, "INCOMPLETE:max_output_tokens"):
+            self.call()
+
+    def test_reasoning_items_are_ignored(self):
+        # api_uyum-8: Responses output interleaves reasoning items with messages.
+        self.body["output"].insert(0, dict(type="reasoning", summary=[]))
+        self.assertEqual(self.call()["provider_model"], "gpt-6-astra")
+
+    def test_transport_schema_has_no_length_constraints(self):
+        # api_uyum-1: server acceptance of length keywords under strict is unverified,
+        # so they are not sent; enum/required/additionalProperties still are.
+        wire = transport_schema(ASSESSMENT_SCHEMA)
+        text = json.dumps(wire)
+        for key in ("minLength", "maxLength", "minItems", "maxItems"):
+            self.assertNotIn(key, text)
+        self.assertIn("additionalProperties", text)
+        self.assertIn("required", text)
+        self.call()
+        self.assertEqual(json.loads(self.opener.requests[0][0].data)["text"]["format"]["schema"], wire)
+
+    def test_wire_schema_must_match_the_host_transport_schema(self):
+        request = copy.deepcopy(self.request)
+        request["wire_schema"] = {"type": "object"}
+        request["request_digest"] = digest({k: v for k, v in request.items() if k != "request_digest"})
+        with self.assertRaisesRegex(Rejected, "REVIEW_POLICY_MISMATCH"):
+            self.call(request=request)
+
+    def test_proxy_comes_only_from_config_env(self):
+        # api_uyum-13: the ambient HTTPS_PROXY is never trusted; configuration is explicit.
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "k", "HTTPS_PROXY": "http://ignored:1",
+                                       "ASTRA_HTTPS_PROXY": "http://cfg:2"}, clear=True):
+            proxies = [h.proxies for h in build_opener().handlers if hasattr(h, "proxies")]
+        self.assertEqual(proxies, [{"https": "http://cfg:2", "http": "http://cfg:2"}])
+
+    def test_opener_without_config_uses_no_proxy(self):
+        # urllib drops a ProxyHandler with no entries, so "no proxy handler" is the
+        # observable form of "no proxy"; the ambient HTTPS_PROXY stays unused.
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "k", "HTTPS_PROXY": "http://ignored:1"},
+                        clear=True):
+            proxies = [h.proxies for h in build_opener().handlers if getattr(h, "proxies", None)]
+        self.assertEqual(proxies, [])
 
 
 if __name__ == "__main__":

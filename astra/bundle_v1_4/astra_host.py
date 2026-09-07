@@ -40,6 +40,25 @@ REVIEW_RESPONSE_SCHEMA = obj({
     "provider_model": ID, "provider_effort": ID,
     "assessment": ASSESSMENT_SCHEMA,
 })
+MIN_VERDICT_BYTES = 451  # measured, see tests/test_host_integration.py:
+                         # test_min_verdict_bytes_is_a_measurement
+
+
+def transport_schema(schema):
+    """Wire schema without length keywords; the host still validates the full schema.
+
+    Whether a provider accepts minLength/maxLength/minItems/maxItems under strict
+    json_schema is UNVERIFIED here (no live call was possible). Dropping them on the
+    wire removes that dependency without weakening validation, which happens locally.
+    """
+    if type(schema) is dict:
+        return {k: transport_schema(v) for k, v in schema.items()
+                if k not in {"minLength", "maxLength", "minItems", "maxItems"}}
+    if type(schema) is list:
+        return [transport_schema(x) for x in schema]
+    return schema
+
+
 COMPARISON_REQUIREMENT_SCHEMA = obj({
     "requirement_id": ID, "scope_id": ID, "claim_ids": array(ID, 320, 1),
     "direction": string(30, values=["lower_is_better", "higher_is_better"]),
@@ -180,12 +199,18 @@ class ReviewerEndpoint:
     effort: str
     timeout: float = 60.0
     credential_env: tuple[str, ...] = ()
+    network: tuple = ()  # (("proxy", url), ("ca_bundle", path)) — never read from the ambient env
 
     def __post_init__(self):
         if type(self.argv) not in (tuple, list):
             raise Rejected("INVALID_COMMAND")
         object.__setattr__(self, "argv", tuple(self.argv))
         object.__setattr__(self, "credential_env", tuple(self.credential_env))
+        network = dict(self.network) if type(self.network) in (tuple, list, dict) else None
+        if network is None or any(k not in {"proxy", "ca_bundle"} or (v is not None and type(v) is not str)
+                                  for k, v in network.items()):
+            raise Rejected("REVIEWER_NETWORK_CONFIGURATION")
+        object.__setattr__(self, "network", tuple(sorted(network.items())))
         validate_argv(list(self.argv))
         if self.kind not in {"EXTERNAL_MODEL", "TEST_FIXTURE"}:
             raise Rejected("REVIEWER_KIND")
@@ -210,6 +235,11 @@ class ReviewerEndpoint:
             if not os.environ.get(name):
                 raise Rejected("REVIEWER_CREDENTIAL_MISSING")
             environment[name] = os.environ[name]
+        settings = dict(self.network)
+        if settings.get("proxy"):
+            environment["ASTRA_HTTPS_PROXY"] = settings["proxy"]
+        if settings.get("ca_bundle"):
+            environment["ASTRA_CA_BUNDLE"] = settings["ca_bundle"]
         try:
             raw = invoke(list(self.argv), canonical(request), self.timeout,
                          environment=environment)
@@ -221,7 +251,10 @@ class ReviewerEndpoint:
             raise Rejected("REVIEWER_UNAVAILABLE") from exc
         if response["request_digest"] != request["request_digest"]:
             raise Rejected("SEMANTIC_REVIEW_BINDING")
-        if response["provider_model"] != self.model or response["provider_effort"] != self.effort:
+        # A dated snapshot of the pinned model is the same model; anything else is not.
+        served = response["provider_model"]
+        if not (served == self.model or served.startswith(self.model + "-")) \
+                or response["provider_effort"] != self.effort:
             raise Rejected("REVIEWER_CONFIGURATION_MISMATCH")
         return response
 
@@ -273,6 +306,8 @@ class TrustedHost:
             raise Rejected("HOST_SOURCE_SCOPE")
         self._vault.assert_current()
         snapshots = self._vault.contents()
+        if len(cards) * MIN_VERDICT_BYTES > WIRE_LIMIT:
+            raise Rejected("REVIEW_BUDGET_EXCEEDED")  # no lawful reply could fit the wire
         results = []
         for requirement in contract["comparisons"]:
             if not set(requirement["claim_ids"]).issubset(decision["claim_ids"]):
@@ -303,7 +338,8 @@ class TrustedHost:
                        comparison_requirements=contract["comparisons"], comparison_results=results,
                        comparison_exemption=contract["comparison_exemption"],
                        expected_model=self._reviewer.model, expected_effort=self._reviewer.effort,
-                       assessment_schema=ASSESSMENT_SCHEMA)
+                       assessment_schema=ASSESSMENT_SCHEMA,
+                       wire_schema=transport_schema(ASSESSMENT_SCHEMA))
         request["request_digest"] = digest(request)
         controller.log("SEMANTIC_REVIEW_STARTED", {"request_digest": request["request_digest"],
                        "reviewer_kind": self._reviewer.kind})

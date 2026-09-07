@@ -357,6 +357,11 @@ def invoke(argv, request, timeout, *, environment=None):
             except subprocess.TimeoutExpired as e:
                 raise TimeoutError("MISSING") from e
             if code != 0:
+                # A worker may declare its own rejection code on the first stderr line.
+                # Free-form text is never trusted as a code.
+                first = bytes(error).decode("utf-8", "replace").splitlines()[:1]
+                if first and re.fullmatch(r"[A-Z0-9_:]{3,80}", first[0]):
+                    raise Rejected(first[0])
                 raise Rejected("WORKER_EXIT")
             return bytes(output)
         finally:
