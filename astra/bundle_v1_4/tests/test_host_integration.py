@@ -31,14 +31,14 @@ class HostIntegrationTests(unittest.TestCase):
                 as_of=(now-timedelta(seconds=2)).isoformat(), valid_until=(now+timedelta(hours=1)).isoformat()))
             self.rows.append(dict(context, entity=("A", "B")[i], source_id=f"s{i}", quote=quote, value=value))
 
-    def build(self, mode="pass", *, requirements=None, reviewer=True, task=TASK):
+    def build(self, mode="pass", *, requirements=None, reviewer=True, task=TASK, worker=WORKER):
         self.vault = SourceVault(self.specs)
         self.requirements = [dict(requirement_id="latency", scope_id="comparison",
             claim_ids=["a:c1", "b:c1", "c:c1"], direction="lower_is_better", rows=self.rows)] if requirements is None else requirements
         host = TrustedHost(task=task, scope_ids=["comparison"], source_vault=self.vault,
             comparisons=self.requirements, comparison_exemption=None if self.requirements else "No comparison is required.",
             reviewer=fixture_reviewer(mode, .15 if mode == "timeout" else 2) if reviewer else None)
-        workers = {wid: dict(role=role, argv=[sys.executable, WORKER])
+        workers = {wid: dict(role=role, argv=[sys.executable, worker])
                    for wid, role in zip(("a", "b", "c"), ("model", "counterexample", "evidence"))}
         self.controller = Controller(workers, ["comparison"], ["s0", "s1"], host=host, max_restarts=0)
         self.assertEqual(self.controller.run(TASK).status, "PHASE_VALIDATED")
@@ -90,7 +90,34 @@ class HostIntegrationTests(unittest.TestCase):
         self.build()
         self.assert_closed("COMPARISON_INCOMPLETE")
 
-    def test_lexically_matching_wrong_meaning_rejects_reviewer_verdict(self):
+    def test_noncritical_uncertain_card_outside_decision_is_published(self):
+        # K-01 / celiski-2: an honest 'uncertain' card must not close the gate by itself.
+        self.build(worker=str(Path(__file__).with_name("uncertain_worker_fixture.py").resolve()),
+                   requirements=[])
+        self.decision["claim_ids"] = ["a:c1", "c:c1"]
+        result = self.finish()
+        self.assertEqual(result["status"], "LOCAL_CHECKS_PASSED", result)
+        verdicts = {v["claim_id"]: v["verdict"] for v in
+                    result["host_verification"]["reviewer_response"]["assessment"]["claim_verdicts"]}
+        self.assertEqual(verdicts["b:c1"], "uncertain")
+
+    def test_uncertain_card_selected_by_decision_closes_gate(self):
+        self.build(worker=str(Path(__file__).with_name("uncertain_worker_fixture.py").resolve()),
+                   requirements=[])
+        self.decision["claim_ids"] = ["a:c1", "b:c1", "c:c1"]
+        self.assert_closed("SEMANTIC_CLAIM_UNSUPPORTED")
+
+    def test_host_alone_does_not_detect_wrong_meaning(self):
+        """Documents the limit: the host checks bindings, not meaning (test_kapsam-1)."""
+        for spec, row in zip(self.specs, self.rows):
+            row["quote"] = "Request count {} requests. Latency was not measured.".format(row["value"])
+            Path(spec["path"]).write_text(row["quote"])
+        self.build(mode="pass")
+        self.assertEqual(self.finish()["status"], "LOCAL_CHECKS_PASSED")
+
+    def test_fixture_uncertain_verdict_on_decision_claim_closes_gate(self):
+        # Renamed from test_lexically_matching_wrong_meaning_rejects_reviewer_verdict: the
+        # rejection comes from the fixture's unconditional 'uncertain' label, not from meaning.
         for quote in ("Request count {value} requests. Latency was not measured.",
                       "Median latency is not {value} ms; this is a timeout."):
             with self.subTest(quote=quote):

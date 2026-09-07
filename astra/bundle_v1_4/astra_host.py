@@ -73,8 +73,10 @@ Return one assessment with exactly one verdict for every global claim ID and
 comparison requirement ID. Quote actual source passages (not just numerals).
 For sourced claims, cover every cited source with a real excerpt. Supported
 means the proposition is supported; refuted means it is refuted. The host will
-compare this verdict to the claim's declared stance. Uncertainty, unsupported
-conditions, unexamined counterevidence or unresolved conflict closes the gate.
+compare this verdict to the claim's declared stance. Mark uncertainty honestly as
+uncertain; an uncertain verdict on a critical claim or on a claim selected by the
+candidate decision closes the gate, and unsupported conditions, unexamined
+counterevidence or unresolved conflict close it too.
 Review the complete concrete decision, owner, guard, stop rule, cost, residual
 risk and coverage. A syntactically valid JSON object is not evidence of truth.
 Give short evidence-based reasons, never private chain-of-thought.
@@ -295,9 +297,14 @@ class TrustedHost:
         unique([v["claim_id"] for v in verdicts])
         if {v["claim_id"] for v in verdicts} != set(cards):
             raise Rejected("SEMANTIC_REVIEW_COVERAGE")
+        expected = {"support": "supported", "refute": "refuted", "uncertain": "uncertain"}
+        selected = set(decision["claim_ids"])
         for verdict in verdicts:
             card = cards[verdict["claim_id"]]
-            if verdict["verdict"] != {"support": "supported", "refute": "refuted", "uncertain": "uncertain"}[card["stance"]] or verdict["verdict"] == "uncertain":
+            if verdict["verdict"] != expected[card["stance"]]:
+                raise Rejected("SEMANTIC_CLAIM_UNSUPPORTED")
+            # Honest uncertainty survives; it closes the gate only where it would carry a decision.
+            if verdict["verdict"] == "uncertain" and (card["critical"] or verdict["claim_id"] in selected):
                 raise Rejected("SEMANTIC_CLAIM_UNSUPPORTED")
             if not verdict["conditions_preserved"] or not verdict["counterevidence_checked"]:
                 raise Rejected("SEMANTIC_CONDITIONS_UNVERIFIED")
