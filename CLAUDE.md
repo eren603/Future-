@@ -1,3 +1,9 @@
+## Grafik ekranı ve çoklu periyot çalışması — kapsam kuralı
+
+Kullanıcı ekran üzerinde yön/giriş/çıkış analizi istediğinde `.claude/skills/grafik-calisma/SKILL.md` içindeki C0 ve `chart_workflow.py` sözleşmesini uygula. Tek karar kaydında görsel ilk bacak çıkarımı, yapısal bias, koşullu giriş ve ölçülmüş başarı kanıtı ayrı kalır. Grafik işi tek başına bütün piramidi, eski model eğitimlerini veya hafıza öğrenmesini çalıştırma talimatı değildir. Güncel kullanıcı amacı ve yetkisi belirleyicidir.
+
+Aşağıdaki tarihsel piramit/strateji yönergeleri ilgili piramit işi istendiğinde geçerlidir. Kalibrasyon artık tüketiciden önce aktarılır; `sinyal_izni`/`validated_edge` ve zaman sözleşmesi olmadan grafik katkısı istatistiksel doğrulanmış sayılmaz. `YON_BIAS` işlem yetkisi değildir. `prob_profit=None` gelecekte kâr olasılığı ölçülmediği anlamına gelir; sabit getiri permütasyonu bu kanıtı üretmez.
+
 # Future- — Proje Yönergesi
 
 Bu depo finans/kripto piyasa analizi odaklıdır (Binance futures, fable paneli,

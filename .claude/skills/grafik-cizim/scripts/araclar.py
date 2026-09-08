@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 
-from tuval import bicim_fiyat, ema as _ema_hesap, sma as _sma_hesap
+from tuval import bicim_fiyat, ema as _ema_hesap, sma as _sma_hesap, _oz
 
 FIB_VARSAYILAN = [0.0, 0.236, 0.382, 0.5, 0.618, 0.705, 0.786, 1.0]
 FIB_GENISLEME = [0.0, 0.618, 1.0, 1.272, 1.618, 2.0, 2.618]
@@ -50,7 +50,7 @@ def _renk(t, s, varsayilan_anahtar="vurgu", anahtar="renk"):
     r = s.get(anahtar)
     if not r:
         return t.t.get(varsayilan_anahtar, varsayilan_anahtar)
-    return t.t.get(r, r)
+    return _oz(t.t.get(r, r))
 
 
 def _sag_kenar(t, s):
@@ -162,12 +162,30 @@ def dikdortgen_ciz(t, s):
 
 
 # ----------------------------------------------------- 5) paralel kanal
+def _channel_prices(t, s, ratios):
+    points = []
+    for key in ('p1','p2','p3'):
+        raw=s[key]
+        if isinstance(raw,(list,tuple)):
+            raw={'bar':raw[0],'fiyat':raw[1]}
+        bar=t.bar_indeks({'zaman':raw['zaman']} if 'zaman' in raw else raw.get('bar'))
+        price=float(raw['fiyat'])
+        if not math.isfinite(price) or (t.log and price <= 0):
+            raise ValueError('kanal fiyatları sonlu; log ölçekte pozitif olmalı')
+        points.append((bar,math.log(price) if t.log else price))
+    (b1,f1),(b2,f2),(b3,f3)=points
+    if b1 == b2:
+        raise ValueError('kanal taban noktaları farklı barlarda olmalı')
+    slope=(f2-f1)/(b2-b1)
+    offset=f3-(f1+slope*(b3-b1))
+    right=t.bar_indeks(s['bar_bitis']) if s.get('bar_bitis') is not None else t.n+t.sag_bosluk-.5
+    ends=(-.5,right) if s.get('uzat',True) else (b1,b2)
+    return [math.exp(value) if t.log else value for bar in ends for ratio in ratios
+            for value in [f1+slope*(bar-b1)+offset*ratio]]
+
+
 def paralel_kanal_fiyat(t, s):
-    f = _nokta_fiyat(s, "p1") + _nokta_fiyat(s, "p2") + _nokta_fiyat(s, "p3")
-    if len(f) >= 3:
-        d = f[2] - f[0]
-        f += [f[0] + d, f[1] + d]
-    return f
+    return _channel_prices(t,s,[0,1])
 
 
 def paralel_kanal_ciz(t, s):
@@ -194,13 +212,20 @@ def paralel_kanal_ciz(t, s):
 
 # ------------------------------------------------ 6) regresyon kanalı
 def _regresyon(t, s):
-    b1 = int(t.bar_indeks(s.get("bar_baslangic", 0)))
-    b2 = int(t.bar_indeks(s.get("bar_bitis", t.n - 1)))
-    b1, b2 = max(0, min(b1, b2)), min(t.n - 1, max(b1, b2))
+    offset = getattr(t,'display_start',0)
+    history = getattr(t,'history',t.m)
+    if '_history_range' in s:
+        b1,b2 = map(int,s['_history_range'])
+    else:
+        b1 = int(t.bar_indeks(s.get('bar_baslangic',0)))+offset
+        b2 = int(t.bar_indeks(s.get('bar_bitis',t.n-1)))+offset
+    b1,b2=max(0,min(b1,b2)),min(len(history)-1,max(b1,b2))
     if b2 - b1 < 3:
         raise ValueError("regresyon_kanali için en az 4 bar gerekli")
     kaynak = str(s.get("kaynak", "close"))
-    y = [t.m[i][kaynak] for i in range(b1, b2 + 1)]
+    if len({history[i].get("segment_id",0) for i in range(b1,b2+1)}) > 1:
+        raise ValueError("regresyon zaman boşluğu üzerinden kurulamaz")
+    y = [history[i][kaynak] for i in range(b1, b2 + 1)]
     x = list(range(len(y)))
     nx = len(x)
     ox, oy = sum(x) / nx, sum(y) / nx
@@ -210,37 +235,41 @@ def _regresyon(t, s):
     kesme = oy - egim * ox
     art = [y[i] - (kesme + egim * x[i]) for i in range(nx)]
     sigma = math.sqrt(sum(a * a for a in art) / max(1, nx - 2))
-    return b1, b2, kesme, egim, sigma, nx
+    return b1-offset, b2-offset, kesme, egim, sigma, nx
 
 
 def regresyon_kanali_fiyat(t, s):
     b1, b2, kesme, egim, sigma, nx = _regresyon(t, s)
     k = float(s.get("sapma", 2.0))
-    uc = [kesme, kesme + egim * (nx - 1)]
+    uc = [kesme, kesme + egim * (nx - 1 + int(s.get("ileri_bar",0)))]
     return [v + d for v in uc for d in (-k * sigma, 0, k * sigma)]
 
 
 def regresyon_kanali_ciz(t, s):
-    b1, b2, kesme, egim, sigma, nx = _regresyon(t, s)
-    k = float(s.get("sapma", 2.0))
-    ileri = int(s.get("ileri_bar", 0))
-    xa, xb = t.x(b1), t.x(b2 + ileri)
-    fa, fb = kesme, kesme + egim * (nx - 1 + ileri)
-    renk = _renk(t, s)
-    ya, yb = t.y(fa), t.y(fb)
-    yau, ybu = t.y(fa + k * sigma), t.y(fb + k * sigma)
-    yad, ybd = t.y(fa - k * sigma), t.y(fb - k * sigma)
-    p = [f'<polygon points="{xa:.1f},{yau:.1f} {xb:.1f},{ybu:.1f} {xb:.1f},{ybd:.1f} '
-         f'{xa:.1f},{yad:.1f}" fill="{renk}" fill-opacity="'
-         f'{float(s.get("dolgu_saydam", 0.10))}"/>',
-         t.cizgi(xa, ya, xb, yb, renk, 1.4, kesik="5 4"),
-         t.cizgi(xa, yau, xb, ybu, renk, 1.6),
-         t.cizgi(xa, yad, xb, ybd, renk, 1.6)]
-    if s.get("etiket", True):
-        yon = "yükselen" if egim > 0 else "düşen"
-        p.append(_etiket(t, s, xa + 4, yau - 12,
-                         s.get("etiket") or f"regresyon {yon} ±{k:g}σ", renk))
-    return "".join(p)
+    b1,b2,intercept,slope,sigma,nx=_regresyon(t,s)
+    k=float(s.get('sapma',2.0)); forward=int(s.get('ileri_bar',0))
+    if forward < 0 or k < 0:
+        raise ValueError('ileri_bar ve sapma negatif olamaz')
+    color=_renk(t,s)
+    # Sample the arithmetic fit before the nonlinear screen transform.
+    steps=max(1,(nx-1+forward)*4)
+    coordinates=[]
+    for j in range(steps+1):
+        bar=b1+(nx-1+forward)*j/steps
+        value=intercept+slope*(bar-b1)
+        coordinates.append((t.x({'index':bar}),t.y(value),t.y(value+k*sigma),t.y(value-k*sigma)))
+    poly=' '.join(f'{x:.1f},{up:.1f}' for x,_,up,_ in coordinates)
+    poly+=' '+' '.join(f'{x:.1f},{down:.1f}' for x,_,_,down in reversed(coordinates))
+    parts=[f'<polygon points="{poly}" fill="{color}" fill-opacity="{float(s.get("dolgu_saydam",.10))}"/>']
+    for column,width in ((1,1.4),(2,1.6),(3,1.6)):
+        pts=' '.join(f'{point[0]:.1f},{point[column]:.1f}' for point in coordinates)
+        parts.append(f'<polyline points="{pts}" fill="none" stroke="{color}" stroke-width="{width}" stroke-dasharray="5 4"/>')
+    if forward:
+        parts.append(t.yazi(t.x({'index':b2})+4,t.ana_ust+15,'regresyon projeksiyonu',renk=color,boyut=10))
+    if s.get('etiket',True):
+        label=s.get('etiket') or f'OLS / bar · artık ±{k:g}σ (güven aralığı değil)'
+        parts.append(_etiket(t,s,max(t.sol+4,coordinates[0][0]+4),coordinates[0][2]-12,label,color))
+    return ''.join(parts)
 
 
 # ------------------------------------------------- 7) Fibonacci düzeltme
@@ -323,10 +352,7 @@ def fib_genisleme_ciz(t, s):
 
 # ------------------------------------------------- 9) Fibonacci kanalı
 def fib_kanal_fiyat(t, s):
-    f = [_nokta_fiyat(s, k)[0] for k in ("p1", "p2", "p3")]
-    gen = f[2] - f[0]
-    return [f[0] + gen * lv for lv in _fib_seviyeler(s)] + \
-           [f[1] + gen * lv for lv in _fib_seviyeler(s)]
+    return _channel_prices(t,s,_fib_seviyeler(s))
 
 
 def fib_kanal_ciz(t, s):
@@ -334,8 +360,8 @@ def fib_kanal_ciz(t, s):
     x2, y2, b2, f2 = _nokta(t, s, "p2")
     x3, y3, b3, f3 = _nokta(t, s, "p3")
     renk = _renk(t, s, "vurgu")
-    dy = y3 - y1
-    egim = (y2 - y1) / (x2 - x1) if x2 != x1 else 0.0
+    egim = (y2-y1)/(x2-x1) if x2 != x1 else 0.0
+    dy = y3-(y1+egim*(x3-x1))
     xs, xe = t.sol, _sag_kenar(t, s)
     p = []
     for lv in _fib_seviyeler(s):
@@ -438,7 +464,8 @@ def yol_ciz(t, s):
     if len(nk) < 2:
         return ""
     renk = _renk(t, s)
-    pts = " ".join(f"{t.x(p.get('bar')):.1f},{t.y(float(p['fiyat'])):.1f}" for p in nk)
+    pts = " ".join(f"{x:.1f},{y:.1f}" for point in nk
+                   for x,y,_,_ in [_nokta(t,{"p1":point},"p1")])
     return (f'<polyline points="{pts}" fill="none" stroke="{renk}" '
             f'stroke-width="{float(s.get("kalinlik", 1.8))}" '
             f'stroke-linejoin="round"/>')
@@ -450,7 +477,8 @@ def _pozisyon_fiyat(t, s):
 
 
 def _pozisyon_ciz(t, s, yon):
-    giris, stop, hedef = float(s["giris"]), float(s["stop"]), float(s["hedef"])
+    from plan_sozlesmesi import geometry
+    giris, stop, hedef, calculated_rr = geometry(s,yon)
     x1 = t.x(s.get("bar_baslangic", -1))
     x2 = _sag_kenar(t, s) if s.get("bar_bitis") is not None else min(
         t.sag, t.x(t.bar_indeks(s.get("bar_baslangic", -1)) + int(s.get("uzunluk_bar", 20))))
@@ -466,21 +494,23 @@ def _pozisyon_ciz(t, s, yon):
     p.append(t.cizgi(ok_x, yg, ok_x, yh, kar_renk, 1.8, ok=True))
     yuzde_h = (hedef - giris) / giris * 100.0
     yuzde_s = (stop - giris) / giris * 100.0
+    status_name={'draft':'TASLAK','conditional':'KOŞULLU','confirmed':'TEYİTLİ KOŞUL'}.get(s.get('_position',{}).get('status'),'TASLAK')
     p += [
-        t.etiket_kutu(x2 - 4, yh + 4, f"Hedef {bicim_fiyat(hedef)} ({yuzde_h:+.2f}%)",
+        t.etiket_kutu(x2 - 4, yh + 4, f"Hedef {bicim_fiyat(hedef)} (Δfiyat {yuzde_h:+.2f}%)",
                       kar_renk, hiza="end"),
-        t.etiket_kutu(x2 - 4, ys + 4, f"Stop {bicim_fiyat(stop)} ({yuzde_s:+.2f}%)",
+        t.etiket_kutu(x2 - 4, ys + 4, f"Stop {bicim_fiyat(stop)} (Δfiyat {yuzde_s:+.2f}%)",
                       zarar_renk, hiza="end"),
         t.etiket_kutu(x1 + 4, yg + 4,
-                      f"{'LONG' if yon == 'long' else 'SHORT'} giriş {bicim_fiyat(giris)}",
+                      f"{status_name} · {yon.upper()} giriş {bicim_fiyat(giris)}",
                       t.t["vurgu"]),
     ]
     if rr is not None:
         # r_etiketi rr_denetim'den geçmiş DEĞERDİR (çizim sözleşmesi). Yoksa ham
         # oran '(denetimsiz)' etiketiyle basılır (S7): şişirilmiş (dar-stop+uzak-
         # hedef) bir R yapay değeri denetimsiz "R:R" gibi sunulmasın.
-        etk = s.get("r_etiketi") or f"R:R {rr:.2f} (denetimsiz)"
-        p.append(t.etiket_kutu(ok_x, (yg + yh) / 2, etk, t.t["vurgu"], hiza="middle"))
+        labels = s.get('_position',{}).get('R_labels') or [f'R:R {rr:.2f} (denetimsiz)']
+        for j,label in enumerate(labels):
+            p.append(t.etiket_kutu(ok_x,(yg+yh)/2+j*21,label,t.t['vurgu'],hiza='middle'))
     for f, r in ((giris, t.t["vurgu"]), (stop, zarar_renk), (hedef, kar_renk)):
         if s.get("fiyat_etiketi", True):
             p.append(t.fiyat_ekseni_etiketi(f, r))
@@ -582,6 +612,9 @@ def _bos_kose(t, gen: float, yuk: float) -> str:
                 continue
             if max(t.y(c["high"]), y1) <= min(t.y(c["low"]), y2):  # kesişim
                 cakisma += 1
+        for a,b,c,d in getattr(t,'_label_boxes',[]):
+            if max(a,x1) <= min(c,x2) and max(b,y1) <= min(d,y2):
+                cakisma += 100
         if en_az is None or cakisma < en_az:
             en_iyi, en_az = kose, cakisma
     return en_iyi
@@ -622,11 +655,45 @@ def ma_fiyat(t, s):
 
 
 def _ma_seri(t, s):
-    per = int(s.get("period", 50))
-    kaynak = str(s.get("kaynak", "close"))
-    dizi = [c[kaynak] for c in t.m]
-    tip = str(s.get("tip", "ema")).lower()
-    return _ema_hesap(dizi, per) if tip == "ema" else _sma_hesap(dizi, per)
+    period=int(s.get('period',50))
+    if period < 1:
+        raise ValueError('MA period pozitif olmalı')
+    source=str(s.get('kaynak','close')); kind=str(s.get('tip','ema')).lower()
+    if kind not in ('ema','sma'):
+        raise ValueError('MA tip ema|sma olmalı')
+    history=getattr(t,'history',t.m); offset=getattr(t,'display_start',0)
+    result=[]; segment=[]; prior=None
+    calculate=_ema_hesap if kind=='ema' else _sma_hesap
+    for candle in history:
+        identifier=candle.get('segment_id',0)
+        if segment and identifier != prior:
+            result.extend(calculate(segment,period)); segment=[]
+        segment.append(candle[source]);prior=identifier
+    result.extend(calculate(segment,period))
+    return result[offset:offset+t.n]
+
+
+def _series_lines(t, series, color, width=1.6):
+    chunks=[]; points=[]; previous=None
+    for i,value in enumerate(series):
+        segment=t.m[i].get('segment_id',0)
+        if value is None or (previous is not None and segment != previous):
+            if points:
+                chunks.append(points)
+            points=[]
+        if value is not None:
+            points.append(f'{t.x(i):.1f},{t.y(value):.1f}')
+        previous=segment
+    if points:
+        chunks.append(points)
+    output=[]
+    for chunk in chunks:
+        if len(chunk)==1:
+            x,y=chunk[0].split(',')
+            output.append(f'<circle cx="{x}" cy="{y}" r="1.8" fill="{_oz(color)}"/>')
+        else:
+            output.append(f'<polyline points="{" ".join(chunk)}" fill="none" stroke="{_oz(color)}" stroke-width="{width}" stroke-linejoin="round"/>')
+    return ''.join(output)
 
 
 def ma_ciz(t, s):
@@ -638,8 +705,7 @@ def ma_ciz(t, s):
             f"ma({s.get('tip', 'ema')}{s.get('period', 50)}): bar sayısı yetersiz "
             f"({t.n} bar) — çizilmedi")
         return ""
-    p = [f'<polyline points="{" ".join(pts)}" fill="none" stroke="{renk}" '
-         f'stroke-width="{float(s.get("kalinlik", 1.6))}" stroke-linejoin="round"/>']
+    p = [_series_lines(t,seri,renk,float(s.get('kalinlik',1.6)))]
     if s.get("etiket", True):
         son = [v for v in seri if v is not None][-1]
         p.append(t.yazi(t.x(len(seri) - 1) + 6, t.y(son) + 4,
@@ -653,6 +719,8 @@ def _bulut_seri(t, s, anahtar):
     cfg = dict(s.get(anahtar) or {})
     if cfg.get("deger") is not None:
         d = [None if v is None else float(v) for v in cfg["deger"]]
+        if len(d) == len(getattr(t,'history',t.m)):
+            d=d[getattr(t,'display_start',0):]
         return (d + [None] * t.n)[:t.n]
     if cfg.get("fiyat") is not None:
         return [float(cfg["fiyat"])] * t.n
@@ -688,8 +756,7 @@ def bulut_ciz(t, s):
         for seri, renk in ((a, ust_renk), (b, alt_renk)):
             pts = [f"{t.x(i):.1f},{t.y(v):.1f}" for i, v in enumerate(seri) if v is not None]
             if pts:
-                p.append(f'<polyline points="{" ".join(pts)}" fill="none" stroke="{renk}" '
-                         f'stroke-width="1.2" stroke-opacity="0.9"/>')
+                p.append(_series_lines(t,seri,renk,1.2))
     if not p:
         t.uyarilar.append("bulut: iki seri de hesaplanamadı — çizilmedi (VERİ YOK)")
     return "".join(p)

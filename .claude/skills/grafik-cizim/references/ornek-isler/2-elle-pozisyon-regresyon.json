@@ -4,7 +4,7 @@
   },
   "son_bar": 150,
   "baslik": "ETHUSDT · 4H · Binance",
-  "alt_baslik": "elle çizim demosu — regresyon kanalı + LONG pozisyon aracı + gelecek projeksiyonu",
+  "alt_baslik": "TASLAK DEMO — fiyatlar güncel ölçüm/işlem kararı değildir",
   "tema": "koyu",
   "sag_bosluk_bar": 45,
   "paneller": [
@@ -33,8 +33,7 @@
       "stop": 1830.35,
       "hedef": 1975.0,
       "bar_baslangic": -1,
-      "uzunluk_bar": 40,
-      "r_etiketi": "R 1.35 (emir_plani)"
+      "uzunluk_bar": 40
     },
     {
       "arac": "olcum",
@@ -58,5 +57,7 @@
       "renk": "olumsuz"
     }
   ],
-  "cikti": "cikti/eth_elle.svg"
+  "cikti": "cikti/eth_elle.svg",
+  "price_unit": "USDT",
+  "timezone": "UTC"
 }

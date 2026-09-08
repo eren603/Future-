@@ -30,213 +30,243 @@ yapıdan alır. Okunamayan/eksik alan "VERİ YOK" olarak raporlanır.
 from __future__ import annotations
 
 import argparse
+import copy
+import hashlib
 import json
 import sys
+import shutil
+import subprocess
+import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 BURASI = Path(__file__).resolve().parent
 if str(BURASI) not in sys.path:
     sys.path.insert(0, str(BURASI))
+import araclar as A
+from tuval import Tuval
+import veri_sozlesmesi as V
+import plan_sozlesmesi as P
 
-import araclar as A  # noqa: E402
-from tuval import Tuval  # noqa: E402
-
-KOK = BURASI.parents[3] if len(BURASI.parents) >= 4 else Path.cwd()
-MOTOR = KOK / "engine"
-
-
-class CizimError(Exception):
-    pass
-
-
-# ------------------------------------------------------------------ veri
-def _kline_yukle(yol: Path) -> tuple[list, str]:
-    """Mum listesi + kaynak etiketi. Önce deponun KENDİ parser'ı denenir."""
-    if MOTOR.exists() and str(MOTOR) not in sys.path:
-        sys.path.insert(0, str(MOTOR))
-    try:
-        import karar_motoru as km  # noqa: PLC0415
-
-        bars = km.parse_klines(str(yol))
-        return ([{"open": b.o, "high": b.h, "low": b.l, "close": b.c,
-                  "volume": b.v, "time": b.t} for b in bars],
-                "engine/karar_motoru.parse_klines")
-    except Exception:  # noqa: BLE001 — motor yoksa yedek parser
-        pass
-    ham = json.loads(yol.read_text(encoding="utf-8"))
-    mumlar = []
-    for r in ham:
-        if isinstance(r, (list, tuple)) and len(r) >= 5:
-            mumlar.append({"time": int(r[0]), "open": float(r[1]), "high": float(r[2]),
-                           "low": float(r[3]), "close": float(r[4]),
-                           "volume": float(r[5]) if len(r) > 5 else 0.0})
-        elif isinstance(r, dict):
-            # Eksik alanlı satır ATLANIR (S1): open/o ikisi de yoksa float(None)
-            # TypeError ile TÜM motoru çökertirdi (satır bazlı atlama yoktu).
-            o = r.get("open", r.get("o")); h = r.get("high", r.get("h"))
-            l = r.get("low", r.get("l")); c = r.get("close", r.get("c"))
-            if None in (o, h, l, c):
-                continue
-            mumlar.append({
-                "time": int(r.get("time") or r.get("t") or 0) or None,
-                "open": float(o), "high": float(h), "low": float(l),
-                "close": float(c),
-                "volume": float(r.get("volume", r.get("v", 0)) or 0)})
-    return mumlar, "yedek parser (cizim.py)"
+KOK = BURASI.parents[3]
+CizimError = V.VeriError
 
 
 def mumlari_getir(job: dict, taban: Path) -> tuple[list, str]:
-    veri = job.get("veri") or {}
-    if veri.get("mumlar"):
-        m = [{"open": float(c.get("open", c.get("o"))),
-              "high": float(c.get("high", c.get("h"))),
-              "low": float(c.get("low", c.get("l"))),
-              "close": float(c.get("close", c.get("c"))),
-              "volume": float(c.get("volume", c.get("v", 0)) or 0),
-              "time": c.get("time", c.get("t"))} for c in veri["mumlar"]]
-        kaynak = "job.veri.mumlar"
-    elif veri.get("kline"):
-        yol = Path(veri["kline"])
-        if not yol.is_absolute():
-            yol = (taban / yol) if (taban / yol).exists() else (KOK / yol)
-        if not yol.exists():
-            raise CizimError(f"kline dosyası yok: {veri['kline']}")
-        m, kaynak = _kline_yukle(yol)
-        kaynak = f"{yol} ({kaynak})"
-    else:
-        raise CizimError("veri.kline ya da veri.mumlar gerekli")
-    if not m:
-        raise CizimError("mum listesi boş")
-    n = int(job.get("son_bar", 0) or 0)
-    if n and len(m) > n:
-        m = m[-n:]
-    return m, kaynak
+    """Return all eligible history; son_bar is a viewport, never a calculation filter."""
+    candles, source, _ = V.load(job, taban, KOK)
+    return candles, source
 
 
-# ------------------------------------------------------------------ çizim
 def _normalize(spec: dict) -> dict:
-    s = dict(spec)
-    ham = str(s.get("arac", "")).strip().lower()
-    if ham in ("ema", "sma"):
-        s.setdefault("tip", ham)
-    s["arac"] = A.coz(ham)
+    s = copy.deepcopy(spec)
+    ham = str(s.get('arac', '')).strip().lower()
+    if ham in ('ema', 'sma'):
+        s.setdefault('tip', ham)
+    s['arac'] = A.coz(ham)
+    s.pop('_position', None)
+    # Timestamp points follow the same epoch normalization as source candles.
+    for point in [s.get(k) for k in ('p1','p2','p3')] + list(s.get('noktalar') or []):
+        if isinstance(point, dict) and point.get('zaman') is not None:
+            point['zaman'] = V.timestamp_ms(point['zaman'])
     return s
 
 
-def uygula(job: dict, taban: Path) -> dict:
-    mumlar, kaynak = mumlari_getir(job, taban)
-    cizimler = [_normalize(c) for c in (job.get("cizimler") or [])]
-    uyari: list[str] = []
+def _remap_history(spec, offset, total):
+    """Internal explicit index refs keep off-left anchors distinct from -1=last."""
+    s = copy.deepcopy(spec)
+    def ref(value):
+        if isinstance(value, dict):
+            return value
+        number = float(value)
+        if number < 0:
+            number += total
+        return {'index': number-offset}
+    if s['arac'] == 'regresyon_kanali':
+        a = s.get('bar_baslangic', 0); b = s.get('bar_bitis', total-1)
+        a = total + int(a) if float(a) < 0 else int(a)
+        b = total + int(b) if float(b) < 0 else int(b)
+        s['_history_range'] = [a,b]
+    for key in ('bar_baslangic','bar_bitis','bar'):
+        if s.get(key) is not None:
+            s[key] = ref(s[key])
+    for point in [s.get(k) for k in ('p1','p2','p3')] + list(s.get('noktalar') or []):
+        if isinstance(point, dict) and point.get('bar') is not None:
+            point['bar'] = ref(point['bar'])
+    return s
 
-    oto = job.get("otomatik")
+
+def _inkscape_png(svg_path, png_path, width):
+    executable=shutil.which('inkscape')
+    if executable is None:
+        raise RuntimeError('PNG için cairosvg veya Inkscape gerekli')
+    try:
+        result=subprocess.run([executable,str(svg_path),'--export-type=png',
+                               f'--export-filename={png_path}',f'--export-width={width}'],
+                              capture_output=True,text=True,timeout=30,check=False)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError('Inkscape PNG dönüşümü 30 saniyede tamamlanmadı') from exc
+    if result.returncode!=0:
+        detail=' '.join((result.stderr or '').split())[:240]
+        raise RuntimeError(f'Inkscape PNG çıkış {result.returncode}: {detail}')
+    if not png_path.exists() or png_path.stat().st_size<=8:
+        raise RuntimeError('Inkscape başarılı PNG dosyası üretmedi')
+
+
+def _export_png(svg,svg_path,width):
+    # A fallback dependency must not hide invalid XML/SVG input.
+    root=ET.fromstring(svg)
+    if root.tag.rsplit('}',1)[-1]!='svg':
+        raise ValueError('PNG kaynağı SVG değil')
+    destination=svg_path.with_suffix('.png')
+    with tempfile.TemporaryDirectory(prefix='chart-png-',dir=str(svg_path.parent)) as temp:
+        pending=Path(temp)/'render.png'
+        try:
+            import cairosvg
+        except ImportError:
+            _inkscape_png(svg_path,pending,width)
+            engine='inkscape'
+        else:
+            cairosvg.svg2png(bytestring=svg.encode(),write_to=str(pending),output_width=width)
+            engine='cairosvg'
+        if not pending.exists() or pending.read_bytes()[:8]!=b'\x89PNG\r\n\x1a\n':
+            raise RuntimeError('PNG çıktısı bulunamadı veya dosya imzası geçersiz')
+        pending.replace(destination)
+    return destination,engine
+
+
+def uygula(job: dict, taban: Path) -> dict:
+    history, kaynak, manifest = V.load(job, taban, KOK)
+    count = int(job.get('son_bar', 0) or 0)
+    if count < 0:
+        raise CizimError('son_bar negatif olamaz')
+    offset = max(0, len(history)-count) if count else 0
+    mumlar = history[offset:]
+    contract = manifest['time_contract']
+    uyari = list(contract.get('warnings', []))
+    if str(job.get('timezone', 'UTC')).upper() != 'UTC':
+        raise CizimError('bu motor UTC çizer; farklı timezone etiketi kabul edilmez')
+    if not job.get('price_unit'):
+        uyari.append('fiyat birimi belirtilmedi; birim etiketi belirsiz')
+    context = dict(manifest, final_decision=job.get('final_decision'),case_sha256=job.get('case_sha256'))
+    cizimler = []
+    for raw in job.get('cizimler') or []:
+        spec = _normalize(raw)
+        if spec.get('bar_space') == 'history':
+            spec = _remap_history(spec, offset, len(history))
+        else:
+            spec.pop('_history_range', None)
+        cizimler.append(spec)
+    oto = job.get('otomatik')
     oto_rapor = None
     if oto:
-        import otomatik_cizim as OC  # noqa: PLC0415
-
-        oto_cizim, oto_rapor = OC.uret(mumlar, oto, taban=taban)
-        cizimler = [_normalize(c) for c in oto_cizim] + cizimler
-        uyari += oto_rapor.get("uyarilar", [])
-
-    t = Tuval(
-        mumlar,
-        genislik=int(job.get("genislik", 1600)),
-        yukseklik=int(job.get("yukseklik", 900)),
-        tema=str(job.get("tema", "koyu")),
-        log_olcek=bool(job.get("log_olcek", False)),
-        sag_bosluk_bar=int(job.get("sag_bosluk_bar", 25)),
-        baslik=str(job.get("baslik", "")),
-        alt_baslik=str(job.get("alt_baslik", "")),
-        paneller=job.get("paneller") or [],
-        dipnot=str(job.get("dipnot", "")),
-    )
-
-    # 1. geçiş — ölçeğe rezerve (çizimler grafik dışına taşmasın)
-    gecerli = []
-    for s in cizimler:
+        import otomatik_cizim as OC
+        cfg = dict(oto) if isinstance(oto, dict) else {}
+        cfg['_context'] = context
+        for key in ('c0','cutoff','as_of','timeframe','interval_seconds'):
+            if key in job:
+                cfg[key] = job[key]
+        oto_cizim, oto_rapor = OC.uret(history, cfg, taban=taban)
+        cizimler = [_remap_history(_normalize(c), offset, len(history)) for c in oto_cizim] + cizimler
+        uyari += oto_rapor.get('uyarilar', [])
+    panels = copy.deepcopy(job.get('paneller') or [])
+    for panel in panels:
+        if isinstance(panel.get('deger'), list) and len(panel['deger']) == len(history):
+            panel['deger'] = panel['deger'][offset:]
+    status_label = 'C0 kapanmış mumlar' if contract.get('status') == 'verified' and contract.get('cutoff_ms') is not None else 'TASLAK · time_unverified'
+    subtitle = ' · '.join(filter(None, (str(job.get('alt_baslik','')), status_label)))
+    t = Tuval(mumlar, history=history, display_start=offset,
+              genislik=int(job.get('genislik',1600)), yukseklik=int(job.get('yukseklik',900)),
+              tema=str(job.get('tema','koyu')), log_olcek=bool(job.get('log_olcek',False)),
+              sag_bosluk_bar=int(job.get('sag_bosluk_bar',25)), baslik=str(job.get('baslik','')),
+              alt_baslik=subtitle, paneller=panels, dipnot=str(job.get('dipnot','')),
+              price_unit=str(job.get('price_unit','birim belirtilmedi')),
+              volume_unit=str(job.get('volume_unit','')), timezone='UTC')
+    requested, skipped, valid = len(cizimler), [], []
+    for index, spec in enumerate(cizimler):
         try:
-            fiyat_fn, _ = A.arac(s["arac"])
-            t.rezerve(fiyat_fn(t, s))
-            gecerli.append(s)
-        except Exception as e:  # noqa: BLE001
-            uyari.append(f"{s.get('arac')}: atlandı — {e}")
+            if spec['arac'] in ('long_pozisyon','short_pozisyon'):
+                spec, messages = P.prepare(spec, context)
+                uyari += messages
+            int(spec.get('katman',A.katman(spec['arac'])))
+            prices, _ = A.arac(spec['arac'])
+            t.rezerve(prices(t,spec))
+            valid.append((index,spec))
+        except (ValueError,TypeError,KeyError,IndexError) as exc:
+            reason = f"{spec.get('arac')}: atlandı — {exc}"
+            uyari.append(reason); skipped.append({'index':index,'arac':spec.get('arac'),'reason':str(exc)})
     t.hazirla()
-
-    # 2. geçiş — katman sırasına göre çiz (bölgeler mumun arkası, etiketler önü)
-    arka, on, cizilen, seviyeler = [], [], [], []
-    for s in sorted(gecerli, key=lambda x: (int(x.get("katman", A.katman(x["arac"]))),)):
+    arka, on, drawn, levels, positions = [], [], [], [], []
+    for index, spec in sorted(valid,key=lambda item:int(item[1].get('katman',A.katman(item[1]['arac'])))):
         try:
-            fiyat_fn, ciz_fn = A.arac(s["arac"])
-            parca = ciz_fn(t, s)
-            z = int(s.get("katman", A.katman(s["arac"])))
-            (arka if z < 0 else on).append(parca)
-            cizilen.append(s["arac"])
-            seviyeler += [round(float(f), 8) for f in fiyat_fn(t, s)]
-        except Exception as e:  # noqa: BLE001
-            uyari.append(f"{s.get('arac')}: çizilemedi — {e}")
-    uyari += t.uyarilar
-
-    svg = t.render("".join(on), arka_svg="".join(arka))
-    cikti = Path(job.get("cikti") or "grafik.svg")
-    if not cikti.is_absolute():
-        cikti = taban / cikti
-    cikti.parent.mkdir(parents=True, exist_ok=True)
-    cikti.write_text(svg, encoding="utf-8")
-
-    rapor = {
-        "cikti": str(cikti),
-        "bicim": "svg",
-        "veri_kaynagi": kaynak,
-        "bar_sayisi": len(mumlar),
-        "son_fiyat": mumlar[-1]["close"],
-        "fiyat_araligi": {"alt": round(t.lo, 8), "ust": round(t.hi, 8)},
-        "cizim_sayisi": len(cizilen),
-        "araclar": sorted(set(cizilen)),
-        "cizilen_seviyeler": sorted(set(seviyeler)),
-        "uyarilar": uyari,
-        "not": ("Seviyeler job'dan/ölçülen yapıdan gelir; bu motor fiyat üretmez. "
-                "Grafik karar DEĞİL, karar-desteğidir."),
-    }
+            price_fn, draw_fn = A.arac(spec['arac'])
+            fragment = draw_fn(t,spec)
+            if not fragment:
+                raise ValueError('görünür çizim üretilemedi (yetersiz veri/boş geometri)')
+            (arka if int(spec.get('katman',A.katman(spec['arac']))) < 0 else on).append(fragment)
+            drawn.append(spec['arac'])
+            levels.extend(float(v) for v in price_fn(t,spec))
+            if spec.get('_position'):
+                positions.append(dict(spec['_position'],entry=spec['giris'],stop=spec['stop'],target=spec['hedef']))
+        except (ValueError,TypeError,KeyError,IndexError) as exc:
+            uyari.append(f"{spec['arac']}: çizilemedi — {exc}")
+            skipped.append({'index':index,'arac':spec['arac'],'reason':str(exc)})
+    svg = t.render(''.join(on),arka_svg=''.join(arka))
+    uyari += t.uyarilar  # render() may add panel/layout warnings.
+    output = Path(job.get('cikti') or 'grafik.svg')
+    if not output.is_absolute():
+        output = taban/output
+    output.parent.mkdir(parents=True,exist_ok=True)
+    output.write_text(svg,encoding='utf-8')
+    manifest.update(display_start=offset, display_rows=len(mumlar), history_rows=len(history),
+                    first_time_ms=mumlar[0].get('time'), last_close_time_ms=mumlar[-1].get('close_time_ms'),
+                    price_unit=job.get('price_unit'), volume_unit=job.get('volume_unit'),
+                    y_scale='log' if t.log else 'linear', x_scale='equally_spaced_bars',
+                    formula_conventions={'ema':'SMA seed then alpha=2/(n+1); full eligible history',
+                                         'rsi':'Wilder mean-of-first-n-changes seed; flat=50',
+                                         'regression':'OLS price against bar index; residual std ddof=2'},
+                    output_sha256=hashlib.sha256(svg.encode()).hexdigest(),
+                    position_evidence=positions)
+    report = {'cikti':str(output),'bicim':'svg','veri_kaynagi':kaynak,'bar_sayisi':len(mumlar),
+              'son_fiyat':mumlar[-1]['close'],'fiyat_araligi':{'alt':t.lo,'ust':t.hi},
+              'istenen_cizim_sayisi':requested,'cizim_sayisi':len(drawn),'atlanan_cizimler':skipped,
+              'araclar':sorted(set(drawn)),'cizilen_seviyeler':sorted(set(levels)),
+              'uyarilar':list(dict.fromkeys(uyari)),'manifest':manifest,
+              'decision_verified':bool(positions) and all(p['decision_verified'] for p in positions),
+              'not':'Grafik karar desteğidir. Koşul teyidi, tahmin doğruluğu veya başarı olasılığı değildir.'}
     if oto_rapor:
-        rapor["otomatik"] = {k: v for k, v in oto_rapor.items() if k != "uyarilar"}
-    # PNG opsiyonel — kurulu değilse sessizce atlanır (SVG zaten görüntülenebilir)
-    if job.get("png"):
+        report['otomatik'] = {k:v for k,v in oto_rapor.items() if k != 'uyarilar'}
+    if job.get('png'):
         try:
-            import cairosvg  # noqa: PLC0415
-
-            png = cikti.with_suffix(".png")
-            cairosvg.svg2png(bytestring=svg.encode("utf-8"), write_to=str(png),
-                             output_width=t.W * 2)
-            rapor["png"] = str(png)
-        except Exception as e:  # noqa: BLE001
-            rapor["png"] = f"VERİ YOK — png üretilemedi ({type(e).__name__})"
-    return rapor
+            png,engine=_export_png(svg,output,t.W*2)
+            report['png']=str(png)
+            report['png_renderer']=engine
+        except (ImportError,ValueError,OSError,RuntimeError,ET.ParseError) as exc:
+            report['uyarilar'].append(f'PNG üretilemedi: {exc}')
+    manifest_path = Path(str(output)+'.manifest.json')
+    report['manifest_path']=str(manifest_path)
+    manifest_path.write_text(json.dumps(report,ensure_ascii=False,indent=2,allow_nan=False),encoding='utf-8')
+    return report
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="TradingView tarzı çizimli grafik (SVG)")
-    ap.add_argument("--job", help="iş dosyası (JSON)")
-    ap.add_argument("--araclar", action="store_true", help="araç listesini yaz")
-    a = ap.parse_args()
-    if a.araclar:
-        print(json.dumps({
-            "araclar": sorted(A.ARACLAR),
-            "takma_adlar": A.TAKMA_AD,
-            "fib_varsayilan_seviyeler": A.FIB_VARSAYILAN,
-            "fib_genisleme_seviyeleri": A.FIB_GENISLEME,
-        }, ensure_ascii=False, indent=2))
+    ap=argparse.ArgumentParser(description='Denetlenebilir SVG mum grafiği')
+    ap.add_argument('--job');ap.add_argument('--araclar',action='store_true')
+    args=ap.parse_args()
+    if args.araclar:
+        print(json.dumps({'araclar':sorted(A.ARACLAR),'takma_adlar':A.TAKMA_AD},ensure_ascii=False,indent=2))
         return 0
-    if not a.job:
-        ap.error("--job gerekli")
-    yol = Path(a.job).expanduser().resolve()
-    job = json.loads(yol.read_text(encoding="utf-8"))
+    if not args.job:
+        ap.error('--job gerekli')
+    path=Path(args.job).expanduser().resolve()
     try:
-        rapor = uygula(job, yol.parent)
-    except CizimError as e:
-        print(json.dumps({"hata": str(e)}, ensure_ascii=False))
+        report=uygula(json.loads(path.read_text(encoding='utf-8')),path.parent)
+    except (ValueError,TypeError,KeyError,OSError) as exc:
+        print(json.dumps({'hata':str(exc)},ensure_ascii=False))
         return 2
-    print(json.dumps(rapor, ensure_ascii=False, indent=2))
+    print(json.dumps(report,ensure_ascii=False,indent=2,allow_nan=False))
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

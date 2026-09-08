@@ -3,6 +3,7 @@
 Yön, geometri, confluence, ATR/MTF/rejim kapıları, otomatik tespit ve
 tarihsel doğrulama (edge kanıtı) sınanır. SELF_TEST_OK basar."""
 import sys
+import copy
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -29,6 +30,33 @@ def bars(moves, start=100.0, wick=0.2):
     return out
 
 
+def fixture_synth(job):
+    """Attest the hand-authored geometry fixtures' synthetic evidence.
+
+    These fixtures specify an observed fresh block/target and a rejection at
+    its midpoint; they are not untimed market datasets. Dedicated regressions
+    separately prove that real missing timestamps/confirmation cannot execute.
+    No production caller should infer these attestations from OHLC geometry.
+    """
+    observed = copy.deepcopy(job)
+    observed["structure"].setdefault("confirmed", True)
+    observed["structure"].setdefault("age_bars", 0)
+    observed.setdefault("time_contract", {"status": "verified"})
+    observed.setdefault("setup_lifecycle", {"status": "active"})
+    regions = (observed.get("order_blocks") or []) + (observed.get("fvgs") or [])
+    for zone in regions:
+        zone.setdefault("status", "fresh")
+    for pool in observed.get("liquidity") or []:
+        pool.setdefault("status", "open")
+    if regions:
+        observed.setdefault("confirmation", {
+            "confirmed": True, "direction": observed["structure"]["direction"],
+            "age_bars": 0, "kind": "rejection",
+            "level": (regions[0]["low"] + regions[0]["high"]) / 2,
+        })
+    return cf.synth(observed)
+
+
 def main():
     # ================= CONFLUENCE =================
     long_job = {
@@ -38,8 +66,9 @@ def main():
         "liquidity": [{"price": 125, "type": "buyside"},
                       {"price": 95, "type": "sellside"}],
     }
-    r = cf.synth(long_job)
+    r = fixture_synth(long_job)
     assert r["KARAR"] == "LONG", r
+    assert r["executable"] is True and r["plan_durumu"] == "ONAYLI", r
     assert r["golden_zone"][1] < 120, r
     assert 104 <= r["giris_bolgesi"][0] and r["giris_bolgesi"][1] <= 107.65, r
     assert r["gecersizlik_sl"] < r["giris_orta"], r
@@ -53,29 +82,30 @@ def main():
         "liquidity": [{"price": 95, "type": "sellside"},
                       {"price": 125, "type": "buyside"}],
     }
-    r = cf.synth(short_job)
+    r = fixture_synth(short_job)
     assert r["KARAR"] == "SHORT", r
+    assert r["executable"] is True, r
     assert r["golden_zone"][0] > 100, r
     assert r["gecersizlik_sl"] > r["giris_orta"], r
     assert r["hedefler"][0] == 95 and r["rr"] >= 2.0, r
     assert not r["kapi_gerekceleri"], r
 
     # yalnız fib → BEKLE
-    r = cf.synth({"structure": {"event": "BOS", "direction": "bull"},
+    r = fixture_synth({"structure": {"event": "BOS", "direction": "bull"},
                   "impulse": {"start": 100.0, "end": 120.0},
                   "liquidity": [{"price": 125, "type": "buyside"}]})
     assert r["KARAR"] == "NÖTR-BEKLE", r
     assert any("confluence eksik" in g for g in r["kapi_gerekceleri"]), r
 
     # yapı-impuls çelişkisi → BEKLE
-    r = cf.synth({"structure": {"event": "CHoCH", "direction": "bull"},
+    r = fixture_synth({"structure": {"event": "CHoCH", "direction": "bull"},
                   "impulse": {"start": 120.0, "end": 100.0},
                   "order_blocks": [{"low": 113, "high": 116, "type": "demand"}]})
     assert r["KARAR"] == "NÖTR-BEKLE", r
     assert any("çelişiyor" in g for g in r["kapi_gerekceleri"]), r
 
     # düşük R:R → BEKLE
-    r = cf.synth({"structure": {"event": "CHoCH", "direction": "bull"},
+    r = fixture_synth({"structure": {"event": "CHoCH", "direction": "bull"},
                   "impulse": {"start": 100.0, "end": 120.0},
                   "order_blocks": [{"low": 104, "high": 106, "type": "demand"}],
                   "liquidity": [{"price": 108, "type": "buyside"}]})
@@ -83,7 +113,7 @@ def main():
     assert any("R:R" in g for g in r["kapi_gerekceleri"]), r
 
     # golden zone geometri
-    r = cf.synth(long_job)
+    r = fixture_synth(long_job)
     assert abs(r["golden_zone"][0] - 104.28) < 0.01, r
     assert abs(r["golden_zone"][1] - 107.64) < 0.01, r
 
@@ -95,7 +125,7 @@ def main():
         c = (gz_lo + gz_hi) / 2.0
         for tmult in (0.15, 0.3, 0.6, 1.0):
             trials += 1
-            rr = cf.synth({
+            rr = fixture_synth({
                 "structure": {"event": "CHoCH", "direction": "bull"},
                 "impulse": {"start": low, "end": high},
                 "order_blocks": [{"low": c - 0.4, "high": c + 0.4, "type": "demand"}],
@@ -107,32 +137,32 @@ def main():
 
     # ATR-uyarlı SL: atr=2.0 → SL = min(100,104.28) - 1.0*2.0 = 98.0
     j = dict(long_job); j["atr"] = 2.0
-    r = cf.synth(j)
+    r = fixture_synth(j)
     assert r["gecersizlik_sl"] == 98.0 and r["atr_kullanildi"] == 2.0, r
     assert r["KARAR"] == "LONG", r
 
     # MTF kapısı: HTF ters yönde → BEKLE
     j = dict(long_job); j["htf_bias"] = "bear"
-    r = cf.synth(j)
+    r = fixture_synth(j)
     assert r["KARAR"] == "NÖTR-BEKLE", r
     assert any("MTF" in g for g in r["kapi_gerekceleri"]), r
 
     # Rejim kapısı: range + BOS(devam) → BEKLE; range + CHoCH(dönüş) → serbest
     j = dict(long_job); j["structure"] = {"event": "BOS", "direction": "bull"}
     j["regime"] = {"durum": "range"}
-    r = cf.synth(j)
+    r = fixture_synth(j)
     assert r["KARAR"] == "NÖTR-BEKLE", r
     assert any("rejim" in g for g in r["kapi_gerekceleri"]), r
     j = dict(long_job); j["regime"] = {"durum": "range"}   # CHoCH kalır
-    r = cf.synth(j)
+    r = fixture_synth(j)
     assert r["KARAR"] == "LONG", r
 
     # Yüksek-vol: R:R eşiği +0.5 → rr~2.2 normalde LONG, yüksek-vol'da BEKLE
     j = dict(long_job); j["liquidity"] = [{"price": 118.65, "type": "buyside"}]
-    r = cf.synth(j)
+    r = fixture_synth(j)
     assert r["KARAR"] == "LONG" and 2.0 <= r["rr"] < 2.5, r
     j2 = dict(j); j2["regime"] = {"durum": "trend", "yuksek_vol": True}
-    r = cf.synth(j2)
+    r = fixture_synth(j2)
     assert r["KARAR"] == "NÖTR-BEKLE", r
     assert any("yüksek-vol" in g for g in r["kapi_gerekceleri"]), r
 
@@ -216,6 +246,8 @@ def main():
     assert cj is not None and cj["impulse"]["end"] > cj["impulse"]["start"], cj
     out = cf.synth(cj)
     assert out["KARAR"] in ("LONG", "SHORT", "NÖTR-BEKLE"), out
+    assert out["plan_yonu"] == "LONG" and out["executable"] is False, out
+    assert out["time_contract"]["status"] == "time_unverified", out
 
     # MTF uçtan uca: LTF boğa + HTF ayı → confluence MTF kapısı BEKLE der
     down_htf = bars(([-1.0] * 10 + [+1.0] * 7) * 20, start=400.0)
@@ -232,12 +264,16 @@ def main():
     assert abs(kb.wilson_lo(50, 100) - 0.402) < 0.01, kb.wilson_lo(50, 100)
     assert kb.wilson_lo(0, 10) == 0.0
 
-    # Dinamik min R:R: kazanma belirsizleştikçe gereken R:R yükselir + korkuluklar
-    assert kb.dinamik_min_rr(30, 30)["min_rr"] == 1.0          # hep kazanç → alt korkuluk
+    # Gereksinim kırpılmaz; sayısal tasarım adayı ve uygulanabilirlik ayrıdır.
+    assert kb.dinamik_min_rr(30, 30)["candidate_rr"] == 1.0
     orta = kb.dinamik_min_rr(10, 30)["min_rr"]
     assert 3.0 < orta <= 5.0, orta                             # wr~0.33 → R:R ~4.2
-    assert kb.dinamik_min_rr(1, 30)["min_rr"] == 5.0           # umutsuz → üst korkuluk
-    assert kb.dinamik_min_rr(0, 0)["min_rr"] == 5.0            # işlem yok → fail-closed
+    zor = kb.dinamik_min_rr(1, 30)
+    assert abs(zor["required_rr"] - 168.24947014259698) < 1e-6, zor
+    assert zor["min_rr"] == zor["required_rr"] and not zor["feasible"], zor
+    assert zor["candidate_rr"] == 5.0 and not zor["net_break_even_guarantee"], zor
+    yok = kb.dinamik_min_rr(0, 0)
+    assert yok["required_rr"] is None and not yok["feasible"], yok
 
     # Bootstrap CI: determinist (aynı tohum = aynı sonuç), lo<hi, pozitif seri → lo>0
     rs = [1.0, 1.2, -1.0, 1.5, 0.8, 1.1, -1.0, 1.3, 0.9, 1.4]
@@ -250,50 +286,60 @@ def main():
     assert kb.mae_atr_mult([0.1] * 10)["atr_mult"] == 0.5
     assert kb.mae_atr_mult([4.0] * 10)["atr_mult"] == 3.0
 
-    # Permütasyon: monotonluk — güçlü gerçek beklenti küçük p, kötü beklenti büyük p
+    # Eski rasgele-kapanış API'si betimseldir; sahte permütasyon p'si vermez.
     import pandas as pd2
     updf = st.load_frame({"candles": up_cycles})
     ha, la, ca = (updf["high"].to_numpy(), updf["low"].to_numpy(),
                   updf["close"].to_numpy())
     atr_a = st.wilder_atr(updf).to_numpy()
     p_iyi = kb.permutation_pvalue(ha, la, ca, atr_a, 5.0, ["long"] * 20,
-                                  1.0, 1.5, 60, n_perm=99, seed=5)["p"]
+                                  1.0, 1.5, 60, n_perm=99, seed=5)
     p_kotu = kb.permutation_pvalue(ha, la, ca, atr_a, -5.0, ["long"] * 20,
-                                   1.0, 1.5, 60, n_perm=99, seed=5)["p"]
-    assert p_iyi < 0.05 < p_kotu, (p_iyi, p_kotu)
+                                   1.0, 1.5, 60, n_perm=99, seed=5)
+    assert p_iyi["p"] is None and p_kotu["p"] is None
+    assert not p_iyi["valid_for_edge_permission"] and not p_kotu["valid_for_edge_permission"]
+    assert p_iyi["descriptive_tail_fraction"] < p_kotu["descriptive_tail_fraction"]
 
     # ================= TARİHSEL DOĞRULAMA (kalibre mod: varsayılan) ==========
-    # Düzenli OTE-retest'li yükseliş → LONG edge: permütasyon + bootstrap + MAE
+    # Düzenli kurulum: yararlı seviyeler ve net holdout ölçümü kalır, küçük
+    # değerlendirme örneği kendiliğinden kanıt/işlem izni üretmez.
     r = sd.simulate({"candles": up_cycles})
-    assert r["islem_sayisi"] >= 12, r["islem_sayisi"]
+    assert r["islem_sayisi"] > 0, r["islem_sayisi"]
     assert r["beklenti_R"] > 0, r
-    assert r["sinyal_izni"] is True, (r["SONUC"], r["gerekce"])
+    assert r["sinyal_izni"] is False and not r["validated_edge"], r
+    ev = r["evaluation"]
+    assert ev["train_end_i"] < ev["evaluation_start_i"] and ev["parameters_frozen"], ev
+    assert ev["n_blocks"] < 10 and not ev["adequate"], ev
+    assert all(t["created_i"] >= ev["evaluation_start_i"] for t in r["islemler_son10"])
     assert all(t["dir"] == "long" for t in r["islemler_son10"]), r["islemler_son10"]
     k = r["kalibrasyon"]
-    assert k["permutasyon"]["p"] <= 0.05, k["permutasyon"]
-    assert k["bootstrap_ci_R"][0] > 0, k["bootstrap_ci_R"]
+    assert k["fit_source"] == "training_only", k
+    assert ev["baseline_policy"]["train_end_i"] == ev["train_end_i"], ev
     assert 0.5 <= k["atr_mult_kalibre"]["atr_mult"] <= 3.0, k["atr_mult_kalibre"]
-    assert 1.0 <= k["onerilen_min_rr"]["min_rr"] <= 5.0, k["onerilen_min_rr"]
-    assert "veri-türevi" in r["esik_kaynagi"], r["esik_kaynagi"]
+    assert 1.0 <= k["onerilen_min_rr"]["candidate_rr"] <= 5.0, k["onerilen_min_rr"]
+    assert all(isinstance(x, float) for x in r["confluence_thresholds"].values()), r
+    assert r["confluence_thresholds"]["min_rr"] == k["frozen_tp_rr"]
+    assert "eğitim" in r["esik_kaynagi"], r["esik_kaynagi"]
     assert r["varsayimlar"], "varsayım defteri boş olamaz"
 
-    # Ayna düşüş → SHORT edge (yön: short dediğinde short)
+    # Ayna düşüş → SHORT işlemler; küçük örnek kanıt sayılmaz.
     down_cycles = bars(([-1.0] * 10 + [+1.0] * 7) * 60, start=400.0)
     r = sd.simulate({"candles": down_cycles})
-    assert r["sinyal_izni"] is True, (r["SONUC"], r["gerekce"])
+    assert r["islem_sayisi"] > 0 and r["sinyal_izni"] is False, r
     assert all(t["dir"] == "short" for t in r["islemler_son10"]), r["islemler_son10"]
 
     # Kenar/testere piyasa → kanıt YOK → sinyal izni YOK (fail-closed)
     saw = bars(([+1.0] * 5 + [-1.0] * 5) * 40)
     r = sd.simulate({"candles": saw})
     assert r["sinyal_izni"] is False, r
-    assert r["SONUC"] in ("VERİ YETERSİZ", "EDGE KANITLANAMADI", "ZAYIF EDGE"), r
+    assert r["evidence_status"] != "heldout_support" and "KANIT YETERSİZ" in r["SONUC"], r
 
     # Legacy mod hâlâ çalışır ve varsayım olarak ETİKETLİDİR
     r = sd.simulate({"candles": up_cycles,
                      "params": {"kalibrasyon": False, "min_trades": 12}})
     assert r["esik_kaynagi"].startswith("statik varsayım"), r["esik_kaynagi"]
-    assert r["sinyal_izni"] is True, (r["SONUC"], r["gerekce"])
+    assert r["sinyal_izni"] is False and r["evaluation"]["parameters_frozen"], r
+    assert r["monte_carlo"]["prob_profit"] is None, r
 
     # Confluence eşik-kaynak etiketi: kalibre bilgisi verilirse yankılanır
     j = dict(long_job)
@@ -340,7 +386,7 @@ def main():
     # terzil testi: ayrım yoksa filtre ÖNERİLMEZ (eşik uydurulmaz)
     duz = [{"r": 0.1 * ((i % 5) - 2), "x": float(i)} for i in range(30)]
     t = fk.tercil_testi(duz, "x")
-    assert t["sonuc"] != "FİLTRE KANITLI" or t["onerilen_esik"] is not None, t
+    assert t["sonuc"] != "FİLTRE KANITLI", t
     if t["sonuc"].startswith("AYRIM YOK"):
         assert t["onerilen_esik"] is None, t
     # örneklem taban altındaysa test koşmaz (fail-closed)
@@ -349,10 +395,10 @@ def main():
     print("SELF_TEST_OK: confluence(long/short/yalniz-fib/celiski/rr/geometri/"
           "canlilik/atr-sl/mtf-kapi/rejim-kapi/yuksek-vol/esik-kaynak), "
           "smc-tespit(fvg/likidite/rejim/yapi/uctan-uca/mtf), "
-          "kalibrasyon(wilson/dinamik-rr/bootstrap/mae/permutasyon), "
+          "kalibrasyon(wilson-ayrik-aday/bootstrap/mae/betimsel-referans), "
           "fvg-kalibre(tanim-ithal/displacement-orta-mum/dolum-monoton/"
           "veri-yok-fail-closed/tercil-filtre), "
-          "dogrulama(kalibre-long/short/fail-closed/legacy-etiket)")
+          "dogrulama(train-freeze-holdout/long-short/az-kanitta-kosullu/legacy-etiket)")
 
 
 if __name__ == "__main__":

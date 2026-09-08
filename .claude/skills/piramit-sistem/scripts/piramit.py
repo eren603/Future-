@@ -251,6 +251,74 @@ def _clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
+def _grafik_zaman_job(job: dict, timeframe: str = "15m") -> dict:
+    """Carry the declared information boundary unchanged to every chart motor."""
+    timing = {k: job[k] for k in ("c0", "cutoff", "as_of") if job.get(k) is not None}
+    timing["timeframe"] = timeframe
+    return timing
+
+
+def _c0_ms(job: dict):
+    """Use the shared canonical epoch parser; inconsistent aliases fail closed."""
+    scripts = SKILLS / "grafik-calisma" / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    from candle_contract import epoch_ms
+    values = [epoch_ms(job[k]) for k in ("c0", "cutoff", "as_of")
+              if job.get(k) is not None]
+    if values and any(v != values[0] for v in values[1:]):
+        raise PiramitError("c0/cutoff/as_of aynı bilgi kesimini göstermeli")
+    return values[0] if values else None
+
+
+def _kalibrasyon_koprusu(sd: dict | None) -> dict:
+    """Numeric calibration contract; descriptive thresholds do not prove edge."""
+    sd = sd if isinstance(sd, dict) else {}
+    th = sd.get("confluence_thresholds") or {}
+    th = th if isinstance(th, dict) else {}
+    values = {k: _num(th.get(k)) for k in ("atr_mult", "min_rr")}
+    valid = all(v is not None and v > 0 for v in values.values())
+    provenance = sd.get("thresholds_kaynak") or sd.get("esik_kaynagi")
+    permitted = sd.get("sinyal_izni") is True and valid and bool(provenance)
+    return {"thresholds": values if valid else {},
+            "thresholds_kaynak": provenance or "kalibrasyon kullanılamadı; tanımlayıcı varsayımlar",
+            "sinyal_izni": permitted,
+            "validated_edge": permitted,
+            "gerekce": (sd.get("gerekce") if permitted else
+                        "Doğrulanmış avantaj sinyali yok: kalibrasyon başarısız, eksik veya yalnız tanımlayıcı."),
+            "evaluation": sd.get("evaluation")}
+
+
+def _panel_tazeligi(d: dict, ad: str, reference_ms, allowed_staleness_minutes,
+                    cutoff_ms=None) -> tuple:
+    """Past staleness and future information availability are separate gates."""
+    ms = _damga_ms(d)
+    if cutoff_ms is not None and isinstance(d, dict):
+        scripts = SKILLS / "grafik-calisma" / "scripts"
+        if str(scripts) not in sys.path:
+            sys.path.insert(0, str(scripts))
+        from candle_contract import epoch_ms
+        raw = next((d[k] for k in _DAMGA_ALAN if d.get(k) is not None), None)
+        try:
+            ms = epoch_ms(raw)
+        except ValueError:
+            ms = None
+    if ms is None:
+        return False, f"{ad}: zaman damgası YOK → BAYAT (fail-closed)"
+    if cutoff_ms is not None and ms > cutoff_ms:
+        return False, f"{ad}: C0 sonrası bilgi ({(ms - cutoff_ms) / 60000:.0f} dk) → dışlandı"
+    reference = cutoff_ms if cutoff_ms is not None else reference_ms
+    if reference is None:
+        return False, f"{ad}: kline son barı ölçülemedi → BAYAT (fail-closed)"
+    age = (reference - ms) / 60000.0
+    if age > allowed_staleness_minutes:
+        return False, (f"{ad}: BAYAT — {age:.0f} dk eski "
+                       f"(izin verilen geçmiş yaş {allowed_staleness_minutes:.0f} dk)")
+    if cutoff_ms is None and age < -allowed_staleness_minutes:
+        return False, f"{ad}: BAYAT — son bardan {-age:.0f} dk İLERİDE"
+    return True, f"{ad}: taze (referansa göre {age:.0f} dk)"
+
+
 def _yol(p, taban: Path):
     """Job'daki yolu çöz: mutlak → aynen; değilse job dizini, sonra depo kökü."""
     if not p:
@@ -442,19 +510,65 @@ def _girdi_kapisi(job: dict, taban: Path) -> dict:
     return sonuc
 
 
-def _klines_to_candles(path: Path) -> list:
-    """Kline dosyasını (Binance JSON / obje listesi / CSV) mum listesine çevirir.
+def _chart_frame(path: Path, timeframe: str = "15m", cutoff=None):
+    """Use the chart motor's canonical loader, including close metadata."""
+    scripts = SKILLS / "grafik-calisma" / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    import smc_tespit as smc
+    chart_job = {"input": str(path), "timeframe": timeframe}
+    if cutoff is not None:
+        chart_job["cutoff"] = cutoff
+    return smc.load_frame(chart_job)
 
-    Parser motorun KENDİsinden alınır (engine/karar_motoru.parse_klines) —
-    ikinci bir parser yazmak = ikinci bir doğruluk kaynağı = sapma riski.
+
+def _klines_to_candles(path: Path, timeframe: str = "15m", cutoff=None) -> list:
+    frame = _chart_frame(path, timeframe, cutoff)
+    rows = frame.astype(object).where(frame.notna(), None).to_dict("records")
+    for row in rows:
+        # Legacy consumers read time/open_time; keep canonical metadata too.
+        if row.get("open_time_ms") is not None:
+            row["time"] = row["open_time_ms"]
+            row["open_time"] = row["open_time_ms"]
+    return rows
+
+
+def _aligned_price_job(job: dict, taban: Path) -> dict:
+    """Feed legacy and chart consumers the same closed candles at explicit C0.
+
+    Snapshots are price inputs only. This does not isolate prior state, supplied
+    derivative panels, or the full historical learning workflow.
     """
-    if str(ENGINE) not in sys.path:
-        sys.path.insert(0, str(ENGINE))
-    import karar_motoru as km  # noqa: PLC0415 — yerel motor, isteğe bağlı yüklenir
-
-    bars = km.parse_klines(str(path))
-    return [{"open": b.o, "high": b.h, "low": b.l, "close": b.c, "volume": b.v,
-             "time": b.t} for b in bars]
+    cutoff = _c0_ms(job)
+    if cutoff is None:
+        return job
+    veri = dict(job.get("veri") or {})
+    contracts, snapshots = {}, {}
+    for name, timeframe in (("m15", "15m"), ("h1", "1h"), ("h4", "4h"),
+                            ("ohlcv_csv", str(job.get("timeframe") or "15m"))):
+        path = _yol(veri.get(name), taban)
+        if path is None:
+            continue
+        frame = _chart_frame(path, timeframe, cutoff)
+        contract = frame.attrs.get("time_contract") or {}
+        if contract.get("status") == "time_unverified":
+            raise PiramitError(f"{name}: C0 için kapanış zamanları doğrulanamadı")
+        rows = frame.astype(object).where(frame.notna(), None).to_dict("records")
+        if not rows or any(_num(r.get("close_time_ms")) is None or
+                           float(r["close_time_ms"]) > cutoff for r in rows):
+            raise PiramitError(f"{name}: C0 kapanış sözleşmesi karşılanmadı")
+        for row in rows:
+            row["time"] = row.get("open_time_ms")
+            row["open_time"] = row.get("open_time_ms")
+        contracts[name] = {**contract, "timeframe": timeframe,
+                           "cutoff_ms": cutoff, "last_close_time_ms": rows[-1]["close_time_ms"]}
+        snapshots[name] = rows
+    outdir = _yaz_dizin(job.get("state_dir"), STATE_DIR) / "c0_inputs"
+    for name, rows in snapshots.items():
+        path = outdir / f"{name}.json"
+        _atomik_yaz(path, json.dumps(rows, ensure_ascii=False, allow_nan=False))
+        veri[name] = str(path.resolve())
+    return {**job, "veri": veri, "price_time_contracts": contracts}
 
 
 # ==========================================================================
@@ -464,7 +578,7 @@ def k1_llm(job: dict, taban: Path) -> dict:
     veri = job.get("veri") or {}
     kanal, eksik, olcumler = {}, [], {}
 
-    for ad in ("m15", "h4", "ohlcv_csv", "returns_csv", "video"):
+    for ad in ("m15", "h1", "h4", "ohlcv_csv", "returns_csv", "video"):
         p = _yol(veri.get(ad), taban)
         kanal[ad] = str(p) if p else YOK
         if p is None and veri.get(ad):
@@ -473,13 +587,14 @@ def k1_llm(job: dict, taban: Path) -> dict:
             eksik.append(f"{ad}: {YOK}")
 
     # Bar sayıları — motorun kendi parser'ıyla ölçülür (uydurma yok)
-    for ad in ("m15", "h4"):
+    for ad in ("m15", "h1", "h4"):
         p = _yol(veri.get(ad), taban)
         if p:
             try:
-                mumlar = _klines_to_candles(p)
+                mumlar = _klines_to_candles(p, {"m15": "15m", "h1": "1h", "h4": "4h"}[ad], _c0_ms(job))
                 olcumler[f"{ad}_bar"] = len(mumlar)
-                olcumler[f"{ad}_son_bar"] = mumlar[-1]["time"] if mumlar else YOK
+                olcumler[f"{ad}_son_bar"] = mumlar[-1].get("time", YOK) if mumlar else YOK
+                olcumler[f"{ad}_son_kapanis_ms"] = mumlar[-1].get("close_time_ms") if mumlar else None
             except Exception as e:  # noqa: BLE001
                 olcumler[f"{ad}_bar"] = YOK
                 eksik.append(f"{ad}: parse edilemedi ({type(e).__name__}: {e})")
@@ -525,33 +640,15 @@ def k1_llm(job: dict, taban: Path) -> dict:
     son_ms = _num(olcumler.get("m15_son_bar"))
     tol_dk = KONVANSIYON["zorunlu_damga_tolerans_dk"]
 
-    def _taze(d: dict, ad: str) -> tuple:
-        """Bu okuma BU verinin barına mı ait? Damgasız/eski = BAYAT (fail-closed).
+    cutoff_ms = _c0_ms(job)
+    declared_age = _num(job.get("allowed_staleness_minutes"))
+    if declared_age is not None:
+        if declared_age < 0:
+            raise PiramitError("allowed_staleness_minutes negatif olamaz")
+        tol_dk = declared_age
 
-        Neden: eski panel okuması yeni kline'la birlikte sessizce 'güncel'
-        sayılıyordu — zorunlu girdi var görünüp aslında dünün ölçümüydü.
-        """
-        ms = _damga_ms(d)
-        if ms is None:
-            return False, (f"{ad}: zaman damgası YOK (`bar_utc`/`zaman_utc`) → hangi "
-                           "veriye ait olduğu kanıtlanamıyor, BAYAT sayıldı")
-        if son_ms is None:
-            # kline son barı ölçülemiyorsa damga KIYASLANAMAZ → kanıt kurulamıyor,
-            # fail-closed (B1): kıyassız kabul, damgasız kabulle aynı deliktir.
-            return False, (f"{ad}: kline son barı ölçülemedi → damga kıyaslanamıyor, "
-                           "BAYAT sayıldı (fail-closed)")
-        yas = (son_ms - ms) / 60000.0
-        if yas > tol_dk:
-            return False, (f"{ad}: BAYAT — okuma son bardan {yas:.0f} dk eski "
-                           f"(tolerans {tol_dk:.0f} dk); yeni kline eski panel "
-                           "okumasıyla birleştirilmez")
-        if yas < -tol_dk:
-            # simetrik korkuluk (B1): damga son bardan İLERİDE = okuma BAŞKA (daha
-            # yeni) veriye ait — eski kline yeni panel okumasıyla da birleştirilmez.
-            return False, (f"{ad}: BAYAT — okuma son bardan {-yas:.0f} dk İLERİDE "
-                           f"(tolerans {tol_dk:.0f} dk); kline eski, panel yeni — "
-                           "birleştirilmez")
-        return True, f"{ad}: taze (son bara göre {yas:.0f} dk)"
+    def _taze(d: dict, ad: str) -> tuple:
+        return _panel_tazeligi(d, ad, son_ms, tol_dk, cutoff_ms)
 
     # Varsayılan panel yolu YALNIZ ana sembol koşusunda kullanılır (B5): ikinci
     # sembol job'u (usd_profil/_ikinci_sembol taşır) yolu beyan etmezse ANA
@@ -663,9 +760,10 @@ def k1_llm(job: dict, taban: Path) -> dict:
 
 
 # ==========================================================================
-# K2 — AI AJAN: tek ajan + araç. Motorlar birbirini GÖRMEDEN koşar.
+# K2 — AI AJAN: yön motorları ayrı; grafik kalibrasyonu üretici→tüketicidir.
 # ==========================================================================
 def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
+    job = _aligned_price_job(job, taban)
     veri = job.get("veri") or {}
     sonuc, hatalar = {}, []
 
@@ -692,29 +790,81 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
     else:
         hatalar.append({"motor": "karar-motoru", "hata": f"m15/h4 {YOK}"})
 
-    # --- grafik-calisma: smc_tespit → confluence ---------------------------
+    # --- calibration producer → SMC → numeric confluence consumer ---------
     smc_job = None
     p_csv = _yol(veri.get("ohlcv_csv"), taban)
+    ph1 = _yol(veri.get("h1"), taban)
+    timing = _grafik_zaman_job(job, str(job.get("timeframe") or "15m"))
     if p_csv:
-        smc_job = {"input": str(p_csv)}
+        smc_job = {"input": str(p_csv), **timing}
     elif p15:
-        smc_job = {"candles": _klines_to_candles(p15)}
-        if ph4:
-            smc_job["htf_candles"] = _klines_to_candles(ph4)
+        smc_job = {"candles": _klines_to_candles(p15, "15m", _c0_ms(job)), **timing}
     if smc_job is not None:
+        if ph4:
+            smc_job["htf_candles"] = _klines_to_candles(ph4, "4h", _c0_ms(job))
+            smc_job["htf_timeframe"] = "4h"
+        if ph1:
+            smc_job["bridge_candles"] = _klines_to_candles(ph1, "1h", _c0_ms(job))
+            smc_job["bridge_timeframe"] = "1h"
         if job.get("smc_params"):
             smc_job["params"] = job["smc_params"]
+
+        sd = None
+        if job.get("setup_dogrulama", True):
+            sd_job = {k: v for k, v in smc_job.items()
+                      if k in ("input", "candles", "timeframe", "c0", "cutoff", "as_of")}
+            if job.get("setup_params"):
+                sd_job["params"] = job["setup_params"]
+            r = _kos(MOTOR["setup_dogrulama"], [], girdi_job=sd_job)
+            if r["ok"] and isinstance(r["cikti"], dict):
+                sd = r["cikti"]
+                sonuc["setup_dogrulama"] = sd
+            else:
+                hatalar.append({"motor": "setup_dogrulama",
+                                "hata": r["hata"] or r["metin"][:300]})
+        bridge = _kalibrasyon_koprusu(sd)
+        sonuc["kalibrasyon_koprusu"] = bridge
+        # SMC receives the same producer output used by confluence. Retain
+        # full provenance and evaluation; never coerce a nested min_rr dict.
+        if sd:
+            smc_job["kalibrasyon"] = sd.get("kalibrasyon") or {}
+            smc_job["confluence_thresholds"] = bridge["thresholds"]
+            smc_job["thresholds_kaynak"] = bridge["thresholds_kaynak"]
         r = _kos(MOTOR["smc_tespit"], [], girdi_job=smc_job)
         if r["ok"] and isinstance(r["cikti"], dict):
             smc = r["cikti"]
+            if (smc.get("time_contract") or {}).get("status") != "verified":
+                bridge.update(sinyal_izni=False, validated_edge=False,
+                              gerekce="Kapanış/zaman sözleşmesi doğrulanmadı; yalnız koşullu taslak.")
             sonuc["smc_tespit"] = {k: smc.get(k) for k in
-                                   ("trend", "rejim", "atr", "olaylar", "htf",
-                                    "swing_sayisi", "varsayimlar")}
+                                   ("trend", "rejim", "atr", "olaylar", "htf", "bridge",
+                                    "swing_sayisi", "varsayimlar", "time_contract",
+                                    "cutoff", "timeframe", "active_evidence")}
             cj = smc.get("confluence_job")
             if cj:
+                cj = {**cj, "thresholds": {**(cj.get("thresholds") or {}),
+                                            **bridge["thresholds"]},
+                      "thresholds_kaynak": bridge["thresholds_kaynak"],
+                      "kalibrasyon_koprusu": bridge,
+                      "time_contract": smc.get("time_contract"), **timing}
                 r2 = _kos(MOTOR["confluence"], [], girdi_job=cj)
                 if r2["ok"] and isinstance(r2["cikti"], dict):
-                    sonuc["grafik-calisma"] = r2["cikti"]
+                    gc = r2["cikti"]
+                    gc["kalibrasyon_koprusu"] = bridge
+                    gc["thresholds_kaynak"] = bridge["thresholds_kaynak"]
+                    gc["thresholds_uygulanan"] = cj["thresholds"]
+                    gc["structural_bias"] = smc.get("trend")
+                    gc["time_contract"] = smc.get("time_contract")
+                    gc["validated_edge"] = bridge["validated_edge"]
+                    gc["sinyal_izni"] = (bridge["sinyal_izni"] and
+                                          str(gc.get("KARAR", "")).upper() in ("LONG", "SHORT"))
+                    if not bridge["sinyal_izni"]:
+                        gc["kosullu_senaryo"] = {k: gc.get(k) for k in
+                                                  ("KARAR", "giris_orta", "gecersizlik_sl", "hedefler")}
+                        gc["KARAR"] = "BEKLE — DOĞRULANMIŞ AVANTAJ SİNYALİ YOK"
+                        gc["sinyal_izni"] = False
+                        gc["kapi_gerekceleri"] = list(gc.get("kapi_gerekceleri") or []) + [bridge["gerekce"]]
+                    sonuc["grafik-calisma"] = gc
                 else:
                     hatalar.append({"motor": "confluence",
                                     "hata": r2["hata"] or r2["metin"][:300]})
@@ -724,34 +874,40 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
         else:
             hatalar.append({"motor": "smc_tespit", "hata": r["hata"] or r["metin"][:300]})
 
-    # --- setup_dogrulama: tarihsel edge kanıtı (kapı, yön değil) ------------
-    if smc_job is not None and job.get("setup_dogrulama", True):
-        sd_job = {k: v for k, v in smc_job.items() if k in ("input", "candles")}
-        if job.get("setup_params"):
-            sd_job["params"] = job["setup_params"]
-        r = _kos(MOTOR["setup_dogrulama"], [], girdi_job=sd_job)
-        if r["ok"] and isinstance(r["cikti"], dict):
-            c = r["cikti"]
-            sonuc["setup_dogrulama"] = {
-                k: c.get(k) for k in ("SONUC", "sinyal_izni", "gerekce",
-                                      "esik_kaynagi", "kalibrasyon", "varsayimlar")}
-        else:
-            hatalar.append({"motor": "setup_dogrulama",
-                            "hata": r["hata"] or r["metin"][:300]})
+    # Optional 1h bridge and 4h context are distinct data at the same C0.
+    # Neither adds an independent evidence family or imputes an unfinished bar.
+    for name, path, timeframe in (("h1", ph1, "1h"), ("h4", ph4, "4h")):
+        if path:
+            r = _kos(MOTOR["smc_tespit"], [], girdi_job={
+                "candles": _klines_to_candles(path, timeframe, _c0_ms(job)),
+                **_grafik_zaman_job(job, timeframe)})
+            if r["ok"] and isinstance(r["cikti"], dict):
+                c = r["cikti"]
+                sonuc[f"smc_tespit_{name}"] = {k: c.get(k) for k in
+                    ("trend", "rejim", "atr", "likidite", "order_blocks",
+                     "acik_fvgler", "olaylar", "time_contract", "timeframe", "cutoff")}
+            else:
+                hatalar.append({"motor": f"smc_tespit_{name}",
+                                "hata": r["hata"] or r["metin"][:300]})
 
-    # --- grafik-calisma 4H: KURULUM ölçeği (sabit-USDT motorunun ATR/likidite
-    # kaynağı; ölçümle 4H seçildi — 15m yapısı 33 puanlık stopla ilgisiz) -----
-    if ph4:
-        r = _kos(MOTOR["smc_tespit"], [],
-                 girdi_job={"candles": _klines_to_candles(ph4)})
-        if r["ok"] and isinstance(r["cikti"], dict):
-            c = r["cikti"]
-            sonuc["smc_tespit_h4"] = {k: c.get(k) for k in
-                                      ("trend", "rejim", "atr", "likidite",
-                                       "order_blocks", "acik_fvgler", "olaylar")}
-        else:
-            hatalar.append({"motor": "smc_tespit_h4",
-                            "hata": r["hata"] or r["metin"][:300]})
+    # Keep the optional bridge visible without inventing an extra vote/score.
+    contexts = {}
+    for timeframe, key in (("15m", "smc_tespit"), ("1h", "smc_tespit_h1"),
+                           ("4h", "smc_tespit_h4")):
+        if key in sonuc:
+            contexts[timeframe] = {"trend": sonuc[key].get("trend"),
+                                   "time_contract": sonuc[key].get("time_contract")}
+    def _alignment(first, second):
+        a = (contexts.get(first) or {}).get("trend")
+        b = (contexts.get(second) or {}).get("trend")
+        return ("aynı yön" if a == b else "karşı yön") if a in ("bull", "bear") and b in ("bull", "bear") else "belirsiz"
+    timeframe_context = {"cutoff_ms": _c0_ms(job), "contexts": contexts,
+                         "bridge_present": "1h" in contexts,
+                         "h1_vs_m15": _alignment("1h", "15m"),
+                         "h1_vs_h4": _alignment("1h", "4h"),
+                         "not": "Aynı SMC ailesinin farklı periyot bağlamı; ilave oy, güven bonusu veya ilk hareket tahmini değildir."}
+    if "1h" in contexts and "smc_tespit" in sonuc:
+        sonuc["smc_tespit"]["bridge"] = contexts["1h"]
 
     # --- korelasyon: ikinci sembol bağımsız bahis mi, kopya mı? -------------
     kor = job.get("korelasyon")
@@ -844,8 +1000,10 @@ def k2_ajan(job: dict, taban: Path, k1: dict) -> dict:
             if gecti else
             f"K2 kapısı KAPALI: yalnız {n} bağımsız kanıt ailesi sonuç üretti "
             f"(gerek {KONVANSIYON['min_motor_k2']}) → tek motor ÇOKLU-AJAN değildir.")
-    return {"katman": "K2-AI-AJAN", "rol": "tek ajan + araç; motorlar birbirini görmez",
+    return {"katman": "K2-AI-AJAN", "rol": "yön motorları ayrı; grafik içinde açık kalibrasyon üretici/tüketici zinciri",
             "motor_sonuclari": sonuc, "hatalar": hatalar,
+            "timeframe_context": timeframe_context,
+            "price_time_contracts": job.get("price_time_contracts") or {},
             "motor_sayisi": n, "gecti": gecti, "kapi": kapi}
 
 
@@ -950,7 +1108,9 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
     if isinstance(gc, dict):
         yb = _num(gc.get("yon_bias"))
         karar = str(gc.get("KARAR", "")).upper()
-        stance = "flat" if "BEKLE" in karar or yb is None else ("long" if yb > 0 else "short")
+        structural = str(gc.get("structural_bias") or "").lower()
+        stance = {"bull": "long", "bear": "short"}.get(structural,
+            "flat" if yb is None or yb == 0 else ("long" if yb > 0 else "short"))
         conf = _num(gc.get("confluence_skoru"))
         if conf is None:
             conf = 0.30
@@ -962,7 +1122,7 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
                                         f"faktörler={gc.get('confluence_faktorleri')} | "
                                         f"rejim={gc.get('rejim')} | kapılar={gc.get('kapi_gerekceleri')}"})
         hed = gc.get("hedefler") or []
-        if stance != "flat":
+        if stance != "flat" and "BEKLE" not in karar and gc.get("validated_edge") is True:
             seviyeler["grafik-calisma"] = {
                 "yon": stance, "entry": _num(gc.get("giris_orta")),
                 "stop": _num(gc.get("gecersizlik_sl")),
@@ -1094,6 +1254,8 @@ def k3_coklu(k1: dict, k2: dict, hafiza_p: Path | None = None) -> dict:
     return {"katman": "K3-COKLU-AJAN",
             "rol": "motorlar → danışman kurulu; güven K5 ağırlıklarıyla ölçeklenir",
             "danismanlar": danismanlar, "seviyeler": seviyeler,
+            "kosullu_senaryolar": {"grafik-calisma": gc.get("kosullu_senaryo")}
+                if isinstance(gc, dict) and gc.get("kosullu_senaryo") else {},
             "agirlik_kaynagi": agir, "notlar": notlar,
             "eleme": eleme_raporu,
             "gecti": gecti, "kapi": kapi}
@@ -1111,8 +1273,11 @@ def _bt_dogrular(bt_kayit) -> tuple:
     mc = rapor.get("monte_carlo") or {}
     pf = _num(met.get("profit_factor"))
     pp = _num(mc.get("prob_profit"))
+    if mc.get("valid_for_future_profit_probability") is not True or pp is None:
+        return False, (f"backtest PF={pf} yalnız tanımlayıcı; MC gelecek kâr "
+                       "olasılığı doğrulaması yok (sabit getiri sırası deneyi kapıyı açmaz)")
     ok = (pf is not None and pf > KONVANSIYON["bt_min_pf"]) and \
-         (pp is None or pp >= KONVANSIYON["bt_min_prob_profit"])
+         (KONVANSIYON["bt_min_prob_profit"] <= pp <= 1)
     return bool(ok), (f"backtest PF={pf}, MC p(kâr)={pp} "
                       f"(kapı: PF>{KONVANSIYON['bt_min_pf']}, "
                       f"p≥{KONVANSIYON['bt_min_prob_profit']})")
@@ -1143,7 +1308,7 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
     sd = m.get("setup_dogrulama")
     if any(d["name"] == "grafik-calisma" for d in k3["danismanlar"]):
         if isinstance(sd, dict):
-            ok = bool(sd.get("sinyal_izni"))
+            ok = sd.get("sinyal_izni") is True and (m.get("grafik-calisma") or {}).get("validated_edge") is True
             verifier["grafik-calisma"] = {"confirmed": ok,
                                           "reason": str(sd.get("gerekce"))[:200]}
             gerekce["grafik-calisma"] = f"setup_dogrulama: {sd.get('SONUC')} — {sd.get('gerekce')}"
@@ -1160,6 +1325,13 @@ def k4_agi(job: dict, k1: dict, k2: dict, k3: dict) -> dict:
         if ok is not None:
             verifier[hedef] = {"confirmed": bool(ok), "reason": ne}
             gerekce[hedef] = ne
+
+    # An optional backtest cannot override a failed current chart/calibration gate.
+    gc_current = m.get("grafik-calisma") or {}
+    if "grafik-calisma" in verifier and (gc_current.get("validated_edge") is not True
+            or "BEKLE" in str(gc_current.get("KARAR", "")).upper()):
+        verifier["grafik-calisma"] = {"confirmed": False,
+            "reason": "Grafik/calibration kapısı kapalı; ayrı backtest bu kapıyı geçersiz kılamaz."}
 
     # --- şişirilmiş-R denetimi (CLAUDE.md: mekanik, tetikleyicisiz) ---------
     rr = {}
@@ -1401,6 +1573,13 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
                   "kapi_gerekceleri": (sentez.get("kapi_gerekceleri") or [])
                   + [celiski_turu["hukum"]]}
 
+    calibration = (k2.get("motor_sonuclari") or {}).get("kalibrasyon_koprusu") or {}
+    sentez["validated_edge"] = calibration.get("validated_edge") is True
+    if not sentez["validated_edge"]:
+        sentez["KARAR"] = "NÖTR-BEKLE"
+        sentez["kapi_gerekceleri"] = list(sentez.get("kapi_gerekceleri") or []) + [
+            "Doğrulanmış avantaj sinyali yok; yön yalnız tanımlayıcı, seviyeler koşullu senaryodur."]
+
     # ---------- işlem kalitesi: seviyeler MOTORDAN, R denetlenmiş -----------
     islem = _islem_kalitesi(k3, k4, sentez)
 
@@ -1412,12 +1591,20 @@ def k5_si(job: dict, taban: Path, k1: dict, k2: dict, k3: dict, k4: dict) -> dic
         emir = {"EMIR": "EMİR YOK", "gerekce": celiski_turu["hukum"],
                 "red_nedenleri": [celiski_turu["hukum"]]}
     else:
-        emir = _emir_plani(job, taban, k1, sentez)
+        emir = _emir_plani(job, taban, k1, sentez, islem)
+
+    if not str(emir.get("EMIR", "")).startswith(("MARKET", "LIMIT")):
+        islem["kosullu_senaryolar"] = {**(islem.get("kosullu_senaryolar") or {}),
+                                        **(islem.get("seviyeler") or {})}
+        islem.update(seviyeler={}, secilen={}, adaylar=[],
+                     hukum="TEMİZ GİRİŞ YOK — KOŞULLU SENARYO",
+                     ozet=f"Yön {sentez.get('YON_BIAS')}; {emir.get('gerekce', 'Emir kapısı kapalı')}")
+        islem["engeller"] = list(islem.get("engeller") or []) + [emir.get("gerekce", "Emir kapısı kapalı")]
 
     # ---------- pozisyon boyutu (risk-yonetimi) ----------------------------
     boyut = None
     rj = job.get("risk")
-    if isinstance(rj, dict) and rj:
+    if isinstance(rj, dict) and rj and islem.get("secilen"):
         rjob = dict(rj)
         sev = (k3.get("seviyeler") or {}).get(rjob.pop("seviye_kaynagi", "karar-motoru"))
         if rjob.get("op") == "position_size" and rjob.get("method") == "fixed_fractional" \
@@ -1520,14 +1707,47 @@ def _celiski_turu(sentez_job: dict, sentez: dict) -> dict:
     }
 
 
-def _emir_plani(job: dict, taban: Path, k1: dict, sentez: dict) -> dict:
-    """Kararı MARKET/LIMIT emrine çevir (seviyeler ölçümden, R denetlenmiş)."""
+def _emir_reddet(emir: dict, reason: str) -> dict:
+    scenarios = list(emir.get("kosullu_senaryolar") or []) + list(emir.get("adaylar") or [])
+    return {**emir, "EMIR": "EMİR YOK", "gerekce": reason,
+            "adaylar": [], "birincil": None, "kosullu_senaryolar": scenarios,
+            "red_nedenleri": list(emir.get("red_nedenleri") or []) + [reason]}
+
+
+def _nihai_karar_izni(sentez: dict) -> bool:
+    side = str(sentez.get("KARAR", "")).upper()
+    invalidated = any(sentez.get(key) is True for key in
+                      ("invalidated", "invalidation_triggered", "gecersizlik_tetiklendi"))
+    return (side in ("LONG", "SHORT") and
+            str(sentez.get("YON_BIAS", "")).upper() == side and
+            sentez.get("validated_edge") is True and not invalidated)
+
+
+def _emir_plani(job: dict, taban: Path, k1: dict, sentez: dict,
+                islem: dict | None = None) -> dict:
+    """Only the final permitted decision and verified displayed levels can order."""
+    islem = islem or {}
+    selected = islem.get("secilen") or {}
+    side = str(sentez.get("KARAR", "")).upper()
+    if not _nihai_karar_izni(sentez):
+        return _emir_reddet({}, "Nihai karar/avantaj kapısı kapalı; YON_BIAS emir izni değildir.")
+    if (str(sentez.get("YON_BIAS", "")).upper() != side or
+            selected.get("yon") != side.lower() or not selected or
+            selected.get("confirmed") is not True):
+        return _emir_reddet({}, "Nihai yön ile hizalı, açıkça doğrulanmış seviye seti yok.")
+    prices = [_num(selected.get(key)) for key in ("entry", "stop", "target")]
+    if None in prices or min(prices) <= 0:
+        return _emir_reddet({}, "Nihai giriş/stop/hedef fiyatları pozitif ve sonlu olmalı.")
+    entry, stop, target = prices
+    if not (stop < entry < target if side == "LONG" else target < entry < stop):
+        return _emir_reddet({}, "Nihai giriş/stop/hedef sırası yönle tutarsız.")
     veri = job.get("veri") or {}
     p15, ph4 = _yol(veri.get("m15"), taban), _yol(veri.get("h4"), taban)
     if not (p15 and ph4):
-        return {"EMIR": "EMİR YOK", "gerekce": f"{YOK} — m15/h4 yolu çözülemedi"}
-    ej = {"sembol": job.get("sembol", YOK), "yon": sentez.get("YON_BIAS"),
-          "m15": str(p15), "h4": str(ph4), "r_min": KONVANSIYON["r_min"]}
+        return _emir_reddet({}, f"{YOK} — m15/h4 yolu çözülemedi")
+    ej = {"sembol": job.get("sembol", YOK), "yon": side,
+          "m15": str(p15), "h4": str(ph4), "r_min": KONVANSIYON["r_min"],
+          "approved_levels": selected, **_grafik_zaman_job(job)}
     prof = _yol(job.get("usd_profil"), taban)
     if prof:
         try:
@@ -1535,9 +1755,38 @@ def _emir_plani(job: dict, taban: Path, k1: dict, sentez: dict) -> dict:
         except (OSError, json.JSONDecodeError):
             pass
     r = _kos(MOTOR["emir_plani"], [], girdi_job=ej)
-    if r["ok"] and isinstance(r["cikti"], dict):
-        return _ilk_gecis_ekle(r["cikti"], p15)
-    return {"EMIR": "EMİR YOK", "gerekce": f"emir planı motoru çalışmadı ({r['hata']})"}
+    if not (r["ok"] and isinstance(r["cikti"], dict)):
+        return _emir_reddet({}, f"emir planı motoru çalışmadı ({r['hata']})")
+    emir = r["cikti"]
+    candidates = emir.get("adaylar") or []
+    # A second calculation cannot silently replace the reviewed price set.
+    def matches(candidate):
+        if str(candidate.get("yon", emir.get("yon", ""))).upper() != side:
+            return False
+        return all(_num(candidate.get(key)) is not None and
+                   _num(candidate.get(key)) == _num(selected.get(source))
+                   for key, source in (("giris", "entry"), ("stop", "stop"), ("hedef", "target")))
+    matched = [candidate for candidate in candidates if matches(candidate)]
+    if not matched:
+        return _emir_reddet(emir, "Emir seviyeleri nihai doğrulanmış seviye setiyle eşleşmiyor.")
+    primary = matched[0]
+    order_type = str(primary.get("emir_tipi") or emir.get("EMIR", "").split(" ")[0]).upper()
+    if order_type not in ("MARKET", "LIMIT"):
+        return _emir_reddet(emir, "Doğrulanmış seviye için desteklenen emir türü yok.")
+    # Only the selected level set is displayed as executable; alternatives
+    # remain explicitly conditional, including a formerly first-ranked order.
+    emir = {**emir, "adaylar": [primary], "birincil": primary,
+            "kosullu_senaryolar": list(emir.get("kosullu_senaryolar") or []) +
+                                   [candidate for candidate in candidates if not matches(candidate)],
+            "EMIR": (f"{order_type} {side} @{primary['giris']} | "
+                     f"SL {primary['stop']} | T1 {primary['hedef']}")}
+    emir = _ilk_gecis_ekle(emir, p15)
+    first = emir.get("ilk_gecis") or {}
+    p_target, p_stop = _num(first.get("p_hedef")), _num(first.get("p_stop"))
+    if (first.get("favori") != "HEDEF" or p_target is None or p_stop is None
+            or not (0 <= p_stop < p_target <= 1)):
+        return _emir_reddet(emir, "İlk-geçiş teyidi eksik/olumsuz; koşullu senaryo emir değildir.")
+    return emir
 
 
 def _ilk_gecis_ekle(emir: dict, p15: Path) -> dict:
@@ -1548,8 +1797,8 @@ def _ilk_gecis_ekle(emir: dict, p15: Path) -> dict:
     VERİ YOK → işlem yok."
     Bu kural 2026-08-08'e kadar ÖLÇÜMSÜZDÜ: motoru (ilk_gecis.py) main'de yoktu,
     `doctor-command-y15960` dalında kalmıştı. Dosyayı koymak yetmez — burada
-    ÇAĞRILMAZSA kural yine elle iştir. Ölçüm emri REDDETMEZ; hükmü etiketler
-    (strateji süzgeci gorev.json strateji_kurali (3)'te tanımlı).
+    ÇAĞRILMAZSA kural yine elle iştir. Burada ölçüm döner; çağıran `_emir_plani`
+    eksik/olumsuz teyidi açıkça emir kapısında reddeder.
 
     Fail-closed: motor koşmazsa alan "ÖLÇÜM YOK" olur, uydurma olasılık YAZILMAZ.
     """
@@ -1610,7 +1859,7 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
     # Sicile YAZILAN aday, _islem_kalitesi'nin kullanıcıya DUYURDUĞU adayla AYNI
     # olmalı (B4): eskiden burada adaylar[0], orada max(R_gercekci) idi — en
     # yüksek R ikinci sıradaysa sicil yanlış girişi kaydediyordu.
-    aday = ik.get("secilen") or {}
+    aday = (ik.get("secilen") or {}) if str(zirve.get("EMIR", "")).startswith(("MARKET", "LIMIT")) else {}
     kmk = m.get("karar-motoru") or {}      # bölge alanları motorun kararından
     # EMİR PLANI SİCİLE YAZILIR: motor temiz-giriş seti vermese de basılan
     # MARKET/LIMIT emri bir sonraki koşuda HESAP VERME ile ölçülmelidir.
@@ -1633,10 +1882,10 @@ def _anlik_goruntu(k1: dict, k2: dict, k3: dict, k5: dict, zirve: dict) -> dict:
         "islem_seviyeleri": ({
             "giris": aday.get("entry"), "stop": aday.get("stop"),
             "hedef": aday.get("target"),
-            "giris_alt": aday.get("giris_alt", (kmk.get("karar") or {}).get("giris_alt")),
-            "giris_ust": aday.get("giris_ust", (kmk.get("karar") or {}).get("giris_ust")),
-            "iptal": aday.get("iptal", (kmk.get("karar") or {}).get("iptal")),
-            "giris_tipi": aday.get("giris_tipi", "limit"),
+            "giris_alt": aday.get("giris_alt", aday.get("entry")),
+            "giris_ust": aday.get("giris_ust", aday.get("entry")),
+            "iptal": aday.get("iptal", aday.get("stop")),
+            "giris_tipi": str(emir0.get("emir_tipi", aday.get("giris_tipi", "limit"))).lower(),
         } if aday else ({
             # motor seti yoksa EMİR PLANININ birincil emri sicile girer;
             # kaynak etiketi gözlemci/mühür temizliği için ayırt edicidir
@@ -1675,7 +1924,7 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
       1) YON_BIAS ile HİZALI, motordan okunan giriş/stop/hedef seti var
       2) rr_denetim verdict = TUTARLI (şişirilmiş R değil)
       3) R_gercekci ≥ R_MIN (karar-motorunun kendi kapısı)
-      4) o danışmanın doğrulaması çürütülmemiş (verifier confirmed ≠ False)
+      4) doğrulama açıkça True; nihai karar LONG/SHORT ve avantaj kapısı açık
     Eksik koşul(lar) gerekçe olarak AÇIKÇA yazılır — "kapı gerekçesi yok" gibi
     bilgisiz satır üretilmez.
     """
@@ -1686,6 +1935,9 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
     ver = k4.get("verifier") or {}
 
     adaylar, engeller = [], []
+    permitted = _nihai_karar_izni(sentez)
+    if not permitted:
+        engeller.append("Nihai karar/avantaj kapısı kapalı; yön ve koşullu senaryolar korunur.")
     for ad, s in sevs.items():
         if hedef_yon and s.get("yon") != hedef_yon:
             engeller.append(f"{ad}: seviye yönü ({s.get('yon')}) YON_BIAS ({bias}) ile hizasız")
@@ -1700,13 +1952,21 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
         if r_ger is None or r_ger < KONVANSIYON["r_min"]:
             neden.append(f"R_gerçekçi={r_ger if r_ger is not None else YOK} "
                          f"< R_MIN={KONVANSIYON['r_min']}")
-        if onay is False:
-            neden.append(f"doğrulama çürütüldü: {ver.get(ad, {}).get('reason', YOK)}")
+        if onay is not True:
+            neden.append(f"doğrulama açıkça True değil: {ver.get(ad, {}).get('reason', YOK)}")
+        if not permitted:
+            neden.append("nihai karar işlem izni vermiyor")
+        if s.get("invalidated") is True or s.get("status") in ("invalidated", "consumed", "cancelled"):
+            neden.append("seviye geçersiz/tüketilmiş/iptal edilmiş")
+        entry, stop, target = (_num(s.get(k)) for k in ("entry", "stop", "target"))
+        if None in (entry, stop, target) or min(entry, stop, target) <= 0 or not (
+                stop < entry < target if s.get("yon") == "long" else target < entry < stop):
+            neden.append("giriş/stop/hedef geometrisi geçersiz")
         if neden:
             engeller.append(f"{ad}: " + "; ".join(neden))
         else:
             adaylar.append({"motor": ad, **s, "R_gercekci": r_ger,
-                            "rr_verdict": verdict})
+                            "rr_verdict": verdict, "confirmed": True})
 
     secilen = {}
     if adaylar:
@@ -1723,9 +1983,10 @@ def _islem_kalitesi(k3: dict, k4: dict, sentez: dict) -> dict:
                    else f"motorlardan giriş/stop/hedef seti gelmedi ({YOK})"))
     return {"hukum": hukum, "ozet": ozet, "adaylar": adaylar, "secilen": secilen,
             "engeller": engeller,
-            "seviyeler": sevs, "rr_denetimi": rrs,
+            "seviyeler": {a["motor"]: a for a in adaylar},
+            "kosullu_senaryolar": {**(k3.get("kosullu_senaryolar") or {}), **sevs}, "rr_denetimi": rrs,
             "kapi_kurali": ("hizalı seviye + rr_denetim TUTARLI + "
-                            f"R_gercekci ≥ {KONVANSIYON['r_min']} + doğrulama çürütülmemiş"),
+                            f"R_gercekci ≥ {KONVANSIYON['r_min']} + doğrulama True + nihai karar izni"),
             "not": "Seviyeler motorların tek-kaynak çıktısıdır; şişirilmiş R "
                    "rr_denetim.py ile mekanik elenmiştir. BEKLE = kalite hükmü, "
                    "yön reddi değil."}
@@ -2085,6 +2346,7 @@ def _sorusturma_kos(rapor: dict, katman: str, kapi: str) -> dict:
 
 
 def kos(job: dict, taban: Path) -> dict:
+    job = _aligned_price_job(job, taban)
     rapor = {
         "sistem": "PİRAMİT — LLM→AI AJAN→ÇOKLU-AJAN→AGI→SI",
         "soru": job.get("soru", YOK), "sembol": job.get("sembol", YOK),
@@ -2181,6 +2443,9 @@ def kos(job: dict, taban: Path) -> dict:
         "kapi_gerekceleri": (s.get("kapi_gerekceleri") or []) + ik["engeller"],
         "gecersizlik": sentez_gecersizlik(s),
         "seviyeler": ik["seviyeler"],
+        "kosullu_senaryolar": ik.get("kosullu_senaryolar") or {},
+        "validated_edge": s.get("validated_edge") is True,
+        "timeframe_context": k2.get("timeframe_context") or {},
         "pozisyon_boyutu": k5.get("pozisyon_boyutu"),
         "ulasilan_katman": "K5-SI (zirve)",
         "ZORUNLU_EKSIK": k1.get("zorunlu_eksik") or [],
@@ -2219,33 +2484,6 @@ def kos(job: dict, taban: Path) -> dict:
         "yon": kiyas.get("YON_DEGISIMI"), "fiyat": kiyas.get("fiyat"),
         "onemli_degisimler": kiyas.get("onemli_degisimler"),
         "danisman_donusleri": kiyas.get("danisman_donusleri")}
-    # anlık görüntüyü YAZ (bir sonraki koşu bununla kıyaslayacak)
-    try:
-        sdir = Path(str(_yol(job.get("state_dir"), taban)
-                        or job.get("state_dir") or (ENGINE / "state")))
-        sdir.mkdir(parents=True, exist_ok=True)
-        _metin = json.dumps(yeni_gor, ensure_ascii=False, indent=2)
-        _atomik_yaz(sdir / "onceki_kosu.json", _metin)
-        rapor["ZIRVE"]["_anlik_goruntu"] = str(sdir / "onceki_kosu.json")
-        # KUM HAVUZU AYNASI: anlık görüntü bir DEFTER KAYDI değil, "kullanıcıya
-        # EN SON SÖYLENEN karar"dır — HESAP VERME ve KIYAS bunu GERÇEK sicilden
-        # (defter_dizini) okur. Kum havuzu koşusunda yalnız sandığa yazılırsa,
-        # aynı bar daha İYİ veriyle (taze görsel okuma, düzeltilmiş türev sembolü)
-        # yeniden koşulduğunda gerçek hafıza ESKİ/EKSİK sürümde donar ve bir
-        # sonraki KIYAS kullanıcıya hiç gösterilmemiş bir kararla kıyaslar
-        # (ölçüldü: gerçek hafıza -0.2627/3 danışman, gösterilen karar
-        # -0.8277/4 danışman). Defter/akıbet YAZIMLARI sandıkta KALIR; yalnız
-        # bu "son söylenen" kaydı gerçek sicile de aynalanır.
-        _gercek = _yol(job.get("defter_dizini"), taban) or job.get("defter_dizini")
-        if _gercek:
-            _gp = Path(str(_gercek))
-            if _gp.resolve() != sdir.resolve():
-                _gp.mkdir(parents=True, exist_ok=True)
-                _atomik_yaz(_gp / "onceki_kosu.json", _metin)
-                rapor["ZIRVE"]["_anlik_goruntu_ayna"] = str(_gp / "onceki_kosu.json")
-    except OSError as e:
-        rapor["ZIRVE"]["_anlik_goruntu"] = f"YAZILAMADI ({e})"
-
     # --- ZİRVE DENETİMLERİ: karar YAZILMADAN önce, koşulsuz ----------------
     rapor["ZIRVE"]["ELEME"] = (k3.get("eleme") or {})
     rapor["_MOTOR_SICILI"] = list(_SICIL)
@@ -2299,24 +2537,6 @@ def kos(job: dict, taban: Path) -> dict:
         rapor["ZIRVE"]["iki_satir"]["2_ISLEM_KALITESI"] = (
             "İŞLEM KALİTESİ: DENETİM İHLALİ — işlem yok. Gözlemci bulguları: "
             + " | ".join(denetim["kritik_ihlal"]))
-        # Sicil tutarlılığı: anlık görüntü mühürden ÖNCE yazıldı; emir-kaynaklı
-        # işlem seviyesi kaldıysa temizle — mühürlü emir bir sonraki koşuda
-        # "verilmiş işlem" gibi ÖLÇÜLMEMELİ (işlem yok hükmüyle çelişirdi).
-        try:
-            gp = Path(str(rapor["ZIRVE"].get("_anlik_goruntu", "")))
-            if gp.is_file():
-                g = json.loads(gp.read_text(encoding="utf-8"))
-                # Mühürlü koşuda işlem seviyesi HER KAYNAKTA temizlenir (B1):
-                # eskiden yalnız kaynak=="emir_plani" siliniyordu; motor-aday
-                # (1205-dalı, kaynak alanı YOK) seviyeleri sicilde kalıp bir
-                # sonraki koşunun "işlem yok" denmiş koşuya R ölçmesine yol açıyordu.
-                if g.get("islem_seviyeleri"):
-                    g["islem_seviyeleri"] = {}
-                    g["islem_kalitesi"] = rapor["ZIRVE"]["ISLEM_KALITESI"]
-                    _atomik_yaz(gp, json.dumps(g, ensure_ascii=False, indent=2))
-        except (OSError, json.JSONDecodeError):
-            pass
-
     # --- KONTROL AJANLARI: gözlemcinin ÜSTÜNE niyet/gerçeklik denetimi ---
     # (araştırmasız / taklit / bulaşma / gizli gündem / tiyatro / görev sapması)
     # Gözlemci mührü UYGULANDIKTAN SONRA koşar: "mühürlüyken emir basılmış"
@@ -2340,8 +2560,52 @@ def kos(job: dict, taban: Path) -> dict:
     muhur = denetim["muhurlendi"] or kontrol["muhurlendi"]
     rapor["durum"] = ("TAMAM — piramidin tepesine ulaşıldı"
                       + (" (DENETİM MÜHÜRÜ)" if muhur else ""))
+    _nihai_seviye_kapisi(rapor["ZIRVE"])
+    yeni_gor = _anlik_goruntu(k1, k2, k3, k5, rapor["ZIRVE"])
+    yeni_gor["sembol"] = job.get("sembol", YOK)
+    # anlık görüntüyü YAZ (bir sonraki koşu bununla kıyaslayacak)
+    try:
+        sdir = Path(str(_yol(job.get("state_dir"), taban)
+                        or job.get("state_dir") or (ENGINE / "state")))
+        sdir.mkdir(parents=True, exist_ok=True)
+        _metin = json.dumps(yeni_gor, ensure_ascii=False, indent=2)
+        _atomik_yaz(sdir / "onceki_kosu.json", _metin)
+        rapor["ZIRVE"]["_anlik_goruntu"] = str(sdir / "onceki_kosu.json")
+        # KUM HAVUZU AYNASI: anlık görüntü bir DEFTER KAYDI değil, "kullanıcıya
+        # EN SON SÖYLENEN karar"dır — HESAP VERME ve KIYAS bunu GERÇEK sicilden
+        # (defter_dizini) okur. Kum havuzu koşusunda yalnız sandığa yazılırsa,
+        # aynı bar daha İYİ veriyle (taze görsel okuma, düzeltilmiş türev sembolü)
+        # yeniden koşulduğunda gerçek hafıza ESKİ/EKSİK sürümde donar ve bir
+        # sonraki KIYAS kullanıcıya hiç gösterilmemiş bir kararla kıyaslar
+        # (ölçüldü: gerçek hafıza -0.2627/3 danışman, gösterilen karar
+        # -0.8277/4 danışman). Defter/akıbet YAZIMLARI sandıkta KALIR; yalnız
+        # bu "son söylenen" kaydı gerçek sicile de aynalanır.
+        _gercek = _yol(job.get("defter_dizini"), taban) or job.get("defter_dizini")
+        if _gercek:
+            _gp = Path(str(_gercek))
+            if _gp.resolve() != sdir.resolve():
+                _gp.mkdir(parents=True, exist_ok=True)
+                _atomik_yaz(_gp / "onceki_kosu.json", _metin)
+                rapor["ZIRVE"]["_anlik_goruntu_ayna"] = str(_gp / "onceki_kosu.json")
+    except OSError as e:
+        rapor["ZIRVE"]["_anlik_goruntu"] = f"YAZILAMADI ({e})"
+
     _deftere_yaz(rapor)
     return rapor
+
+
+def _nihai_seviye_kapisi(zirve: dict) -> None:
+    """The displayed active levels reflect the last gate, not an earlier candidate."""
+    allowed = (str(zirve.get("EMIR", "")).startswith(("MARKET", "LIMIT")) and
+               zirve.get("sentez_karari") in ("LONG", "SHORT") and
+               zirve.get("validated_edge") is True)
+    if not allowed:
+        scenarios = dict(zirve.get("kosullu_senaryolar") or {})
+        scenarios.update(zirve.get("seviyeler") or {})
+        if zirve.get("emir_adaylari"):
+            scenarios["emir_motoru"] = zirve["emir_adaylari"]
+        zirve.update(seviyeler={}, emir_adaylari=[], pozisyon_boyutu=None,
+                     kosullu_senaryolar=scenarios)
 
 
 def sentez_gecersizlik(s: dict):
@@ -2361,6 +2625,7 @@ def _durdur(rapor: dict, katman: str, kapi: str) -> dict:
     rapor["SORUSTURMA"] = _sorusturma_kos(rapor, katman, kapi)
     rapor["ZIRVE"]["SORUSTURMA"] = rapor["SORUSTURMA"].get("ozet") or YOK
     rapor["_MOTOR_SICILI"] = list(_SICIL)
+    _nihai_seviye_kapisi(rapor["ZIRVE"])
     _deftere_yaz(rapor)
     return rapor
 

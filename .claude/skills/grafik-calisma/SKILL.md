@@ -1,130 +1,52 @@
 ---
 name: grafik-calisma
-description: >-
-  Grafik okuma, SMC + Fibonacci analiz ve grafik üretme becerisi. Bir soru
-  grafik/chart okuma, mum grafiği (candlestick) yorumlama, fiyat grafiği,
-  teknik analiz, SMC, CHoCH, BOS, order block, FVG, likidite, Fibonacci
-  retracement, golden zone, giriş bölgesi (entry), destek/direnç, trend
-  çizgisi, ya da grafik/dashboard OLUŞTURMA ile ilgili olduğunda OTOMATİK
-  devreye girer — hiçbir slash komutu gerekmez. Kullanıcı grafik ekran
-  görüntüsü gönderdiğinde ya da bir sembol için analiz istediğinde de tetiklenir.
-  Tetikleyici kelimeler (TR/EN): grafik, chart, mum, candlestick, teknik analiz,
-  technical analysis, SMC, smart money, ICT, CHoCH, BOS, order block, FVG,
-  fibonacci, fib, golden zone, OTE, likidite, liquidity sweep, entry, giriş,
-  destek direnç, support resistance, trend, dashboard, plot, ATR, rejim,
-  regime, MTF, çoklu zaman dilimi, edge, tarihsel doğrulama.
-  Çalışan motorlar: scripts/smc_tespit.py (OHLCV'den otomatik yapı/OB/FVG/
-  likidite/ATR/rejim tespiti), scripts/confluence.py (katman sıralı giriş/çıkış
-  + ATR-stop + MTF + rejim kapıları), scripts/setup_dogrulama.py (tarihsel
-  edge kanıtı — kanıt yoksa sinyal yok). Detaylı SMC metodolojisi için
-  forex-trading-expert becerisinin references/smart-money-concepts.md
-  dosyasını kullanır.
+description: Grafik/ekran görüntüsü ve OHLCV için kaynak ve kapanış zamanını doğrula, aktif SMC bölgelerini incele, yapı yönü ile ilk hareketi ayır ve koşullu giriş/stop/hedef hesapla. Binance15m/1h/4h karşılaştırmalarında chart_workflow kullan; puanı olasılık, kalibrasyonu tek başına başarı kanıtı sayma.
 ---
 
-# Grafik Okuma & SMC + Fibonacci Analizi
+# Grafik çalışma
 
-Üç mod var: **görselden okuma**, **canlı veriden analiz**, **grafik üretme**.
-Hepsi otomatik; kullanıcı komut yazmaz.
+## Veri ve görsel sözleşmesi
 
-## Kesinlik boru hattı (SAYISAL VERİ VARSA ZORUNLU SIRA)
-Yön + giriş/çıkış istendiğinde ve OHLCV verisi mevcutsa (kullanıcı yapıştırdı
-ya da Crypto.com MCP'den çekildi), seviyeler göz kararı DEĞİL şu zincirle üretilir:
+Sembol, piyasa, fiyat türü, periyot ve UTC kesimini belirle. C0 son kapanmış mumdur; açık ve C0 sonrası kapanışları dışarıda bırak ve sayısını kaydet. `candle_contract.py` tek normalizasyon kaynağıdır: Binance kline dizileri veya OHLCV nesneleri, `cutoff`/`c0`/`as_of`, açılış/kapanış zamanı ve `timeframe` kullanılır. Çelişkili kesim, bozuk OHLC veya karışmış zaman sessizce kabul edilmez. Zamansız eski veri yalnız `time_unverified` taslak üretir.
 
-```
-veri (OHLCV)
- → scripts/smc_tespit.py      # swing/BOS-CHoCH/OB/FVG/likidite/ATR/rejim OTOMATİK
-                              # (aynı veri = aynı seviye; öznellik yok). HTF verisi
-                              # de verilirse htf_bias çıkarır (MTF hizalama).
- → scripts/setup_dogrulama.py # KALİBRASYON + KANIT (her koşuda bu veriyle):
-                              #  - MAE kalibrasyonu → SL tamponu (atr_mult) veriden
-                              #  - permütasyon testi → edge, rastgele girişten ayrışmalı
-                              #  - bootstrap CI → beklenti alt sınırı > 0
-                              #  - Wilson → önerilen min R:R = (1-wr_lo)/wr_lo
-                              # sinyal_izni=false ise SİNYAL VERİLMEZ (fail-closed).
- → scripts/confluence.py      # tespit çıktısı + KALİBRE eşiklerle (atr_mult ve
-                              # min_rr setup_dogrulama.kalibrasyon'dan; job'a
-                              # thresholds_kaynak yaz) katman sıralı giriş/çıkış.
- → karar-kurulu               # nihai tek karar (diğer motorlarla sentez)
+Özgün ekranı aç; yalnız gözlenebilen seviyeleri işaretle. Piksel ölçümü yaklaşık olup okunabilir eksen dayanaklarına bağlanır. Görsel verinin yerine mum uydurma. 4h dış yapı, 1h ara bağlam, 15m yerel tetik olarak incelenebilir; bu roller tek başına doğruluk kanıtı değildir. Ana yapı düşerken ilk bacak yukarı retracement olabilir. Kurulu Kör Grafik C0 ve yaşam döngüsü protokolü uygulanıyorsa onun daha sıkı kurallarını koru.
+
+## Kullanıcıya grafik planı
+
+`chart_workflow.py` aynı sözleşmenin 15m/1h/4h girdilerini bir kesimde doğrular, analistin kaynaklı gözleminden tek karar kartı üretir ve değişiklik denetimli yerel sonuç kaydı tutar:
+
+```bash
+python3 .claude/skills/grafik-calisma/scripts/chart_workflow.py prepare case_job.json --output prepared.json
+python3 .claude/skills/grafik-calisma/scripts/chart_workflow.py plan prepared.json observation.json --output decision.json
+python3 .claude/skills/grafik-calisma/scripts/chart_workflow.py --help
 ```
 
-Kurallar: (1) `smc_tespit` çıktısındaki `confluence_job` doğrudan
-`confluence.py`'ye verilir — elle seviye uydurulmaz. (2) `setup_dogrulama`
-`sinyal_izni=false` derse sonuç en fazla "kurulum var ama tarihsel kanıt yok →
-BEKLE" olur. (3) Görsel-yalnız analizde (sayısal veri yoksa) bu zincir
-çalıştırılamaz; çıktı "yaklaşık/kanıtsız" etiketiyle verilir ve kullanıcıdan
-OHLCV istenir.
+Gözlemde ilk bacak yönü, ana yapı, kaynak mum referansları, giriş bölgesi/türü/koşulu, stop, hedefler, ufuk ve geçerlilik bulunur. Yön analistin çıkarımıdır; kod bunu piyasa sonucu diye doğrulamaz. `confirmed` tetik koşulunun gözlendiği anlamındadır; istatistiksel onay veya kâr garantisi değildir. Giriş koşulluysa yön ve bölgeler korunur, durum açıkça koşullu yazılır.
 
-## Dinamik eşik ilkesi (kalibrasyon.py)
-Piyasa durağan değildir: sabit eşik (dünkü 15 işlem / MC 0.6 / R:R 2) bir
-sonraki koşuda geçersiz olabilir. Bu yüzden eşikler SEÇİLMEZ, her koşuda o
-koşunun verisinden İSTATİSTİKLE türetilir (`scripts/kalibrasyon.py`):
-permütasyon p-değeri (edge ≠ piyasa sürüklenmesi), bootstrap CI, Wilson
-kötümser kazanma oranından min R:R, kazanan-MAE quantile'ından SL tamponu.
-İki tuzak da yasak: statik eşik VE serbest ayar (aşırı-uyum). Türetimler
-korkulukla sınırlıdır; kalibre edilemeyen her sabit çıktıdaki `varsayimlar`
-defterinde AÇIKÇA etiketlenir — gizli sabit eşik yasaktır. Her motor çıktısı
-`esik_kaynagi` alanıyla eşiklerin veri-türevi mi varsayım mı olduğunu bildirir.
+Fiyat adımı, giriş aralığının iki ucunda R:R ve açık maliyet varsayımları hesaplanır. Ücret/kayma bilinmiyorsa net sonuç bilinmiyor kalır. Özgün görüntüye ölçülü işaretleme için Chart Calculation Workbench; ham OHLCV'den yeni SVG için `grafik-cizim` kullanılabilir. Çizim ile metin aynı karar kaydından gelmeli ve render açılıp kontrol edilmelidir.
 
-## A) Görselden okuma (ekran görüntüsü / chart resmi)
-Kullanıcı bir grafik görseli gönderdiğinde şu sırayla analiz et:
+## SMC yardımcı hesaplama
 
-1. **Bağlam:** sembol, zaman dilimi, borsa (görünüyorsa). Görünmüyorsa "VERİ YOK"
-   de, uydurma.
-2. **Piyasa yapısı (SMC):**
-   - Swing yüksek/düşükleri belirle → trend (HH-HL / LH-LL).
-   - **BOS** (trend yönünde yapı kırılımı) ve **CHoCH** (trend değişim sinyali —
-     son swing'in ters yönde kırılması) işaretle.
-   - **Order Block** (kırılım öncesi son ters mum bölgesi), **FVG** (üç mumluk
-     boşluk) ve **likidite havuzları** (eşit tepe/dip, süpürme fitilleri) tespit et.
-   - Detaylı tanımlar: `../forex-trading-expert/references/smart-money-concepts.md`.
-3. **Confluence ile yön + giriş/çıkış (ZORUNLU KATMAN SIRASI):**
-   Fibonacci **tek başına yeterli değildir** — sadece bir "nerede" aracıdır;
-   yönü, bağlamı, geçerliliği bilmez. Giriş/çıkış seviyesi **her zaman** şu
-   sırayla hesaplanır (fib en sonda bir rötuş katmanıdır):
+`smc_tespit.py` onaylanabilir zamanıyla pivotları ve kapanış kırılımlarını hesaplar. Aktif likidite/OB/FVG listeleri ile tarihsel listeler ayrıdır. Alınmış hedef veya geçersiz OB yeni girişte kullanılamaz. Son olayın yönü dış yapı bağlamıdır; kendi başına sonraki ilk bacak değildir.
 
-   > **bağlam(HTF) → yapı(SMC) → arz-talep(OB/FVG) → likidite → [fib] → onay → risk**
+`confluence.py` aday giriş bölgelerini ayrı puanlar; başka bölgedeki kanıt aynı girişin puanına eklenmez. Aynı olay ailesi bağımsız oy sayılmaz. Açık hedef, geçerli yapı, zaman ve taze aday tetik olmadan taslak çalışması yapılabilir, onaylı işlem denemez. Varsayımsal impuls ucu açık likidite diye sunulmaz. `plan_yonu`/`plan_durumu` taslak ile uygulanabilirliği ayırır; `yon_bias` yapısal bağlamı korur.
 
-   Kural: **güçlü giriş bölgesi = golden zone (0.618–0.786) + order block/FVG +
-   likidite AYNI noktada buluştuğunda (confluence).** Yalnız fib = confluence
-   eksik → **NÖTR-BEKLE** (fail-closed). Bunu hafızadan değil **motorla** üret:
-   ```
-   python3 scripts/confluence.py --job job.json
-   ```
-   Motor girdisi: `structure` (CHoCH/BOS + bull/bear), `impulse` (swing bacağı),
-   `htf_bias`, `order_blocks`, `fvgs`, `liquidity`. Çıktı: KARAR (LONG/SHORT/
-   NÖTR-BEKLE), confluence skoru + faktörler, golden zone, **giriş bölgesi**
-   (golden zone ∩ OB/FVG), **geçersizlik (SL)** = impulsu başlatan swing ötesi,
-   **hedefler** = hedef yöndeki likidite, ve **R:R**. Kapılar (fail-closed):
-   yapı-impuls çelişkisi / confluence yok / skor<eşik / R:R<eşik → BEKLE.
-4. **Sonuç kartı:** motor çıktısını olduğu gibi ver — yön, giriş bölgesi,
-   geçersizlik, hedef(ler), R:R, confluence skoru + **olasılık dili** ("olur"
-   değil "olabilir"). Görselde OKUNAMAYAN hiçbir sayı üretme; seviyeleri
-   görseldeki ölçekten yaklaşık ver ve yaklaşık olduğunu söyle. Onay (alt-TF
-   tetik) girişten önce beklenir.
+## Tarihsel değerlendirme ve kalibrasyon
 
-## B) Canlı veriden analiz (sembol verildiğinde)
-Kullanıcı "BTC 4h analiz et" gibi bir istek verirse:
-1. **Crypto.com MCP** `get_candlestick` ile OHLCV çek (uygun interval, ~100-200 mum).
-2. Aynı katman sırasını SAYISAL veriyle uygula: swing tespiti + CHoCH/BOS + OB/FVG
-   + likidite havuzlarını çıkar, sonra `scripts/confluence.py` motoruna ver →
-   yön + giriş/çıkış + R:R gerçek fiyatlarla hesaplanır (yalnız fib değil, confluence).
-3. Hesaplama/doğrulama gerekiyorsa `data-analysis-deep-scan` scriptleriyle çalış.
-4. İstenirse **işaretlenmiş grafik çiz** (aşağıdaki C modu) ve SendUserFile ile gönder.
+Algoritmik edge değerlendirmesi isteniyorsa:
 
-## C) Grafik üretme
-- **Analiz grafiği:** `grafik-cizim` becerisinin motoruyla üretilir —
-  `python3 ../grafik-cizim/scripts/cizim.py --job is.json`. Mum grafiği +
-  BOS/CHoCH + order block/FVG/likidite + impuls Fibonacci'si (altın bölge) +
-  giriş/stop/hedef pozisyon kutusu, `otomatik` katmanıyla bu becerinin
-  `smc_tespit.py` çıktısından ÇİZİLİR (elle seviye girilmez). Çıktı SVG'dir;
-  **matplotlib gerekmez** (bu ortamda kurulu değildir — eski matplotlib/mplfinance
-  yönergesi bu yüzden geçersizdir). Araç envanteri:
-  `../grafik-cizim/references/tradingview-arac-haritasi.md`.
-- **Genel grafik/dashboard:** `dataviz` becerisi kurallarıyla (erişilebilir renk,
-  net eksen); Excel içi grafik için `xlsx`.
+1. Normalleştirilmiş, C0'a kadar kapanmış geçmişi sabitle.
+2. `setup_dogrulama.py` ile eğitim bölümünde parametreleri seç, sonraki ayrılmış dönemde dondurulmuş parametreleri değerlendir.
+3. Sayısal `confluence_thresholds` ve `thresholds_kaynak` alanlarını SMC/confluence girdisine aktar. Açıklama nesnesini sayısal `min_rr` yerine verme.
+4. `sinyal_izni`/`validated_edge` yalnız belirtilen ayrılmış dönemin kanıt kapsamını taşır. Yetersiz kanıtta yapısal eğilim ve koşullu plan kalabilir; sonuç yüksek isabet diye yayımlanmaz.
+5. Kalibrasyon geçmiş kazananlara göre ayarlanıp aynı getiride kanıtlanamaz. Referansla giriş, maliyet, kapasite, takip penceresi ve hedef/stop kuralı eşleştirilmelidir.
 
-## Zorunlu risk çerçevesi (her analizde)
-- Bu bir **olasılık senaryosudur, sinyal değildir** — her çıktıda tek cümleyle belirt.
-- Risk yönetimi: işlem başına maks %1-2 risk, min 1:2 R:R
-  (forex-trading-expert Risk Management bölümüyle uyumlu).
-- Gerçek / varsayım / yorum ayrımı korunur; emin olunmayan nokta açıkça söylenir.
+`kalibrasyon.py` Wilson, zaman/blok bağımlılığına dikkat edilen belirsizlik ve işlem yürütme yardımcılarını içerir. FVG dolum/ömür oranında tamamlanmamış takipler ayrıca belirtilir. `backtest.monte_carlo` sabit getirilerin sırasını değiştirir; gelecekte kâr olasılığı ölçmez. Wilson'dan türetilen gerekli R, uygulanabilir hedef önerisiyle ayrı tutulur; üstten kırpılmış değer konservatif gerekli sınır diye sunulmaz.
+
+Kaynak ve yöntem ayrıntıları: [kalibrasyon-kaynaklar.md](references/kalibrasyon-kaynaklar.md). Puanlar ve tasarım eşikleri gözlenmiş başarı oranı değildir.
+
+## Sonuç ve doğrulama
+
+Kullanıcıya sözleşme/C0, ana yapı, ilk hareketin dayanağı, giriş koşulu/bölgesi, stop/geçersizlik, T1/T2, R aralığı ve iptal koşulunu kısa yaz. İleri sonucunu görmeden planı dondur. Tetiklenmeyeni kazanç/kayıp sayma; yerel dosya hash zincirini harici zaman damgası imzası gibi tanıtma.
+
+Yeni regresyonlar `test_smc_regressions.py`, `test_calibration_regressions.py`, `test_chart_workflow.py` dosyalarındadır. Test sonucu yalnız çalıştırıldığı kaynak sürümü ve kapsamı için geçerlidir. Kod testi, kârlılık veya evrensel sıfır hata kanıtı değildir. Kullanıcıya yeni mimari veya tekrar model eğitimi önermeden önce somut eksik kanıtı belirle.

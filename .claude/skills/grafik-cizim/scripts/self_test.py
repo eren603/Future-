@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import math
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -198,8 +199,7 @@ def test_uctan_uca(m, tmp: Path):
         "baslik": "ÖZ-TEST · sentetik",
         "paneller": [{"tip": "hacim"}, {"tip": "rsi", "period": 14}],
         "otomatik": {"emir": {"yon": "long", "giris": m[-1]["close"],
-                              "stop": m[-1]["low"], "hedef": max(c["high"] for c in m) * 1.2,
-                              "r": 2.1}},
+                              "stop": m[-1]["low"], "hedef": max(c["high"] for c in m) * 1.2}},
         "cizimler": [{"arac": "fibonacci", "p1": {"bar": 10, "fiyat": m[10]["low"]},
                       "p2": {"bar": -5, "fiyat": m[-5]["high"]}}],
         "cikti": str(tmp / "oztest.svg"),
@@ -224,8 +224,8 @@ def test_uctan_uca(m, tmp: Path):
 
 def main() -> int:
     m = sahte_mumlar()
-    tmp = Path(__file__).resolve().parent / "_oztest_cikti"
-    tmp.mkdir(exist_ok=True)
+    temporary = tempfile.TemporaryDirectory(prefix="grafik-cizim-selftest-")
+    tmp = Path(temporary.name)
     test_olcek(m)
     test_rezervasyon(m)
     test_fib(m)
@@ -233,15 +233,13 @@ def main() -> int:
     test_tum_araclar(m)
     test_grounding(m)
     test_uctan_uca(m, tmp)
-    for t in tmp.glob("*.svg"):
-        t.unlink()
-    tmp.rmdir()
+    temporary.cleanup()
 
     print(f"GEÇTİ: {len(GECTI)}   KALDI: {len(KALDI)}")
     for k in KALDI:
         print(f"  ✖ {k}")
     if not KALDI:
-        print("✔ grafik-cizim motoru SAĞLAM")
+        print("✔ çizim/aritmetik öz-testleri geçti (tahmin başarısı ölçülmedi)")
     return 0 if not KALDI else 1
 
 

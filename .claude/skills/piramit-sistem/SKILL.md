@@ -56,8 +56,11 @@ python .claude/skills/piramit-sistem/scripts/self_test.py
 {
   "soru": "BTCUSDT — nihai yön ve işlem kalitesi?",
   "sembol": "BTCUSDT",
+  "c0": "2026-01-02T02:45:00Z",          // ortak bilgi kesimi; UTC kapanış sınırı
+  "allowed_staleness_minutes": 240,      // yalnız geçmiş panel yaşı
   "veri": {
     "m15": "engine/girdi/m15.json",      // karar-motoru + SMC girdisi
+    "h1": "engine/girdi/h1.json",        // ops. gerçek 1H ara bağlam; türetilmez
     "h4":  "engine/girdi/h4.json",       // 4H bağlam
     "ohlcv_csv": null,                   // ops. (m15 yerine tablo kaynağı)
     "turev": { "price_series": [...], "oi_series": [...], "funding": 0.0025,
@@ -81,7 +84,7 @@ python .claude/skills/piramit-sistem/scripts/self_test.py
 | Katman | Koşan beceri/motor | Kapı (fail-closed) |
 |---|---|---|
 | **K1 LLM** | `data-analysis-deep-scan` (`profile_data`/`verify_data`), `video-isleme`, kline parser (`engine/karar_motoru.parse_klines`) | (m15+h4) veya ohlcv_csv okunmalı — yoksa **üst katman koşmaz** |
-| **K2 AI AJAN** | `karar-motoru`, `grafik-calisma` (`smc_tespit`→`confluence`, `setup_dogrulama`), `turev-akis`, `backtest-motoru` | ≥2 motor **gerçek sayısal** sonuç üretmeli — tek motor çoklu-ajan değildir |
+| **K2 AI AJAN** | `karar-motoru`, `grafik-calisma` (`setup_dogrulama`→`smc_tespit`→`confluence`), `turev-akis`, `backtest-motoru` | ≥2 bağımsız kanıt ailesi; 1H/4H aynı SMC motorudur, sayıyı artırmaz |
 | **K3 ÇOKLU-AJAN** | motorlar → `karar-kurulu` danışman şeması; güven × K5 ağırlığı | ≥2 danışman |
 | **K4 AGI** | `karar-kurulu/rr_denetim`, `setup_dogrulama` (doğrulayıcı), `uzman-modu` 5 merceği, `forex-trading-expert` (SMC referansı) | bilgi katmanı: bulguları K5'e taşır, kararı bastırmaz |
 | **K5 SI** | `karar-kurulu/sentez.py` → `risk-yonetimi` → `portfoy-optimizasyonu` → `grafik-calisma/kalibrasyon.wilson_lo` | sentez üretilmeli; üretilemezse **NÖTR-BEKLE** |
@@ -119,8 +122,49 @@ python .claude/skills/piramit-sistem/scripts/self_test.py
   Motor BEKLE dese bile yön **açıkça** söylenir.
 - **İŞLEM KALİTESİ:** dört koşulun hepsi gerekir — (1) YÖN ile hizalı, motordan
   okunan giriş/stop/hedef, (2) `rr_denetim` = TUTARLI, (3) `R_gercekci ≥ 1.35`,
-  (4) doğrulama çürütülmemiş. Eksikse hüküm **"TEMİZ GİRİŞ YOK"** + hangi
+  (4) doğrulama açıkça `confirmed: true`. Eksikse hüküm **"TEMİZ GİRİŞ YOK"** + hangi
   koşulun düştüğü tek tek yazılır.
+
+Güncel işlem kapısı ayrıca **açık `confirmed: true`**, nihai `LONG/SHORT`
+kararı ve `validated_edge: true` ister. Eksik teyit olumlu sayılmaz;
+`YON_BIAS` tek başına emir izni değildir. Emir motorunun yönü ve bütün
+giriş/stop/hedef değerleri seçilen, denetlenmiş setle aynı olmalıdır.
+Farklı seviyeler veya eksik/olumsuz ilk-geçiş teyidi yalnız koşullu senaryo
+olarak tutulur. Son mühürden sonra uygulanabilir seviyeler ve pozisyon
+boyutu temizlenir; son kayıt da bu nihai çıktıyı yansıtır.
+
+## Grafik zamanı ve kalibrasyon aktarımı
+
+`c0`, `cutoff` ve `as_of` ortak kesim için eşdeğerdir; birlikte verilirse
+aynı anı göstermelidir. ISO damgalarında saat dilimi zorunludur. Her mumun
+açılış/kapanış damgası taşınır; kapanış yoksa yalnız açıkça verilen
+`timeframe` ile hesaplanır. `closed: false` mumlar ve kapanışı C0'dan
+sonra olan mumlar dışlanır. 15m, opsiyonel 1h ve 4h kendi son tamamlanmış
+mumlarıyla aynı kesime bağlanır; bu son kapanışların birbirine eşit olması
+gerekmez. Henüz tamamlanmayan 4h mumu 15m verisiyle tamamlanmış sayılmaz.
+Ana akış C0 verildiğinde kapalı mumları `state_dir/c0_inputs` girdilerine
+yazar; eski fiyat motorları da bu aynı girdileri okur.
+
+C0'dan **1 ms, 15 dk veya 239 dk sonraki panel bilgisi kabul edilmez**.
+`allowed_staleness_minutes` yalnız C0 öncesindeki bilgi yaşını sınırlar;
+gelecek bilgi için tolerans değildir. Zamanı doğrulanamayan grafik çıktısı
+koşullu taslaktır. Fiyat kesimi, tam eski piramit iş akışının hafıza,
+türev veri ve öğrenme bağımlılıklarını kör testten yalıttığı anlamına gelmez.
+
+`setup_dogrulama` önce çalışır; `confluence_thresholds.atr_mult` ve
+`confluence_thresholds.min_rr` sonlu, pozitif **sayı** olarak confluence'a
+aktarılır. `thresholds_kaynak` ve eğitim/ayrılmış değerlendirme açıklamaları
+çıktıda korunur. Eğitimden gelen sayısal eşik önerisi kendi başına avantaj
+kanıtı değildir. Kalibrasyon başarısız, kapalı, eksik veya kanıtı yetersizse
+`validated_edge/sinyal_izni` kapalı kalır; yapısal yön ve koşullu senaryolar
+ayrı sunulur. Etiket metni yerine gerçek boolean kapısı kullanılır.
+Sabit getiri sırasını karıştıran Monte Carlo'nun eksik kâr olasılığı,
+backtest doğrulaması diye kabul edilmez.
+
+Sınırlı regresyonlar: `python scripts/test_graph_integration.py` (bu beceri
+dizininden). Gerçek zaman normalizasyonu ve confluence hesaplarıyla,
+kalibrasyon/dış motor taklitleri kullanılır; tüm test çıktıları geçici
+dizindedir. Tam piramit, canlı emir veya geçmiş öğrenme döngüsü çalıştırılmaz.
 
 ## Türev kanalı — panel beklemeden (kline körlüğü panzehiri)
 

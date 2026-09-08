@@ -1,113 +1,147 @@
-# TradingView çizim araçları → `grafik-cizim` haritası
+# TradingView araçları ve uygulanabilen çizim yolları
 
-TradingView'ın çizim paleti ile bu depodaki motorun eşlemesi. "Kapsam" sütunu
-dürüsttür: **kısmi** ve **yok** olanlar gizlenmez.
+Bu harita araç seçimi içindir; TradingView ile tüm davranışların, varsayılanların
+ve piksel yerleşiminin eşdeğer olduğu iddiası değildir. Desteklenen gerçek araç
+adları ve takma adlar `cizim.py --araclar` çıktısındadır.
 
-## 1. Çizgiler & geometri
+## 1. Yeni tuval veya orijinal görsel
 
-| TradingView | Motor aracı | Kapsam |
+| İstek | Uygulama | Kanıt sınırı |
 |---|---|---|
-| Trend Line | `trend_cizgisi` | tam (`uzat`: sag/sol/iki, ok ucu, etiket) |
-| Ray / Extended Line | `trend_cizgisi` (`uzat`) | tam |
-| Horizontal Line | `yatay_cizgi` | tam (+ eksen fiyat rozeti) |
-| Horizontal Ray | `yatay_ray` | tam |
-| Vertical Line | `dikey_cizgi` | tam |
-| Cross Line | `dikey_cizgi` + `yatay_cizgi` | tam (iki araçla) |
-| Arrow | `ok` | tam |
-| Polyline / Path | `yol` | tam |
-| Rectangle | `dikdortgen` | tam |
-| Ellipse / Circle | — | **yok** (`dikdortgen` + `metin` ile yaklaşılır) |
-| Triangle / Polygon | `yol` (kapalı) | kısmi (dolgu yok) |
-| Parallel Channel | `paralel_kanal` | tam (orta çizgi dahil) |
-| Regression Trend | `regresyon_kanali` | tam (±nσ, `ileri_bar` projeksiyonu) |
-| Disjoint Channel | — | **yok** |
-| Flat Top/Bottom | `dikdortgen` + `trend_cizgisi` | kısmi |
-| Pitchfork (Andrews) | `andrews_catali` | tam |
-| Schiff / Modified Schiff Pitchfork | — | **yok** |
-| Gann Box / Gann Fan | — | **yok** |
+| Ham veriden yeni mum grafiği | `cizim.py` normalizasyon ve hesaplarından sonra SVG tuvali | Kaynak mumları, birimleri, zaman kesimini ve hesap konvansiyonlarını doğrula. |
+| Yüklenen görselin üzerine çizim | Chart Calculation Workbench kalibrasyonu ve deterministik anotasyonu | Orijinal görsel ve kalibrasyon manifesti korunur; pikselden alınan değerler yaklaşık ölçümdür. |
+| Ekran görüntüsüne benzeyen yeni grafik | Aynı sembol/zaman dilimine ait gerçek ham veriyle yeni tuval | Yeniden oluşturulduğunu belirt; ekran görüntüsünden gizli mum geçmişi çıkarma. |
 
-## 2. Fibonacci ailesi
+Orijinal görsel üzerine çizim için:
 
-| TradingView | Motor aracı | Kapsam |
+1. Kaynak dosyayı orijinal çözünürlükte incele. Dosya hash'ini, ölçülerini,
+   kırpma/ölçekleme işlemlerini ve ham OHLC bulunup bulunmadığını kaydet.
+2. Fiyat paneli sınırlarını, x/y eksen yönlerini, doğrusal/log ölçeği, zaman
+   dilimini, birimleri ve okunabilir tick konumlarını belirle. Alt panelleri ayrı
+   eksen sistemleri olarak ele al.
+3. Her kullanılan eksende en az iki güvenilir piksel–veri ankrajı gerekir;
+   mümkünse en az üç kullanarak kalibrasyon artıklarını ölç. Eşit bar aralığını
+   kesintisiz takvim zamanı sanma; seans boşluklarını ve görünür C0'ı koru.
+4. Workbench `scripts/chart_geometry.py` ile dönüşümü hesapla. Doğrusal/log
+   fiyat dönüşümünü ve zaman eşlemesini kontrol et; piksel hassasiyetinin izin
+   vermediği ondalıkları kesin fiyat gibi sunma.
+5. Yalnız gerekli noktaları sayısallaştır; kaynak pikseli, dönüştürülmüş değeri,
+   birimi ve belirsizliği birlikte tut. Kalibrasyon yapılamayan eksene kesin
+   fiyat/zaman geometrisi çizme.
+6. Workbench `scripts/annotate_chart.py` ile çizgi/bölge/etiketleri uygula;
+   kaynağın üzerine yeni, uydurulmuş mumlar üretme. Görseli ve manifesti açıp
+   ankrajları, örtülen mumları ve etiket taşmalarını doğrula.
+
+Workbench bu depodaki SVG motorundan ayrı bir beceridir; mevcut kurulumundaki
+hesap/kalibrasyon sözleşmesini oku ve o kurulumun yollarını kullan. Bilinmeyen
+nonlineer ölçek, yetersiz ankraj veya okunamayan zamanlar varsa nitel/ yaklaşık
+sonuçla sınırla. Görsel tek başına doğrulanmış OHLC, gösterge geçmişi veya
+`confirmed` işlem kararı kanıtı sağlamaz.
+
+## 2. Çizgi, kanal ve Fibonacci
+
+| TradingView benzeri öğe | Araç / temel alanlar | Uygulanan davranış ve sınır |
 |---|---|---|
-| Fib Retracement | `fib_retracement` | tam — seviyeler ayarlanabilir, **altın bölge (0.618–0.786) gölgeli**, etiket "0.618 (64.972,45)", çakışma önleyici etiket dizilimi |
-| Trend-Based Fib Extension | `fib_genisleme` | tam (1.272/1.414/1.618/2.0/2.618) |
-| Fib Channel | `fib_kanal` | tam |
-| Fib Speed Resistance Fan | `fib_yelpaze` | tam |
-| Fib Time Zones | `fib_zaman` | tam (1,2,3,5,8,13,21,34,55,89) |
-| Fib Circles / Spiral / Arcs | — | **yok** (nadiren kullanılır) |
-| Fib Wedge | — | **yok** |
+| Trend Line / Ray | `trend_cizgisi`: `p1`,`p2`,`uzat` | İki ankraj, sağ/sol/iki uzatma; uzantı analitik projeksiyondur. |
+| Horizontal Line / Ray | `yatay_cizgi`: `fiyat`; `yatay_ray`: `fiyat`,`bar` | İsteğe bağlı bar sınırları, etiket ve fiyat rozeti. |
+| Vertical / Cross Line | `dikey_cizgi`: `bar`; yatay çizgiyle birleşim | Bar veya zaman referansı; kaynak zaman yoksa zaman eşleme reddedilir. |
+| Arrow / Path | `ok`: `p1`,`p2`; `yol`: `noktalar` | Ok ve çok parçalı yol; genel dolgulu poligon düzenleyicisi değildir. |
+| Rectangle / Zone | `dikdortgen`: `fiyat1`,`fiyat2` | Fiyat bandı ve bar aralığı; etiketin anlamını çağıran sağlar. |
+| Parallel Channel | `paralel_kanal`: `p1`,`p2`,`p3` | İlk iki nokta taban, üçüncü nokta kendi x konumunda paralel uzaklığı belirler; orta çizgi seçilebilir. |
+| Regression Trend | `regresyon_kanali`: bar aralığı, `sapma`,`ileri_bar` | Fiyatın bar indeksine OLS uyumu; artık standart sapması `ddof=2`; kanal güven/tahmin aralığı değildir. |
+| Andrews Pitchfork | `andrews_catali`: `p1`,`p2`,`p3` | Andrews geometrisi; Schiff/Modified Schiff varyantları uygulanmaz. |
+| Fib Retracement | `fib_retracement`: `p1`,`p2`,`seviyeler` | `f2-(f2-f1)*oran`; isteğe bağlı 0.618–0.786 bandı. Log tuval bu aritmetik fiyatları log konumlarına taşır. |
+| Trend-Based Fib Extension | `fib_genisleme`: `p1`,`p2`,`p3` | `f3+(f2-f1)*oran`; verilen ankrajlara bağlı hesap. |
+| Fib Channel | `fib_kanal`: `p1`,`p2`,`p3` | Üçüncü ankrajın tabana kendi x konumundaki uzaklığı oranlarla çoğaltılır; ölçek konvansiyonunu belirt. |
+| Fib Fan | `fib_yelpaze`: `p1`,`p2` | Motorun tanımlı oran ışınları; TradingView'ın tüm fan seçenekleri değildir. |
+| Fib Time Zones | `fib_zaman`: başlangıç/bitiş barı | Fibonacci bar uzaklıkları; gelecekteki olay zamanını doğrulamaz. |
 
-Not (metodoloji): Fibonacci **tek başına yön vermez** — `grafik-calisma`
-SKILL.md'deki katman sırası geçerlidir: `bağlam(HTF) → yapı(SMC) → arz-talep
-(OB/FVG) → likidite → [fib] → onay → risk`. Motor fib'i son rötuş katmanı
-olarak çizer; giriş kararı `confluence.py` + `setup_dogrulama.py` iznine bağlıdır.
+Elips/daire, Gann, Fib spiral/yay ve Disjoint Channel için yerleşik eşdeğer yoktur.
+Dikdörtgen/metin gibi bir yaklaşık temsil kullanılırsa bunun geometrik eşdeğer
+olduğunu iddia etme. Fibonacci ve kanal seviyeleri kendi başına yön teyidi değildir.
 
-## 3. Pozisyon & risk araçları
+Regresyon aritmetik fiyat uzayında hesaplanır; log tuvalde eğri olarak örneklenir.
+Bu, log-fiyata regresyon uydurmakla aynı değildir. `ileri_bar` geleceğe uzatmadır;
+sonuçları gözlenen mumlardan ve koşul teyidinden ayır.
 
-| TradingView | Motor aracı | Kapsam |
+## 3. Pozisyon, ölçüm ve karar durumu
+
+| Öğe | Araç | Sınır |
 |---|---|---|
-| Long Position | `long_pozisyon` | tam — yeşil hedef kutusu + kırmızı stop kutusu, %, R:R etiketi, eksen rozetleri |
-| Short Position | `short_pozisyon` | tam |
-| Risk/Reward ratio etiketi | pozisyon aracının `r_etiketi` | tam (denetlenmiş R dışarıdan verilir) |
-| Price Range / Date Range | `olcum` | tam (Δfiyat, %, bar sayısı) |
-| Bars Pattern / Ghost Feed | — | **yok** |
-| Projection | `regresyon_kanali.ileri_bar` + gelecek `bar` indeksi | kısmi |
+| Long / Short Position | `long_pozisyon` / `short_pozisyon` | Pozitif giriş/stop/hedef, doğru yön sırası, ham fiyat mesafesi R'si ve karar etiketi. |
+| Price / Bar Range | `olcum`: `p1`,`p2` | Fiyat değişimi, yüzde ve bar uzaklığı; işlem gerçekleşmesi veya takvim süresi iddiası değildir. |
+| Fiyat rozeti | `fiyat_etiketi`: `fiyat`,`metin` | `render()` sırasında eksende yerleşir; yakın rozetler kaydırılır ve asıl seviyeye çizgiyle bağlanır. |
+| Projeksiyon | Gelecek bar / `ileri_bar` | Senaryo; gözlenen fiyat veya yürütülmüş emir değildir. |
 
-## 4. Anotasyon
+Long geometrisi `stop < giris < hedef`; short geometrisi `hedef < giris < stop`.
+Sıfır risk, yön çelişkisi, `EMIR YOK` veya `blocked` kutuyu engeller ve gerekçe
+raporlanır. `conditional` koşullu, `draft` taslaktır. `confirmed` yalnız aynı
+C0'a bağlı kapanmış veri ve son karar yönünün teyidini gösterir; başarı yüzdesi
+veya model doğruluğu etiketi değildir. Serbest metin durum doğrulamasını geçersiz kılamaz.
 
-| TradingView | Motor aracı | Kapsam |
+`r_etiketi` serbest metindir ve denetim kanıtı sayılmaz. Motorun R ayrımı:
+
+| Yöntem | Hesap | Anlam |
 |---|---|---|
-| Text | `metin` | tam |
-| Anchored Text / Note | `metin` (`kutu: true`) | tam |
-| Callout | `metin` + `ok` | kısmi (kuyruk ayrı çizilir) |
-| Price Label | `fiyat_etiketi` | tam (sağ eksen rozeti) |
-| Arrow Up / Down marker | `isaret` | tam |
-| Flag / Emoji / Sticker | — | **yok** |
-| Table / Info panel (Pine `table.new`) | `bilgi_paneli` | tam — `konum: "oto"` ile **mumların en az olduğu köşe ölçülerek** seçilir |
+| `raw_price_distance` | `abs(target-entry)/abs(entry-stop)` | rawR / R ham; komisyon, kayma ve gerçekleşme içermez. |
+| `net_of_costs` | `(abs(target-entry)-win_cost_price)/(abs(entry-stop)+loss_cost_price)` | netR / R net; verilen maliyet varsayımlarıyla hesaplanır. |
+| `atr_floor_scenario` | `reward/max(risk,ATR*stop_floor)` | ATR senaryosu; kullanılan ATR tabanı varsayımdır, çizilen stopu değiştirmez. |
 
-## 5. Grafik üstü göstergeler (çizim sayılan kısım)
+`rr_audit` nesnesi `input_sha256`, `cutoff`, `direction`, `entry`, `stop`,
+`target`, `method`, `R` içerir. Hash normalize veriye, cutoff ortak C0'a ve
+fiyatlar çizilen geometriye eşleşmelidir. Net yöntem ayrıca negatif olmayan
+`win_cost_price`/`loss_cost_price` ister; bunlar fiyat biriminde iki yönlü
+komisyon/kayma gibi maliyetlerin beyan edilmiş toplamıdır. Bilinmeyen maliyeti
+sıfır kabul edip net diye etiketleme.
 
-| TradingView | Motor aracı | Kapsam |
+ATR yöntemi pozitif `atr` ister; mevcut `rr_denetim.py` eşiklerini ve ürettiği
+senaryo gerekçesini kaydet. Eşiklere uyum, stopun piyasada korunacağına dair
+kanıt değildir. Denetim hesabı yeniden üretir; gelecekteki sonucu doğrulamaz.
+
+## 4. Anotasyon ve göstergeler
+
+| Öğe | Araç / alan | Uygulama sınırı |
 |---|---|---|
-| Moving Average (EMA/SMA) | `ma` | tam |
-| MA Cloud / Ichimoku Kumo / Band fill | `bulut` | tam (kesişimde renk döner; seri ya da sabit fiyat kabul eder) |
-| Volume (alt panel) | `paneller: [{"tip":"hacim"}]` | tam |
-| RSI (alt panel) | `paneller: [{"tip":"rsi"}]` | tam |
-| Herhangi bir seri (alt panel) | `paneller: [{"tip":"seri","deger":[...]}]` | tam |
-| Bollinger / Keltner | `bulut` (dışarıdan seri) | kısmi (bant hesabı çağıran tarafta) |
-| Log ölçek / gelecek boşluğu | `log_olcek`, `sag_bosluk_bar` | tam |
+| Text / Note / Callout | `metin`, `kutu:true`, gerekirse `ok` | Metin ve ayrı ok; ekrandaki her interaktif not davranışını kopyalamaz. |
+| Up / Down Marker | `isaret` | Yön işareti; emoji/sticker/serbest ikon seti değildir. |
+| Info Table | `bilgi_paneli`: `satirlar`, `konum` | `oto` mum yoğunluğuna göre köşe seçer; tüm çizimlerle çakışmayı garanti etmez. |
+| EMA / SMA | `ma`: `tip`,`period`,`kaynak` | Tam uygun geçmişte hesap, ardından görünüm dilimi; yeterli ısınma gerektirir. |
+| Two-series Cloud | `bulut`: `a`,`b` | Verilen MA/seri/sabit fiyat arasını doldurur; Ichimoku hesaplarının tamamını üretmez. |
+| Volume | `paneller:[{tip:"hacim"}]` | Kaynak hacmi ve varsa hacim birimi; eksik hacimden gerçek ölçüm çıkarma. |
+| RSI | `paneller:[{tip:"rsi",period:14}]` | Wilder yumuşatma, ilk n değişim ortalaması; düz seri 50; tam geçmiş ve kaynak segmentleri kullanılır. |
+| Custom series | `paneller:[{tip:"seri",deger:[...]}]` | Verilen seri; eksik noktalar çizgiyle birleştirilmez. |
+| Bollinger / Keltner / başka bantlar | Dışarıda hesaplanan `bulut` serileri | İlgili bant hesabını, pencereyi ve sapma konvansiyonunu çağıran kaydeder. |
 
-## 6. Kullanıcının gönderdiği 7 görselin eşlemesi
+EMA başlangıcı ilk n değerin SMA'sı, devamı `alpha=2/(n+1)`; RSI başlangıcı ilk
+n fiyat değişiminin kazanç/kayıp ortalamasıdır. Pencere, fiyat kaynağı, eksik veri
+ve seans boşluğu yaklaşımını görünüm seçimiyle değiştirme. Her iki göstergede
+kaynak segment değişimi yeni ısınma başlatır; geçmiş kesilmesinin etkisini belirt.
 
-Her satır, o görseldeki çizimi üretmek için gereken araçlardır (görseller
-"neyin gerektiğini" belirlemek için okundu; **bu bir fiyat ölçümü değildir**).
+## 5. Koordinatlar, katmanlar ve çıktı kanıtı
 
-| # | Görsel | Görülen çizimler | Gereken araçlar |
-|---|---|---|---|
-| 1 | THY 4sa (BIST) | renkli yatay bantlar (pembe/mavi/sarı/yeşil), yatay ışınlar, noktalı ve düz trend çizgileri, kalın ok, eksen fiyat rozetleri (330,75 / 311,00 / 295,25), alt osilatör paneli | `dikdortgen`, `yatay_ray`, `trend_cizgisi`, `ok`, `fiyat_etiketi`, `paneller:[{tip:"seri"\|"rsi"}]` |
-| 2 | ETHUSDT 1sa | düşen paralel kanal + kesik orta çizgi, **long pozisyon aracı** (hedef +%66,74 / stop −%34,21 kutuları), iki hareketli ortalama, kesik trend çizgileri, geleceğe projeksiyon | `paralel_kanal`, `long_pozisyon`, `ma`, `trend_cizgisi`, `sag_bosluk_bar` + gelecek `bar` |
-| 3 | Kanal + MA (küçük) | mavi/kırmızı ikiye bölünmüş kanal gövdesi, MA | `paralel_kanal` (+`dikdortgen`), `ma` |
-| 4 | DOGEUSDT 1sa | **Fibonacci düzeltme etiketli seviyeler** (0.786 (0,25802) …), düşen kanal, long pozisyon kutusu, yatay çizgiler, eksen rozetleri | `fib_retracement`, `paralel_kanal`, `long_pozisyon`, `yatay_cizgi`, `fiyat_etiketi` |
-| 5 | NIBAS 1sa | etiketli DESTEK/DİRENÇ bant dikdörtgenleri, yeşil trend çizgisi, beyaz MA, **sağ üstte bilgi tablosu** | `dikdortgen` (+`etiket`), `trend_cizgisi`, `ma`, `bilgi_paneli` |
-| 6 | BIST 100 4sa | sarı paralel kanal + kesik orta çizgi, gri yatay bölge dikdörtgenleri (13.700-800 …), kırmızı/yeşil yatay çizgi + rozet, daire işareti | `paralel_kanal`, `dikdortgen`, `yatay_cizgi`, `fiyat_etiketi`, `isaret` (daire yerine üçgen/metin — elips **yok**) |
-| 7 | Futures scalp (mobil) | kırmızı/yeşil arz-talep bantları, **iki MA arası mor bulut**, çok sayıda MA, kesik basamaklı stop çizgisi, "1 Buy STP / 1 Buy LMT" emir seviyesi etiketleri, çok renkli eksen rozetleri | `dikdortgen`, `bulut`, `ma`, `yol`, `yatay_cizgi`(+`etiket`), `fiyat_etiketi` |
+`son_bar` son N mumu gösterir; hesap geçmişini kısaltmaz. Elle çizim barları
+varsayılan görünür alanı kullanır; `bar_space:"history"` tam geçmiş referansıdır.
+Otomatik ankrajlar tam geçmişten görünür koordinatlara taşınır. Negatif legacy
+bar sondan sayılır; zaman referansları komşu damgalar arasında kesirli konum verir.
 
-**Sonuç:** 7 görseldeki çizimlerin tamamı — elips (6) ve emoji/sticker hariç —
-mevcut 24 araçla üretilebilir.
+Tüm kaynaklar/karar aynı `c0`/`cutoff`/`as_of` kesimini kullanır; birlikte verilen
+takma adlar normalize edildiğinde birebir aynı timestamp olmalı. Yalnız açılış
+zamanıyla kapanmışlık iddia etme: kaynak `close_time` veya açıklanmış
+`timeframe`/`interval_seconds` ve açılış gerekir. Düzensiz takvimler için kaynak
+kapanışlarını kullan. C0 sonrası/açık mum ve doğrulanmamış zaman statüsünü raporla.
 
-## 7. Neden SVG (matplotlib değil)
+Bölge katmanları mumların arkasında, çizgiler/etiketler önde; her ikisi plot
+alanında kırpılır. Fiyat rozetleri kırpma dışında yerleştirilir. Alt panellerin
+toplam yüksekliği orantılı sınırlandırılır. Çok sayıda rozet, uzun metin veya
+küçük panel yine çakışabilir; çıktı görsel olarak denetlenmelidir.
 
-- Bu ortamda `matplotlib` **kurulu değil** (`grafik-calisma/SKILL.md`'nin
-  "C) Grafik üretme" maddesi bu yüzden çalışmıyordu); SVG için ek paket gerekmez.
-- Vektörel: fiyat etiketleri her ölçekte keskin, dosya küçük, diff'lenebilir.
-- İstenirse `cairosvg` varsa PNG de üretilir (`job.png: true`); yoksa
-  rapora "VERİ YOK — png üretilemedi" yazılır, SVG yine geçerlidir.
+Manuel SVG/normalizasyon standart kütüphaneyi, otomatik SMC tespiti pandas/NumPy'ı
+kullanır. İsteğe bağlı PNG dönüşümü cairosvg gerektirir. Ortama ilişkin
+matplotlib kurulu/kurulu değil varsayımı yapma.
 
-## 8. Dış kaynak notu
-
-Depo dışı bir kütüphaneye bağımlılık **bilinçli olarak alınmadı**: TradingView
-Lightweight Charts (JS), mplfinance ve plotly benzer işi görür ama her biri kurulum
-(ve JS için tarayıcı) ister; bu depo çevrimdışı, determinist ve sıfır-bağımlılık
-disiplininde çalışır. Aynı çizim sözlüğü (job şeması) ileride başka bir görselleyiciye
-bağlanabilir — araç adları TradingView terminolojisiyle birebir eşlenmiştir.
+Yeni tuvalin SVG'si ile `<cikti>.manifest.json` dosyasını birlikte değerlendir:
+kaynak/normalize/çıktı hash'leri, C0, dışlanan ve tutulan satırlar, görünüm,
+ölçek/birimler, formül konvansiyonları, gerçek çizim sayısı, atlananlar ve
+uyarılar. Kaynak sağlayıcı/alınma zamanı gibi harici köken bilgilerini ayrıca
+sakla. Ekran görüntüsü yolunda orijinal görsel, kalibrasyon ankrajları/artıkları,
+pikselden tahmin edilen değerler ve anotasyon manifesti bu kanıtın karşılığıdır.

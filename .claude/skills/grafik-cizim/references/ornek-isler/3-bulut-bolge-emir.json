@@ -4,7 +4,7 @@
   },
   "son_bar": 120,
   "baslik": "BTCUSDT · 15M · Binance",
-  "alt_baslik": "bulut (MA cloud) + arz-talep bantları + emir seviyesi etiketleri — 7. görselin karşılığı",
+  "alt_baslik": "TASLAK DEMO — fiyatlar güncel ölçüm/işlem kararı değildir",
   "tema": "koyu",
   "cizimler": [
     {
@@ -55,5 +55,7 @@
       "etiket": "1 Buy LMT"
     }
   ],
-  "cikti": "cikti/bulut.svg"
+  "cikti": "cikti/bulut.svg",
+  "price_unit": "USDT",
+  "timezone": "UTC"
 }

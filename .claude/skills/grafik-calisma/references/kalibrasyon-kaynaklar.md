@@ -9,7 +9,9 @@ eşikler her çalıştırmada dinamik ayarlanmalı."
 
 **Denetim sonucu: KISMEN DOĞRU.** Uyarlanabilirlik lehine sağlam kanıt var;
 ama "her koşuda serbest yeniden ayar" biçimi aleyhine DAHA GÜÇLÜ kanıt var.
-Doğru biçim: eşik SEÇİLMEZ (optimize edilmez), İSTATİSTİKTEN TÜRETİLİR.
+Uygulanan biçim: parametre yalnız geçmiş eğitim bölümünde belirlenir; sonra
+sabit tutulup ayar için kullanılmayan sonraki bölümde ölçülür. Bir quantile
+türetmek de veriyle ayardır; tek başına seçim yanlılığını ortadan kaldırmaz.
 
 ## Uyarlanabilirlik LEHİNE kanıt
 - **Lo (2004), Adaptive Markets Hypothesis** (J. Portfolio Management):
@@ -65,20 +67,88 @@ Doğru biçim: eşik SEÇİLMEZ (optimize edilmez), İSTATİSTİKTEN TÜRETİLİ
   optimal değil; kırılma öncesi veriyi kısmen dahil etmek MSFE'yi düşürür.
   https://www.sciencedirect.com/science/article/abs/pii/S0304407613000687
 
-## Sentez → depodaki uygulama
-Literatürün onayladığı dinamiklik: (a) az-parametreli ve ekonomik gerekçeli
-(volatilite ölçekleme, rejim kapısı), (b) seçim-yanlılığına karşı test edilmiş,
-(c) koşullu/eşikli. Bu yüzden `kalibrasyon.py`:
-1. **Eşik optimizasyonu YOK** — hiçbir eşik "en iyi sonucu verene" çekilmez
-   (data-snooping'in kendisi olurdu).
-2. **Türetim istatistiksel**: permütasyon testi (edge ≠ sürüklenme; White'ın
-   Reality Check soyundan), bootstrap CI, Wilson kötümser kazanma oranı →
-   min R:R, kazanan-MAE quantile → SL tamponu (volatilite ölçekleme sınıfı).
-3. **Korkuluklar** (clamp) + **varsayım defteri**: kalan her sabit etiketli.
-4. **Fail-closed**: kanıt/veri yetersiz → sinyal yok.
+## Uygulama sözleşmesi — nedensel ayrım ve sınırlı tarihsel destek
 
-## Sınır (dürüstlük)
-Geçmiş ≠ gelecek; kalibrasyon da geçmiş veriden yapılır. Permütasyon+bootstrap
-sahte keşfi azaltır, sıfırlamaz (tek tarihsel yol; CPCV değil). Manipülatif
-piyasada hiçbir istatistik garantisi yoktur — bu yüzden nihai karar hâlâ
-fail-closed kapılardan geçer ve zayıf kanıtta BEKLE verilir.
+Yukarıdaki bibliyografya önceki araştırma notudur; bu kod onarımı bütün kaynak
+özetlerini bağımsız olarak yeniden doğrulamadı. Hiçbir makale, aşağıdaki somut
+stratejiye kârlılık veya eşik doğruluğu garantisi olarak kullanılmaz. Önceki
+“istatistikten türetmek optimizasyon değildir” ve rastgele giriş karşılaştırmasının
+“White Reality Check soyundan” olduğu iddiaları bu uygulamayı tarif etmiyordu.
+
+### Zaman sırası
+
+- `setup_dogrulama.simulate` ve `fvg_kalibre.kalibre` önce eğitim önekini ayırır.
+  Varsayılan oran 0.60 bir tasarım tercihidir. İlerleyen veriyle sabit bir sınır
+  korumak için `params.train_end_i` açıkça verilebilir; bu indeks eğitimdeki son bardır.
+- MAE, hedef adayı, FVG seviye/stop ve filtre adayları yalnız bu önekten çıkar.
+  FVG ızgarasının sıralanması açıkça **eğitimde seçim**dir, anlamlılık testi değildir.
+- Seçilen birleşik politika sonraki bölüm boyunca sabittir. Sınırdan eski
+  işlemler/sonuç pencereleri taşınmaz. Değerlendirme zaman bloklarının sonunda
+  tam azami işlem ufku kalmayan girişler sonuca bakmadan dışarıda bırakılır.
+- Aynı değerlendirmeye bakarak tekrar tekrar ayar yapmak bu tek koşunun
+  sınamasının dışındadır; `repeated_retuning_adjusted=false` bunu bildirir.
+
+### İşlem ve referans
+
+Ortak `kalibrasyon.execute_orders` her iki tarafa da aynı limit yürütmesini,
+aynı maliyet/funding varsayımını ve tek pozisyon kapasitesini uygular. Giriş ve
+SL fiyatları emir verilirken kapanmış ATR'den dondurulur. Bekleyen emirler ilk
+gerçekleşme sırasıyla yarışır; önceki olayın gelecekteki çıkışı kapasite ayırmaz.
+
+Kapanış girişinin izlenmesi sonraki mumda başlar. Limit giriş mumunun daha önce
+oluşmuş olumlu fitili TP diye kredilendirilmez; kapanış veya açılışta gerçekleşmiş
+giriş bunu doğrulayabilir. Aynı mumda stop+hedef stop sayılır. Stop ötesi açılış
+boşluğu erişilebilen açılış fiyatından çıkar. MAE, stop sonrası daha uç fiyata
+uzatılmaz; TP mumunun sırası bilinmiyorsa muhafazakâr OHLC MAE üst sınırı olarak
+etiketlenir. Model ölçülmemiş mum içi yolu bildiğini iddia etmez.
+
+Referans politikası yalnız EĞİTİM emirlerinden dondurulur: yön, önceki kapanışa
+göre ATR ölçekli limit/stop/hedef mesafeleri, ömür ve varsa geçersizlik tarifleri
+ile eğitimdeki emir/bar oranı. Değerlendirme döneminde sabit seed ile her barda
+Bernoulli emir verme denemesi yapılır; emir o bardan ÖNCEKİ kapanış/ATR ile
+ölçeklenir. Gelecekteki holdout emirleri, yön karışımı veya işlem sayısı referans
+politikasına giremez. Sonraki holdout fiyatlarının değiştirilmesi önceki referans
+emirlerini değiştirmez; bu özellik regresyonla sınanır. Aynı yürütme motoru ve
+maliyet/kapasite kuralları iki tarafa da uygulanır.
+
+Dolum ve kapasite nedeniyle gerçekleşen işlem sayıları değişebilir; iki seri de
+sıfır işlem olan zaman bloklarını içerir. Bu **eğitimde donmuş rastgele-zaman
+referansı**dır, permutation p testi değildir. Eski `permutation_pvalue` işlevi
+yalnız betimsel uyumluluk çıktısı verir; `p=null`, `valid_for_edge_permission=false`.
+
+### Kanıt kapısı ve çıktı
+
+- `evaluation` eğitim/değerlendirme sınırlarını, sabit parametre durumunu, zaman
+  ekseni kontrolünü, net işlem ve referans sayısını, blok sayısını ve CI'ları verir.
+- Bloklar birbiriyle örtüşmez; içindeki getiriler birlikte toplanır. Bootstrap
+  birimi tek FVG satırı değil takvim bloğudur. Bloklar arası yaklaşık bağımsızlık
+  hâlâ bir varsayımdır; keyfî rejim değişimine karşı garanti yoktur.
+- En az 10 blok ve iki tarafta en az 10 kullanılan işlem bir tasarım tabanıdır.
+  Eğitim örneği de yeterli olmalıdır. Net getiri CI altı ve eşleştirilmiş
+  referans-farkı CI altı pozitif, iki yarının net blok ortalaması pozitif ve zaman
+  ekseni geçerli ise `sinyal_izni=true`, `evidence_status=heldout_support` olur.
+- Sonuç **“AYRILMIŞ DÖNEMDE DESTEK VAR”** der; “EDGE KANITLI” veya gelecek
+  başarı yüzdesi demez. `validated_edge` yalnız aynı sınırlı tarihsel desteğin
+  uyumluluk boolean'ıdır; onu tek başına gelecek iddiasına dönüştürmeyin.
+- `confluence_thresholds={atr_mult: sayı, min_rr: sayı}` her durumda kullanılabilir
+  eğitim/tasarım adayını taşır. Yetersiz kanıt bu sayısal çıktıyı silmez; işlem
+  iznini kapatır. `min_rr`, sabit değerlendirilmiş hedef adayıdır; başabaş garantisi değildir.
+
+### Wilson, maliyet, yaşam süresi ve Monte Carlo sınırları
+
+Wilson dönüşümündeki teorik `(1-p)/p` gereksinimi kırpılmadan `required_rr` /
+`min_rr` alanında kalır. Örnek yoksa gereksinim `null`dır. Ayrı `candidate_rr`
+tasarım sınırında tutulur; `feasible=false` yüksek gereksinimin 5R ile karşılandığı
+anlamına gelmez. Hedef değişince kazanma olasılığı yeniden ölçülmelidir; bu yüzden
+hedef adayı eğitimde seçilir ve sonraki bölümde sabit değerlendirilir. Net ücret,
+kayma, funding ve süre-sonu çıkışları ikili/brüt Wilson formülüne indirgenmez.
+
+FVG çıktısı brüt R, maliyet R ve net R'yi ayırır. Dolum oranının paydasına yalnız
+tam takip ufku olan FVG'ler girer; yeniler `n_censored` sayılır. Ömür quantile'ı
+tam gözlenmiş bütün FVG'leri kapsar; dolmayanlar da paydadadır. İstenen quantile
+ufuk içinde erişilmediyse `bar=null`; dolanlara koşullu medyan ayrıca etiketlidir.
+
+`backtest.monte_carlo` sabit işlemlerin sırasından kaynaklanan düşüş riskini ölçer.
+Başlangıç equity=1 hesaba katılır. Çarpım sıradan bağımsız olduğundan terminal
+getiri değişmez; `prob_profit=null`, `valid_for_future_profit_probability=false`.
+Bu çıktı gelecekte kâr olasılığı veya sinyal kapısı değildir.

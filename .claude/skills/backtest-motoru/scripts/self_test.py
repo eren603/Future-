@@ -43,7 +43,17 @@ def main():
                                 "win_rate", "expectancy_per_trade", "final_equity"])
         assert r1["metrics"]["num_trades"] >= 1
         assert r1["monte_carlo"]["runs"] == 300
-        _finite(r1["monte_carlo"], ["final_return_p50", "max_dd_p50", "prob_profit"])
+        mc = r1["monte_carlo"]
+        _finite(mc, ["fixed_terminal_return", "max_dd_p50"])
+        assert mc["method"] == "fixed_return_order_risk"
+        assert mc["prob_profit"] is None and not mc["valid_for_future_profit_probability"]
+        assert mc["final_return_p5"] == mc["final_return_p50"] == mc["final_return_p95"] == mc["fixed_terminal_return"]
+        # Initial equity must count: a single initial loss is a drawdown.
+        first_loss = bt.monte_carlo([-0.1], 10, 7)
+        assert first_loss["max_dd_p5"] == first_loss["max_dd_p95"] == -0.1
+        reordered = bt.monte_carlo([0.1, -0.05, 0.02], 20, 1)
+        reordered2 = bt.monte_carlo([0.02, 0.1, -0.05], 20, 2)
+        assert reordered["fixed_terminal_return"] == reordered2["fixed_terminal_return"]
         assert "walk_forward" in r1
 
         # 2) RSI

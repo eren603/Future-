@@ -1,155 +1,150 @@
 ---
 name: grafik-cizim
 description: >-
-  Grafik ÜZERİNE TradingView'daki gibi çizim yapma becerisi. Bir soru grafiğe
-  çizim ekleme, Fibonacci çizme (retracement/genişleme/kanal/yelpaze/zaman
-  bölgeleri), trend çizgisi, paralel kanal, regresyon kanalı, Andrews çatalı,
-  destek/direnç bölgesi (dikdörtgen), order block / FVG / likidite işaretleme,
-  long/short pozisyon aracı (giriş-stop-hedef R:R kutusu), ölçüm aracı, ok/metin/
-  etiket, fiyat rozeti, bilgi paneli (tablo), EMA/SMA çizgisi, hacim/RSI alt
-  paneli, "grafiği çiz", "işaretle", "çizimli grafik ver", "TradingView gibi
-  göster" ile ilgili olduğunda OTOMATİK devreye girer — slash komutu gerekmez.
-  Ayrıca kullanıcı bir grafik ekran görüntüsü gönderip "aynısını çiz / üzerine
-  çiz" dediğinde de tetiklenir. Çalışan motorlar: scripts/cizim.py (job →
-  SVG mum grafiği + çizimler), scripts/araclar.py (24 TradingView aracı),
-  scripts/otomatik_cizim.py (smc_tespit'in ÖLÇTÜĞÜ yapıdan otomatik çizim
-  katmanı), scripts/self_test.py. Sıfır bağımlılık (SVG; matplotlib GEREKMEZ).
-  Tetikleyici kelimeler (TR/EN): çiz, çizim, işaretle, fibonacci, fib, retracement,
-  golden zone, trend çizgisi, kanal, channel, pitchfork, dikdörtgen, bölge, zone,
-  order block, FVG, likidite, long pozisyon, short position, risk ödül kutusu,
-  ölçüm, measure, etiket, label, anotasyon, annotate, chart drawing, plot,
-  overlay, TradingView, ekran görüntüsü gibi çiz.
+  Ham OHLCV verisinden TradingView tarzı çizimli SVG mum grafikleri üret;
+  trend, kanal, Fibonacci, pozisyon, gösterge ve açıklama katmanlarını kaynak
+  ve hesap kanıtıyla göster. Kullanıcı mevcut grafik ekran görüntüsüne çizim
+  istediğinde orijinal görseli koruyan kalibre edilmiş Workbench yoluna yönlendir.
 ---
 
-# Grafik Çizim — TradingView araç seti (SVG, sıfır bağımlılık)
+# Grafik Çizim
 
-`grafik-calisma` grafiği **okur/ölçer**; bu beceri onu **çizer**. Analiz motoru
-(smc_tespit → confluence → setup_dogrulama) ne ölçtüyse bu motor onu görselleştirir.
-Çizilen her sayı ya kullanıcıdan/üst motordan gelir ya da ölçülen yapıdan — **bu
-motor fiyat uydurmaz**, ölçemediğini çizmez ve `uyarilar` alanına yazar.
+`grafik-calisma` ölçüm yapar; bu beceri ölçülen veriyi ve verilen çizimleri
+sunar. Grafik, kararın koşullarını gösterebilir; tahmin doğruluğu veya işlem
+başarısı garantisi vermez. Gözlenen, hesaplanan, görselden tahmin edilen ve
+geleceğe yansıtılan değerleri ayrı etiketle.
 
-Çıktı **SVG**'dir: matplotlib kurulu olmadığında da çalışır (bu ortamda kurulu
-değil), vektörel olduğu için etiketler hiçbir ölçekte bozulmaz. `SendUserFile`
-ile doğrudan gösterilebilir.
+## Girdiye göre yol seç
 
-## Koşum
+| Girdi ve istek | Yol |
+|---|---|
+| Ham OHLCV ile yeni mum grafiği | `scripts/cizim.py`: ortak mum normalizasyonu → hesap → yeni SVG tuvali. |
+| Orijinal ekran görüntüsünün üzerine çizim | Chart Calculation Workbench: eksen kalibrasyonu → deterministik anotasyon → görsel ve manifest denetimi. |
+| Görsele benzer yeni grafik | Gerçek ham veriyi iste/kullan; bunun yeniden oluşturulmuş tuval olduğunu belirt. |
+
+Ekran görüntüsünden okunamayan OHLC, hacim, gösterge geçmişi veya zaman damgası
+üretme. Ham veri yoksa otomatik SMC/EMA/RSI motorunu sahte mumlarla çalıştırma.
+Workbench mevcut değilse yeterli kalibrasyon kanıtını koruyan eşdeğer araç kullan;
+bunu sağlayamıyorsan yalnız nitel açıklama veya açıkça yaklaşık işaretleme sun.
+
+## Ham veri ve ortak C0
+
+- `veri.kline`: JSON/CSV dosyası; Binance dizileri veya OHLC nesneleri.
+  `veri.mumlar`: doğrudan OHLC nesne listesi. Normalizasyon
+  `grafik-calisma/scripts/candle_contract.py` sözleşmesini paylaşır.
+- `open/high/low/close` sonlu ve OHLC aralığı tutarlı olmalı. Log ölçekte tüm
+  fiyatlar pozitif olmalı. Kaynak sırasını sessizce düzeltme, tekrarları silme
+  veya eksik mumu doldurma. Eksik/çelişkili veri hatasını raporla.
+- `c0`, `cutoff`, `as_of` aynı kesim zamanının takma adlarıdır. Birden fazlası
+  varsa normalize edilmiş değerleri tam aynı zaman damgası olmalı; alternatif
+  kesim alanı icat etme. Çoklu zaman dilimleri ve son karar bu ortak kesimi kullanır.
+- Mumun uygunluğu açılışa göre değil **kapanış zamanına** göre belirlenir:
+  `close_time <= C0`; `closed:false` mumlar dışlanır. Kaynak `close_time`
+  veremiyorsa `open_time`/`time` ile `timeframe` veya `interval_seconds` gerekir.
+  Sabit aralıkta türetilen kapanış `open_time + interval_ms - 1` konvansiyonudur;
+  değişken seans/takvim için gerçek kaynak kapanışını kullan.
+- Zamanlar epoch saniye/ms/us/ns veya timezone içeren ISO olabilir; normalize
+  çıktı UTC milisaniyedir. Grafik `timezone:"UTC"` çizer. `price_unit` ve
+  mümkünse `volume_unit`, piyasa/seans ve düzeltilmiş fiyat temelini belirt.
+- Kesim/kapanış kanıtı yoksa `time_unverified` ve TASLAK gösterilir. Düzensiz
+  aralıklar uyarı üretir; eşit bar aralıklı x eksenini gerçek geçen süre sanma.
+- `son_bar` yalnız görünüm sınırıdır. MA/RSI, otomatik yapı ve seçilmiş regresyon
+  aralığı C0'a uygun tam geçmişte hesaplanır, sonra görünür alana taşınır.
+  Gösterge için yeterli ısınma geçmişi yoksa çizilemeyen sonucu bildir.
+
+## Koşum ve iş dosyası
+
+Manuel SVG çizim/normalizasyon yolu Python standart kütüphanesiyle çalışır.
+Otomatik tespit `pandas`/`numpy` kullanır. PNG dönüşümü isteğe bağlı `cairosvg`
+gerektirir; eksik bağımlılığı ve üretilemeyen katmanı rapordan kontrol et.
 
 ```bash
-python3 .claude/skills/grafik-cizim/scripts/cizim.py --job is.json   # çiz
-python3 .claude/skills/grafik-cizim/scripts/cizim.py --araclar       # araç listesi
-python3 .claude/skills/grafik-cizim/scripts/self_test.py             # öz-test (46 kontrol)
+python3 .claude/skills/grafik-cizim/scripts/cizim.py --job is.json
+python3 .claude/skills/grafik-cizim/scripts/cizim.py --araclar
+python3 .claude/skills/grafik-cizim/scripts/self_test.py
 ```
 
-## İş dosyası (job)
+Aşağıdaki dosya biçim örneğidir; kaynağı ve C0'ı gerçek çalışmaya göre belirle:
 
 ```json
 {
   "veri": {"kline": "engine/girdi/h4.json"},
-  "son_bar": 160,
-  "baslik": "BTCUSDT · 4H · Binance",
-  "alt_baslik": "SMC + Fibonacci — ölçülen yapıdan",
-  "tema": "koyu",
-  "genislik": 1600, "yukseklik": 900,
-  "log_olcek": false,
-  "sag_bosluk_bar": 30,
-  "paneller": [{"tip": "hacim", "yukseklik": 0.13}, {"tip": "rsi", "period": 14}],
-  "otomatik": {"ma": [{"tip": "ema", "period": 50}], "regresyon": {"bar": 120}},
-  "cizimler": [{"arac": "fib_retracement", "p1": {"bar": 84, "fiyat": 61520.0},
-                "p2": {"bar": 120, "fiyat": 65780.0}}],
-  "cikti": "cikti/btc_4h.svg"
+  "c0": "2026-01-01T00:00:00Z", "timeframe": "4h",
+  "timezone": "UTC", "price_unit": "USDT", "volume_unit": "BTC",
+  "son_bar": 160, "baslik": "BTCUSDT · 4H · kaynak adı",
+  "tema": "koyu", "genislik": 1600, "yukseklik": 900,
+  "log_olcek": false, "sag_bosluk_bar": 30,
+  "paneller": [{"tip": "hacim"}, {"tip": "rsi", "period": 14}],
+  "otomatik": {"ma": [{"tip": "ema", "period": 50}]},
+  "cizimler": [], "cikti": "cikti/btc_4h.svg"
 }
 ```
 
-- `veri`: `{"kline": "<Binance kline JSON/CSV>"}` (deponun kendi
-  `engine/karar_motoru.parse_klines` parser'ı kullanılır — ikinci parser yok)
-  **veya** `{"mumlar": [{open,high,low,close,volume,time}, …]}`.
-- **Nokta gösterimi:** `{"bar": i, "fiyat": p}` — `bar` negatifse **sondan**
-  (-1 = son mum), `n`'den büyükse **geleceğe projeksiyon** (TradingView sağ
-  boşluğu), `{"zaman": <ms>}` da kabul edilir.
-- Çıktı: SVG dosyası + stdout'a JSON rapor (`cizilen_seviyeler`, `araclar`,
-  `uyarilar`, `fiyat_araligi`). `cizilen_seviyeler` `iddia_denetle.py` ile
-  çapraz kontrol edilebilir.
+Noktalar `{"bar": i, "fiyat": p}` biçimindedir. Varsayılan bar alanı görünür
+mum dilimidir; `-1` son mumu, görünüm dışındaki büyük indeks projeksiyonu belirtir.
+Tam geçmişe ait elle çizimler için çizim nesnesine `bar_space:"history"` ekle.
+`{"zaman": zaman_damgasi, "fiyat": p}` kesirli bar konumuna çevrilir; zaman
+verisi yoksa son muma sessizce yapıştırılmaz.
 
-## Araçlar (24) — TradingView karşılıkları
+Araçlar ve sınırları için [TradingView haritasını](references/tradingview-arac-haritasi.md)
+oku. Ortak görünüm alanları `renk`, `kalinlik`, `kesik`, `dolgu_saydam`,
+`etiket`, `katman`dır. Desteklenen adlar/takma adlar için `--araclar` kullan.
 
-| Araç | TradingView | Zorunlu alanlar |
-|---|---|---|
-| `trend_cizgisi` | Trend Line / Ray | `p1`,`p2` (+`uzat`: sag/sol/iki, `ok`) |
-| `yatay_cizgi` | Horizontal Line | `fiyat` (+`bar_baslangic`,`bar_bitis`) |
-| `yatay_ray` | Horizontal Ray | `fiyat`,`bar` |
-| `dikey_cizgi` | Vertical Line | `bar` |
-| `dikdortgen` | Rectangle / Zone | `fiyat1`,`fiyat2` (+`bar_baslangic`) |
-| `paralel_kanal` | Parallel Channel | `p1`,`p2`,`p3` |
-| `regresyon_kanali` | Regression Trend | `bar_baslangic`,`bar_bitis` (+`sapma`,`ileri_bar`) |
-| `andrews_catali` | Pitchfork | `p1`,`p2`,`p3` |
-| `fib_retracement` | Fib Retracement | `p1`,`p2` (+`seviyeler`,`altin_bolge`,`tam_genislik`) |
-| `fib_genisleme` | Trend-Based Fib Extension | `p1`,`p2`,`p3` |
-| `fib_kanal` | Fib Channel | `p1`,`p2`,`p3` |
-| `fib_yelpaze` | Fib Fan (Speed Fan) | `p1`,`p2` |
-| `fib_zaman` | Fib Time Zones | `bar_baslangic`,`bar_bitis` |
-| `long_pozisyon` | Long Position | `giris`,`stop`,`hedef` |
-| `short_pozisyon` | Short Position | `giris`,`stop`,`hedef` |
-| `olcum` | Measure / Price Range | `p1`,`p2` |
-| `ok` | Arrow | `p1`,`p2` |
-| `yol` | Path / Polyline | `noktalar[]` |
-| `metin` | Text / Callout | `p1`,`metin` (+`kutu`) |
-| `isaret` | Arrow Marker Up/Down | `p1`,`yon` |
-| `fiyat_etiketi` | Price Label (eksen rozeti) | `fiyat` |
-| `bilgi_paneli` | Table / Info Panel | `satirlar[]` (+`konum`: `oto`) |
-| `ma` (`ema`/`sma`) | Moving Average | `period` (+`tip`) |
-| `bulut` | MA Cloud / Kumo / Band fill | `a`,`b` (MA tanımı, seri ya da sabit fiyat) |
+`otomatik` etkinse OB/FVG/likidite/yapı/fib/trend/swing etiketleri ve bilgi
+paneli kendi seçenekleriyle açılıp kapatılır; tespit ayarları `params` içindedir.
+`regresyon` ve `ma` ayrıca istenir; `emir` verilen planı kullanır. Bunların
+hepsi varsayılan açık değildir. Üretilemeyen katmanı `uyarilar` ve
+`atlanan_cizimler` üzerinden bildir; istenen sayıyı çizilen sayı diye sunma.
 
-Ortak alanlar: `renk` (tema anahtarı ya da hex), `kalinlik`, `kesik` ("5 3"),
-`dolgu_saydam`, `etiket`, `katman` (z-sırası). İngilizce adlar da kabul edilir
-(`fibonacci`, `rectangle`, `long_position`, `pitchfork`, `measure`, …) —
-`araclar.TAKMA_AD`.
+## Karar ve pozisyon kanıtı
 
-**Katman düzeni** TradingView'daki gibidir: bölge/kanal mumların **arkasına**,
-çizgi/etiket/panel **önüne** çizilir. `bilgi_paneli` varsayılan `konum: "oto"`
-ile mumların **en az olduğu köşeyi ölçerek** yerleşir (üst üste binme yok).
+`final_decision` üst kararın durumunu taşır. Pozisyon geometrisi long için
+`stop < giris < hedef`, short için `hedef < giris < stop` olmalıdır.
 
-## Otomatik katman (`otomatik`)
-
-`grafik-calisma/scripts/smc_tespit.py`'nin **ölçtüğü** yapıyı çizime çevirir —
-ikinci bir tespit mantığı yazılmaz:
-
-| Anahtar | Ne çizer |
+| Durum | Sunum |
 |---|---|
-| `ob` | order block dikdörtgenleri (talep yeşil / arz kırmızı) |
-| `fvg` | açık FVG bantları |
-| `likidite` | eşit tepe/dip likidite rayları (`×adet` etiketli) |
-| `yapi` | BOS / CHoCH kırılım çizgileri + yön işareti |
-| `fib` | son impuls bacağından Fibonacci + altın bölge (0.618–0.786) |
-| `trend_cizgisi` | son iki teyitli swing'den trend çizgisi |
-| `swing_etiket` | HH / HL / LH / LL etiketleri |
-| `regresyon` | `{"bar": 120, "sapma": 2.0, "ileri_bar": 30}` |
-| `ma` | `[{"tip":"ema","period":50,"renk":"#ff9800"}]` |
-| `panel` | ölçülen değerlerle bilgi paneli (trend, ADX/rejim, ATR, ATR%, sayımlar) |
-| `emir` | `{"yon","giris","stop","hedef","r"}` ya da `emir_plani.py` çıktı dosyası → pozisyon kutusu |
+| `confirmed` | Yön, kapanmış veri ve aynı C0 doğrulanmış koşul; başarı olasılığı değildir. |
+| `conditional` | Henüz gerçekleşmesi gereken koşula bağlı plan; teyit edilmiş gibi gösterme. |
+| `draft` | Taslak veya zaman/kaynak kanıtı eksik plan. |
+| `blocked` | İşlem kutusunu çizme; engelleme gerekçesini raporla. |
 
-Her biri varsayılan **açık**; `false` ile kapatılır. Ölçülemeyen çizim atlanır
-ve `uyarilar`a "VERİ YOK" gerekçesiyle yazılır — **uydurulmaz**.
+`confirmed` için `final_decision.direction`, `status` ve ortak C0 alanı gerekir.
+`EMIR YOK`/`blocked`, yön çelişkisi veya geçersiz geometri serbest etiketle
+geçersiz kılınamaz. Görselden okunan fiyatları tek başına confirmed emir kanıtı sayma.
 
-## Doğruluk sözleşmesi (bu motora özel)
+- **rawR / R ham:** `abs(hedef-giris) / abs(giris-stop)`; maliyet içermez.
+- **netR / R net:** `(ödül-kazanılan işlem maliyeti)/(risk+kaybedilen işlem maliyeti)`;
+  komisyon/kayma varsayımları aynı fiyat biriminde açıkça verilmelidir.
+- **ATR senaryosu:** varsayımsal ATR stop tabanıyla yeniden hesap; çizilen stopu
+  değiştirmez, netR değildir ve piyasa başarısını ölçmez.
 
-1. **Uydurma seviye yok.** `otomatik` katmanının ürettiği her fiyat, öz-testin
-   GROUNDING testiyle ölçülen kümede (smc_tespit çıktısı ∪ ham OHLC) olduğu
-   kanıtlanır; kaynaksız fiyat testi düşürür.
-2. **Şişirilmiş R yok.** Pozisyon aracı R'yi `|hedef−giriş| / |giriş−stop|`
-   ham mesafeden hesaplar. Bir R **karar** olarak sunulacaksa önce
-   `karar-kurulu/scripts/rr_denetim.py`'den geçirilir; etiket `r_etiketi` ile
-   denetlenmiş değerden verilir.
-3. **Grafik karar değildir.** Çıktı karar-desteğidir; yön/işlem hükmü
-   `karar-kurulu` / `piramit-sistem` sentezinden gelir.
-4. Görsel bir **ölçüm değildir**: kullanıcının ekran görüntüsünden okunan
-   seviyelerin güveni `gorsel_tavan` = **0.50** ile tavanlıdır ve `smc_tespit`
-   yapısıyla uyuşmazsa çürütülür ("GÖRSEL-MEKANİK ÇELİŞKİSİ"). Mekanik ayrıntı:
-   `piramit-sistem/SKILL.md` §"Zorunlu girdiler".
+Denetlenmiş R için `rr_audit`, normalize veri hash'i, aynı C0, yön ve
+entry/stop/target ile bağlanır; yöntem ve sayı yeniden hesaplanır. Serbest
+`r_etiketi` doğrulama sayılmaz. Ayrıntı ve alanlar araç haritasındadır.
 
-## Ne zaman hangi mod
+## Görseli ve kanıtı teslim et
 
-- Kullanıcı "çiz / işaretle / göster" derse → `otomatik` katman + gerekirse elle çizim.
-- Karar analizinden sonra seviyeleri görselleştirmek gerekiyorsa → `otomatik.emir`
-  ile `emir_plani.py` çıktısını ver (giriş/stop/hedef kutusu birebir motordan).
-- Kullanıcı bir TradingView ekran görüntüsü gönderip "aynısını kur" derse →
-  `references/tradingview-arac-haritasi.md` eşlemesiyle araçları seç.
+SVG ile `<cikti>.manifest.json` üretilir. Manifest kaynak/normalize/çıktı
+SHA-256 değerlerini, zaman sözleşmesini, satır sayılarını, görünüm aralığını,
+birimleri, hesap konvansiyonlarını ve pozisyon kanıtını içerir. Kaynak sağlayıcı,
+alınma zamanı, piyasa/seans ve fiyat temeli biliniyorsa ayrıca kaydet; hash bunları
+kendiliğinden doğrulamaz. Görsel anotasyonunda kalibrasyon manifestini de sakla.
+
+Çıktıyı açıp uç değerleri, ölçekleri, saat/birim etiketlerini, görünmeyen serileri,
+çizim kırpılmasını ve etiket/panel çakışmalarını kontrol et. Çizimler plot alanında
+kırpılır; eksen rozetleri ayrıca yerleştirilir. Otomatik yerleşim çakışmasızlık
+vaadi değildir. Kaynağı, hesaplanan/tahmini ayrımını ve kalan uyarıları kısa notla ver.
+
+## Son kararın çizime bağlanması
+
+`confirmed` son karar ayrıca `input_sha256` (bu motorun normalize mum hash'i) ve
+`geometry: {entry, stop, target}` taşır. Bunlardan biri çizilen veri/seviyeyle
+çelişirse pozisyon çizilmez. `case_sha256` verilirse job alanıyla aynı olmalıdır.
+Giriş bölgesi için `geometry.entry_zone`, açık `entry_policy` (midpoint/lower/upper/
+reference_price), `stop`, `targets` ve `target_index` kullanılır; referans fiyat
+politikasında `reference_price` zorunludur. Koşullu kartların verdiği kaynak,
+kesim ve geometri de kontrol edilir; koşullu durum teyitli sayılmaz.
+
+`png: true`, önce cairosvg kullanır; paket yoksa PATH'teki Inkscape'i argüman
+listesiyle ve 30 saniye sınırıyla çalıştırır. XML/SVG, çıkış kodu, yeni çıktı
+dosyası ve PNG imzası kontrol edilir. Dönüşüm hatası JSON uyarısında kalır.

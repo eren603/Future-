@@ -16,6 +16,8 @@ Motor bir seviye ölçemezse o çizim ATLANIR ve uyarı yazılır — uydurulmaz
 from __future__ import annotations
 
 import json
+import math
+from tuval import bicim_fiyat
 import sys
 from pathlib import Path
 
@@ -26,37 +28,46 @@ for _p in (str(BURASI), str(GRAFIK)):
         sys.path.insert(0, _p)
 
 
-def _smc(mumlar: list, params: dict | None = None) -> tuple[dict, object]:
+def _smc(mumlar: list, params: dict | None = None, time_job: dict | None = None) -> tuple[dict, object]:
     import smc_tespit as ST  # noqa: PLC0415
 
     job = {"candles": mumlar}
+    for key in ("c0", "cutoff", "as_of", "timeframe", "interval_seconds"):
+        if time_job and key in time_job:
+            job[key] = time_job[key]
     if params:
         job["params"] = params
     return ST.detect(job), ST
 
 
-def _swing_etiketleri(ST, mumlar, cikti_uyari, sinir=8):
-    """HH/HL/LH/LL — smc_tespit'in KENDİ find_swings'i ile (tek doğruluk kaynağı)."""
-    import pandas as pd  # noqa: PLC0415
+def _swing_sets(out, ST, mumlar, params):
+    if isinstance(out.get('swings'), dict):
+        return out['swings'].get('highs', []), out['swings'].get('lows', [])
+    import pandas as pd
+    effective = {**ST.DEFAULTS, **(params or {})}
+    return ST.find_swings(pd.DataFrame(mumlar), int(effective['left']), int(effective['right']))
 
-    df = pd.DataFrame(mumlar)
-    yuksek, alcak = ST.find_swings(df, 2, 2)
+
+def _swing_etiketleri(yuksek, alcak, sinir=8):
     ciz = []
-    for dizi, tur in ((yuksek[-sinir:], "high"), (alcak[-sinir:], "low")):
-        onceki = None
-        for s in dizi:
-            if onceki is None:
-                etk = "H" if tur == "high" else "L"
-            elif tur == "high":
-                etk = "HH" if s["price"] > onceki else "LH"
+    for full, tur in ((yuksek, 'high'), (alcak, 'low')):
+        first = max(0, len(full)-sinir)
+        for j in range(first,len(full)):
+            swing=full[j]
+            previous=full[j-1]['price'] if j else None
+            if previous is None:
+                label='H' if tur=='high' else 'L'
+            elif tur=='high':
+                label='HH' if swing['price']>previous else 'LH'
             else:
-                etk = "HL" if s["price"] > onceki else "LL"
-            onceki = s["price"]
-            ciz.append({"arac": "metin", "metin": etk,
-                        "p1": {"bar": s["i"], "fiyat": s["price"]},
-                        "renk": "olumlu" if etk in ("HH", "HL") else "olumsuz",
-                        "hiza": "middle", "boyut": 11})
+                label='HL' if swing['price']>previous else 'LL'
+            ciz.append({'arac':'metin','metin':label,
+                        'p1':{'bar':swing['i'],'fiyat':swing['price']},
+                        'known_at_bar':swing.get('confirmed_i',swing.get('confirm_i')),
+                        'renk':'olumlu' if label in ('HH','HL') else 'olumsuz',
+                        'hiza':'middle','boyut':11})
     return ciz
+
 
 
 def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict]:
@@ -65,13 +76,15 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
     ciz: list[dict] = []
     n = len(mumlar)
     try:
-        out, ST = _smc(mumlar, cfg.get("params"))
+        out, ST = _smc(mumlar, cfg.get("params"), cfg)
     except Exception as e:  # noqa: BLE001
         return [], {"kaynak": "smc_tespit.py", "hata": f"tespit koşamadı: {e}",
                     "uyarilar": [f"otomatik katman VERİ YOK — {e}"]}
 
     trend = out.get("trend", "belirsiz")
     atr = out.get("atr")
+    atr = float(atr) if isinstance(atr, (float,int)) and math.isfinite(atr) else None
+    yuksek, alcak = _swing_sets(out, ST, mumlar, cfg.get("params"))
     olaylar = out.get("olaylar") or []
     son = mumlar[-1]["close"]
 
@@ -147,10 +160,7 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
     # --- trend çizgisi: son iki teyitli aynı yönlü swing
     if cfg.get("trend_cizgisi", True):
         try:
-            import pandas as pd  # noqa: PLC0415
-
-            yuksek, alcak = ST.find_swings(pd.DataFrame(mumlar), 2, 2)
-            dizi = alcak if trend == "bull" else yuksek
+            dizi = alcak if trend == "bull" else yuksek if trend == "bear" else []
             if len(dizi) >= 2:
                 a, b = dizi[-2], dizi[-1]
                 ciz.append({"arac": "trend_cizgisi",
@@ -166,7 +176,7 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
     # --- swing etiketleri
     if cfg.get("swing_etiket", True):
         try:
-            ciz += _swing_etiketleri(ST, mumlar, uyari)
+            ciz += _swing_etiketleri(yuksek, alcak)
         except Exception as e:  # noqa: BLE001
             uyari.append(f"swing etiketleri: {e}")
 
@@ -195,24 +205,23 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
             uyari.append(f"emir dosyası okunamadı: {e}")
             emir = None
     if isinstance(emir, dict):
-        # emir_plani şema normalizasyonu (B8): tam çıktıda seviyeler 'birincil'
-        # altındadır ve R anahtarı BÜYÜKtür ('R'). Eskiden g/st/hd=None → kutu
-        # hiç çizilmezdi; r okunmayınca R etiketi düşerdi.
-        if isinstance(emir.get("birincil"), dict):
-            emir = emir["birincil"]
-        g, st, hd = emir.get("giris"), emir.get("stop"), emir.get("hedef", emir.get("t1"))
-        r_deg = emir.get("r", emir.get("R"))
-        if None in (g, st, hd):
-            uyari.append("emir kutusu: giriş/stop/hedef eksik — çizilmedi (VERİ YOK)")
-        else:
-            yon = str(emir.get("yon", "long")).lower()
-            yon = "short" if yon.startswith("s") else "long"
-            spec = {"arac": f"{yon}_pozisyon", "giris": float(g), "stop": float(st),
-                    "hedef": float(hd), "bar_baslangic": emir.get("bar", n - 1),
-                    "uzunluk_bar": int(emir.get("uzunluk_bar", 25))}
-            if r_deg is not None:
-                spec["r_etiketi"] = f"R {float(r_deg):.2f}"
+        # Preserve parent decision state instead of discarding it at birincil.
+        parent = dict(emir)
+        leaf = emir.get('birincil') if isinstance(emir.get('birincil'),dict) else emir
+        try:
+            from plan_sozlesmesi import direction
+            side = direction(leaf.get('yon', parent.get('yon')))
+            spec = {'arac':f'{side}_pozisyon','giris':leaf.get('giris'),
+                    'stop':leaf.get('stop'),'hedef':leaf.get('hedef',leaf.get('t1')),
+                    'bar_baslangic':leaf.get('bar',n-1),
+                    'uzunluk_bar':int(leaf.get('uzunluk_bar',25)),
+                    'plan_metadata':parent}
+            for key in ('R','r','rr_audit','rr_denetim','final_decision'):
+                if key in leaf:
+                    spec[key]=leaf[key]
             ciz.append(spec)
+        except (ValueError,TypeError) as exc:
+            uyari.append(f'emir kutusu: {exc}')
 
     # --- ölçülen değerlerle bilgi paneli
     if cfg.get("panel", True):
@@ -222,7 +231,7 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
              "renk": "olumlu" if trend == "bull" else "olumsuz" if trend == "bear" else "notr"},
             {"ad": "Rejim (ADX)", "deger": f"{rejim.get('durum', 'VERİ YOK')} · "
                                            f"{rejim.get('adx', 'VERİ YOK')}"},
-            {"ad": "ATR (Wilder)", "deger": f"{atr:.2f}" if atr else "VERİ YOK"},
+            {"ad": "ATR (Wilder)", "deger": f"{atr:.8g}" if atr is not None else "VERİ YOK"},
             {"ad": "ATR %", "deger": f"{rejim.get('atr_pct', 0) * 100:.2f}%"
                                      if rejim.get("atr_pct") else "VERİ YOK"},
             {"ad": "Yüksek volatilite", "deger": "EVET" if rejim.get("yuksek_vol") else "hayır",
@@ -236,7 +245,7 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
             # TR biçim (B5): 65123.45 → "65.123,45". Eski `replace(",",".")` iki
             # noktalı '65.123.45' üretiyordu (binlik VE ondalık nokta) — takas gerekir.
             {"ad": "Son fiyat",
-             "deger": f"{son:,.2f}".replace(",", "\x00").replace(".", ",").replace("\x00", ".")},
+             "deger": bicim_fiyat(son)},
         ]
         ciz.append({"arac": "bilgi_paneli", "baslik": cfg.get("panel_baslik", "ÖLÇÜLEN YAPI"),
                     "satirlar": satir, "konum": cfg.get("panel_konum", "oto"),
@@ -255,6 +264,8 @@ def uret(mumlar: list, cfg: dict, taban: Path | None = None) -> tuple[list, dict
             "cizim": len(ciz),
         },
         "varsayimlar": out.get("varsayimlar"),
+        "time_contract": out.get("time_contract"),
+        "swings": out.get("swings"),
         "uyarilar": uyari,
     }
     return ciz, rapor

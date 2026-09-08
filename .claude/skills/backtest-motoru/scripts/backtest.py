@@ -218,25 +218,43 @@ def run_backtest(frame: pd.DataFrame, strategy: dict, *, fees_bps=5.0, slippage_
 
 
 def monte_carlo(trade_returns: list[float], runs: int, seed: int) -> dict:
-    r = np.array(trade_returns, dtype=float)
-    if len(r) < 3:
-        return {"note": "Yetersiz işlem sayısı (Monte Carlo atlandı)", "runs": 0}
+    """Fixed-return order-risk diagnostic, not a future-profit simulation.
+
+    Reordering does not change terminal compounded return. Only drawdown/path
+    summaries vary. Include equity=1 before the first trade so an initial loss
+    is measured. Legacy terminal percentile fields remain explicit invariants;
+    the misleading probability field is null and cannot authorize a signal.
+    """
+    r = np.asarray(trade_returns, dtype=float)
+    if not np.isfinite(r).all() or np.any(r <= -1):
+        raise BacktestError("order-risk returns must be finite and greater than -1")
+    if int(runs) < 0:
+        raise BacktestError("order-risk runs must be nonnegative")
+    terminal = float(np.prod(1.0 + r) - 1.0) if len(r) else 0.0
+    report = {
+        "method": "fixed_return_order_risk",
+        "runs": int(runs) if len(r) and int(runs) else 0,
+        "fixed_terminal_return": round(terminal, 6),
+        "terminal_return_order_invariant": True,
+        "final_return_p5": round(terminal, 6),
+        "final_return_p50": round(terminal, 6),
+        "final_return_p95": round(terminal, 6),
+        "prob_profit": None,
+        "valid_for_future_profit_probability": False,
+        "note": "Fixed observations are reordered, not new returns sampled. Terminal percentiles are identical by construction; drawdown includes initial equity=1.",
+    }
+    if not report["runs"]:
+        report.update(max_dd_p5=None, max_dd_p50=None, max_dd_p95=None)
+        return report
     rng = np.random.default_rng(int(seed))
-    finals = np.empty(int(runs))
     max_dds = np.empty(int(runs))
     for k in range(int(runs)):
-        shuffled = rng.permutation(r)
-        eq = np.cumprod(1.0 + shuffled)
-        finals[k] = eq[-1] - 1.0
-        rollmax = np.maximum.accumulate(eq)
-        max_dds[k] = float((eq / rollmax - 1.0).min())
-    pct = lambda a, q: round(float(np.percentile(a, q)), 6)
-    return {
-        "runs": int(runs),
-        "final_return_p5": pct(finals, 5), "final_return_p50": pct(finals, 50), "final_return_p95": pct(finals, 95),
-        "max_dd_p5": pct(max_dds, 5), "max_dd_p50": pct(max_dds, 50), "max_dd_p95": pct(max_dds, 95),
-        "prob_profit": round(float((finals > 0).mean()), 4),
-    }
+        eq = np.concatenate(([1.0], np.cumprod(1.0 + rng.permutation(r))))
+        peak = np.maximum.accumulate(eq)
+        max_dds[k] = float(np.min(eq / peak - 1.0))
+    for q in (5, 50, 95):
+        report[f"max_dd_p{q}"] = round(float(np.percentile(max_dds, q)), 6)
+    return report
 
 
 def run_job(job: dict, base: Path | None) -> dict:

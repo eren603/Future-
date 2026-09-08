@@ -4,7 +4,7 @@
   },
   "son_bar": 160,
   "baslik": "BTCUSDT · 4H · Binance",
-  "alt_baslik": "otomatik SMC + Fibonacci katmanı — ölçülen yapıdan",
+  "alt_baslik": "TASLAK DEMO — fiyatlar güncel ölçüm/işlem kararı değildir",
   "tema": "koyu",
   "paneller": [
     {
@@ -34,5 +34,7 @@
       "bar": 120
     }
   },
-  "cikti": "cikti/btc_4h_oto.svg"
+  "cikti": "cikti/btc_4h_oto.svg",
+  "price_unit": "USDT",
+  "timezone": "UTC"
 }
