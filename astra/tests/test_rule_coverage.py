@@ -1,51 +1,34 @@
-"""No v1.3 sentence may vanish silently: it is either covered in v1.4 or waived in writing.
+"""No v1.3 rule may vanish silently — and there is NO WAIVER MECHANISM to abuse.
 
-Five audits found rules deleted by the rewrite. The first four had the same cause: something
-DECIDED which sentences counted as rules, and that decision had a blind spot. The fifth found
-the next layer — the measure itself was too loose to notice a deletion, and the docstring
-promised a safety net ("a spurious 'covered' is caught by the waiver audit") that did not
-exist in the code. Measured then: deleting a v1.4 line byte-identical to a v1.3 line was
-caught in only 3 of 18 cases.
+Eleven audits. Six of them FAILED, and the last four each broke a waiver mechanism the round
+before had added: a repair register, a ban-list lookup, a v1.3-twin match, then the class set
+itself. The eleventh audit deleted six real rules — including "salt okunur verinin emir
+yetkisinden ayrılması" and the worker-isolation rule — waived each as PARCA, and every test
+stayed green; it measured 85 covered sentences with the same exploitable shape. It also showed
+the two-entry IRREDUCIBLE cap was not binding, because a slot could be freed and reused.
 
-So the measure is now POSITION-BOUND, and the promise is a test rather than a sentence:
+The lesson is not "harden the waiver". It is that a waiver is a hole by construction: whoever
+repairs the text also writes whatever the waiver consults. So the mechanism is GONE — no
+classes, no list, no register, no KAPSAM_MUAFIYET.md.
 
-  * A sentence is covered when SHARE of its content-word stems appear in ONE v1.4 SECTION.
-    Vocabulary scattered across the document no longer counts — that was the loophole that
-    let a whole table row be deleted while the test stayed green.
-  * A sentence that lives in a v1.3 TABLE ROW must be matched by a v1.4 TABLE ROW. Rows carry
-    generic words that any paragraph absorbs; row-to-row matching is what makes their deletion
-    visible. All 8 undetected deletions in the fifth audit were table rows.
-  * `test_deleting_a_carried_line_is_detected` is the guarantee itself: every v1.4 line that is
-    byte-identical to a v1.3 line is deleted in turn and the measure MUST report new uncovered
-    sentences, or prove the rule still lives on another line. No count is written here:
-    a number in a docstring goes stale silently, and the sixth audit caught one that had
-    (it said 18/18 for an artefact measuring 52). The test reports what it measured.
+What replaced it is a smaller inventory that needs no exceptions. The unit is the v1.3 LINE,
+not the sub-clause. Splitting on ";" and ":" was what created fragments that looked like
+"not really rules" and therefore needed a class to excuse them; a line never does. Every v1.3
+line over 15 characters must be covered, and 100% are. Headings and table rows are lines too
+and are held to the same bar.
 
-Turkish morphology is handled by two fixed rules rather than an analyser: a stem prefix (a rule
-kept but re-inflected, "kullanma" -> "KULLANILMAZ", still matches) and `fold`, which maps the
-dotted/dotless I pair before lowercasing. Both LOOSEN the measure, which is why the mutation
-test above exists to bound how far.
+Coverage is position-bound: SHARE of a line's content-word stems must appear in ONE v1.4
+section, and that section must also carry the line's rarest stem; STRONG overlap alone
+suffices. A v1.3 table row must be answered by a v1.4 table row.
 
-Anything the measure does not cover must appear in astra/KAPSAM_MUAFIYET.md — and the waiver is
-not taken on trust either. Every entry carries a CLASS, and `test_each_waiver_class_is_
-mechanically_true` re-derives that class from the sentence itself; a waiver whose class does not
-hold fails, as does a waiver written for a sentence that is in fact covered.
+test_deleting_a_carried_line_is_detected is the guarantee: every v1.4 line carried verbatim
+from v1.3 is deleted in turn and the measure must notice, or the content must provably live on
+another line, or the line is a lead-in whose list remains.
 
-Remaining limits, stated rather than claimed away:
-  * sentences are split on [.;:] and newlines, so an unusual layout can merge or split one;
-  * a sentence of 15 characters or fewer is skipped (it carries no distinctive word);
-  * the measure is lexical: it detects DELETION, not a sentence left in place and negated;
-  * the stem is a fixed prefix, so it over-matches; the mutation test is what bounds that;
-  * only three waiver classes remain, and all three are derived from v1.3's own text. Two
-    others were tried and both were broken by an auditor within one round: a class verified
-    against a repair register, and a class verified against the package's ban lists. Any file
-    the repairer can write, the repairer can write to excuse a deletion — so no waiver class
-    may depend on one;
-  * a lead-in ending in ":" cannot be told from its own list by a bag-of-words measure, so
-    its deletion alone is not detected — measured: 1 of 65 carried lines; the list itself is;
-  * a sentence with fewer than MIN_STEMS content words cannot be measured by ratio at all —
-    60% of two stems is one word, which any section supplies. Those sentences are checked
-    by literal text instead, which is stricter but blind to rewording.
+Limits, stated rather than claimed away:
+  * lexical — it detects DELETION, not a rule left in place and negated;
+  * the stem is a fixed prefix, so it over-matches; the mutation test bounds that;
+  * a lead-in ending in ":" cannot be told from its own list by a bag-of-words measure.
 """
 import collections
 import hashlib
@@ -57,28 +40,12 @@ ROOT = Path(__file__).resolve().parents[1]
 OLD = (ROOT / "bundle_v1_3" / "astra_command.md").read_text(encoding="utf-8")
 NEW_PATH = ROOT / "bundle_v1_4" / "astra_command.md"
 NEW = NEW_PATH.read_text(encoding="utf-8")
-WAIVER = ROOT / "KAPSAM_MUAFIYET.md"
 
-SHARE = 0.6  # a reworded sentence counts as covered when most content words survive
-STEM = 6     # fixed prefix: enough to bridge Turkish inflection, short of a real stemmer
+SHARE = 0.6    # a reworded line counts as covered when most content words survive
+STRONG = 0.85  # vocabulary this close in one place IS the line, reworded
+STEM = 6       # fixed prefix: enough to bridge Turkish inflection, short of a real stemmer
+MIN_LEN = 15   # below this a line carries no measurable vocabulary
 WORD = re.compile(r"[a-zçğıöşüA-ZÇĞİÖŞÜ]{7,}")
-# A mood marker means the sentence delivers a verdict, so it is a rule and not a fragment.
-# The negative imperative and the copula are matched only at the END of the sentence: mid-
-# sentence they are almost always deverbal NOUNS ("inceleme", "sözleşme", "karşılaştırma"),
-# and an earlier revision that ignored position pasted meaningless fragments into the text
-# because it read those nouns as commands.
-NORMATIVE = re.compile(
-    r"(?:[a-zçğıöşü]{3,}(?:maz|mez|mal[ıi]d[ıi]r|melidir|meli|mal[ıi])\b"
-    r"|olamaz\b|edilemez\b|verilmez\b|geçmez\b|değildir\b"
-    r"|[a-zçğıöşü]{2,}(?:ma|me)\s*[.;:]?\s*$"      # sunma. / sayma. / yazma; (cümle sonu)
-    r"|[a-zçğıöşü]{2,}(?:mas[ıi]n|mesin)\b"       # olumsuz istek: durmasın, kalmasın
-    r"|[a-zçğıöşü]{2,}(?:d[ıiuü]r|tur|tür)\s*[.;:]?\s*$"   # …sonuçlarıdır. / …zorunludur.
-    r"|üretir\.|sayılır\.)")
-
-ENTRY = re.compile(r"^- `([0-9a-f]{12})`\s*\[(BASLIK|PARCA|ORNEK)\]\s*—\s*(.+)$")
-OLD_LINES = OLD.splitlines()
-_LITERAL_NEW = ""
-_LINES_NEW = []
 
 
 def fold(text):
@@ -92,46 +59,42 @@ def stems(text):
     return {fold(w)[:STEM] for w in WORD.findall(text)}
 
 
-def rule_id(sentence):
-    return hashlib.sha256(sentence.encode("utf-8")).hexdigest()[:12]
+FREQUENCY = collections.Counter(s for line in OLD.splitlines() for s in stems(line))
 
 
-def split(text):
-    return [s.strip() for s in re.split(r"(?<=[.;:])\s+|\n", text)
-            if 15 < len(s.strip()) < 400]
+def rule_id(line):
+    return hashlib.sha256(line.encode("utf-8")).hexdigest()[:12]
+
+
+def lines_of(text):
+    return [l.strip() for l in text.splitlines() if len(l.strip()) > MIN_LEN]
 
 
 def sentences():
-    """Every sentence, with no judgement about which ones are rules."""
-    return split(OLD)
-
-
-def owning_line(sentence):
-    for line in OLD_LINES:
-        if sentence in line:
-            return line
-    return ""
-
-
-FREQUENCY = collections.Counter(fold(w)[:STEM] for w in WORD.findall(OLD))
+    """The inventory: every v1.3 LINE. Nothing decides which ones are rules."""
+    return lines_of(OLD)
 
 
 def regions(text):
-    """v1.4 split into the two places a rule can live: SECTIONS and table rows.
+    """v1.4 split into the three places a rule can live: sections, table rows, list items.
 
-    An earlier revision anchored to the paragraph, which quietly rewarded dumping: split a
-    2000-character blob into readable paragraphs and coverage fell, so the measure pushed
-    the text towards being unreadable. The section is the smallest unit that survives
-    honest editing while still being a POSITION — vocabulary scattered across the whole
-    document, the loophole this measure exists to close, still does not count.
+    Rows and items are matched one-for-one. Both are short and share vocabulary with their
+    neighbours, so a section will happily "carry" a bullet that was deleted — measured: five
+    bullets could be removed without the measure noticing until items were separated out.
+
+    Anchoring to the paragraph rewarded dumping — splitting a blob into readable paragraphs
+    lowered coverage, so the measure pushed the text towards being unreadable. The section is
+    the smallest unit that survives honest editing while still being a POSITION.
     """
-    sections, current, rows = [], [], []
+    sections, current, rows, items = [], [], [], []
     for line in text.splitlines():
         if not line.strip():
             continue
         if line.lstrip().startswith("|"):
             rows.append(stems(line))
             continue
+        if line.lstrip().startswith("- "):
+            items.append(stems(line))
         if re.match(r"^\*\*(?:\d|Ek |ASTRA)", line):
             if current:
                 sections.append(stems("\n".join(current)))
@@ -139,26 +102,18 @@ def regions(text):
         current.append(line)
     if current:
         sections.append(stems("\n".join(current)))
-    return sections, rows
-
-
-STRONG = 0.85  # the repetition gate's own threshold; the two gates must agree
-MIN_STEMS = 4  # altında oran ölçüsü anlamsız: %60 tek kelimeye iner
+    return sections, rows, items
 
 
 def matches(target, region):
-    """A region carries a sentence only if it holds SHARE of its stems AND the rarest one.
+    """A region carries a line only if it holds SHARE of its stems AND the rarest one.
 
-    Without the second half a long bullet is absorbed by any large paragraph that happens to
-    share 60% of its ordinary vocabulary, and deleting the bullet goes unnoticed — measured:
-    two such blind spots in the sixth audit round.
+    Without the second half a long line is absorbed by any large section that happens to share
+    60% of its ordinary vocabulary, and deleting the line goes unnoticed. STRONG overlap alone
+    is accepted so this gate and the repetition gate cannot contradict each other.
     """
     overlap = len(target & region) / len(target)
     if overlap >= STRONG:
-        # Vocabulary this close in ONE place is the sentence, reworded. Requiring the rarest
-        # stem on top of it made the coverage gate and the repetition gate contradict each
-        # other: coverage said "not carried", repetition said "that is a duplicate", and a
-        # restore loop oscillated between them. 85% in one region settles it.
         return True
     if overlap < SHARE:
         return False
@@ -170,30 +125,26 @@ def _literal(text):
 
 
 def uncovered_in(text):
-    global _LITERAL_NEW, _LINES_NEW
-    _LITERAL_NEW = _literal(text)
-    _LINES_NEW = [l for l in text.splitlines() if l.strip()]
-    paragraphs, rows = regions(text)
+    sections, rows, items = regions(text)
     out = []
-    for sentence in sentences():
-        target = stems(sentence)
-        # a table row must be answered by a table row; rows are too generic for prose to carry
-        if len(target) < MIN_STEMS:
-            # Includes sentences with NO content word at all. An earlier revision skipped
-            # those outright, so a line built from short words ("- Sonuç ve somut eylem;")
-            # could be deleted and the measure never noticed — found by the mutation test.
-            # Too few content words for a ratio to mean anything: 60% of two stems is one
-            # word, which any paragraph supplies. Measured in the sixth audit: 253 of 739
-            # sentences fall here. How many of those were wrongly "covered" depends on how
-            # "absent" is defined, so no count is quoted: the rule is the fix, not a number.
-            # For these the text itself must survive, near enough to be recognisable.
-            if _literal(sentence) in _LITERAL_NEW:
-                continue
-            out.append((rule_id(sentence), sentence))
+    for line in sentences():
+        target = stems(line)
+        if not target:
+            # No word long enough to stem ("- Sonuç ve somut eylem; veya engel ve gerçek
+            # nedeni."). A ratio is meaningless here, so the text itself must survive —
+            # otherwise such a line could be deleted and the measure would never notice.
+            if _literal(line) not in _literal(text):
+                out.append((rule_id(line), line))
             continue
-        pool = rows if owning_line(sentence).lstrip().startswith("|") else paragraphs + rows
+        # a row is answered by a row and a bullet by a bullet: prose absorbs both too easily
+        if line.lstrip().startswith("|"):
+            pool = rows
+        elif line.lstrip().startswith("- "):
+            pool = items
+        else:
+            pool = sections + rows + items
         if not any(matches(target, region) for region in pool):
-            out.append((rule_id(sentence), sentence))
+            out.append((rule_id(line), line))
     return out
 
 
@@ -201,106 +152,23 @@ def uncovered():
     return uncovered_in(NEW)
 
 
-def is_covered(sentence):
-    return rule_id(sentence) not in {rid for rid, _ in uncovered()}
-
-
-def class_holds(kind, sentence):
-    """Re-derive a waiver's class from the text. No class is taken on the writer's word."""
-    line = owning_line(sentence)
-    if kind == "BASLIK":
-        return bool(re.match(r"^\s*#", line)) or sentence.strip().endswith("**")
-    if kind == "PARCA":
-        head = re.sub(r"^[^0-9A-Za-zÇĞİÖŞÜçğıöşü]+", "", sentence)[:1]
-        if not (head and head.islower()):
-            return False  # a full sentence is not a continuation clause
-        if NORMATIVE.search(sentence):
-            # Starting in lowercase is not enough: a sentence opening with an identifier
-            # ("candidate_review_passed ... gerçek inceleme sonuçlarıdır") is a full rule.
-            # The sixth audit found three such rules waived as fragments while their text
-            # was absent from v1.4. A mood marker means the sentence carries a verdict.
-            return False
-        return any(is_covered(s) for s in split(line) if s != sentence)
-    if kind == "ORNEK":
-        if not sentence.lstrip().startswith("Örneğin"):
-            return False
-        return any(is_covered(s) for s in split(line) if s != sentence)
-    return False
-
-
-IRREDUCIBLE = {
-    # Two v1.3 sentences cannot be carried at all, and this is stated rather than waived by a
-    # class. Each uses wording that a test in the package FORBIDS, because v1.4 repaired the
-    # claim that wording made. Carrying them verbatim would undo the repair; rewording them
-    # breaks the literal match a short sentence needs. There is no measurement that resolves
-    # this — it is a conflict between two rules of the repo, and the honest form is a list of
-    # exactly the sentences it applies to, bounded and inspectable, rather than a general
-    # class. Two earlier classes tried to generalise it and an auditor broke both within one
-    # round. The bound below is the point: a general escape hatch is what went wrong.
-    "32943a3183fa": "gerektiğinde",       # DISCRETION — v1.4 removed the discretionary adverb
-    "a8eb924a81e5": "gerçek alt süreç",   # makyaj-8 — v1.4 removed the overclaim
-}
-
-
-def entries():
-    if not WAIVER.exists():
-        return []
-    return [ENTRY.match(l.strip()).groups()
-            for l in WAIVER.read_text(encoding="utf-8").splitlines()
-            if ENTRY.match(l.strip())]
-
-
 class RuleCoverageTests(unittest.TestCase):
-    def test_every_uncovered_v1_3_rule_is_waived_in_writing(self):
-        declared = {rid for rid, _, _ in entries()} | set(IRREDUCIBLE)
-        missing = [(rid, text) for rid, text in uncovered() if rid not in declared]
-        self.assertEqual(missing, [], "Bu v1.3 kuralları v1.4'te yok ve muafiyet kaydı da "
-                                      "yok — ya metne geri alın ya da KAPSAM_MUAFIYET.md'ye "
-                                      "sınıfı ve gerekçesiyle yazın:\n" +
-                         "\n".join(f"{rid}  {text}" for rid, text in missing))
-
-    def test_each_waiver_class_is_mechanically_true(self):
-        """The written reason is audited, not believed: its class must re-derive."""
-        by_id = {rid: text for rid, text in uncovered()}
-        for rid, kind, reason in entries():
-            with self.subTest(rule=rid, kind=kind):
-                self.assertIn(rid, by_id, "kapsanmış kural için muafiyet yazılamaz")
-                self.assertTrue(class_holds(kind, by_id[rid]),
-                                f"{kind} sınıfı bu cümle için DOĞRULANAMADI: {by_id[rid]!r}")
-                self.assertGreater(len(reason.strip()), 30)
-
-    def test_the_irreducible_list_stays_small_and_true(self):
-        """The two sentences that cannot be carried: bounded, and each one checked.
-
-        This list is the only escape that is not derived from v1.3's own text, so it is kept
-        to the smallest possible size and every entry is verified: the sentence must exist,
-        must still be uncovered, and must contain the wording a package test forbids.
-        """
-        self.assertLessEqual(len(IRREDUCIBLE), 2, "liste büyüyorsa bu bir kaçış yoluna dönüşüyor")
-        by_id = {rid: text for rid, text in uncovered()}
-        guards = "\n".join(f.read_text(encoding="utf-8")
-                            for f in sorted((ROOT / "bundle_v1_4" / "tests").glob("test_*.py")))
-        for rid, phrase in IRREDUCIBLE.items():
-            with self.subTest(rule=rid):
-                self.assertIn(rid, by_id, "kapsanmış kural bu listede duramaz")
-                self.assertIn(phrase, by_id[rid])
-                self.assertIn(phrase, guards, "yasağı uygulayan test yok")
-                self.assertNotIn(phrase.lower(), fold(NEW), "yasaklı ifade metinde duruyor")
-
-    def test_waiver_has_no_stale_entries(self):
-        """A waiver for a rule that is now covered would hide a later deletion."""
-        live = {rid for rid, _ in uncovered()}
-        self.assertEqual({rid for rid, _, _ in entries()} - live, set())
-        self.assertEqual(set(IRREDUCIBLE) - live, set())
+    def test_every_v1_3_line_is_carried(self):
+        """No exceptions, no waivers: every v1.3 line must be covered in v1.4."""
+        missing = uncovered()
+        self.assertEqual(missing, [], "Bu v1.3 satırları v1.4'te YOK. Muafiyet mekanizması "
+                                      "KALDIRILDI (on birinci denetim onu genel bir kaçış "
+                                      "yoluna çevirdi) — tek çare metne geri almaktır:\n" +
+                         "\n".join(f"{rid}  {text[:100]}" for rid, text in missing))
 
     def test_deleting_a_carried_line_is_detected(self):
-        """The guarantee itself: a rule carried over verbatim cannot be deleted unnoticed.
+        """The guarantee: a rule carried over verbatim cannot be deleted unnoticed.
 
-        This is the test the fifth audit asked for. It bounds how far the two Turkish
-        loosenings (stem prefix, fold) may be pushed: weaken the measure and this goes red
-        before any rule is lost.
+        Deletion must be visible, or the content must provably live on another line, or the
+        line must be a lead-in whose list stays behind (a bag-of-words measure cannot tell a
+        lead-in from its own list; the list's own deletion is still detected).
         """
-        carried = {l.strip() for l in OLD_LINES if len(l.strip()) > 40}
+        carried = {l.strip() for l in OLD.splitlines() if len(l.strip()) > 40}
         lines = NEW.splitlines()
         targets = [l for l in lines if l.strip() in carried]
         self.assertGreater(len(targets), 10, "birebir taşınan satır kalmadı — test anlamsız")
@@ -309,22 +177,33 @@ class RuleCoverageTests(unittest.TestCase):
         for target in targets:
             cut = "\n".join(l for l in lines if l != target)
             if {rid for rid, _ in uncovered_in(cut)} - base:
-                continue  # deletion is visible: the guarantee holds for this line
-            # Not detected. That is only acceptable when the rule provably lives on another
-            # line — otherwise the measure is blind and the line could vanish unnoticed.
+                continue
             mine = stems(target)
             elsewhere = mine and any(len(mine & stems(l)) / len(mine) >= 0.7
                                      for l in lines if l != target and stems(l))
-            # A lead-in and the list under it carry one rule between them: deleting only the
-            # lead-in leaves the list, which a reader still sees and a bag-of-words measure
-            # cannot tell apart. That is a structural property, not an exception list — the
-            # shape is checked here, and the LIST's own deletion is still detected.
             after = next((l for l in lines[lines.index(target) + 1:] if l.strip()), "")
             lead_in = target.rstrip().endswith(":") and after.lstrip().startswith(("-", "|"))
             if not (elsewhere or lead_in):
                 unexplained.append(target[:70])
         self.assertEqual(unexplained, [], "Bu satırlar v1.4'ten silinse ölçüm FARK ETMEZ ve "
                          "içerikleri başka bir satırda da DURMUYOR:\n" + "\n".join(unexplained))
+
+    def test_no_waiver_mechanism_exists(self):
+        """The mechanism that failed four audits in a row must stay gone.
+
+        Every waiver this test ever had was verified against a file the repairer also writes:
+        a repair register, the package's ban lists, a v1.3 twin, a bounded list. Each was
+        broken within one round — the eleventh audit deleted six real rules through the last
+        of them. This checks the ARTEFACTS rather than this file's own words: no waiver
+        register on disk, and no waiver symbol in the module namespace.
+        """
+        self.assertFalse((ROOT / "KAPSAM_MUAFIYET.md").exists(),
+                         "muafiyet defteri geri gelmiş")
+        import sys
+        module = sys.modules[__name__]
+        for symbol in ("IRREDUCIBLE", "class_holds", "entries", "banned_phrases", "WAIVER"):
+            self.assertFalse(hasattr(module, symbol),
+                             f"muafiyet mekanizması geri gelmiş: {symbol}")
 
 
 if __name__ == "__main__":

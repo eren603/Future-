@@ -87,8 +87,14 @@ def _literal(text):
 
 
 def _split(text):
-    return [s.strip() for s in re.split(r"(?<=[.;:])\s+|\n", text)
-            if 15 < len(s.strip()) < 400]
+    """LINES, not clauses.
+
+    The coverage gate measures v1.3 LINES, so these repetition gates must too. While they
+    split on ";" and ":" the two contradicted each other: coverage demanded a v1.3 line back,
+    repetition called one of its clauses a duplicate of a v1.4 rewording, and removing the
+    clause made the line uncovered again — an edit loop with no fixed point.
+    """
+    return [l.strip() for l in text.splitlines() if 15 < len(l.strip()) < 2000]
 
 class CommandTextTests(unittest.TestCase):
     def body(self):

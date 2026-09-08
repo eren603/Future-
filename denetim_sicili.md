@@ -300,3 +300,34 @@ ESKALE KAYDI (Madde 10 — üç deneme de FAIL; sözleşme gereği kullanıcıya
 - Doğrulama: bundle 200 OK, depo 11 OK, roundtrip 200 OK.
 - ⚠ AÇIK KALEM (gizlenmiyor): mutasyon yakalama 66'da 62; kalan 4'ün gerekçesi
   ölçülmedi. Önceki turda 65'te 64'tü — sıkılaştırmalar hedef sayısını artırdı.
+
+## Madde 10 — 12. tur: MUAFİYET MEKANİZMASI KALDIRILDI (11. tur FAIL'inin ardından)
+- 11. tur, tek denetçi yerine 8 saldırı yüzeyi + 3 mercekli çürütme ile koştu (workflow).
+  Bulgular (kendi ölçümümle doğrulandı):
+  1. **P0** — `PARCA` sınıfı GENEL kaçış yolu: denetçi 6 GERÇEK kuralı sildi, her birini
+     PARCA ile muaf tuttu, bütün testler yeşil kaldı. Silinenler arasında iki güvenlik
+     hükmü vardı: "salt okunur verinin emir yetkisinden ayrılması" ve işçi izolasyonu.
+     Ölçülen saldırı yüzeyi: aynı şekli taşıyan 85 kapsanmış cümle.
+  2. **P0** — v1.3 tablo satırı ↔ v1.4 tablo satırı garantisi PARCA ile atlanıyordu;
+     5. turda eklenen kural tam da kendi hedef vakasında etkisizdi.
+  3. **P0** — `IRREDUCIBLE` ≤2 kapağı bağlayıcı değil: slot boşaltılıp yeniden
+     kullanılabiliyor, yani liste büyümeden sınırsız kaçış yolu.
+  4. **P0** — "yasağı uygulayan test var mı" kapısı sahte: ifade bir Python YORUMUNDA
+     geçse yeterliydi.
+- KÖK NEDEN (kabul edildi): muafiyet bir DELİKTİR — metni onaran taraf, muafiyeti
+  doğrulayan dosyayı da yazar. Yedi turdur mekanizma sertleştirilmeye çalışıldı; dördü
+  bir tur içinde kırıldı.
+- 12. turda yapılan: **muafiyet mekanizması tümden KALDIRILDI.** Sınıf yok, liste yok,
+  defter yok, `KAPSAM_MUAFIYET.md` SİLİNDİ. Yerine envanter küçültüldü: birim artık
+  v1.3 CÜMLESİ değil v1.3 SATIRI. ";" ve ":" ile bölmek "bu zaten kural değildi"
+  denilebilecek parçalar üretiyordu ve muafiyet ihtiyacını doğuran şey buydu; satır
+  bunu üretmiyor. 237 satırın **237'si kapsanıyor — muafiyet sıfır.**
+- Ek sıkılaştırmalar: tablo satırı kuralının aynısı LİSTE MADDESİNE de uygulandı
+  (5 madde silinse ölçüm fark etmiyordu); içerik kelimesi olmayan satırlar için birebir
+  dize aranıyor; mükerrer kapıları da SATIR düzeyine çekildi (kapsam satır, mükerrer
+  cümle olduğu için iki kapı birbiriyle çelişip düzeltmeyi sonsuz döngüye sokuyordu).
+- Yeni test `test_no_waiver_mechanism_exists`: muafiyet defteri diskte yoksa ve modülde
+  muafiyet sembolü kalmadıysa geçer — mekanizmanın geri gelmesi testi düşürür.
+- Ölçüm: kapsanmayan 0/237, mutasyon 71/78 (kalan 7'si "içeriği başka satırda duruyor"
+  ya da lead-in gerekçesiyle testte açıklanıyor).
+- Doğrulama: bundle 200 OK, depo 9 OK, roundtrip 200 OK.
