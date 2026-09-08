@@ -328,6 +328,6 @@ ESKALE KAYDI (Madde 10 — üç deneme de FAIL; sözleşme gereği kullanıcıya
   cümle olduğu için iki kapı birbiriyle çelişip düzeltmeyi sonsuz döngüye sokuyordu).
 - Yeni test `test_no_waiver_mechanism_exists`: muafiyet defteri diskte yoksa ve modülde
   muafiyet sembolü kalmadıysa geçer — mekanizmanın geri gelmesi testi düşürür.
-- Ölçüm: kapsanmayan 0/237, mutasyon 71/78 (kalan 7'si "içeriği başka satırda duruyor"
+- Ölçüm: kapsanmayan 0/237, mutasyon 72/78 (kalan 6'si "içeriği başka satırda duruyor"
   ya da lead-in gerekçesiyle testte açıklanıyor).
 - Doğrulama: bundle 200 OK, depo 9 OK, roundtrip 200 OK.
