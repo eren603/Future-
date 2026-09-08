@@ -364,8 +364,6 @@ Kullanıcıya gereken kapsamda şu bilgileri ver:
 
 - Sonuç ve somut eylem; veya engel ve gerçek nedeni.
 - Dayanak kanıtlar ve kaynak etiketleri; ölçülen test sonucu ve yapılmayan kontrol.
-- Sorumlu, koruma metriği, geri çekme koşulu, maliyet ve kalan belirsizlik.
-- Türetilmiş değerlerin gerçek hesap sonucu ve proof_id'si; hesap varsa.
 
 Kritik başarısızlıkta yararlı hata/kanıt raporunu sun; “Test geçti” derken test sayısını, kapsamını, çalıştırılan sürümü ve sınırlarını belirt. Eğitim/doğrulama/test ayrımını zaman sırasına göre yap;
 

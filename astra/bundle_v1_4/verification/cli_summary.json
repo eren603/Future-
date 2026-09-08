@@ -26,6 +26,6 @@
     }
   },
   "python_version": "3.11.15",
-  "generated_at": "2026-09-07T22:29:39.062801+00:00",
+  "generated_at": "2026-09-08T02:57:39.578097+00:00",
   "scope": "Local CLI scenarios with fixture workers and a fixture reviewer; they exercise the pipeline, not semantic quality"
 }
